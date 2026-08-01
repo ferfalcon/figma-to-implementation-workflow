@@ -5,13 +5,13 @@
 Apply the following rules to every stage in this workflow:
 
 1. Read all listed source materials completely before creating or modifying the target document.
-2. Inspect the actual Figma nodes, repository files, and existing project documents. Do not rely on filenames, summaries, or assumptions alone.
+2. Inspect the actual Design source, repository files, and existing project documents. Do not rely on filenames, summaries, or assumptions alone.
 3. Treat the relevant `Document-Guidelines-*.md` file as the structural and quality guideline for its corresponding document.
 4. Do not copy explanatory content from a guideline into the project document. Apply the guideline to the actual project.
 5. Clearly classify information as:
 
    * **Confirmed:** explicitly supported by project documentation or a user decision.
-   * **Observed:** directly visible or defined in Figma or the repository.
+   * **Observed:** directly visible or defined in the Design source or the repository.
    * **Inferred:** strongly suggested but not explicitly confirmed.
    * **Recommended:** proposed to resolve a gap or implementation concern.
    * **Open question:** cannot be determined safely from the available evidence.
@@ -27,7 +27,7 @@ Apply the following rules to every stage in this workflow:
     * Structural technical decisions belong in `ARCHITECTURE.md`.
     * Implementation ordering belongs in `PLAN.md`.
     * Executable implementation units belong in task files.
-11. Maintain traceability between Figma evidence, requirements, design decisions, specifications, implementation work, and validation.
+11. Maintain traceability between Design source evidence, requirements, design decisions, specifications, implementation work, and validation.
 12. Perform two explicit review passes before completing each stage:
 
     * **Review pass 1 — Completeness and correctness**
@@ -42,20 +42,20 @@ Apply the following rules to every stage in this workflow:
 
 ---
 
-# Stage 1 — Audit the Figma source
+# Stage 1 — Audit the Design source
 
-Carefully inspect and analyze the complete relevant scope of the Figma file.
+Carefully inspect and analyze the complete relevant scope of the Design source.
 
-Your goal is to create or update `FIGMA-AUDIT.md`.
+Your goal is to create or update `DESIGN-AUDIT.md`.
 
 ## Sources
 
-* The supplied Figma file or node
+* The supplied Design source
 * Any linked Figma pages, sections, frames, components, variables, styles, and prototypes that are relevant to the project
 
 ## Instructions
 
-1. Determine the exact Figma scope being analyzed.
+1. Determine the exact Design source scope being analyzed.
 2. Record:
 
    * File, page, section, frame, and node names
@@ -77,8 +77,8 @@ Your goal is to create or update `FIGMA-AUDIT.md`.
    * Unclear responsive behavior
    * Incomplete prototype paths
    * Accessibility concerns visible in the design
-   * Design decisions that cannot be determined from Figma
-4. For every material observation, include the relevant Figma page, frame, or node reference.
+   * Design decisions that cannot be determined from Design source
+4. For every material observation, include the relevant Design source page, frame, or node reference.
 5. Do not convert inferred product behavior into confirmed requirements.
 6. Organize unresolved findings into:
 
@@ -89,7 +89,7 @@ Your goal is to create or update `FIGMA-AUDIT.md`.
 
 ## Required result
 
-`FIGMA-AUDIT.md` must provide a factual evidence baseline that later documents can reference without repeatedly rediscovering the Figma structure.
+`DESIGN-AUDIT.md` must provide a factual evidence baseline that later documents can reference without repeatedly rediscovering the Design source structure.
 
 Perform both required review passes before completing the stage.
 
@@ -99,10 +99,10 @@ Perform both required review passes before completing the stage.
 
 Deeply analyze:
 
-* The Figma file
-* `FIGMA-AUDIT.md`
-* Existing project or stakeholder documentation
+* The Design source
+* `DESIGN-AUDIT.md`
 * `Document-Guidelines-REQUIREMENTS.md`
+* Existing project or stakeholder documentation
 
 Your goal is to create or update `REQUIREMENTS.md`.
 
@@ -161,7 +161,7 @@ Your goal is to create or update `REQUIREMENTS.md`.
    * Data-retention policies
      unless they are supported by a source or clearly labeled as recommendations.
 7. Keep the document implementation-neutral except where a technology is an actual project constraint.
-8. Add a traceability table connecting each requirement to its Figma evidence or other source.
+8. Add a traceability table connecting each requirement to its Design source evidence or other source.
 
 ## Review pass 1
 
@@ -169,7 +169,7 @@ Check that every requirement is specific, necessary, unambiguous, prioritized, a
 
 ## Review pass 2
 
-Check that no Figma inference has been presented as a confirmed product decision and that no requirement contradicts another requirement.
+Check that no Design source inference has been presented as a confirmed product decision and that no requirement contradicts another requirement.
 
 ---
 
@@ -177,10 +177,11 @@ Check that no Figma inference has been presented as a confirmed product decision
 
 Deeply analyze:
 
-* The Figma file
-* `FIGMA-AUDIT.md`
+* The Design source
+* `DESIGN-AUDIT.md`
 * `REQUIREMENTS.md`
 * `Document-Guidelines-DESIGN.md`
+* Existing project or stakeholder documentation
 
 Your goal is to create or update `DESIGN.md`.
 
@@ -210,7 +211,7 @@ Your goal is to create or update `DESIGN.md`.
    * Inferred
    * Recommended
    * Open question
-4. Reference the relevant Figma pages, frames, components, or nodes.
+4. Reference the relevant Design source pages, frames, components, or nodes.
 5. Map important design decisions to the requirement IDs they support.
 6. Describe design intent and relationships, not only raw measurements.
 7. Do not turn `DESIGN.md` into:
@@ -223,7 +224,7 @@ Your goal is to create or update `DESIGN.md`.
 
 ## Review pass 1
 
-Compare the document against the actual Figma source for visual and behavioral completeness.
+Compare the document against the actual Design source for visual and behavioral completeness.
 
 ## Review pass 2
 
@@ -235,11 +236,12 @@ Verify that the design supports `REQUIREMENTS.md` and that inferred design behav
 
 Deeply analyze:
 
-* The Figma file
-* `FIGMA-AUDIT.md`
+* The Design source
+* `DESIGN-AUDIT.md`
 * `REQUIREMENTS.md`
 * `DESIGN.md`
 * `Document-Guidelines-SPEC.md`
+* Existing project or stakeholder documentation
 
 Your goal is to create or update `SPEC.md`.
 
@@ -271,7 +273,7 @@ Your goal is to create or update `SPEC.md`.
 6. Every material specification must reference:
 
    * Its requirement ID
-   * Its relevant design section or Figma evidence
+   * Its relevant design section or Design source evidence
 7. Define behavior for applicable states:
 
    * Default
@@ -311,8 +313,8 @@ Check requirement coverage, design consistency, edge-case completeness, accessib
 
 Deeply review:
 
-* The Figma file
-* `FIGMA-AUDIT.md`
+* The Design source
+* `DESIGN-AUDIT.md`
 * `REQUIREMENTS.md`
 * `DESIGN.md`
 * `SPEC.md`
@@ -383,8 +385,8 @@ For a genuinely simple static site, document why a separate architecture stage i
 Deeply analyze:
 
 * The repository
-* The Figma file
-* `FIGMA-AUDIT.md`
+* The Design source
+* `DESIGN-AUDIT.md`
 * `REQUIREMENTS.md`
 * `DESIGN.md`
 * `SPEC.md`
@@ -435,8 +437,8 @@ Perform both required review passes before completing the stage.
 Deeply analyze:
 
 * The repository
-* The Figma file
-* `FIGMA-AUDIT.md`
+* The Design source
+* `DESIGN-AUDIT.md`
 * `REQUIREMENTS.md`
 * `DESIGN.md`
 * `SPEC.md`
@@ -741,7 +743,7 @@ Deeply analyze:
 After all implementation tasks are complete, deeply compare:
 
 * The implemented application
-* The Figma file
+* The Design source
 * `REQUIREMENTS.md`
 * `DESIGN.md`
 * `SPEC.md`
