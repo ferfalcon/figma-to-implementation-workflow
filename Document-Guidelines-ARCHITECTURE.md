@@ -299,7 +299,7 @@ This is one of the most useful sections.
 
 It should state what is allowed to depend on what.
 
-````md
+```md
 ## Dependency Rules
 
 Dependencies flow inward:
@@ -316,7 +316,7 @@ Repository interfaces
 Infrastructure implementations
     ↓
 Repository interfaces
-````
+```
 
 Rules:
 
@@ -327,7 +327,7 @@ Rules:
 5. React components must not access the database directly.
 6. Business rules must not be implemented exclusively inside route handlers.
 
-````
+```
 
 Without dependency rules, the document may describe the current system but fail to guide future changes.
 
@@ -353,7 +353,7 @@ Example: creating an FAQ.
 7. `FaqRepository` persists the FAQ.
 8. The API returns the created resource.
 9. The dashboard updates its local state.
-````
+```
 
 A sequence diagram can also be written with Mermaid:
 
@@ -467,7 +467,7 @@ The detailed payload definitions may belong in `SPEC.md`, OpenAPI, or dedicated 
 
 Explain how the frontend is structured.
 
-````md
+```md
 ## Frontend Architecture
 
 The frontend is organized by feature rather than by file type.
@@ -484,7 +484,7 @@ src/
 │   ├── hooks/
 │   └── utilities/
 └── styles/
-````
+```
 
 Rules:
 
@@ -495,7 +495,7 @@ Rules:
 * accessibility behavior is part of component implementation,
   not an optional enhancement.
 
-````
+```
 
 This is more useful than documenting every React component individually.
 
@@ -516,7 +516,7 @@ The client sends the token with protected requests:
 
 ```http
 Authorization: Bearer <token>
-````
+```
 
 Authentication answers:
 
@@ -529,7 +529,7 @@ Authorization answers:
 Public read operations do not require authentication. FAQ mutation
 operations require an authenticated administrator.
 
-````
+```
 
 Also document where tokens are stored, expiration behavior, logout semantics, and relevant trade-offs.
 
@@ -557,7 +557,7 @@ maps those errors to status codes and public response bodies.
 
 Infrastructure details, stack traces, SQL errors, and secrets must
 not be returned to clients.
-````
+```
 
 ---
 
@@ -588,7 +588,7 @@ The architecture includes:
 
 Describe where each part runs and how it connects.
 
-````md
+```md
 ## Deployment Architecture
 
 ```text
@@ -599,7 +599,7 @@ Vercel: React application
 Render: Fastify API
    ↓ TLS
 Neon: PostgreSQL
-````
+```
 
 Environment-specific configuration is provided through environment variables.
 
@@ -607,7 +607,7 @@ The API is stateless. Persistent data is stored exclusively in PostgreSQL.
 Database migrations run as part of the deployment process before the new
 application version receives traffic.
 
-````
+```
 
 ---
 
@@ -629,7 +629,7 @@ The API produces structured logs containing:
 - sanitized error information.
 
 Passwords, tokens, secrets, and sensitive request content must not be logged.
-````
+```
 
 For a small project, logging and basic health checks may be enough.
 
@@ -774,7 +774,7 @@ That last sentence prevents future ideas from becoming accidental requirements.
 
 # Compact template
 
-````md
+```md
 # Architecture
 
 ## 1. Purpose
@@ -799,7 +799,7 @@ Describe the principal applications, services, and infrastructure.
 
 ```text
 Client → API → Application Services → Repository → Database
-````
+```
 
 ## 5. Components and Responsibilities
 
@@ -895,7 +895,7 @@ Describe unit, integration, component, and end-to-end test boundaries.
 * ...
 * ...
 
-````
+```
 
 ---
 
@@ -918,7 +918,7 @@ FaqAccordion
 └── FaqItem
     ├── FaqTrigger
     └── FaqPanel
-````
+```
 
 ## State Ownership
 
@@ -970,7 +970,7 @@ Tests cover:
 * one-item and multiple-item modes;
 * reduced-motion behavior.
 
-````
+```
 
 For a single component, this may be enough.
 
@@ -986,7 +986,7 @@ Good content:
 
 ```md
 Business logic belongs in application services.
-````
+```
 
 Too vague:
 
