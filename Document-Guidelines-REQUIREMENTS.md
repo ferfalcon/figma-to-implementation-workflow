@@ -417,9 +417,9 @@ One requirement can have several acceptance criteria.
 
 ---
 
-# In a Figma-to-code workflow
+# In a design-to-code workflow
 
-A Figma file cannot reveal every product requirement.
+The design source cannot reveal every product requirement.
 
 It may show:
 
@@ -442,7 +442,7 @@ It often does not show:
 * Backend behavior
 * Complete accessibility requirements
 
-Therefore, when creating `REQUIREMENTS.md` from Figma, observations should be separated from assumptions:
+Therefore, when creating `REQUIREMENTS.md` from the Design source, observations should be separated from assumptions:
 
 ```md
 ## Confirmed Requirements

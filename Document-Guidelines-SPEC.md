@@ -15,7 +15,7 @@ A good `SPEC.md` describes the required outcome, but generally avoids prescribin
 
 ## What belongs in `SPEC.md`
 
-For a UI project or Figma-to-code workflow, it commonly covers:
+For a UI project or design-to-code workflow, it commonly covers:
 
 * Scope and objectives
 * Component structure
@@ -191,7 +191,7 @@ Describe:
 
 ## 19. References
 
-- Figma file
+- Design source
 - DESIGN.md
 - Related issue
 - API documentation

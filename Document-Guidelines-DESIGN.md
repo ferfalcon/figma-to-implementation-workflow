@@ -13,7 +13,7 @@ A useful `DESIGN.md` explains:
 * What accessibility expectations are visible or implied?
 * Which details are confirmed, inferred, or still unclear?
 
-It should capture the **design intent**, not merely list pixel measurements copied from Figma.
+It should capture the **design intent**, not merely list pixel measurements copied from the design source.
 
 ## Typical relationship with other files
 
@@ -42,7 +42,7 @@ Briefly explain what the design represents, its purpose, and where it appears.
 
 ## 2. Source
 
-- Figma file:
+- Design source:
 - Analyzed node:
 - Relevant pages or frames:
 - Analysis date:
@@ -197,7 +197,7 @@ Clearly distinguish details inferred from the design from confirmed requirements
 
 ## 17. Open Questions
 
-List anything that cannot be determined safely from Figma.
+List anything that cannot be determined safely from the design source.
 
 ## 18. Risks and Potential Inconsistencies
 
@@ -208,8 +208,8 @@ Document contradictions, incomplete states, unusual dimensions, or implementatio
 
 A `DESIGN.md` should not be:
 
-* A dump of every Figma property.
-* A replacement for the Figma file.
+* A dump of every design source property.
+* A replacement for the design source.
 * A component implementation plan.
 * A list of CSS declarations.
 * A requirements document disguised as design documentation.
@@ -227,11 +227,11 @@ The second version preserves both the observed values and the design intent.
 
 ## Observation versus inference
 
-This distinction is especially important when generating `DESIGN.md` from Figma.
+This distinction is especially important when generating `DESIGN.md` from design sources.
 
 Use language such as:
 
-* **Observed:** directly visible or explicitly defined in Figma.
+* **Observed:** directly visible or explicitly defined in the design source.
 * **Inferred:** strongly suggested but not explicitly demonstrated.
 * **Recommended:** proposed to resolve a missing design decision.
 * **Open question:** requires confirmation.
@@ -256,4 +256,4 @@ This prevents invented responsive behavior from being confused with the original
 3. **Responsive interpretation** — what changes and what remains consistent.
 4. **Uncertainty management** — observations, assumptions, contradictions, and open questions.
 
-That makes `DESIGN.md` a durable explanation of the design rather than a temporary Figma inspection report.
+That makes `DESIGN.md` a durable explanation of the design rather than a temporary design source inspection report.

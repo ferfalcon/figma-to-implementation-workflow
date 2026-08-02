@@ -70,7 +70,7 @@ Briefly explain what will be implemented and why.
 
 List the materials used to create the plan:
 
-- Figma design
+- Design source
 - DESIGN.md
 - SPEC.md
 - Existing repository
