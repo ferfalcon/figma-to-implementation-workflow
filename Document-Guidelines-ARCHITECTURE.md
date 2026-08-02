@@ -1,1026 +1,533 @@
-`ARCHITECTURE.md` is a project document that explains **how a software system is organized internally and why it is organized that way**.
+# `ARCHITECTURE.md` Documentation Guidelines
 
-It describes the system at a higher level than individual implementation files. A new developer should be able to read it and understand:
+An `ARCHITECTURE.md` file explains **how a software system is organized and why its structural decisions were made**.
 
-* the major parts of the system;
-* how those parts communicate;
-* where different responsibilities belong;
-* how data moves through the application;
-* which architectural rules should be preserved;
-* why important technical decisions were made.
+It should let a developer understand:
 
----
+- the major parts of the system;
+- the responsibility of each part;
+- how parts communicate;
+- how data and state move through the system;
+- which dependency rules must be preserved;
+- which constraints and tradeoffs shaped the structure;
+- which decisions are confirmed, proposed, or unresolved.
 
-## The central question
-
-An `ARCHITECTURE.md` file answers:
+The central question is:
 
 > **How is this system structured, and why?**
 
-For example:
+## Document responsibility
 
-```text
-Browser
-   ↓
-React application
-   ↓
-Fastify API
-   ↓
-Service layer
-   ↓
-Repository layer
-   ↓
-PostgreSQL
-```
+`ARCHITECTURE.md` owns structural technical decisions and boundaries.
 
-The document should explain not only that these layers exist, but also:
+It is not:
 
-* what each layer owns;
-* which dependencies are allowed;
-* where validation happens;
-* where business logic lives;
-* how errors are handled;
-* how authentication works;
-* how the system may evolve.
+- a product requirements document;
+- a visual design description;
+- a complete behavioral specification;
+- a step-by-step implementation plan;
+- an API reference;
+- a database-schema dump;
+- a list of every source file;
+- a record of every minor coding choice.
 
----
+Use the related documents according to their responsibility:
 
-## What it is not
+| Document | Main responsibility |
+|---|---|
+| `REQUIREMENTS.md` | Product outcomes, rules, constraints, and quality expectations |
+| `DESIGN.md` | Visual, responsive, and interaction intent |
+| `SPEC.md` | Precise and testable behavior |
+| `ARCHITECTURE.md` | System structure, boundaries, dependencies, and technical decisions |
+| `PLAN.md` | Implementation order, affected files, dependencies, and validation |
 
-An `ARCHITECTURE.md` file is usually not:
+## When a separate architecture document is appropriate
 
-* a complete product specification;
-* a list of every component;
-* a step-by-step implementation plan;
-* API reference documentation;
-* a replacement for code comments;
-* a record of every minor technical decision.
+Create a separate `ARCHITECTURE.md` when the project or feature has meaningful structural decisions involving one or more of these areas:
 
-It should focus on the system’s **structural model and architectural constraints**.
+- multiple applications, packages, services, or runtime boundaries;
+- routing or navigation architecture;
+- significant component or feature boundaries;
+- shared state or complex data flow;
+- APIs or third-party integrations;
+- persistence or migrations;
+- authentication or authorization;
+- background processing;
+- build and deployment infrastructure;
+- security, reliability, or observability boundaries;
+- architectural migration from an existing system.
 
----
+A separate architecture document may be unnecessary for a genuinely small static page or isolated component with no meaningful structural decisions. In that case:
 
-# Typical `ARCHITECTURE.md` structure
+1. Record why the architecture stage was skipped.
+2. Put the necessary structural decisions in `SPEC.md` or `PLAN.md`.
+3. Keep architecture references optional in later workflow stages.
 
-There is no mandatory format, but the following structure works well.
+## Evidence before decisions
 
-```md
-# Architecture
+Architecture must be grounded in the actual project.
 
-## 1. Purpose
+Inspect:
 
-## 2. System Context
+- the repository structure;
+- package and dependency files;
+- build and deployment configuration;
+- existing components, modules, services, and utilities;
+- current data-access and state-management patterns;
+- tests and validation infrastructure;
+- `REQUIREMENTS.md`;
+- `DESIGN.md`;
+- `SPEC.md`;
+- existing technical documentation;
+- approved stakeholder or technical decisions.
 
-## 3. Architectural Goals
+Do not infer architecture from filenames or framework stereotypes alone.
 
-## 4. High-Level Architecture
+Distinguish clearly between:
 
-## 5. Major Components
+- **Current architecture:** observed in the repository now.
+- **Target architecture:** proposed for the implementation.
+- **Transitional architecture:** temporary structure required during migration.
 
-## 6. Dependency Rules
+Never describe proposed files, layers, or services as if they already exist.
 
-## 7. Data Flow
+## Examples are non-normative
 
-## 8. Data Architecture
+Technology names, directory structures, hosting providers, and architectural patterns in examples are illustrative only.
 
-## 9. API Architecture
+Do not adopt them unless supported by:
 
-## 10. Frontend Architecture
+- repository evidence;
+- project constraints;
+- requirements or specifications;
+- an explicitly approved architectural decision.
 
-## 11. Authentication and Authorization
+Examples must not override the inspected project architecture.
 
-## 12. Error Handling
+See:
 
-## 13. Security
+- [`templates/ARCHITECTURE.template.md`](templates/ARCHITECTURE.template.md)
+- [`examples/ARCHITECTURE-full-stack-example.md`](examples/ARCHITECTURE-full-stack-example.md)
+- [`examples/ARCHITECTURE-component-example.md`](examples/ARCHITECTURE-component-example.md)
 
-## 14. Deployment Architecture
+## Required content
 
-## 15. Observability
+Not every project needs every subsection, but a useful architecture document should address the following concerns when they apply.
 
-## 16. Testing Strategy
+### 1. Purpose and scope
 
-## 17. Architectural Decisions
+Define:
 
-## 18. Constraints and Trade-offs
+- what system, application, feature, or component is covered;
+- why the document exists;
+- what is explicitly outside its scope;
+- whether it describes current, target, or transitional architecture.
 
-## 19. Known Risks
+### 2. Sources and evidence
 
-## 20. Future Evolution
-```
+Record the sources that support the architecture:
 
-Not every project needs every section. A small frontend component may need only five or six sections.
+- repository paths;
+- project documents;
+- infrastructure configuration;
+- requirement and specification IDs;
+- approved decisions.
 
----
+Important structural claims should be traceable to evidence.
 
-# Recommended section-by-section format
-
-## 1. Purpose
-
-Explain why the document exists and what part of the system it covers.
-
-```md
-## Purpose
-
-This document describes the architecture of the FAQ platform,
-including the public website, administration dashboard, API,
-database, authentication model, and deployment environment.
-
-It defines the major system boundaries, dependency rules, and
-technical decisions that implementations must preserve.
-```
-
-This prevents confusion about whether the document covers the whole repository, one application, or one feature.
-
----
-
-## 2. System context
+### 3. System context
 
 Describe the system from the outside.
 
 Identify:
 
-* users;
-* external systems;
-* third-party services;
-* major inputs and outputs.
+- users and actors;
+- external systems;
+- third-party services;
+- major inputs and outputs;
+- trust boundaries.
 
-```md
-## System Context
-
-The platform has two user groups:
-
-1. Public visitors, who browse and search published FAQs.
-2. Administrators, who manage FAQ content through a protected dashboard.
-
-The system consists of:
-
-- a public React application;
-- an administration React application;
-- a Fastify API;
-- a PostgreSQL database;
-- an external hosting and deployment platform.
-```
-
-A small context diagram is often useful:
+A small context diagram is useful when it improves understanding.
 
 ```text
-Public visitor ──→ Public web application ──→ API
-                                             │
-Administrator ──→ Admin dashboard ───────────┤
-                                             ↓
-                                         PostgreSQL
+Actor → System boundary → External dependency
 ```
 
----
+### 4. Architectural goals
 
-## 3. Architectural goals
+State the project-specific qualities the architecture prioritizes, such as:
 
-State the qualities the architecture is designed to support.
+- maintainability;
+- accessibility;
+- testability;
+- security;
+- reliability;
+- performance;
+- scalability;
+- simplicity;
+- replaceable infrastructure.
 
-Examples:
+Do not list generic qualities without explaining their relevance or tradeoffs.
 
-* maintainability;
-* accessibility;
-* testability;
-* separation of concerns;
-* scalability;
-* security;
-* replaceable infrastructure;
-* clear ownership of business rules.
+### 5. High-level structure
+
+Describe the major runtime and code boundaries.
+
+Explain:
+
+- the principal applications, packages, services, or components;
+- how they communicate;
+- where important responsibilities belong;
+- which boundaries are current and which are proposed.
+
+The description should remain useful even if individual filenames change.
+
+### 6. Components and responsibilities
+
+For each architecturally significant part, define:
+
+- responsibilities;
+- owned state or data;
+- dependencies;
+- public boundaries;
+- responsibilities it must not absorb.
+
+Good architecture documentation protects responsibility boundaries, not just directory names.
+
+### 7. Dependency rules
+
+State what may depend on what.
+
+Examples of rule types:
+
+- direction of dependencies between layers or modules;
+- framework-independent boundaries;
+- feature-to-shared-code rules;
+- UI-to-data-access restrictions;
+- allowed integration paths;
+- prohibited circular dependencies.
+
+Only define layers or abstractions that the project actually needs.
+
+### 8. Data and interaction flows
+
+Document important flows that clarify boundaries or failure behavior.
+
+For each flow, identify:
+
+- initiator;
+- validation boundaries;
+- authorization boundaries;
+- business-rule ownership;
+- data access;
+- side effects;
+- success and failure results.
+
+Avoid documenting every minor function call.
+
+### 9. State and data ownership
+
+Define:
+
+- authoritative data sources;
+- persistent and transient state;
+- client, server, or component ownership;
+- caching and synchronization;
+- validation ownership;
+- concurrency and consistency concerns;
+- sensitive-data boundaries.
+
+Ambiguous ownership is a common source of duplicated logic and inconsistent state.
+
+### 10. Interface architecture
+
+For frontend or user-interface systems, address when applicable:
+
+- routing and navigation boundaries;
+- feature organization;
+- shared-component boundaries;
+- page and layout composition;
+- server state versus interface state;
+- data-access boundaries;
+- styling and design-system integration;
+- rendering strategy;
+- error boundaries.
+
+Do not turn this section into a list of every component.
+
+### 11. Service, API, and integration architecture
+
+When applicable, define:
+
+- request and message boundaries;
+- external input validation;
+- business-rule ownership;
+- service or use-case boundaries;
+- integration adapters;
+- error translation;
+- versioning or compatibility expectations;
+- background work.
+
+Detailed payload definitions belong in `SPEC.md`, OpenAPI, or dedicated API documentation.
+
+### 12. Persistence architecture
+
+When applicable, describe:
+
+- main entities and relationships;
+- persistence ownership;
+- transaction boundaries;
+- migration strategy;
+- retention or deletion behavior;
+- mapping between domain, transport, and persistence models;
+- consistency constraints.
+
+Avoid copying the complete schema unless it is necessary to understand architectural decisions.
+
+### 13. Authentication and authorization
+
+When applicable, explain:
+
+- identity source;
+- authentication flow;
+- authorization enforcement;
+- protected boundaries;
+- session or token lifecycle;
+- logout and revocation behavior;
+- relevant tradeoffs.
+
+Do not assume an authentication model from an example.
+
+### 14. Accessibility architecture
+
+Document the structural decisions needed to preserve accessibility across components and features.
+
+Address when relevant:
+
+- semantic component boundaries;
+- keyboard interaction ownership;
+- focus management;
+- accessible names and relationships;
+- status and error announcements;
+- reduced-motion handling;
+- reusable accessibility behavior;
+- testing responsibility.
+
+Accessibility is an architectural concern when behavior is shared across the system.
+
+### 15. Error handling and reliability
+
+Define:
+
+- error categories;
+- propagation and translation;
+- user-facing recovery;
+- retry and idempotency rules;
+- fallback behavior;
+- failure boundaries;
+- logging and sanitization;
+- rollback or recovery where applicable.
+
+### 16. Security and privacy
+
+Document relevant structural controls:
+
+- trust boundaries;
+- input validation;
+- authorization enforcement;
+- secret management;
+- sensitive-data handling;
+- origin and network controls;
+- logging restrictions;
+- abuse protection;
+- privacy constraints.
+
+Do not invent security or retention policies. Carry unsupported decisions as recommendations or open questions.
+
+### 17. Build, deployment, and runtime
+
+When applicable, describe:
+
+- build outputs;
+- environments;
+- hosting boundaries;
+- configuration;
+- networking;
+- deployment ordering;
+- migrations;
+- rollback or recovery;
+- runtime constraints.
+
+### 18. Observability
+
+When relevant, define:
+
+- logs;
+- metrics;
+- traces;
+- health checks;
+- alerts;
+- diagnostic identifiers;
+- information that must not be recorded.
+
+The detail should match the project’s operational needs.
+
+### 19. Testing architecture
+
+Explain what belongs in each applicable validation layer:
+
+- unit tests;
+- component tests;
+- integration tests;
+- contract tests;
+- end-to-end tests;
+- accessibility validation;
+- visual validation.
+
+Testing boundaries should align with architectural boundaries.
+
+### 20. Architectural decisions
+
+Record significant decisions with:
+
+- status;
+- context;
+- selected option;
+- rationale;
+- alternatives considered;
+- tradeoffs and consequences;
+- traceability to requirements or specifications.
+
+Use separate Architecture Decision Records when decisions require independent review, history, or replacement.
+
+### 21. Constraints and tradeoffs
+
+State accepted limitations honestly.
+
+Architecture always involves tradeoffs. A document describing only benefits is incomplete.
+
+### 22. Risks, assumptions, and open questions
+
+Record:
+
+- architectural risks;
+- unsupported assumptions;
+- unresolved technical decisions;
+- decisions requiring stakeholder approval;
+- blocking versus non-blocking status.
+
+Do not silently resolve uncertainty through convention or preference.
+
+### 23. Future evolution
+
+Describe likely extension points only when useful.
+
+Future possibilities must not become accidental current requirements. Mark them clearly as outside the present scope unless approved elsewhere.
+
+### 24. Traceability and validation
+
+Map important architecture decisions to:
+
+- requirement IDs;
+- specification sections or IDs;
+- repository evidence;
+- implementation tasks;
+- validation methods.
+
+## Evidence and uncertainty labels
+
+Use the workflow’s shared classifications:
+
+- **Confirmed:** established by project documentation or an approved decision.
+- **Observed:** directly visible in the repository or infrastructure.
+- **Inferred:** strongly suggested but not confirmed.
+- **Recommended:** proposed to resolve a structural concern.
+- **Open question:** cannot be determined safely.
+
+Architecture documents should not blur observed current structure with recommended target structure.
+
+## Level of detail
+
+The correct level is:
+
+> Detailed enough to guide implementation and protect architectural boundaries, but not so detailed that routine code changes make the document obsolete.
+
+Good:
 
 ```md
-## Architectural Goals
-
-The architecture prioritizes:
-
-- clear separation between HTTP, business, and persistence concerns;
-- independent testing of business rules;
-- predictable TypeScript types across application boundaries;
-- accessible and responsive interfaces;
-- simple local development and deployment;
-- the ability to replace database infrastructure without rewriting
-  application logic.
-```
-
-These goals provide criteria for evaluating architectural decisions later.
-
----
-
-## 4. High-level architecture
-
-Present the overall structure.
-
-```md
-## High-Level Architecture
-
-The project uses a client-server architecture.
-
-- React applications provide the user interfaces.
-- Fastify exposes the HTTP API.
-- Application services coordinate business operations.
-- Repository interfaces isolate database access.
-- Prisma implements persistence against PostgreSQL.
-```
-
-For a monorepo:
-
-```text
-apps/
-├── api-server/
-├── public-web/
-└── admin-web/
-
-packages/
-├── domain/
-├── validation/
-└── shared-types/
-```
-
-The document should explain what those directories mean, rather than simply listing them.
-
----
-
-## 5. Major components
-
-Describe the important subsystems and their responsibilities.
-
-```md
-## Major Components
-
-### Public Web Application
-
-Responsible for:
-
-- displaying published FAQs;
-- filtering by category;
-- searching FAQ content;
-- supporting shareable question URLs;
-- exposing accessible accordion interactions.
-
-It cannot create, update, or delete FAQ records.
-
-### Administration Dashboard
-
-Responsible for:
-
-- authenticating administrators;
-- managing FAQs and categories;
-- changing publication state;
-- changing display order;
-- displaying validation and API errors.
-
-### API Server
-
-Responsible for:
-
-- validating HTTP requests;
-- authenticating protected operations;
-- authorizing administrative actions;
-- coordinating application services;
-- translating application errors into HTTP responses.
-
-### Persistence Layer
-
-Responsible for:
-
-- reading and writing database records;
-- implementing repository contracts;
-- executing transactions;
-- mapping persistence records to domain objects.
-```
-
-The key is to define **responsibility boundaries**.
-
----
-
-## 6. Dependency rules
-
-This is one of the most useful sections.
-
-It should state what is allowed to depend on what.
-
-```md
-## Dependency Rules
-
-Dependencies flow inward:
-
-```text
-HTTP routes
-    ↓
-Application services
-    ↓
-Domain rules
-    ↓
-Repository interfaces
-
-Infrastructure implementations
-    ↓
-Repository interfaces
-```
-
-Rules:
-
-1. Route handlers may depend on application services.
-2. Application services may depend on domain models and repository interfaces.
-3. Domain code must not depend on Fastify, Prisma, React, or PostgreSQL.
-4. Prisma repository implementations may depend on Prisma.
-5. React components must not access the database directly.
-6. Business rules must not be implemented exclusively inside route handlers.
-
-```
-
-Without dependency rules, the document may describe the current system but fail to guide future changes.
-
----
-
-## 7. Data flow
-
-Show what happens during important operations.
-
-Example: creating an FAQ.
-
-```md
-## Data Flow
-
-### Create FAQ
-
-1. The administrator submits the FAQ form.
-2. The dashboard validates basic form constraints.
-3. The dashboard sends `POST /faqs`.
-4. Fastify validates the request schema.
-5. The authentication layer identifies the administrator.
-6. `CreateFaqService` applies business rules.
-7. `FaqRepository` persists the FAQ.
-8. The API returns the created resource.
-9. The dashboard updates its local state.
-```
-
-A sequence diagram can also be written with Mermaid:
-
-```mermaid
-sequenceDiagram
-    actor Admin
-    participant UI as Admin Dashboard
-    participant API as Fastify API
-    participant Service as FAQ Service
-    participant Repo as FAQ Repository
-    participant DB as PostgreSQL
-
-    Admin->>UI: Submit FAQ
-    UI->>API: POST /faqs
-    API->>Service: createFaq(input)
-    Service->>Repo: save(faq)
-    Repo->>DB: INSERT
-    DB-->>Repo: Stored record
-    Repo-->>Service: FAQ
-    Service-->>API: FAQ
-    API-->>UI: 201 Created
-```
-
-Only include diagrams that improve understanding. A large diagram containing every file generally becomes difficult to maintain.
-
----
-
-## 8. Data architecture
-
-Explain the important data model and relationships.
-
-```md
-## Data Architecture
-
-The primary entities are:
-
-- `Faq`
-- `Category`
-- `Administrator`
-- `AuditEntry`
-
-Relationships:
-
-- one category can contain many FAQs;
-- each FAQ belongs to one category;
-- an administrator can create many audit entries;
-- an audit entry records one administrative action.
-```
-
-You may include a simplified model:
-
-```text
-Category
-- id
-- name
-- slug
-
-Faq
-- id
-- question
-- answer
-- status
-- order
-- categoryId
-- createdAt
-- updatedAt
-```
-
-Avoid duplicating the entire database schema unless that schema is central to understanding the architecture.
-
----
-
-## 9. API architecture
-
-Explain the conventions governing the API.
-
-```md
-## API Architecture
-
-The API uses resource-oriented HTTP endpoints.
-
-Public endpoints:
-
-- `GET /faqs`
-- `GET /faqs/:slug`
-- `GET /categories`
-
-Administrative endpoints:
-
-- `POST /faqs`
-- `PATCH /faqs/:id`
-- `DELETE /faqs/:id`
-- `PATCH /faqs/reorder`
-
-Conventions:
-
-- JSON is used for requests and responses.
-- Request and response schemas are explicitly defined.
-- Validation errors return `400`.
-- Authentication failures return `401`.
-- Authorization failures return `403`.
-- Missing resources return `404`.
-- Unexpected failures return `500` without exposing internal details.
-```
-
-The detailed payload definitions may belong in `SPEC.md`, OpenAPI, or dedicated API documentation.
-
----
-
-## 10. Frontend architecture
-
-Explain how the frontend is structured.
-
-```md
-## Frontend Architecture
-
-The frontend is organized by feature rather than by file type.
-
-```text
-src/
-├── app/
-├── features/
-│   ├── authentication/
-│   ├── faqs/
-│   └── categories/
-├── shared/
-│   ├── components/
-│   ├── hooks/
-│   └── utilities/
-└── styles/
-```
-
-Rules:
-
-* feature-specific code stays inside its feature directory;
-* shared components contain no product-specific business logic;
-* server state is separated from transient interface state;
-* API requests are centralized in typed client modules;
-* accessibility behavior is part of component implementation,
-  not an optional enhancement.
-
-```
-
-This is more useful than documenting every React component individually.
-
----
-
-## 11. Authentication and authorization
-
-Explain the security model.
-
-```md
-## Authentication and Authorization
-
-Administrators authenticate using an email and password.
-
-After successful authentication, the API issues a signed JWT.
-
-The client sends the token with protected requests:
-
-```http
-Authorization: Bearer <token>
-```
-
-Authentication answers:
-
-> Who is making the request?
-
-Authorization answers:
-
-> Is this user allowed to perform this operation?
-
-Public read operations do not require authentication. FAQ mutation
-operations require an authenticated administrator.
-
-```
-
-Also document where tokens are stored, expiration behavior, logout semantics, and relevant trade-offs.
-
----
-
-## 12. Error handling
-
-Define the error model and responsibility boundaries.
-
-```md
-## Error Handling
-
-Errors are classified into:
-
-- validation errors;
-- authentication errors;
-- authorization errors;
-- not-found errors;
-- conflict errors;
-- infrastructure errors;
-- unexpected application errors.
-
-Application services throw typed application errors. The HTTP layer
-maps those errors to status codes and public response bodies.
-
-Infrastructure details, stack traces, SQL errors, and secrets must
-not be returned to clients.
-```
-
----
-
-## 13. Security
-
-Document the architectural controls rather than merely saying “the application must be secure.”
-
-```md
-## Security
-
-The architecture includes:
-
-- password hashing using Argon2;
-- signed and expiring authentication tokens;
-- server-side authorization checks;
-- schema validation for all external input;
-- environment variables for secrets;
-- restricted CORS origins;
-- parameterized database access through Prisma;
-- rate limiting on authentication endpoints;
-- safe error responses;
-- audit records for administrative mutations.
-```
-
----
-
-## 14. Deployment architecture
-
-Describe where each part runs and how it connects.
-
-```md
-## Deployment Architecture
-
-```text
-Browser
-   ↓ HTTPS
-Vercel: React application
-   ↓ HTTPS
-Render: Fastify API
-   ↓ TLS
-Neon: PostgreSQL
-```
-
-Environment-specific configuration is provided through environment variables.
-
-The API is stateless. Persistent data is stored exclusively in PostgreSQL.
-Database migrations run as part of the deployment process before the new
-application version receives traffic.
-
-```
-
----
-
-## 15. Observability
-
-Explain how the system can be understood when something goes wrong.
-
-```md
-## Observability
-
-The API produces structured logs containing:
-
-- request identifier;
-- route;
-- HTTP method;
-- status code;
-- execution duration;
-- authenticated user identifier when available;
-- sanitized error information.
-
-Passwords, tokens, secrets, and sensitive request content must not be logged.
-```
-
-For a small project, logging and basic health checks may be enough.
-
----
-
-## 16. Testing strategy
-
-Describe testing layers and what belongs in each.
-
-```md
-## Testing Strategy
-
-### Unit tests
-
-Test domain rules and application services without HTTP or database access.
-
-### Integration tests
-
-Test repository implementations, database behavior, authentication,
-and API routes.
-
-### Component tests
-
-Test React component behavior, validation, keyboard interaction,
-and accessibility states.
-
-### End-to-end tests
-
-Test critical flows such as:
-
-- administrator login;
-- FAQ creation and publication;
-- public FAQ discovery;
-- FAQ reordering;
-- logout and protected-route enforcement.
-```
-
----
-
-## 17. Architectural decisions
-
-Record significant decisions and their rationale.
-
-```md
-## Architectural Decisions
-
-### Use a repository abstraction
-
-**Decision:** Application services depend on repository interfaces rather
-than Prisma directly.
-
-**Reason:** This separates business logic from persistence and allows
-services to be tested using in-memory repositories.
-
-**Trade-off:** It introduces additional interfaces and mapping code.
-
-### Use a modular monolith
-
-**Decision:** The API is deployed as one application rather than as
-multiple services.
-
-**Reason:** The current scale does not justify distributed-system
-complexity.
-
-**Trade-off:** Modules cannot be deployed independently.
-```
-
-For larger projects, these decisions may instead be stored as individual Architecture Decision Records:
-
-```text
-docs/
-└── architecture/
-    ├── ARCHITECTURE.md
-    └── decisions/
-        ├── 0001-use-postgresql.md
-        ├── 0002-use-jwt-authentication.md
-        └── 0003-use-modular-monolith.md
-```
-
----
-
-## 18. Constraints and trade-offs
-
-A good architecture document should admit limitations.
-
-```md
-## Constraints and Trade-offs
-
-- The project uses a modular monolith to reduce operational complexity.
-- The API cannot scale individual modules independently.
-- JWT logout does not automatically invalidate an already-issued token
-  unless token revocation is added.
-- Client-side rendering simplifies deployment but provides weaker initial
-  search-engine rendering than server-side rendering.
-- Prisma increases development speed but creates some coupling inside the
-  infrastructure layer.
-```
-
-Architecture always involves trade-offs. A document that describes only advantages is usually incomplete.
-
----
-
-## 19. Known risks
-
-Document architectural risks that need attention.
-
-```md
-## Known Risks
-
-1. FAQ ordering may produce conflicting values during concurrent updates.
-2. Search performance may degrade as the FAQ collection grows.
-3. Audit logs may grow indefinitely without a retention policy.
-4. Shared frontend types may accidentally become coupled to API transport models.
-5. Token storage strategy must be reviewed before handling sensitive production data.
-```
-
----
-
-## 20. Future evolution
-
-Describe likely growth paths without treating them as current requirements.
-
-```md
-## Future Evolution
-
-The architecture should allow future support for:
-
-- multiple administrator roles;
-- FAQ version history;
-- full-text database search;
-- content localization;
-- external identity providers;
-- independent public and administrative deployments.
-
-These capabilities are not part of the current implementation unless
-explicitly included in the specification.
-```
-
-That last sentence prevents future ideas from becoming accidental requirements.
-
----
-
-# Compact template
-
-```md
-# Architecture
-
-## 1. Purpose
-
-Describe the scope and purpose of this document.
-
-## 2. System Context
-
-Identify users, external systems, and major application boundaries.
-
-## 3. Architectural Goals
-
-- Maintainability
-- Testability
-- Security
-- Accessibility
-- Simplicity
-
-## 4. High-Level Architecture
-
-Describe the principal applications, services, and infrastructure.
-
-```text
-Client → API → Application Services → Repository → Database
-```
-
-## 5. Components and Responsibilities
-
-### Component A
-
-Responsibilities:
-
-* ...
-* ...
-
-Must not:
-
-* ...
-* ...
-
-### Component B
-
-Responsibilities:
-
-* ...
-* ...
-
-## 6. Dependency Rules
-
-1. ...
-2. ...
-3. ...
-
-## 7. Important Data Flows
-
-### Flow A
-
-1. ...
-2. ...
-3. ...
-
-## 8. Data Architecture
-
-Describe the main entities, relationships, ownership, and persistence rules.
-
-## 9. API Architecture
-
-Describe endpoint organization, validation, versioning, and error conventions.
-
-## 10. Frontend Architecture
-
-Describe features, state ownership, component boundaries, routing, and API access.
-
-## 11. Authentication and Authorization
-
-Describe identity, permissions, token or session management, and protected boundaries.
-
-## 12. Error Handling
-
-Describe error categories, propagation, logging, and client responses.
-
-## 13. Security
-
-Describe trust boundaries and security controls.
-
-## 14. Deployment
-
-Describe environments, hosting, networking, migrations, and configuration.
-
-## 15. Observability
-
-Describe logs, metrics, tracing, health checks, and alerting.
-
-## 16. Testing Strategy
-
-Describe unit, integration, component, and end-to-end test boundaries.
-
-## 17. Architectural Decisions
-
-### Decision
-
-**Choice:**
-...
-
-**Reason:**
-...
-
-**Trade-offs:**
-...
-
-## 18. Constraints and Risks
-
-* ...
-* ...
-
-## 19. Future Evolution
-
-* ...
-* ...
-
-```
-
----
-
-# Example for a small frontend component
-
-An `ARCHITECTURE.md` does not have to describe an entire backend system. It can document a reusable UI component.
-
-```md
-# FAQ Accordion Architecture
-
-## Purpose
-
-This document describes the internal structure and behavioral boundaries
-of the FAQ accordion component.
-
-## Component Structure
-
-```text
-FaqAccordion
-└── FaqItem
-    ├── FaqTrigger
-    └── FaqPanel
-```
-
-## State Ownership
-
-`FaqAccordion` owns the identifier of the currently expanded item.
-
-`FaqItem` receives:
-
-* whether it is expanded;
-* a callback for toggling it;
-* its trigger and panel identifiers.
-
-Individual items do not maintain duplicate expansion state.
-
-## Accessibility Architecture
-
-Each trigger is a native `button`.
-
-The trigger exposes:
-
-* `aria-expanded`;
-* `aria-controls`.
-
-Each panel:
-
-* has a stable `id`;
-* references its trigger through `aria-labelledby`;
-* is removed from keyboard navigation while collapsed.
-
-## Dependency Rules
-
-* Presentation styles must not determine component state.
-* Content data must be passed into the component.
-* The accordion must not fetch data directly.
-* Keyboard behavior must remain independent of animation behavior.
-
-## Responsive Behavior
-
-The component uses the available container width and does not rely on
-viewport-specific JavaScript.
-
-## Testing Boundaries
-
-Tests cover:
-
-* mouse activation;
-* keyboard activation;
-* focus visibility;
-* expanded and collapsed ARIA states;
-* one-item and multiple-item modes;
-* reduced-motion behavior.
-
-```
-
-For a single component, this may be enough.
-
----
-
-# How detailed should it be?
-
-The correct detail level is:
-
-> Detailed enough to guide implementation and protect architectural boundaries, but not so detailed that every code change makes it obsolete.
-
-Good content:
-
-```md
-Business logic belongs in application services.
+Feature modules may depend on shared UI primitives, but shared primitives must not import product-feature code.
 ```
 
 Too vague:
 
 ```md
-The application follows best practices.
+The project follows best practices.
 ```
 
 Too implementation-specific:
 
 ```md
-Line 42 of `faq.service.ts` calls `repository.findBySlug()`.
+Line 42 of `feature-service.ts` calls `repository.findById()`.
 ```
 
-The architecture document should remain valid even when individual function names or files change.
+Prefer stable boundaries, ownership, flows, and decision rationale over temporary implementation details.
 
----
+## Common failure modes
 
-# A useful quality test
+Avoid:
+
+- documenting an imagined architecture without inspecting the repository;
+- copying an example stack into an unrelated project;
+- listing folders without explaining responsibilities;
+- introducing layers that solve no current problem;
+- mixing product requirements with technical decisions;
+- duplicating the full specification or implementation plan;
+- treating proposed structure as current structure;
+- omitting dependency rules;
+- ignoring accessibility, security, errors, or testing where relevant;
+- describing only advantages and hiding tradeoffs;
+- turning future ideas into current commitments;
+- leaving major decisions without evidence or traceability.
+
+## Review checklist
+
+Before completing `ARCHITECTURE.md`, verify:
+
+### Completeness and correctness
+
+- [ ] The document has a clear scope.
+- [ ] Current, target, and transitional architecture are distinguished.
+- [ ] Repository observations are accurate.
+- [ ] Major boundaries and responsibilities are documented.
+- [ ] Dependency rules are explicit.
+- [ ] Important data, state, and interaction flows are covered.
+- [ ] Relevant accessibility, security, error, deployment, and testing concerns are included.
+- [ ] Tradeoffs, constraints, and risks are stated.
+
+### Consistency, traceability, risks, and uncertainty
+
+- [ ] Architecture decisions support `REQUIREMENTS.md` and `SPEC.md`.
+- [ ] The document does not contradict `DESIGN.md`.
+- [ ] Proposed structures are not presented as existing files.
+- [ ] Decisions reference evidence or approved constraints.
+- [ ] Inferences and recommendations are labeled.
+- [ ] Open questions remain visible.
+- [ ] Example technologies were not adopted without project evidence.
+- [ ] The architecture can guide `PLAN.md` without duplicating implementation sequencing.
+
+## Quality test
 
 After reading `ARCHITECTURE.md`, a developer should be able to answer:
 
 1. What are the major parts of the system?
 2. What responsibility belongs to each part?
-3. How does data move through the system?
-4. Where does business logic live?
-5. Which dependencies are allowed?
-6. How are authentication and authorization handled?
-7. How is persistent data organized?
-8. How is the system deployed?
-9. What architectural trade-offs were accepted?
+3. Which dependencies are allowed or prohibited?
+4. How do data and state move through the system?
+5. Where do validation and business rules belong?
+6. How are external systems and persistence isolated?
+7. How are accessibility, errors, security, and testing supported structurally?
+8. What is current versus proposed?
+9. Which tradeoffs and risks were accepted?
 10. Which decisions must not be changed casually?
 
-When those answers remain unclear, the document needs more precision.
-
----
-
-For very small components, `ARCHITECTURE.md` can be a section inside `SPEC.md`. For complete applications, monorepos, or features involving frontend, backend, persistence, authentication, and deployment, keeping it as a separate document is usually valuable.
+When these answers remain unclear, the document needs more precision.
