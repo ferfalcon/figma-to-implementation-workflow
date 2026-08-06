@@ -1,294 +1,148 @@
-A `PLAN.md` file is a **human-readable implementation plan stored in Markdown**.
+# `PLAN.md` Guidelines
 
-It describes **how a project, feature, component, or change will be built** before the actual implementation begins.
+`PLAN.md` explains how approved requirements and specifications will be implemented in the actual repository. It owns technical approach, file impact, ordering, dependencies, risks, and validation—not new product requirements.
 
-In a spec-driven workflow, the documents usually play these roles:
+Use `templates/PLAN.template.md`, `Identifier-Conventions.md`, and the inspected repository.
 
-```text
-DESIGN.md → What the experience and interface should be
-SPEC.md   → What the system must do
-PLAN.md   → How the team will implement it
-Code      → The implementation itself
-```
+## Evidence before planning
 
-## Main purpose
+Before naming files, commands, dependencies, conventions, or modules, inspect:
 
-A good `PLAN.md` converts requirements into an ordered sequence of implementation tasks.
+- repository structure and package boundaries;
+- framework, dependency, build, and deployment files;
+- reusable components, utilities, tokens, styles, and tests;
+- current data, state, API, and error-handling patterns;
+- approved upstream artifacts.
 
-It should answer questions such as:
+Distinguish:
 
-* What needs to be created or modified?
-* In what order should the work happen?
-* Which files, components, modules, or services are involved?
-* What dependencies exist between tasks?
-* Which technical decisions must be made?
-* How will each step be tested?
-* What risks or uncertainties could affect the implementation?
-* When is the implementation considered complete?
+- observed existing files and patterns;
+- proposed files and patterns;
+- unresolved locations or decisions.
 
-The plan should be detailed enough that another developer—or an AI coding agent—can implement the feature without inventing major requirements.
+Never describe a proposed path as existing.
 
-## What `PLAN.md` is not
+## Plan item identifiers
 
-A `PLAN.md` should not simply repeat the specification.
+Use stable `PLAN-*` IDs. Every material plan item should include:
 
-For example:
+- one meaningful objective;
+- `REQ-*`, `SPEC-*`, and relevant design references;
+- affected existing or proposed files;
+- dependencies and ordering;
+- implementation approach;
+- integrated accessibility, responsive, state, error, and test work;
+- validation method and expected result;
+- risks, assumptions, and compatibility implications.
 
-```markdown
-## Requirement
+## Integrated implementation quality
 
-The navigation must collapse on mobile.
-```
+Do not create a late “Accessibility phase” where semantics, keyboard behavior, focus handling, accessible relationships, or reduced-motion behavior are first added.
 
-That belongs mainly in `SPEC.md`.
+Accessibility belongs in the plan item that creates or changes the component or interaction. The same rule applies to responsive behavior, loading, empty, error, success, disabled, long-content, failed-request states, and relevant tests.
 
-The implementation plan should translate it into technical work:
+A final validation phase may verify these concerns and correct residual defects.
 
-```markdown
-## Mobile navigation implementation
+A suitable phase shape may be:
 
-1. Create a `MobileMenuButton` component.
-2. Store the menu state in the navigation component.
-3. Hide desktop navigation below the defined breakpoint.
-4. Add `aria-expanded` and `aria-controls` to the trigger.
-5. Move focus into the menu when it opens.
-6. Return focus to the trigger when it closes.
-7. Close the menu when Escape is pressed.
-8. Add keyboard and responsive behavior tests.
-```
+1. accessible foundation and design-system integration;
+2. core behavior, data, keyboard, focus, validation, and errors;
+3. responsive, content, and edge-case completion;
+4. regression protection and final validation.
 
-## Recommended structure
+Adapt this to the project rather than copying it mechanically.
 
-```markdown
-# Implementation Plan
+## Responsive planning
 
-## 1. Overview
+Do not select `768px` or another familiar breakpoint without evidence.
 
-Briefly explain what will be implemented and why.
+For every layout transition:
 
-## 2. Source Documents
+1. identify design-source evidence;
+2. describe the content or layout failure condition;
+3. inspect existing project or design-system breakpoints;
+4. select the narrowest justified transition;
+5. test intermediate widths, long content, zoom, and reflow;
+6. record the final value and rationale.
 
-List the materials used to create the plan:
+When the exact value is not yet known, the plan may make selection and validation part of the relevant `PLAN-*` item.
 
-- Design source
-- DESIGN.md
-- SPEC.md
-- Existing repository
-- API documentation
-- Design-system documentation
+## Interaction planning
 
-## 3. Current State
+Use the pattern defined in `DESIGN.md` and `SPEC.md`. Do not assume all mobile navigation is a modal or menu widget. Plan focus movement, Escape handling, focus return, and background availability according to the specified pattern.
 
-Describe the relevant existing implementation:
+## Architecture handling
 
-- Existing components
-- Current architecture
-- Reusable utilities
-- Known limitations
-- Technical debt that affects the work
+Create or use `ARCHITECTURE.md` when meaningful structural decisions exist.
 
-## 4. Scope
+When architecture is skipped:
 
-### Included
+1. record the reason in `WORKFLOW-STATE.md`;
+2. keep behavioral structural constraints in `SPEC.md`;
+3. put repository and implementation structure in `PLAN.md`;
+4. do not invent an architecture section merely to satisfy the workflow.
 
-- Features and behaviors covered by the implementation
+## Files and modules
 
-### Excluded
+For every affected path, record:
 
-- Work intentionally deferred or outside this change
+- action: Create, Modify, Delete, Move, or Unresolved;
+- whether it exists or is proposed;
+- responsibility;
+- evidence supporting the location;
+- compatibility or migration impact.
 
-## 5. Technical Approach
+## Dependencies and ordering
 
-Explain the proposed implementation strategy:
+Order work by real prerequisites. Avoid generic sequences when the repository suggests another dependency order.
 
-- Component architecture
-- Data flow
-- State management
-- API integration
-- Styling approach
-- Responsive strategy
-- Accessibility strategy
-- Testing strategy
+Identify safe parallel work only when file ownership and interfaces do not conflict.
 
-## 6. Files and Modules
+## Validation
 
-| File or module | Action | Responsibility |
-|---|---|---|
-| `Header.tsx` | Modify | Coordinate navigation behavior |
-| `MobileMenu.tsx` | Create | Render mobile navigation |
-| `header.css` | Modify | Add responsive styles |
-| `Header.test.tsx` | Create | Test interaction and accessibility |
+Every material plan item must define supported validation, such as:
 
-## 7. Implementation Phases
+- unit, component, integration, contract, or end-to-end tests;
+- type checking, linting, and build;
+- keyboard, focus, screen-reader, and automated accessibility checks;
+- responsive and visual comparison;
+- content and error scenarios;
+- API, persistence, migration, deployment, rollback, or regression checks.
 
-### Phase 1 — Foundation
+Do not list commands that were not confirmed in the repository.
 
-- [ ] Define shared types
-- [ ] Add required design tokens
-- [ ] Create the base component structure
+## Lite profile
 
-### Phase 2 — Core behavior
+For Lite work, use the plan section of `IMPLEMENTATION-BRIEF.md`, preserving `PLAN-*` ownership. Upgrade the profile when the brief cannot express architecture, dependencies, risk, or task decomposition clearly.
 
-- [ ] Implement state and interactions
-- [ ] Connect data or API services
-- [ ] Handle loading and error states
+## Common failure modes
 
-### Phase 3 — Responsive behavior
+Avoid:
 
-- [ ] Implement mobile layout
-- [ ] Implement tablet behavior
-- [ ] Verify desktop behavior
+- repeating the specification without translating it into repository work;
+- invented paths, commands, dependencies, or conventions;
+- accessibility or responsiveness deferred to cleanup;
+- arbitrary breakpoint values;
+- phases that produce no independently verifiable result;
+- unsupported abstractions or dependencies;
+- ignored migration, compatibility, deployment, rollback, security, privacy, or regression work;
+- missing validation for material items;
+- implementation code during planning.
 
-### Phase 4 — Accessibility
+## Review
 
-- [ ] Add semantic HTML
-- [ ] Add accessible names and relationships
-- [ ] Implement keyboard interaction
-- [ ] Verify focus management
-- [ ] Test reduced-motion behavior
+### Pass 1 — Feasibility and completeness
 
-### Phase 5 — Validation
+- [ ] Current repository state is accurate.
+- [ ] Scope, technical approach, files, ordering, dependencies, integration, migration, and validation are complete as applicable.
+- [ ] Plan items are concrete and decomposable.
+- [ ] Accessibility, responsiveness, states, errors, and tests are integrated.
 
-- [ ] Add unit tests
-- [ ] Add integration tests
-- [ ] Perform visual comparison
-- [ ] Test supported viewport sizes
-- [ ] Run linting and type checking
+### Pass 2 — Consistency, traceability, risks, and uncertainty
 
-## 8. Dependencies and Ordering
-
-Explain which tasks must happen before others.
-
-## 9. Risks and Mitigations
-
-| Risk | Impact | Mitigation |
-|---|---|---|
-| Design uses an unavailable font | Visual mismatch | Define an approved fallback |
-| API response is unclear | Incorrect data handling | Confirm or document the schema |
-| Mobile interaction is unspecified | Inconsistent implementation | Record the selected assumption |
-
-## 10. Open Questions
-
-- Questions that must be answered before or during implementation
-- Missing design states
-- Unclear API behavior
-- Decisions that require stakeholder approval
-
-## 11. Definition of Done
-
-- [ ] All acceptance criteria pass
-- [ ] Responsive behavior matches the specification
-- [ ] Keyboard navigation works
-- [ ] Accessibility checks pass
-- [ ] Tests pass
-- [ ] No linting or type errors remain
-- [ ] Documentation is updated
-```
-
-## Characteristics of a strong plan
-
-### Ordered
-
-Tasks appear in a logical implementation sequence.
-
-```text
-Types → data layer → business logic → UI → integration → testing
-```
-
-### Concrete
-
-Weak:
-
-```markdown
-- Build the component.
-- Make it responsive.
-- Add accessibility.
-```
-
-Strong:
-
-```markdown
-- Create the `Footer` component shell using semantic `<footer>` markup.
-- Render navigation groups from typed configuration data.
-- Switch from a four-column grid to stacked accordions below 768px.
-- Connect each accordion trigger to its panel using `aria-controls`.
-- Preserve all links in the DOM when JavaScript is unavailable.
-```
-
-### Traceable
-
-Major tasks should connect back to a design decision, requirement, or acceptance criterion.
-
-Example:
-
-```markdown
-- Implement Escape-key handling.
-  - Source: `SPEC.md`, Accessibility Requirements, AC-07.
-```
-
-### Testable
-
-Every important implementation task should have a validation method.
-
-```markdown
-- Implement the loading state.
-- Verify that the submit button is disabled while the request is pending.
-- Add a test confirming that duplicate requests cannot be submitted.
-```
-
-### Honest about uncertainty
-
-A plan should clearly distinguish between:
-
-* confirmed requirements;
-* implementation decisions;
-* assumptions;
-* unresolved questions.
-
-It should not silently convert guesses into requirements.
-
-## Different levels of `PLAN.md`
-
-### Project-level plan
-
-Covers the complete application:
-
-```text
-Repository setup
-Architecture
-Authentication
-Database
-API
-Frontend
-Testing
-Deployment
-Monitoring
-```
-
-### Feature-level plan
-
-Covers one feature:
-
-```text
-User authentication
-FAQ management
-Search
-Checkout
-Notifications
-```
-
-### Component-level plan
-
-Covers one UI component:
-
-```text
-Structure
-Variants
-Props
-States
-Responsive behavior
-Accessibility
-Styling
-Tests
-Integration
-```
+- [ ] IDs follow `Identifier-Conventions.md`.
+- [ ] Every plan item maps to approved requirements or specifications.
+- [ ] Existing and proposed files are distinguished.
+- [ ] Architecture-skip handling is consistent.
+- [ ] No arbitrary breakpoint, unsupported interaction rule, or product scope was introduced.
+- [ ] Risks, assumptions, blockers, and accepted tradeoffs remain visible.
