@@ -23,6 +23,8 @@ updated: YYYY-MM-DD
 ---
 ```
 
+The repository snapshot in metadata is the task-start state. Record the Implementation output snapshot after the task is committed.
+
 # Phase 01 — Task 01: Task title
 
 ## 1. Status
@@ -38,11 +40,11 @@ Describe the single concrete result this task must produce.
 ## 3. Source References
 
 - Source baseline: `SOURCE-BASELINE.md`
-- Design snapshots: `SRC-DS-*`
-- Repository snapshot: `SRC-REPO-*`
-- Runtime snapshots: `SRC-RUN-*` / None
-- Documentation snapshots: `SRC-DOC-*` / None
-- Asset snapshots: `SRC-ASSET-*` / None
+- Design inputs: `SRC-DS-*`
+- Task-start repository snapshot: `SRC-REPO-*`
+- Supporting runtime inputs: `SRC-RUN-*` / None
+- Documentation inputs: `SRC-DOC-*` / None
+- Asset inputs: `SRC-ASSET-*` / None
 - `PLAN.md`:
 - `PLAN-REVIEW.md`:
 - Requirement IDs:
@@ -57,13 +59,13 @@ Describe the single concrete result this task must produce.
 Complete before implementation begins.
 
 - Verification date and method:
-- Design snapshot applicable: Yes / No / Unverified
-- Repository commit available and checked out: Yes / No / Unverified
-- Newer material source content detected: Yes / No / Unknown
-- Rebaseline required: Yes / No
+- Design inputs applicable: Yes / No / Unverified
+- Task-start repository commit checked out: Yes / No / Unverified
+- Difference classification: Unchanged / Expected previous-task output / Unexpected concurrent change / Unavailable
+- Upstream rebaseline required: Yes / No
 - Action or limitation:
 
-Do not begin affected implementation when a material rebaseline is unresolved.
+An approved previous-task output may become this task's start snapshot without reopening upstream stages. Do not begin affected implementation when an unexpected material change remains unresolved.
 
 ## 5. Prerequisites
 
@@ -88,7 +90,7 @@ Use `None` when no prerequisite exists.
 
 ## 7. Repository Context
 
-Record current state at the pinned `SRC-REPO-*` commit:
+Record current state at the task-start `SRC-REPO-*` commit:
 
 - Existing files and modules
 - Established patterns and conventions
@@ -96,13 +98,13 @@ Record current state at the pinned `SRC-REPO-*` commit:
 - Confirmed scripts and commands
 - Constraints or technical debt
 
-Distinguish observed existing paths from proposed paths and later branch changes.
+Distinguish observed paths from proposed paths and unrelated later changes.
 
 ## 8. Files and Modules
 
 | Path | Action | Existing or proposed | Responsibility | Repository evidence |
 |---|---|---|---|---|
-| `path/to/file` | Create / Modify / Delete | Existing / Proposed | ... | `SRC-REPO-*` |
+| `path/to/file` | Create / Modify / Delete | Existing / Proposed | ... | task-start `SRC-REPO-*` |
 
 ## 9. Dependencies and Interfaces
 
@@ -110,11 +112,12 @@ Document module and task dependencies, public interfaces, data or component cont
 
 ## 10. Implementation Steps
 
-1. Verify the relevant source snapshots.
+1. Verify input and task-start snapshots.
 2. Inspect affected files and confirm repository assumptions.
 3. ...
 4. Update relevant tests and documentation.
 5. Run required validation.
+6. Commit the approved result and create an Implementation output `SRC-REPO-*` record.
 
 Do not include implementation code during task decomposition.
 
@@ -150,7 +153,7 @@ Use `Not applicable` only with a reason.
 
 ## 12. Validation
 
-List only commands and checks supported by the pinned repository snapshot.
+List only commands and checks supported by the task-start repository snapshot.
 
 ### Automated validation
 
@@ -179,7 +182,8 @@ For each check, define the expected result. Do not claim a check passed until it
 - [ ] Required accessibility behavior is verified.
 - [ ] Required responsive and state behavior is verified.
 - [ ] Relevant automated and manual validation passes.
-- [ ] Snapshot verification or approved rebaseline is complete.
+- [ ] Snapshot verification or approved upstream rebaseline is complete.
+- [ ] The committed result has an Implementation output snapshot.
 - [ ] Documentation and task status are updated.
 
 ## 14. Risks and Considerations
@@ -204,22 +208,38 @@ Do not silently work around documentation or source-baseline errors.
 
 Use `None` when implementation followed the task exactly.
 
-## 17. Definition of Done
+## 17. Output Lineage
+
+Complete after implementation is committed.
+
+- Parent task-start snapshot: `SRC-REPO-*`
+- Implementation output snapshot: `SRC-REPO-*`
+- Output commit SHA:
+- Produced by task: task ID
+- Validation status:
+- Approved as next task start: Yes / No / N/A
+
+Creating an expected task output does not supersede the original project input baseline or require upstream rollback.
+
+## 18. Definition of Done
 
 - [ ] The objective is implemented within scope.
 - [ ] Acceptance criteria pass.
 - [ ] Required validation executed successfully.
 - [ ] No required validation remains failing or unverified.
-- [ ] Snapshot references remain valid or an approved rebaseline was completed.
+- [ ] Input snapshot references remain valid or an approved upstream rebaseline was completed.
+- [ ] The implementation output snapshot and parent lineage are recorded.
 - [ ] Relevant documentation was updated.
-- [ ] `TASKS-INDEX.md` reflects current status.
+- [ ] `TASKS-INDEX.md` and `WORKFLOW-STATE.md` reflect current status and lineage.
 - [ ] Deviations and remaining risks are recorded.
 - [ ] Downstream tasks have the information they need.
 
-## 18. Completion Report
+## 19. Completion Report
 
 - Files created, modified, or deleted:
-- Snapshot IDs used:
+- Input snapshot IDs used:
+- Task-start repository snapshot:
+- Implementation-output repository snapshot:
 - Source verification performed:
 - Behavior implemented:
 - Validation executed:
