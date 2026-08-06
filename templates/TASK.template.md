@@ -1,10 +1,27 @@
 # Implementation Task Template
 
-Use this template to create one implementation task file.
+Use this template to create one implementation task file. Name files with zero-padded phase and task numbers, such as `Phase-01--Task-01.md`.
 
-Name task files with zero-padded phase and task numbers, such as `Phase-01--Task-01.md`.
+A task must produce one coherent, independently verifiable result. Reference only snapshot IDs defined in `SOURCE-BASELINE.md`.
 
-A task must produce one coherent, independently verifiable result. Do not include implementation code during task decomposition.
+```yaml
+---
+artifact: TASK
+id: P01-T01
+status: Not started
+baseline:
+  design:
+    - SRC-DS-001
+  repository:
+    - SRC-REPO-001
+  runtime: []
+  documentation:
+    - SRC-DOC-001
+  assets: []
+created: YYYY-MM-DD
+updated: YYYY-MM-DD
+---
+```
 
 # Phase 01 — Task 01: Task title
 
@@ -12,7 +29,7 @@ A task must produce one coherent, independently verifiable result. Do not includ
 
 `Not started`
 
-Use the same status vocabulary defined in `TASKS-INDEX.md`.
+Use the status vocabulary defined in `TASKS-INDEX.md`.
 
 ## 2. Objective
 
@@ -20,6 +37,12 @@ Describe the single concrete result this task must produce.
 
 ## 3. Source References
 
+- Source baseline: `SOURCE-BASELINE.md`
+- Design snapshots: `SRC-DS-*`
+- Repository snapshot: `SRC-REPO-*`
+- Runtime snapshots: `SRC-RUN-*` / None
+- Documentation snapshots: `SRC-DOC-*` / None
+- Asset snapshots: `SRC-ASSET-*` / None
 - `PLAN.md`:
 - `PLAN-REVIEW.md`:
 - Requirement IDs:
@@ -29,15 +52,28 @@ Describe the single concrete result this task must produce.
 - `ARCHITECTURE.md` references, when applicable:
 - Related tasks:
 
-## 4. Prerequisites
+## 4. Snapshot Verification
 
-List tasks, repository conditions, assets, decisions, or access requirements that must be satisfied before implementation begins.
+Complete before implementation begins.
+
+- Verification date and method:
+- Design snapshot applicable: Yes / No / Unverified
+- Repository commit available and checked out: Yes / No / Unverified
+- Newer material source content detected: Yes / No / Unknown
+- Rebaseline required: Yes / No
+- Action or limitation:
+
+Do not begin affected implementation when a material rebaseline is unresolved.
+
+## 5. Prerequisites
+
+List tasks, repository conditions, assets, decisions, access requirements, and required snapshot verification.
 
 - ...
 
 Use `None` when no prerequisite exists.
 
-## 5. Scope
+## 6. Scope
 
 ### Included
 
@@ -50,9 +86,9 @@ Use `None` when no prerequisite exists.
 - Deferred or unapproved capabilities
 - Unrelated refactoring
 
-## 6. Repository Context
+## 7. Repository Context
 
-Record the relevant current repository state before implementation:
+Record current state at the pinned `SRC-REPO-*` commit:
 
 - Existing files and modules
 - Established patterns and conventions
@@ -60,37 +96,29 @@ Record the relevant current repository state before implementation:
 - Confirmed scripts and commands
 - Constraints or technical debt
 
-Distinguish observed existing paths from proposed new paths.
+Distinguish observed existing paths from proposed paths and later branch changes.
 
-## 7. Files and Modules
+## 8. Files and Modules
 
-| Path | Action | Existing or proposed | Responsibility |
-|---|---|---|---|
-| `path/to/file` | Create / Modify / Delete | Existing / Proposed | ... |
+| Path | Action | Existing or proposed | Responsibility | Repository evidence |
+|---|---|---|---|---|
+| `path/to/file` | Create / Modify / Delete | Existing / Proposed | ... | `SRC-REPO-*` |
 
-Mark unresolved locations explicitly instead of inventing them.
+## 9. Dependencies and Interfaces
 
-## 8. Dependencies and Interfaces
+Document module and task dependencies, public interfaces, data or component contracts, compatibility requirements, and downstream effects.
 
-Document:
+## 10. Implementation Steps
 
-- modules or tasks this work depends on;
-- public interfaces it creates or changes;
-- data, API, component, or design-system contracts affected;
-- compatibility requirements;
-- downstream tasks affected.
-
-## 9. Implementation Steps
-
-1. Inspect the affected files and confirm repository assumptions.
-2. ...
+1. Verify the relevant source snapshots.
+2. Inspect affected files and confirm repository assumptions.
 3. ...
 4. Update relevant tests and documentation.
-5. Run the required validation.
+5. Run required validation.
 
-Steps must be concrete and ordered, but should not contain implementation code.
+Do not include implementation code during task decomposition.
 
-## 10. State, Responsive, and Accessibility Requirements
+## 11. State, Responsive, and Accessibility Requirements
 
 ### States and errors
 
@@ -120,9 +148,9 @@ Steps must be concrete and ordered, but should not contain implementation code.
 
 Use `Not applicable` only with a reason.
 
-## 11. Validation
+## 12. Validation
 
-List only commands and checks supported by the repository.
+List only commands and checks supported by the pinned repository snapshot.
 
 ### Automated validation
 
@@ -139,69 +167,60 @@ List only commands and checks supported by the repository.
 - Interaction checks:
 - Responsive checks:
 - Accessibility checks:
-- Visual comparison:
+- Visual comparison against `SRC-DS-*`:
 - Error and edge-case checks:
 - Regression checks:
 
-For each check, define the expected result. Do not claim a check passed until it was run successfully.
+For each check, define the expected result. Do not claim a check passed until it ran successfully.
 
-## 12. Acceptance Criteria
-
-Link every material criterion to its source.
+## 13. Acceptance Criteria
 
 - [ ] `[Requirement or specification ID]` Objective result is observable and correct.
-- [ ] ...
 - [ ] Required accessibility behavior is verified.
 - [ ] Required responsive and state behavior is verified.
 - [ ] Relevant automated and manual validation passes.
+- [ ] Snapshot verification or approved rebaseline is complete.
 - [ ] Documentation and task status are updated.
 
-## 13. Risks and Considerations
+## 14. Risks and Considerations
 
 | Risk or assumption | Impact | Mitigation or validation |
 |---|---|---|
 | ... | ... | ... |
 
-Include likely regressions, migration concerns, compatibility issues, and unresolved repository assumptions.
+## 15. Implementation Discoveries
 
-## 14. Implementation Discoveries
-
-Complete this section during implementation.
-
-| Discovery | Impact | Owning document | Required update |
+| Discovery | Impact | Owning artifact | Required update |
 |---|---|---|---|
-| ... | ... | `REQUIREMENTS.md` / `DESIGN.md` / `SPEC.md` / `ARCHITECTURE.md` / `PLAN.md` / Task | ... |
+| ... | ... | `SOURCE-BASELINE.md` / `REQUIREMENTS.md` / `DESIGN.md` / `SPEC.md` / `ARCHITECTURE.md` / `PLAN.md` / Task | ... |
 
-Do not silently work around documentation errors.
+Do not silently work around documentation or source-baseline errors.
 
-## 15. Deviations
+## 16. Deviations
 
-Complete this section during implementation.
-
-| Planned approach | Actual approach | Reason | Approval or evidence | Impact |
+| Planned approach or baseline | Actual approach or baseline | Reason | Approval or evidence | Impact |
 |---|---|---|---|---|
 | ... | ... | ... | ... | ... |
 
 Use `None` when implementation followed the task exactly.
 
-## 16. Definition of Done
+## 17. Definition of Done
 
-This task is complete only when:
-
-- [ ] The objective is implemented within the defined scope.
+- [ ] The objective is implemented within scope.
 - [ ] Acceptance criteria pass.
-- [ ] Required validation was executed successfully.
+- [ ] Required validation executed successfully.
 - [ ] No required validation remains failing or unverified.
+- [ ] Snapshot references remain valid or an approved rebaseline was completed.
 - [ ] Relevant documentation was updated.
-- [ ] `TASKS-INDEX.md` reflects the current status.
+- [ ] `TASKS-INDEX.md` reflects current status.
 - [ ] Deviations and remaining risks are recorded.
 - [ ] Downstream tasks have the information they need.
 
-## 17. Completion Report
-
-Complete this section before marking the task complete.
+## 18. Completion Report
 
 - Files created, modified, or deleted:
+- Snapshot IDs used:
+- Source verification performed:
 - Behavior implemented:
 - Validation executed:
 - Validation results:
