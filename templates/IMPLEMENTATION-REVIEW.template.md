@@ -1,6 +1,6 @@
 # Implementation Review Template
 
-Use this template to create `IMPLEMENTATION-REVIEW.md`. Validate the completed implementation against exact source snapshots, approved artifacts, the implementation commit, and the runtime used for testing.
+Use this template to create `IMPLEMENTATION-REVIEW.md`. Validate the completed implementation against exact input snapshots, approved artifacts, the pinned implementation-output repository snapshot, and the runtime used for testing.
 
 Do not report a test, build, lint, type check, accessibility check, source check, or manual review as passed unless it was executed successfully.
 
@@ -15,13 +15,12 @@ baseline:
     - SRC-DS-001
   repository:
     - SRC-REPO-001
-  runtime:
-    - SRC-RUN-001
+  runtime: []
   documentation:
     - SRC-DOC-001
   assets: []
 implementation:
-  commit: <commit-sha>
+  repository_snapshot: SRC-REPO-002
   runtime_snapshot: SRC-RUN-001
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
@@ -37,9 +36,12 @@ updated: YYYY-MM-DD
 - Reviewer:
 - Project:
 - Source baseline: `SOURCE-BASELINE.md`
-- Implementation commit:
-- Runtime snapshot used for validation: `SRC-RUN-*`
+- Original repository input baseline: `SRC-REPO-*`
+- Implementation-output repository snapshot: `SRC-REPO-*`
+- Validation-runtime snapshot: `SRC-RUN-*`
 - Environment:
+
+The implementation-output snapshot must have role Implementation output and contain the reviewed commit SHA. The runtime snapshot must identify that repository snapshot when known.
 
 ## 2. Review Scope
 
@@ -55,36 +57,39 @@ updated: YYYY-MM-DD
 - Areas not changed by the implementation
 - Checks that could not be executed, with reasons
 
-## 3. Final Baseline Integrity Check
+## 3. Final Baseline and Lineage Integrity Check
 
 | Check | Result | Evidence | Blocking |
 |---|---|---|---|
 | Every referenced `SRC-*` ID exists | Pass / Fail / Blocked | ... | Yes / No |
-| Design snapshot used by approved artifacts is identified | ... | ... | ... |
-| Repository baseline and implementation commit are identified | ... | ... | ... |
-| Runtime used for validation is captured | ... | ... | ... |
-| Material source changes received impact assessment | ... | ... | ... |
-| No artifact silently relies on newer source content | ... | ... | ... |
+| Design input used by approved artifacts is identified | ... | ... | ... |
+| Original repository input baseline is identified | ... | ... | ... |
+| Implementation commit is pinned as an Implementation output `SRC-REPO-*` | ... | ... | ... |
+| Implementation lineage reaches the input baseline without gaps | ... | ... | ... |
+| Runtime used for validation is a `SRC-RUN-*` tied to the implementation output | ... | ... | ... |
+| Unexpected input changes received impact assessment | ... | ... | ... |
+| Expected task outputs are distinguished from upstream changes | ... | ... | ... |
+| No artifact silently relies on newer input content | ... | ... | ... |
 | Superseded artifacts or decisions are visible | ... | ... | ... |
 
 An implementation must not be accepted as matching “the design” without naming the design snapshot.
 
-## 4. Source and Artifact Baseline
+## 4. Source, Artifact, and Output Baseline
 
-| Source or artifact | Snapshot, version, or commit | Status | Notes |
-|---|---|---|---|
-| Design source | `SRC-DS-*` | Verified / Changed / Unavailable | ... |
-| Repository baseline | `SRC-REPO-*` | ... | ... |
-| Implementation | commit SHA | ... | ... |
-| Runtime | `SRC-RUN-*` | ... | ... |
-| Product or technical documents | `SRC-DOC-*` | ... | ... |
-| `DESIGN-AUDIT.md` | artifact version | ... | ... |
-| `REQUIREMENTS.md` | artifact version | ... | ... |
-| `DESIGN.md` | artifact version | ... | ... |
-| `SPEC.md` | artifact version | ... | ... |
-| `ARCHITECTURE.md`, when applicable | artifact version | ... | ... |
-| `PLAN.md` and `PLAN-REVIEW.md` | artifact versions | ... | ... |
-| Tasks | artifact versions | ... | ... |
+| Source or artifact | Snapshot, version, or commit | Role | Status | Notes |
+|---|---|---|---|---|
+| Design input | `SRC-DS-*` | Input baseline | Verified / Changed / Unavailable | ... |
+| Repository input | `SRC-REPO-*` | Input baseline | ... | ... |
+| Implementation repository | `SRC-REPO-*` | Implementation output | ... | Contains reviewed commit |
+| Validation runtime | `SRC-RUN-*` | Validation runtime | ... | Associated with implementation output |
+| Product or technical documents | `SRC-DOC-*` | Input / Supporting | ... | ... |
+| `DESIGN-AUDIT.md` | artifact version | ... | ... | ... |
+| `REQUIREMENTS.md` | artifact version | ... | ... | ... |
+| `DESIGN.md` | artifact version | ... | ... | ... |
+| `SPEC.md` | artifact version | ... | ... | ... |
+| `ARCHITECTURE.md`, when applicable | artifact version | ... | ... | ... |
+| `PLAN.md` and `PLAN-REVIEW.md` | artifact versions | ... | ... | ... |
+| Tasks | artifact versions | ... | ... | ... |
 
 ## 5. Validation Environment
 
@@ -94,7 +99,7 @@ Document operating system and runtime, browser and device coverage, viewports, t
 
 | Check | Command, tool, or method | Executed | Result | Evidence |
 |---|---|---|---|---|
-| Source verification | ... | Yes / No | Passed / Failed / Blocked | ... |
+| Source and lineage verification | ... | Yes / No | Passed / Failed / Blocked | ... |
 | Build | ... | Yes / No | Passed / Failed / Blocked / N/A | ... |
 | Type checking | ... | ... | ... | ... |
 | Linting | ... | ... | ... | ... |
@@ -118,7 +123,7 @@ Every must-have requirement and material specification must appear.
 ### IMPL-001 — Finding title
 
 - **Severity:** Critical / High / Medium / Low
-- **Category:** Source baseline / Requirement / Design fidelity / State / Responsive / Accessibility / Content / Validation / Error handling / Data / API / Compatibility / Performance / Security / Test coverage / Build / Deployment / Regression / Other
+- **Category:** Source baseline / Output lineage / Requirement / Design fidelity / State / Responsive / Accessibility / Content / Validation / Error handling / Data / API / Compatibility / Performance / Security / Test coverage / Build / Deployment / Regression / Other
 - **Source snapshot, requirement, or specification:**
 - **Expected behavior:**
 - **Actual behavior:**
@@ -201,9 +206,9 @@ Do not label an unapproved defect as a deviation.
 
 ## 17. Corrections and Retesting
 
-| Finding | Correction | Files changed | Retest method | Retest result |
-|---|---|---|---|---|
-| ... | ... | ... | ... | ... |
+| Finding | Correction | Previous implementation snapshot | Corrected implementation snapshot | Retest method | Result |
+|---|---|---|---|---|---|
+| ... | ... | `SRC-REPO-*` | `SRC-REPO-*` | ... | ... |
 
 ## 18. Remaining Risks and Limitations
 
@@ -215,7 +220,7 @@ Do not label an unapproved defect as a deviation.
 
 ### Completeness and correctness
 
-- [ ] Final baseline integrity checks were executed.
+- [ ] Final baseline and lineage integrity checks were executed.
 - [ ] Every must-have requirement and material specification was reviewed.
 - [ ] Design fidelity, states, responsive behavior, and content edge cases were checked against named snapshots.
 - [ ] Required accessibility, data, API, compatibility, performance, security, deployment, and regression checks were addressed.
@@ -224,12 +229,14 @@ Do not label an unapproved defect as a deviation.
 ### Consistency, traceability, source integrity, risks, and uncertainty
 
 - [ ] Every finding traces to a pinned source expectation.
+- [ ] The implementation commit is represented by an Implementation output snapshot.
+- [ ] Repository and runtime lineage is complete.
 - [ ] Executed, failed, blocked, skipped, and unavailable checks are distinguished honestly.
-- [ ] Corrected findings were retested.
+- [ ] Corrected findings were retested against new output snapshots when code changed.
 - [ ] Approved deviations include evidence or approval.
-- [ ] No source changed silently during final review.
+- [ ] No upstream source changed silently during final review.
 - [ ] Remaining risks and limitations are explicit.
-- [ ] The final result matches unresolved finding severity and baseline integrity.
+- [ ] The final result matches unresolved finding severity and lineage integrity.
 
 ## 20. Final Result
 
@@ -242,10 +249,10 @@ Select exactly one:
 ## 21. Completion Summary
 
 - Files reviewed:
-- Snapshot IDs validated:
-- Implementation commit:
-- Runtime snapshot:
-- Source verification executed:
+- Input snapshot IDs validated:
+- Implementation-output repository snapshot:
+- Validation-runtime snapshot:
+- Source and lineage verification executed:
 - Other validation executed:
 - Findings by severity:
 - Corrections completed:
