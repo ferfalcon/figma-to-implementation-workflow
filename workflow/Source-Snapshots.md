@@ -6,9 +6,11 @@ A source URL by itself is not a snapshot. Many URLs point to mutable content. Re
 
 ## Core model
 
-Every project creates `SOURCE-BASELINE.md` during Stage 0 from [`../templates/SOURCE-BASELINE.template.md`](../templates/SOURCE-BASELINE.template.md).
+Express records source snapshots in the Source baseline section of `WORKPACK.md` from [`../templates/WORKPACK.template.md`](../templates/WORKPACK.template.md).
 
-`SOURCE-BASELINE.md` owns snapshot identity and details. Other artifacts reference snapshot IDs instead of copying mutable URLs, dates, or commits throughout the documentation set.
+Lite, Standard, and Full create `SOURCE-BASELINE.md` during Stage 0 from [`../templates/SOURCE-BASELINE.template.md`](../templates/SOURCE-BASELINE.template.md).
+
+The active baseline owner defines snapshot identity and details. Other artifacts or consolidated sections reference snapshot IDs instead of copying mutable URLs, dates, or commits throughout the documentation set.
 
 Example artifact metadata:
 
@@ -39,7 +41,7 @@ Use an empty list when a category does not apply. Do not insert an undefined pla
 - `SRC-DOC-*` — product, API, legal, design-system, or technical documentation;
 - `SRC-ASSET-*` — asset bundles, fonts, images, icons, or other implementation inputs.
 
-Each ID is defined once in `SOURCE-BASELINE.md` and never reused.
+Each ID is defined once in the active baseline owner and never reused.
 
 ## Snapshot roles
 
@@ -142,6 +144,8 @@ Input baseline → Task start → Implementation output → Next task start
 
 A single commit may serve as both one task's Implementation output and the next task's Task start. Reference the same snapshot ID rather than duplicating it.
 
+Express permits one task and therefore normally has one Task start and one Implementation output.
+
 ### Runtime deployments
 
 Record environment and URL, deployment or release ID, associated repository snapshot, timestamp, configuration or feature-flag state, test data, authentication state, captured evidence, and environment differences.
@@ -152,15 +156,17 @@ Record path or URL, authority, revision or checksum, exact sections used, access
 
 ## Artifact baseline references
 
-Every workflow artifact created after Stage 0 must identify the snapshot IDs it relies on.
+Every workflow artifact or consolidated ownership section created after baseline capture must identify the snapshot IDs it relies on.
 
-Metadata should reference design snapshots used for visual evidence, repository snapshots used for current-state claims, documentation snapshots used for requirements, runtime snapshots used for observed behavior, and asset snapshots used as implementation inputs.
+Metadata or workpack sections should reference design snapshots used for visual evidence, repository snapshots used for current-state claims, documentation snapshots used for requirements, runtime snapshots used for observed behavior, and asset snapshots used as implementation inputs.
 
 Reference only sources actually used.
 
 ## Active input baseline and implementation lineage
 
-`WORKFLOW-STATE.md` distinguishes:
+Express distinguishes active inputs, the task-start repository snapshot, the Implementation output, and the validation runtime inside `WORKPACK.md`.
+
+Lite, Standard, and Full use `WORKFLOW-STATE.md` to distinguish:
 
 - active upstream input snapshots;
 - current task-start repository snapshot;
@@ -177,9 +183,12 @@ When a task completes successfully:
 
 1. create a new `SRC-REPO-*` record with role Implementation output;
 2. record the output commit SHA;
-3. use it as the next task's Task start when applicable;
-4. update `WORKFLOW-STATE.md` and task completion evidence;
-5. do not roll the workflow back merely because the approved task changed the repository.
+3. connect it to the task-start snapshot and task ID;
+4. use it as the next task's Task start when applicable;
+5. update the active baseline owner, task record, and control state;
+6. do not roll the workflow back merely because the approved task changed the repository.
+
+For Express, steps 1–5 are recorded inside `WORKPACK.md`. A second independent next task requires an upgrade.
 
 When the output is deployed for validation:
 
@@ -191,11 +200,11 @@ Expected outputs require lineage and validation, not an upstream rebaseline impa
 
 ## Detecting changes
 
-Before a stage, after a meaningful pause, before a task, and before final acceptance:
+Before a stage or consolidated checkpoint, after a meaningful pause, before a task, and before final acceptance:
 
 1. compare available source identity with the referenced snapshot;
 2. classify the difference as unchanged, expected workflow output, or unexpected upstream/concurrent change;
-3. record the check in `WORKFLOW-STATE.md`;
+3. record the check in the active control record;
 4. do not silently use newer content under an older ID.
 
 For Time-bound sources, a new inspection time alone does not require rebasing when relevant content is demonstrably unchanged. Record the method.
@@ -209,10 +218,10 @@ Use this protocol when a material upstream input changes unexpectedly or an appr
 1. create a new snapshot ID;
 2. preserve the previous record and mark it Superseded when appropriate;
 3. record reason, detected changes, and effective date;
-4. perform an impact assessment across artifacts;
+4. perform an impact assessment across artifacts or workpack sections;
 5. identify the earliest affected stage;
-6. move `WORKFLOW-STATE.md` back when correction is required;
-7. update affected artifacts only after review;
+6. move the active control state back when correction is required;
+7. update affected artifacts or sections only after review;
 8. preserve stable requirement, design, specification, architecture, plan, and task IDs unless genuinely replaced;
 9. record superseded decisions and changed criteria;
 10. rerun required gates.
@@ -221,24 +230,26 @@ Never edit an existing snapshot ID to point silently to different content.
 
 ## Impact assessment
 
-| New snapshot | Previous snapshot | Change summary | Affected artifacts | Earliest affected stage | Action | Status |
+| New snapshot | Previous snapshot | Change summary | Affected artifacts or sections | Earliest affected stage | Action | Status |
 |---|---|---|---|---:|---|---|
-| `SRC-DS-002` | `SRC-DS-001` | ... | `DESIGN-AUDIT.md`, `DESIGN.md`, `SPEC.md` | 1 | Re-audit affected nodes | Open |
+| `SRC-DS-002` | `SRC-DS-001` | ... | Design evidence, design intent, specification | 1 | Re-audit affected nodes | Open |
 
-A change does not require rewriting unaffected artifacts. Record why an artifact is unaffected when not obvious.
+A change does not require rewriting unaffected artifacts or sections. Record why an area is unaffected when not obvious.
+
+A rebaseline that expands Express beyond one coherent result is also a profile-upgrade trigger.
 
 ## Final baseline integrity check
 
 Before final acceptance, verify:
 
-- every referenced snapshot ID exists;
-- no artifact silently depends on newer input content;
+- every referenced snapshot ID exists in the active baseline owner;
+- no artifact or workpack section silently depends on newer input content;
 - the original repository input baseline is identified;
 - the implementation commit is a pinned `SRC-REPO-*` Implementation output;
-- the validation runtime is a pinned `SRC-RUN-*` snapshot tied to that output;
+- the validation runtime is a pinned `SRC-RUN-*` snapshot tied to that output when applicable;
 - unexpected input changes received impact assessment;
 - expected task outputs have complete lineage;
-- superseded artifacts or decisions remain visible;
+- superseded artifacts, sections, or decisions remain visible;
 - unavailable captures are documented honestly.
 
 An implementation must not be described as matching “the design” without identifying which design snapshot was used.

@@ -7,19 +7,39 @@ The workflow supports AI-assisted and human-led work with explicit source baseli
 ## Start here
 
 1. [`workflow/Design-Implementation-Workflow.md`](workflow/Design-Implementation-Workflow.md)
-2. [`workflow/Source-Snapshots.md`](workflow/Source-Snapshots.md)
-3. [`workflow/Source-Authority.md`](workflow/Source-Authority.md)
-4. [`workflow/Workflow-Profiles.md`](workflow/Workflow-Profiles.md)
+2. [`workflow/Workflow-Profiles.md`](workflow/Workflow-Profiles.md)
+3. [`workflow/Source-Snapshots.md`](workflow/Source-Snapshots.md)
+4. [`workflow/Source-Authority.md`](workflow/Source-Authority.md)
 5. [`workflow/Identifier-Conventions.md`](workflow/Identifier-Conventions.md)
 6. [`workflow/Validation-Rules.md`](workflow/Validation-Rules.md)
-7. [`ChatGPT-instructions.md`](ChatGPT-instructions.md)
+7. [`schemas/README.md`](schemas/README.md)
+8. [`ChatGPT-instructions.md`](ChatGPT-instructions.md)
 
 ## Workflow overview
+
+### Express path
+
+```text
+WORKPACK.md
+  ├── control + Express eligibility
+  ├── source baseline + scope
+  ├── design evidence + findings
+  ├── requirements + design intent + specification
+  ├── repository-aware approach + one task
+  ├── two review passes
+  ├── implementation + output lineage
+  └── validation + final review
+```
+
+Express is for one narrow, coherent implementation result with at most one task and no meaningful architecture, integration, persistence, authentication, migration, security, privacy, deployment, or unresolved product-decision risk.
+
+### Lite, Standard, and Full path
 
 ```text
 Stage 0: SOURCE-BASELINE.md
        + PROJECT-CONTEXT.md
        + WORKFLOW-STATE.md
+       + optional workflow-record.json
     ↓
 Pinned design-source audit
     ↓
@@ -38,7 +58,7 @@ Pinned implementation output + validation runtime
 IMPLEMENTATION-REVIEW.md
 ```
 
-The Lite profile consolidates requirements, design intent, specification, and planning into separate sections of `IMPLEMENTATION-BRIEF.md`. Standard and Full use separate artifacts.
+Lite consolidates requirements, design intent, specification, and planning into separate sections of `IMPLEMENTATION-BRIEF.md`. Standard and Full use separate artifacts.
 
 ## Repository areas
 
@@ -47,7 +67,8 @@ The Lite profile consolidates requirements, design intent, specification, and pl
 Normative process rules:
 
 - complete stage sequence;
-- workflow profiles and execution modes;
+- Express, Lite, Standard, and Full profiles;
+- execution modes;
 - source snapshots and rebaseline behavior;
 - source authority and conflict resolution;
 - global identifiers;
@@ -76,29 +97,39 @@ Artifact-specific writing and review guidance for:
 
 ### `templates/`
 
-Reusable project artifact structures for Stage 0, audits, Lite briefs, requirements, design, specifications, reviews, architecture, plans, tasks, and final implementation validation.
+Reusable structures for Express workpacks, Stage 0 controls, audits, Lite briefs, requirements, design, specifications, reviews, architecture, plans, tasks, and final implementation validation.
 
 ### `prompts/`
 
-One executable prompt per workflow stage, from intake through final implementation review.
+- one consolidated Express workpack prompt;
+- one executable prompt per normal workflow stage, from intake through final implementation review.
+
+### `schemas/`
+
+Machine-readable workflow control definitions. A project may add `.workflow/workflow-record.json` or any `*.workflow.json` file to enable semantic CI checks without replacing the normative Markdown artifacts.
+
+The executable validator checks identifier uniqueness, references, profile requirements, Express one-workpack and one-task rules, task dependency cycles, snapshot lineage, completion rules, and validation evidence.
 
 ### `examples/`
 
-Non-normative examples organized by Lite, Standard, and Full profiles.
+Non-normative examples organized by Express, Lite, Standard, and Full profiles.
 
 ### `scripts/`
 
-Repository integrity tooling. Run:
+Repository integrity and executable workflow tooling. Run:
 
 ```bash
 node scripts/validate-workflow.mjs
+node scripts/test-workflow-record.mjs
 ```
+
+The first command checks repository structure, Markdown links, JSON syntax, and any discovered project workflow records. The second command verifies valid general and Express fixtures and detects known semantic failures.
 
 ## Source snapshots
 
 A URL alone is not a reliable baseline. Figma files, websites, branches, shared documents, and preview environments can change without changing address.
 
-Every project creates `SOURCE-BASELINE.md` with stable IDs:
+Express defines source records inside `WORKPACK.md`. Lite, Standard, and Full create `SOURCE-BASELINE.md`. All profiles use stable IDs:
 
 ```text
 SRC-DS-001      Design source
@@ -119,9 +150,13 @@ Approved task commits are expected Implementation outputs. Unexpected upstream d
 
 ## Workflow profiles
 
+### Express
+
+For one narrow implementation result with one workpack and at most one task. Use [`templates/WORKPACK.template.md`](templates/WORKPACK.template.md) and [`prompts/00-express-workpack.md`](prompts/00-express-workpack.md).
+
 ### Lite
 
-For isolated components, small static pages, and narrow changes without meaningful architecture or integration risk.
+For isolated components, small static pages, and narrow changes that exceed Express limits but do not carry meaningful architecture or integration risk.
 
 ### Standard
 
@@ -131,19 +166,18 @@ For multi-page sites, substantial UI features, or meaningful repository integrat
 
 For full-stack applications, authentication, persistence, complex integrations, multiple services, migrations, or high security, privacy, deployment, or operational risk.
 
-Every profile requires `SOURCE-BASELINE.md`, `PROJECT-CONTEXT.md`, and `WORKFLOW-STATE.md`.
-
 ## Execution modes
 
-- `Gated` — stop after each stage or consolidated Lite artifact until explicitly advanced.
+- `Gated` — stop after each stage or consolidated checkpoint until explicitly advanced.
 - `Continuous documentation` — continue through documentation and task decomposition while unblocked, then stop before implementation.
-- `Task-by-task` — implement one unblocked task at a time after planning approval.
+- `Task-by-task` — implement one unblocked task at a time after planning approval. Express has exactly one task.
 
 ## Artifact ownership
 
 | Artifact | Owns |
 |---|---|
-| `SOURCE-BASELINE.md` | Source identity, revision, role, pin strength, output lineage, and rebaseline impact |
+| `WORKPACK.md` | Express control, source baseline, scope, audit, expected result, plan, one task, lineage, validation, and final review in separate sections |
+| `SOURCE-BASELINE.md` | Lite, Standard, and Full source identity, revision, role, pin strength, output lineage, and rebaseline impact |
 | `PROJECT-CONTEXT.md` | Stable project scope, profile, quality baseline, and input references |
 | `WORKFLOW-STATE.md` | Operational control, verification, lineage, blockers, and next action |
 | `DESIGN-AUDIT.md` | Evidence observed within pinned design snapshots |
@@ -154,6 +188,7 @@ Every profile requires `SOURCE-BASELINE.md`, `PROJECT-CONTEXT.md`, and `WORKFLOW
 | `PLAN.md` | Repository-aware approach, ordering, dependencies, risks, and validation |
 | Task files | Task-start state, coherent implementation scope, validation, and output lineage |
 | `IMPLEMENTATION-REVIEW.md` | Final validation against exact inputs, implementation output, and runtime |
+| Workflow record | Machine-readable projection of control state, references, tasks, and lineage for automated checks |
 
 ## Repository structure
 
@@ -169,8 +204,10 @@ Every profile requires `SOURCE-BASELINE.md`, `PROJECT-CONTEXT.md`, and `WORKFLOW
 ├── guidelines/
 ├── templates/
 ├── prompts/
+├── schemas/
 ├── examples/
 ├── scripts/
+├── tests/
 └── .github/workflows/
 ```
 
@@ -186,6 +223,8 @@ Identify interaction patterns before prescribing focus behavior. Disclosures, me
 
 1. Completeness and correctness.
 2. Consistency, traceability, source and output-lineage integrity, risks, and uncertainty after first-pass corrections.
+
+Both reviews are required in every profile. Express records them inside `WORKPACK.md`.
 
 ## Contributing
 

@@ -1,11 +1,11 @@
 # Validation Rules
 
-Validation establishes whether an artifact, task, or implementation satisfies its approved sources. It must be reproducible, scoped, and honest about what was and was not executed.
+Validation establishes whether an artifact, consolidated workpack section, task, or implementation satisfies its approved sources. It must be reproducible, scoped, and honest about what was and was not executed.
 
 ## Core rules
 
 1. Never claim a check passed unless it was executed successfully.
-2. Identify the exact source snapshots, artifact versions, repository commit, runtime, environment, and conditions used.
+2. Identify the exact source snapshots, artifact or workpack version, repository commit, runtime, environment, and conditions used.
 3. Define the expected result before reporting the actual result.
 4. Distinguish Passed, Failed, Blocked, Not executed, and Not applicable.
 5. Explain every failed, blocked, skipped, unavailable, or not-applicable check.
@@ -14,6 +14,7 @@ Validation establishes whether an artifact, task, or implementation satisfies it
 8. Corrected findings require retesting.
 9. Validation must cover the changed scope and likely regressions outside it.
 10. A final result must reflect the highest unresolved material severity and source-lineage integrity.
+11. Profile eligibility is part of validation; an Express result cannot be accepted if the work exceeded its one-result and one-task constraints without upgrading.
 
 ## Evidence requirements
 
@@ -32,17 +33,21 @@ Validation evidence should include, as applicable:
 
 Do not include secrets, tokens, personal data, or sensitive logs.
 
-## Artifact reviews
+## Artifact and consolidated-section reviews
 
-Documentation and planning reviews use two distinct passes.
+Documentation and planning reviews use two distinct passes. Express records both inside `WORKPACK.md`; Lite records consolidated reviews in `IMPLEMENTATION-BRIEF.md`; Standard and Full use their separate review artifacts.
 
 ### Pass 1 — Completeness and correctness
 
-Check the artifact against its responsibility, template, sources, and scope. Correct omissions and factual errors before beginning the second pass.
+Check each artifact or ownership section against its responsibility, template, sources, and scope. Correct omissions and factual errors before beginning the second pass.
+
+For Express, also confirm every eligibility condition remains true after source and repository inspection.
 
 ### Pass 2 — Consistency, traceability, source integrity, risks, and uncertainty
 
-Check the corrected artifact against upstream and downstream artifacts, snapshot metadata, identifiers, conflicts, assumptions, risks, and blockers.
+Check the corrected artifact set or workpack against upstream and downstream responsibilities, snapshot metadata, identifiers, conflicts, assumptions, risks, blockers, and profile limits.
+
+For Express, confirm one task remains sufficient and no separate architecture, integration, migration, operational, or product-decision work is hidden inside the implementation approach.
 
 Rereading without changing review focus does not count as two reviews.
 
@@ -58,6 +63,8 @@ A task is complete only when:
 - no required check remains failing, blocked, or unverified;
 - documentation discoveries and deviations are recorded;
 - downstream tasks have an accurate starting state.
+
+Express records these items in the Single implementation unit, Implementation record, and Validation evidence sections of `WORKPACK.md`. Express permits exactly one task and no task prerequisites.
 
 ## Implementation validation layers
 
@@ -135,6 +142,8 @@ Pixel-level comparison may support review but should not override intentional re
 
 Validate approved requirements for performance, compatibility, security, privacy, reliability, SEO, analytics, deployment, migration, rollback, and observability. Do not invent thresholds during validation.
 
+If an Express workpack discovers a material non-functional concern that requires design or architecture decisions, upgrade before acceptance.
+
 ## Severity
 
 Suggested severity model:
@@ -150,8 +159,9 @@ Severity must reflect user and project impact, not implementation effort.
 
 Before accepting implementation, confirm:
 
-- all referenced snapshots exist;
-- input sources did not change silently;
+- all referenced snapshot IDs exist in the active baseline owner;
+- no artifact or workpack section silently depends on newer input content;
+- the original repository input baseline is identified;
 - the reviewed commit is an Implementation output snapshot;
 - the validation runtime is tied to the reviewed output when applicable;
 - every must-have requirement and material specification was reviewed;
@@ -159,7 +169,8 @@ Before accepting implementation, confirm:
 - failed checks and unresolved findings are visible;
 - corrected findings were retested;
 - approved deviations include authority and impact;
-- remaining risks are explicit.
+- remaining risks are explicit;
+- the selected profile remained valid, or an upgrade was completed before acceptance.
 
 Allowed final results:
 
@@ -173,6 +184,7 @@ Run:
 
 ```bash
 node scripts/validate-workflow.mjs
+node scripts/test-workflow-record.mjs
 ```
 
-The toolkit validator checks required repository structure, prompt sequencing, legacy-path removal, and internal Markdown links. It validates repository integrity, not the quality of a project-specific workflow application.
+The toolkit validator checks required repository structure, prompt sequencing, legacy-path removal, internal Markdown links, JSON syntax, and discovered machine-readable workflow records. The self-test verifies general and Express semantic rules. These checks validate repository and control-record integrity, not the quality of a project-specific workflow application.

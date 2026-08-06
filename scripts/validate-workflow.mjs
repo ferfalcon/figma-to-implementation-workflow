@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, extname, join, normalize, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { validateWorkflowRecord } from './lib/validate-workflow-record.mjs';
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const root = resolve(scriptDirectory, '..');
@@ -30,6 +31,7 @@ const requiredPaths = [
   'guidelines/SPEC.md',
   'guidelines/ARCHITECTURE.md',
   'guidelines/PLAN.md',
+  'templates/WORKPACK.template.md',
   'templates/SOURCE-BASELINE.template.md',
   'templates/PROJECT-CONTEXT.template.md',
   'templates/WORKFLOW-STATE.template.md',
@@ -45,11 +47,21 @@ const requiredPaths = [
   'templates/TASKS-INDEX.template.md',
   'templates/TASK.template.md',
   'templates/IMPLEMENTATION-REVIEW.template.md',
+  'prompts/00-express-workpack.md',
+  'examples/express-component/README.md',
+  'examples/express-component/WORKPACK.md',
   'examples/lite-component/README.md',
   'examples/standard-site/README.md',
   'examples/standard-site/ARCHITECTURE-component-example.md',
   'examples/full-application/README.md',
   'examples/full-application/ARCHITECTURE-full-stack-example.md',
+  'schemas/README.md',
+  'schemas/workflow-record.schema.json',
+  'scripts/lib/validate-workflow-record.mjs',
+  'scripts/test-workflow-record.mjs',
+  'tests/fixtures/workflow-record.valid.json',
+  'tests/fixtures/workflow-record.express.valid.json',
+  'tests/fixtures/workflow-record.invalid.json',
   'scripts/validate-workflow.mjs',
 ];
 
@@ -115,7 +127,6 @@ function normalizeLinkTarget(rawTarget) {
     target = target.slice(1, -1);
   }
 
-  // Remove an optional Markdown title after a whitespace separator.
   const titleSeparator = target.match(/\s+["']/);
   if (titleSeparator?.index !== undefined) {
     target = target.slice(0, titleSeparator.index);
@@ -156,7 +167,8 @@ for (const repositoryPath of legacyRootPaths) {
   }
 }
 
-const markdownFiles = walk(root).filter((path) => extname(path).toLowerCase() === '.md');
+const allFiles = walk(root);
+const markdownFiles = allFiles.filter((path) => extname(path).toLowerCase() === '.md');
 const linkPattern = /\[[^\]]*\]\(([^)]+)\)/g;
 
 for (const markdownPath of markdownFiles) {
@@ -197,8 +209,42 @@ const templateFiles = readdirSync(join(root, 'templates'))
   .filter((name) => name.endsWith('.template.md'))
   .sort();
 
-if (templateFiles.length < 14) {
-  errors.push(`Expected at least 14 templates, found ${templateFiles.length}`);
+if (templateFiles.length < 15) {
+  errors.push(`Expected at least 15 templates, found ${templateFiles.length}`);
+}
+
+for (const jsonPath of [
+  join(root, 'schemas', 'workflow-record.schema.json'),
+  join(root, 'tests', 'fixtures', 'workflow-record.valid.json'),
+  join(root, 'tests', 'fixtures', 'workflow-record.express.valid.json'),
+  join(root, 'tests', 'fixtures', 'workflow-record.invalid.json'),
+]) {
+  try {
+    JSON.parse(readFileSync(jsonPath, 'utf8'));
+  } catch (error) {
+    errors.push(`${toRepositoryPath(jsonPath)}: invalid JSON: ${error.message}`);
+  }
+}
+
+const workflowRecordFiles = allFiles.filter((path) => {
+  const repositoryPath = toRepositoryPath(path);
+  if (repositoryPath.startsWith('tests/fixtures/')) return false;
+  return repositoryPath.endsWith('/workflow-record.json') || repositoryPath.endsWith('.workflow.json');
+});
+
+for (const recordPath of workflowRecordFiles) {
+  const repositoryPath = toRepositoryPath(recordPath);
+  let record;
+  try {
+    record = JSON.parse(readFileSync(recordPath, 'utf8'));
+  } catch (error) {
+    errors.push(`${repositoryPath}: invalid JSON: ${error.message}`);
+    continue;
+  }
+
+  for (const finding of validateWorkflowRecord(record)) {
+    errors.push(`${repositoryPath}: ${finding}`);
+  }
 }
 
 if (warnings.length > 0) {
@@ -212,6 +258,6 @@ if (errors.length > 0) {
   for (const error of errors) console.error(`- ${error}`);
   process.exitCode = 1;
 } else {
-  console.log(`Workflow repository validation passed.`);
-  console.log(`Checked ${requiredPaths.length + promptPaths.length} required paths and ${markdownFiles.length} Markdown files.`);
+  console.log('Workflow repository validation passed.');
+  console.log(`Checked ${requiredPaths.length + promptPaths.length} required paths, ${markdownFiles.length} Markdown files, and ${workflowRecordFiles.length} project workflow record(s).`);
 }
