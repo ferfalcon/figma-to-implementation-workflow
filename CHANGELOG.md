@@ -8,6 +8,12 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 
 ### Added
 
+- Dependency-free `design-workflow` CLI package and executable entry point.
+- CLI commands for project initialization, status, next-action guidance, stage and mode control, source snapshots, artifact creation, task lifecycle, validation, and identifier tracing.
+- Profile-aware artifact generation from the toolkit templates.
+- Automatic repository commit pinning during CLI initialization.
+- Automatic Implementation output snapshots when CLI-managed tasks complete.
+- End-to-end CLI integration tests and package-content validation in GitHub Actions.
 - Express profile for one narrow implementation result using one `WORKPACK.md` and at most one task.
 - Express workpack template, execution prompt, and complete component example.
 - Express profile support in source snapshots, identifier ownership, validation rules, intake guidance, and assistant instructions.
@@ -29,7 +35,7 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 - Reorganized artifact-writing guidance into `guidelines/`.
 - Moved source-specific Figma preparation into `source-adapters/`.
 - Reorganized examples by Express, Lite, Standard, and Full profiles.
-- Extended repository CI to validate schemas, fixtures, Express resources, and discovered workflow records.
+- Extended repository CI to validate schemas, fixtures, Express resources, workflow CLI behavior, package contents, and discovered workflow records.
 - Updated internal links and assistant instructions for the v2 structure and Express path.
 
 ### Removed
