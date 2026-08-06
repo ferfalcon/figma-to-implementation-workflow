@@ -1,10 +1,10 @@
 # Design Workflow CLI
 
-The CLI maintains `.workflow/workflow-record.json`, generates profile-appropriate Markdown artifacts from the toolkit templates, and applies the same semantic validator used by repository CI.
+The CLI maintains `.workflow/workflow-record.json` as the canonical mutable workflow-control record, generates profile-appropriate Markdown artifacts, produces deterministic human-readable state views, and applies the same validation used by repository CI.
+
+See [`../workflow/State-Ownership.md`](../workflow/State-Ownership.md) for the ownership model.
 
 ## Run locally
-
-From this toolkit repository:
 
 ```bash
 node cli/design-workflow.mjs help
@@ -27,9 +27,36 @@ npx @ferfalcon/design-workflow init \
   --repository .
 ```
 
-`init` creates the machine-readable record and only the Markdown artifacts required by the selected profile. Repository input is pinned to the current Git commit when `--repository` is supplied.
+`init` creates the workflow record, profile-required Markdown artifacts, and these generated state views:
+
+```text
+.workflow/generated/WORKFLOW-STATUS.md
+.workflow/generated/SOURCE-INDEX.md
+.workflow/generated/ARTIFACT-INDEX.md
+.workflow/generated/TASK-INDEX.md
+```
 
 Task-by-task mode cannot begin at Stage 0. Initialize with `Gated` or `Continuous documentation`, reach Stage 9, then switch modes.
+
+## Canonical state and generated views
+
+The record owns mutable profile, execution mode, stage, status, active inputs, snapshots, artifact inventory, task lifecycle, validation state, and implementation-output lineage.
+
+Generated views are deterministic projections of that record. Do not edit them manually. Every CLI mutation synchronizes them automatically.
+
+Repair or regenerate views after a direct JSON edit:
+
+```bash
+design-workflow sync
+```
+
+Check freshness without changing files:
+
+```bash
+design-workflow sync --check
+```
+
+`design-workflow validate` checks both semantic validity and generated-view freshness.
 
 ## Commands
 
@@ -39,6 +66,7 @@ Task-by-task mode cannot begin at Stage 0. Initialize with `Gated` or `Continuou
 design-workflow status
 design-workflow status --json
 design-workflow next
+design-workflow sync --check
 design-workflow validate
 ```
 
@@ -67,6 +95,8 @@ design-workflow snapshot add \
 ```
 
 Supported kinds are `design`, `repo`, `runtime`, `doc`, and `asset`. IDs are allocated automatically unless `--id` is supplied.
+
+Detailed source scope, evidence, reproduction information, authority, and limitations remain in `SOURCE-BASELINE.md` or `WORKPACK.md`; the record owns the mutable registry fields.
 
 ### Create artifacts
 
@@ -114,7 +144,18 @@ The default record is:
 .workflow/workflow-record.json
 ```
 
-Use `--record path/to/record.json` with any command to override it.
+Generated views are placed in the `generated/` directory beside the selected record. Use `--record path/to/record.json` with any command to override the default.
+
+## Version-control behavior
+
+In CLI-managed projects, commit the record and generated views together. CI can run:
+
+```bash
+design-workflow sync --check
+design-workflow validate
+```
+
+A stale or missing generated file is a validation failure. Generated views are disposable and can always be recreated from the record.
 
 ## Safety behavior
 
@@ -124,4 +165,5 @@ Use `--record path/to/record.json` with any command to override it.
 - A second current task cannot be started.
 - Completion requires a full Git SHA and resolved validation.
 - Passed validation requires evidence.
-- Semantic findings produce a non-zero exit code for CI use.
+- Generated views cannot silently diverge from the record.
+- Semantic or synchronization findings produce a non-zero exit code for CI use.
