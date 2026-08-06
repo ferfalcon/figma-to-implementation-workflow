@@ -12,7 +12,8 @@ The workflow supports AI-assisted and human-led work with explicit source baseli
 4. [`workflow/Workflow-Profiles.md`](workflow/Workflow-Profiles.md)
 5. [`workflow/Identifier-Conventions.md`](workflow/Identifier-Conventions.md)
 6. [`workflow/Validation-Rules.md`](workflow/Validation-Rules.md)
-7. [`ChatGPT-instructions.md`](ChatGPT-instructions.md)
+7. [`schemas/README.md`](schemas/README.md)
+8. [`ChatGPT-instructions.md`](ChatGPT-instructions.md)
 
 ## Workflow overview
 
@@ -20,6 +21,7 @@ The workflow supports AI-assisted and human-led work with explicit source baseli
 Stage 0: SOURCE-BASELINE.md
        + PROJECT-CONTEXT.md
        + WORKFLOW-STATE.md
+       + optional workflow-record.json
     ↓
 Pinned design-source audit
     ↓
@@ -82,17 +84,26 @@ Reusable project artifact structures for Stage 0, audits, Lite briefs, requireme
 
 One executable prompt per workflow stage, from intake through final implementation review.
 
+### `schemas/`
+
+Machine-readable workflow control definitions. A project may add `.workflow/workflow-record.json` or any `*.workflow.json` file to enable semantic CI checks without replacing the normative Markdown artifacts.
+
+The executable validator checks identifier uniqueness, references, profile requirements, task dependency cycles, snapshot lineage, completion rules, and validation evidence.
+
 ### `examples/`
 
 Non-normative examples organized by Lite, Standard, and Full profiles.
 
 ### `scripts/`
 
-Repository integrity tooling. Run:
+Repository integrity and executable workflow tooling. Run:
 
 ```bash
 node scripts/validate-workflow.mjs
+node scripts/test-workflow-record.mjs
 ```
+
+The first command checks repository structure, Markdown links, JSON syntax, and any discovered project workflow records. The second command verifies that the semantic validator accepts a valid fixture and detects known failures in an invalid fixture.
 
 ## Source snapshots
 
@@ -154,6 +165,7 @@ Every profile requires `SOURCE-BASELINE.md`, `PROJECT-CONTEXT.md`, and `WORKFLOW
 | `PLAN.md` | Repository-aware approach, ordering, dependencies, risks, and validation |
 | Task files | Task-start state, coherent implementation scope, validation, and output lineage |
 | `IMPLEMENTATION-REVIEW.md` | Final validation against exact inputs, implementation output, and runtime |
+| Workflow record | Machine-readable projection of control state, references, tasks, and lineage for automated checks |
 
 ## Repository structure
 
@@ -169,8 +181,10 @@ Every profile requires `SOURCE-BASELINE.md`, `PROJECT-CONTEXT.md`, and `WORKFLOW
 ├── guidelines/
 ├── templates/
 ├── prompts/
+├── schemas/
 ├── examples/
 ├── scripts/
+├── tests/
 └── .github/workflows/
 ```
 
