@@ -1,8 +1,27 @@
 # Architecture Template
 
-Use this template to create a project-specific `ARCHITECTURE.md`.
+Use this template to create a project-specific `ARCHITECTURE.md`. Do not adopt example technologies or patterns without project or repository evidence.
 
-Remove sections that do not apply. Add sections when the project has important architectural concerns not represented here. Do not fill gaps by copying technologies or patterns from examples without repository or project evidence.
+Reference only snapshot IDs defined in `SOURCE-BASELINE.md`.
+
+```yaml
+---
+artifact: ARCHITECTURE
+status: Draft
+baseline:
+  design:
+    - SRC-DS-001
+  repository:
+    - SRC-REPO-001
+  runtime:
+    - SRC-RUN-001
+  documentation:
+    - SRC-DOC-001
+  assets: []
+created: YYYY-MM-DD
+updated: YYYY-MM-DD
+---
+```
 
 # Architecture
 
@@ -13,366 +32,171 @@ Remove sections that do not apply. Add sections when the project has important a
 - Last updated: YYYY-MM-DD
 - Owners:
 - Scope:
+- Source baseline: `SOURCE-BASELINE.md`
+- Repository snapshot: `SRC-REPO-*`
+- Runtime snapshots: `SRC-RUN-*` / None
 - Related documents:
   - `REQUIREMENTS.md`
   - `DESIGN.md`
   - `SPEC.md`
   - `PLAN.md`
 
-## 2. Purpose
+## 2. Purpose and Scope
 
-Explain what part of the system this document covers and which structural decisions it protects.
+Explain what part of the system is covered, which structural decisions are protected, and what remains outside scope.
 
 ## 3. Evidence and Sources
 
-List the sources used to determine the architecture.
-
-- Repository paths inspected:
-- Existing technical documentation:
+- Repository snapshot and paths inspected:
+- Runtime snapshots:
+- Documentation snapshots:
 - Requirement IDs:
 - Specification IDs:
-- Deployment or infrastructure sources:
 - Stakeholder decisions:
 
-Classify important statements as confirmed, observed, inferred, recommended, or open questions.
+Classify statements as confirmed, observed, inferred, recommended, or open. Current-state claims must reference pinned repository or runtime snapshots.
 
-## 4. Scope and Non-Scope
+## 4. System Context
 
-### Included
-
-- Applications, packages, services, or components covered
-- Relevant integrations and infrastructure
-
-### Excluded
-
-- Areas intentionally outside this document
-- Future capabilities not currently approved
-
-## 5. System Context
-
-Identify:
-
-- Primary users and actors
-- External systems
-- Third-party services
-- Major inputs and outputs
-- Trust boundaries
+Identify users, actors, external systems, third-party services, major inputs and outputs, and trust boundaries.
 
 ```text
 Actor → System boundary → External dependency
 ```
 
-## 6. Architectural Goals
+## 5. Architectural Goals
 
-List the qualities the architecture is designed to support.
+Document project-specific priorities and tradeoffs for maintainability, accessibility, testability, security, performance, reliability, simplicity, and other relevant qualities.
 
-- Maintainability
-- Accessibility
-- Testability
-- Security
-- Performance
-- Reliability
-- Simplicity
+## 6. Current Architecture
 
-Explain project-specific priorities and tradeoffs rather than listing generic qualities only.
+Describe the applications, packages, runtime boundaries, important directories, dependency direction, constraints, and technical debt observed in `SRC-REPO-*` and applicable `SRC-RUN-*` snapshots.
 
-## 7. Current Architecture
+Do not describe branch-head or deployed behavior absent from the referenced snapshots.
 
-Describe the relevant architecture that exists in the repository today.
+## 7. Target and Transitional Architecture
 
-- Applications and packages
-- Runtime boundaries
-- Important directories or modules
-- Existing dependency direction
-- Existing constraints and technical debt
+Describe proposed boundaries, responsibilities, migration path, compatibility requirements, and temporary structure. Keep current, target, and transitional architecture distinct.
 
-Distinguish observed repository facts from inferred intent.
+## 8. High-Level Structure
 
-## 8. Target Architecture
-
-Include this section when the implementation will change the current structure.
-
-Describe:
-
-- Proposed system boundaries
-- New or changed responsibilities
-- Migration path from the current state
-- Compatibility requirements
-- Transitional architecture, if applicable
-
-Do not present a proposed structure as if it already exists.
-
-## 9. High-Level Structure
-
-Describe the principal parts and how they communicate.
+Describe principal parts and communication paths.
 
 ```text
 Interface → Application boundary → Data or external boundary
 ```
 
-## 10. Components and Responsibilities
+## 9. Components and Responsibilities
 
-### Component or subsystem name
+For each architecturally significant component or subsystem, record:
 
-**Responsibilities:**
+- responsibilities;
+- responsibilities it must not absorb;
+- dependencies;
+- owned data or state;
+- public interfaces;
+- source evidence or decision references.
 
-- ...
-- ...
+## 10. Dependency Rules
 
-**Must not:**
+State allowed and prohibited dependency directions. Define only layers or abstractions the project needs.
 
-- ...
-- ...
+## 11. Important Data and Interaction Flows
 
-**Dependencies:**
+For each material flow, document initiator, validation, authorization, business-rule ownership, data access, side effects, success, and failure behavior.
 
-- ...
+## 12. State and Data Ownership
 
-**Owned data or state:**
+Document authoritative sources, persistent and transient state, client and server ownership, caching, synchronization, validation, consistency, concurrency, and sensitive-data boundaries.
 
-- ...
+## 13. Frontend Architecture
 
-Repeat for each architecturally significant component or subsystem.
+When applicable, cover routing, navigation, feature and shared-component organization, state, data access, design-system integration, rendering, error boundaries, and reusable accessibility behavior.
 
-## 11. Dependency Rules
+## 14. Backend, API, and Integration Architecture
 
-State allowed and prohibited dependency directions.
+When applicable, cover request handling, validation, business rules, services or use cases, API conventions, integration adapters, background work, compatibility, and error translation.
 
-1. ...
-2. ...
-3. ...
+## 15. Persistence Architecture
 
-Include framework-independence or layer-boundary rules only when supported by the selected architecture.
+When applicable, cover entities, relationships, ownership, transaction boundaries, migrations, retention, deletion, and model mapping.
 
-## 12. Important Data and Interaction Flows
+## 16. Authentication and Authorization
 
-### Flow name
+When applicable, cover identity source, authentication flow, enforcement boundaries, session or token lifecycle, protected operations, logout, revocation, and tradeoffs.
 
-1. Actor or component initiates the operation.
-2. ...
-3. The operation completes or reports failure.
+## 17. Accessibility Architecture
 
-Document only flows that clarify boundaries, ownership, or important failure behavior.
+Document semantic component boundaries, keyboard ownership, focus management, accessible naming and relationships, announcements, reduced motion, and testing responsibility.
 
-## 13. State and Data Ownership
+Accessibility must be integrated into component and system boundaries rather than deferred.
 
-Describe:
+## 18. Error Handling and Reliability
 
-- Authoritative data sources
-- Persistent versus transient state
-- Client versus server ownership
-- Caching and synchronization
-- Validation boundaries
-- Concurrency or consistency concerns
-- Sensitive-data handling
+Document error categories, propagation, translation, recovery, retry, idempotency, fallback, logging, sanitization, and failure boundaries.
 
-## 14. Frontend Architecture
+## 19. Security and Privacy
 
-When applicable, describe:
+Document trust boundaries, input validation, authorization, secrets, sensitive data, logging restrictions, network controls, abuse protection, and privacy constraints supported by approved sources.
 
-- Routing and navigation boundaries
-- Feature and shared-component organization
-- Component ownership
-- Server and interface state
-- Data-access boundaries
-- Styling and design-system integration
-- Rendering strategy
-- Error boundaries
+## 20. Build, Deployment, Runtime, and Observability
 
-## 15. Backend and API Architecture
+When applicable, document build outputs, environments, hosting, configuration, networking, deployment ordering, migrations, rollback, logs, metrics, traces, health checks, alerts, and prohibited recorded data.
 
-When applicable, describe:
+Tie observed deployment claims to `SRC-RUN-*`.
 
-- Request handling
-- Validation
-- Business-rule ownership
-- Service or use-case boundaries
-- API conventions
-- Integration boundaries
-- Background processing
-- Error translation
+## 21. Testing Architecture
 
-Detailed endpoint payloads belong in the specification or API documentation.
+Define responsibilities for unit, component, integration, contract, end-to-end, accessibility, visual, performance, and security validation as applicable.
 
-## 16. Persistence Architecture
-
-When applicable, describe:
-
-- Main entities and relationships
-- Persistence ownership
-- Transaction boundaries
-- Migration strategy
-- Retention and deletion behavior
-- Repository or data-access boundaries
-
-Avoid duplicating the complete database schema unless it is essential to understanding the architecture.
-
-## 17. Authentication and Authorization
-
-When applicable, describe:
-
-- Identity source
-- Authentication flow
-- Authorization boundaries
-- Session or token lifecycle
-- Protected operations
-- Logout and revocation behavior
-- Security tradeoffs
-
-## 18. Accessibility Architecture
-
-Describe structural decisions needed to preserve accessibility across the system.
-
-- Semantic component boundaries
-- Keyboard interaction ownership
-- Focus management
-- Accessible naming and relationships
-- Status and error announcements
-- Reduced-motion handling
-- Testing responsibilities
-
-Accessibility must be integrated into component and system boundaries rather than deferred as a final enhancement.
-
-## 19. Error Handling and Reliability
-
-Describe:
-
-- Error categories
-- Propagation and translation
-- User-facing recovery behavior
-- Retry and idempotency rules
-- Fallback behavior
-- Logging and sanitization
-- Failure boundaries
-
-## 20. Security and Privacy
-
-Describe relevant:
-
-- Trust boundaries
-- Input validation
-- Authorization enforcement
-- Secret management
-- Sensitive-data handling
-- Logging restrictions
-- Network and origin controls
-- Abuse protection
-- Privacy constraints
-
-Do not invent policies or controls not supported by requirements or approved decisions.
-
-## 21. Build, Deployment, and Runtime
-
-When applicable, describe:
-
-- Build outputs
-- Environments
-- Hosting boundaries
-- Environment configuration
-- Networking
-- Deployment ordering
-- Database migrations
-- Rollback or recovery
-
-## 22. Observability
-
-When applicable, describe:
-
-- Logs
-- Metrics
-- Traces
-- Health checks
-- Alerting
-- Diagnostic identifiers
-- Data that must not be recorded
-
-## 23. Testing Architecture
-
-Define the responsibility of each relevant testing layer.
-
-- Unit tests
-- Component tests
-- Integration tests
-- Contract tests
-- End-to-end tests
-- Accessibility validation
-- Visual validation
-
-## 24. Architectural Decisions
+## 22. Architectural Decisions
 
 ### ADR-001 — Decision title
 
-**Status:** Proposed / Accepted / Superseded
+- **Status:** Proposed / Accepted / Superseded
+- **Context:**
+- **Source snapshots:**
+- **Decision:**
+- **Rationale:**
+- **Alternatives considered:**
+- **Tradeoffs and consequences:**
+- **Requirement and specification references:**
 
-**Context:**
+Use separate ADR files when independent history or review is useful.
 
-...
+## 23. Constraints, Risks, Assumptions, and Open Questions
 
-**Decision:**
+| Item | Type | Impact | Evidence or snapshot | Mitigation or owner | Status |
+|---|---|---|---|---|---|
+| ... | Constraint / Risk / Assumption / Question | ... | ... | ... | ... |
 
-...
+## 24. Source-change Handling
 
-**Rationale:**
+- Snapshot verification required before implementation:
+- Source changes that invalidate current architecture claims:
+- Earliest workflow stage to revisit:
 
-...
+Create new snapshot IDs and perform a rebaseline impact assessment rather than silently updating current-state evidence.
 
-**Alternatives considered:**
+## 25. Traceability
 
-- ...
-
-**Tradeoffs and consequences:**
-
-- ...
-
-**Requirement and specification references:**
-
-- ...
-
-Use separate Architecture Decision Records when decisions require independent history or approval.
-
-## 25. Constraints and Tradeoffs
-
-- Constraint or accepted limitation
-- Resulting consequence
-- Mitigation, when applicable
-
-## 26. Risks
-
-| Risk | Impact | Likelihood | Mitigation | Status |
+| Architecture item | Snapshot | Requirement or specification | Repository or runtime evidence | Validation |
 |---|---|---|---|---|
 | ... | ... | ... | ... | ... |
 
-## 27. Assumptions and Open Questions
+## 26. Architecture Validation
 
-### Assumptions
+### Pass 1 — Completeness and correctness
 
-- ...
+- [ ] Scope and pinned current-state observations are accurate.
+- [ ] Current, target, and transitional architecture are distinct.
+- [ ] Responsibilities, dependencies, state, and flows are explicit.
+- [ ] Accessibility, security, errors, deployment, and testing are addressed where relevant.
 
-### Open questions
+### Pass 2 — Consistency, traceability, source integrity, risks, and uncertainty
 
-- ...
-
-Do not silently convert unresolved questions into architectural decisions.
-
-## 28. Future Evolution
-
-Describe plausible extension points without turning them into current requirements.
-
-- ...
-
-## 29. Traceability
-
-| Architecture item | Requirement or specification | Repository evidence | Validation |
-|---|---|---|---|
-| ... | ... | ... | ... |
-
-## 30. Architecture Validation
-
-- [ ] Scope and current-state observations are accurate.
-- [ ] Proposed architecture is distinguished from existing architecture.
-- [ ] Responsibilities and dependency rules are explicit.
-- [ ] Important data and state ownership is defined.
-- [ ] Accessibility, security, errors, and testing are addressed where relevant.
+- [ ] Snapshot IDs exist and were actually used.
+- [ ] No current-state claim silently relies on newer repository or runtime content.
+- [ ] Decisions are traceable to requirements, specifications, and source evidence.
 - [ ] Tradeoffs, risks, assumptions, and open questions are visible.
-- [ ] Decisions are traceable to requirements, specifications, or repository evidence.
-- [ ] No example technology or pattern was adopted without project evidence.
+- [ ] No example technology or pattern was adopted without evidence.
