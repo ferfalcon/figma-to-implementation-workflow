@@ -2,7 +2,7 @@ import { ARTIFACT_STATUSES, SNAPSHOT_KINDS } from './constants.mjs';
 import {
   artifactId, artifactType, commaList, createArtifactFile, fail, nextId,
   normalizeChoice, printFindings, readRecord, relativeDisplay,
-  resolveRecordPath, saveRecord, validateWorkflowRecord, write, writeRecord,
+  resolveRecordPath, saveRecord, validateWorkflowRecord, write,
 } from './utils.mjs';
 
 export function commandSnapshot(cwd, stdout, stderr, positionals, options) {
@@ -41,7 +41,7 @@ export function commandSnapshot(cwd, stdout, stderr, positionals, options) {
     newErrors.forEach((error) => write(stderr, `- ${error}`));
     return 1;
   }
-  writeRecord(recordPath, record);
+  saveRecord(recordPath, record);
   write(stdout, `Added snapshot ${id}`);
   return 0;
 }
