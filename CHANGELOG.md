@@ -8,21 +8,29 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 
 ### Added
 
+- Express profile for one narrow implementation result using one `WORKPACK.md` and at most one task.
+- Express workpack template, execution prompt, and complete component example.
+- Express profile support in source snapshots, identifier ownership, validation rules, intake guidance, and assistant instructions.
+- Machine-readable workflow record schema and dependency-free semantic validator.
+- Semantic checks for duplicate IDs, broken references, profile requirements, task cycles, output lineage, completion state, and validation evidence.
+- Express semantic checks for one-workpack ownership, one-task limits, and profile-upgrade conditions.
+- General, invalid, and Express workflow-record fixtures with validator self-tests.
 - Profile-organized example entry points.
 - Stage-specific prompt library.
 - Source adapters for Figma, screenshots, PDFs, existing websites, and mixed-source projects.
 - Source authority and validation rule documents.
 - Repository structure and Markdown-link validation script.
 - GitHub Actions validation workflow.
-- Contribution guidance and MIT license.
+- Contribution guidance.
 
 ### Changed
 
 - Reorganized normative workflow documents into `workflow/`.
 - Reorganized artifact-writing guidance into `guidelines/`.
 - Moved source-specific Figma preparation into `source-adapters/`.
-- Reorganized examples by Lite, Standard, and Full profiles.
-- Updated internal links and assistant instructions for the v2 structure.
+- Reorganized examples by Express, Lite, Standard, and Full profiles.
+- Extended repository CI to validate schemas, fixtures, Express resources, and discovered workflow records.
+- Updated internal links and assistant instructions for the v2 structure and Express path.
 
 ### Removed
 
