@@ -1,265 +1,130 @@
-A **`SPEC.md`** file is a **technical specification document** that defines exactly **what a project, feature, page, or component must do**.
+# `SPEC.md` Guidelines
 
-It translates design intent into explicit, testable requirements that developers can implement without repeatedly guessing or inspecting the original design.
+`SPEC.md` translates approved requirements and design intent into precise, observable, testable behavior. It should let implementation and review proceed without repeatedly guessing from the design source.
 
-## Core idea
+Use `templates/SPEC.template.md` and `Identifier-Conventions.md`.
 
-Think of the documentation flow like this:
+## Ownership
 
-* **`DESIGN.md`** — What is the design system and visual intent?
-* **`SPEC.md`** — What behavior and requirements must be implemented?
-* **`PLAN.md`** — How will we implement those requirements?
-* **Code** — The actual implementation.
+`SPEC.md` owns:
 
-A good `SPEC.md` describes the required outcome, but generally avoids prescribing every implementation detail.
+- required user-visible and system behavior;
+- states, content rules, and edge cases;
+- interaction, keyboard, and focus behavior;
+- responsive behavior;
+- accessibility behavior;
+- conceptual data and interface requirements;
+- validation, errors, recovery, and acceptance criteria.
 
-## What belongs in `SPEC.md`
+It does not own repository paths, component filenames, task ordering, or unsupported architecture.
 
-For a UI project or design-to-code workflow, it commonly covers:
+## Identifier namespaces
 
-* Scope and objectives
-* Component structure
-* Content requirements
-* Visual states
-* Interaction behavior
-* Responsive behavior
-* Accessibility requirements
-* Data and API requirements
-* Validation and error handling
-* Edge cases
-* Acceptance criteria
-* Open questions and assumptions
+Use:
 
-## Recommended structure
+- `SPEC-BEH-*` for behavior;
+- `SPEC-INT-*` for interactions;
+- `SPEC-VAL-*` for validation and errors;
+- `SPEC-ACC-*` for accessibility;
+- `SPEC-DATA-*` for data and interfaces;
+- `AC-*` for acceptance criteria.
 
-```md
-# Feature or Component Specification
+Reference `REQ-*` requirements; do not reuse their identifiers as specification identifiers.
 
-## 1. Overview
+## Testable language
 
-Briefly describe what is being specified and why it exists.
+A material specification should identify:
 
-## 2. Goals
+- preconditions and trigger;
+- required result;
+- applicable states;
+- success and failure behavior;
+- responsive conditions;
+- keyboard and focus behavior when applicable;
+- acceptance criteria and validation method;
+- supporting requirement and design references.
 
-- Primary goal
-- Secondary goal
-- User outcome
+Avoid subjective terms unless they are defined by observable criteria.
 
-## 3. Scope
+## Responsive specifications
 
-### Included
+Describe behavior at supplied viewports, between them, and beyond them. Define:
 
-- Requirement included in this implementation
-- Another included behavior
+- fixed and fluid behavior;
+- wrapping, stacking, reordering, hiding, or replacement;
+- overflow and long-content behavior;
+- unusually narrow and wide conditions;
+- the layout or content failure that requires a transition.
 
-### Excluded
+Do not default to `768px` or another familiar number without evidence. When the exact breakpoint is an implementation decision, specify the observable failure condition the plan must test.
 
-- Feature intentionally not included
-- Future enhancement
+## Interaction and focus specifications
 
-## 4. Terminology
+Identify the interaction pattern before defining keyboard or focus behavior.
 
-Define project-specific terms when necessary.
+- A disclosure normally keeps focus on its trigger when expanded.
+- A modal dialog normally moves focus into the dialog and contains focus while open.
+- A menu widget has menu-specific keyboard behavior only when the interface truly uses that pattern.
+- A non-modal drawer may require different focus handling depending on whether background content remains available.
 
-## 5. Functional Requirements
+Do not apply modal or menu rules to every mobile navigation. Record an open question when the pattern cannot be determined.
 
-### FR-001: Requirement name
+## Accessibility specifications
 
-The system must...
+Define applicable semantics, keyboard operation, focus order and visibility, accessible names and relationships, state exposure, announcements, contrast, touch targets, reflow, zoom, and reduced motion.
 
-### FR-002: Requirement name
+Use native semantics where possible. Require ARIA only when native HTML cannot express the needed relationship or state.
 
-The user must be able to...
+## Data, validation, and errors
 
-## 6. Content Requirements
+Describe conceptual inputs, outputs, required and optional fields, defaults, validation ownership, persistence or synchronization, partial data, failures, recovery, retry, and duplicate-action behavior when relevant.
 
-- Required text
-- Optional content
-- Character limits
-- Empty content behavior
-- Localization considerations
+Detailed repository architecture belongs elsewhere.
 
-## 7. Component Structure
+## Acceptance criteria
 
-- Parent component
-- Child components
-- Repeated elements
-- Optional regions
+Each `AC-*` item must be objectively verifiable and reference its requirement or specification. One requirement may have several criteria.
 
-## 8. States
-
-- Default
-- Hover
-- Focus
-- Active
-- Disabled
-- Loading
-- Empty
-- Error
-- Success
-
-## 9. Interaction Behavior
-
-Describe:
-
-- Click behavior
-- Keyboard behavior
-- Focus management
-- Transitions
-- Opening and closing behavior
-- Form submission behavior
-
-## 10. Responsive Behavior
-
-### Small screens
-
-Describe layout and behavior.
-
-### Medium screens
-
-Describe layout and behavior.
-
-### Large screens
-
-Describe layout and behavior.
-
-## 11. Accessibility Requirements
-
-- Semantic HTML requirements
-- Keyboard navigation
-- Focus visibility
-- Accessible names
-- ARIA requirements
-- Contrast expectations
-- Reduced-motion behavior
-- Screen-reader announcements
-
-## 12. Data Requirements
-
-Describe:
-
-- Required data
-- Data shape
-- Optional fields
-- Default values
-- Sorting and filtering
-- Persistence requirements
-
-## 13. Validation and Error Handling
-
-- Validation rules
-- Inline error behavior
-- Server error behavior
-- Recovery behavior
-
-## 14. Edge Cases
-
-- Missing content
-- Long content
-- Slow network
-- Duplicate actions
-- Unsupported data
-- Small viewport
-- JavaScript failure
-
-## 15. Non-Functional Requirements
-
-- Performance
-- Browser support
-- Security
-- Maintainability
-- SEO
-- Analytics
-
-## 16. Acceptance Criteria
-
-- [ ] Requirement can be objectively verified
-- [ ] Keyboard users can complete the interaction
-- [ ] Layout works at the required viewport sizes
-- [ ] Loading, empty, and error states are handled
-- [ ] Implementation matches the approved design
-
-## 17. Assumptions
-
-- Assumption one
-- Assumption two
-
-## 18. Open Questions
-
-- Question requiring product clarification
-- Missing behavior not defined in the design
-
-## 19. References
-
-- Design source
-- DESIGN.md
-- Related issue
-- API documentation
-```
-
-## Requirements should be testable
-
-Avoid vague statements such as:
+Example:
 
 ```md
-The component should look good on mobile.
+### SPEC-INT-004 — Expand an FAQ answer
+
+Activating the question control reveals its associated answer without moving focus away from the trigger.
+
+- `AC-021`: Pointer activation toggles the answer.
+- `AC-022`: Enter and Space activate the native button.
+- `AC-023`: The button exposes state with `aria-expanded`.
+- `AC-024`: The answer is programmatically associated with the trigger.
 ```
 
-Prefer measurable requirements:
+## Lite profile
 
-```md
-At viewport widths below 768px, the navigation items must be
-hidden behind a menu button.
+For Lite work, use the specification section of `IMPLEMENTATION-BRIEF.md`, preserving `SPEC-*` and `AC-*` ownership.
 
-Activating the button must open the navigation panel and move
-keyboard focus to the first interactive item.
-```
+## Common failure modes
 
-Another example:
+Avoid:
 
-```md
-The form should validate the email field.
-```
+- repeating requirements without making behavior precise;
+- using bare `FR-*` IDs that collide with requirements;
+- arbitrary breakpoint values;
+- unsupported focus movement;
+- prescribing repository paths or task order;
+- missing loading, empty, error, success, disabled, long-content, or failed-request behavior;
+- vague accessibility statements;
+- acceptance criteria that cannot be observed or reproduced.
 
-Better:
+## Review
 
-```md
-When the submitted email value is empty or does not use a valid
-email format, the form must:
+### Pass 1 — Completeness and correctness
 
-1. Prevent submission.
-2. Display an inline error below the field.
-3. Associate the error with the input using `aria-describedby`.
-4. Move focus to the first invalid field.
-```
+- [ ] Scope, terminology, behavior, interactions, states, responsive behavior, accessibility, data, validation, errors, edge cases, non-functional behavior, and acceptance criteria are covered as applicable.
+- [ ] Material behavior is objectively testable.
 
-## Functional requirements and acceptance criteria
+### Pass 2 — Consistency, traceability, risks, and uncertainty
 
-These are related but have different purposes.
-
-### Functional requirement
-
-Defines what the system must do:
-
-```md
-### FR-004: Expand an FAQ item
-
-The user must be able to expand an FAQ item to reveal its answer.
-```
-
-### Acceptance criteria
-
-Defines how you verify that it works:
-
-```md
-- [ ] Clicking the question reveals its answer.
-- [ ] Pressing Enter or Space while the question has focus reveals it.
-- [ ] The trigger exposes its current state through `aria-expanded`.
-- [ ] The answer is programmatically associated with its trigger.
-```
-
-The most important principle is:
-
-> `SPEC.md` should be detailed enough that implementation can be reviewed against it objectively.
-
-When something cannot be tested, observed, or clearly interpreted, it probably needs to be rewritten or moved to an assumptions or open-questions section.
+- [ ] IDs follow `Identifier-Conventions.md`.
+- [ ] Every material specification references requirements and relevant design evidence.
+- [ ] No unsupported breakpoint, focus rule, threshold, or architecture is presented as confirmed.
+- [ ] Assumptions and open questions remain visible.
