@@ -1,6 +1,6 @@
 # Design Template
 
-Use with `Document-Guidelines-DESIGN.md` to create a project-specific record of visual, responsive, content, and interaction intent.
+Use with [`../guidelines/DESIGN.md`](../guidelines/DESIGN.md) and [`../workflow/Identifier-Conventions.md`](../workflow/Identifier-Conventions.md) to create a project-specific record of visual, responsive, content, and interaction intent.
 
 Reference only snapshot IDs defined in `SOURCE-BASELINE.md`.
 
