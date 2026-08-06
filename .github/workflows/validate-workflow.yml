@@ -27,3 +27,9 @@ jobs:
 
       - name: Test semantic workflow validation
         run: node scripts/test-workflow-record.mjs
+
+      - name: Test workflow CLI
+        run: node scripts/test-cli.mjs
+
+      - name: Verify package contents
+        run: npm pack --dry-run
