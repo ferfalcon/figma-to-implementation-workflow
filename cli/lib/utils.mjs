@@ -75,10 +75,13 @@ export function syncWorkflowViews(path, record, options) {
 }
 
 export function workflowFindings(path, record) {
-  return [
-    ...validateWorkflowRecord(record),
-    ...generatedStateFindings(path, record),
-  ];
+  const findings = validateWorkflowRecord(record);
+  try {
+    findings.push(...generatedStateFindings(path, record));
+  } catch (error) {
+    findings.push(`Generated workflow views could not be evaluated: ${error instanceof Error ? error.message : String(error)}`);
+  }
+  return findings;
 }
 
 export function saveRecord(path, record) {
