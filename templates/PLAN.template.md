@@ -1,6 +1,6 @@
 # Implementation Plan Template
 
-Use with `Document-Guidelines-PLAN.md`. Inspect the real repository before naming files, commands, dependencies, or conventions.
+Use with [`../guidelines/PLAN.md`](../guidelines/PLAN.md) and [`../workflow/Identifier-Conventions.md`](../workflow/Identifier-Conventions.md). Inspect the real repository before naming files, commands, dependencies, or conventions.
 
 Reference only snapshot IDs defined in `SOURCE-BASELINE.md`.
 
