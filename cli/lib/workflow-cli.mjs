@@ -1,6 +1,6 @@
 import {
   commandHelp, commandInit, commandMode, commandNext, commandStage,
-  commandStatus, commandTrace, commandValidate,
+  commandStatus, commandSync, commandTrace, commandValidate,
 } from './commands-project.mjs';
 import { commandArtifact, commandSnapshot } from './commands-resources.mjs';
 import { commandTask } from './commands-tasks.mjs';
@@ -19,6 +19,7 @@ export async function runCli(args, environment) {
   if (command === 'snapshot') return commandSnapshot(cwd, stdout, stderr, positionals, options);
   if (command === 'artifact') return commandArtifact(cwd, stdout, stderr, positionals, options);
   if (command === 'task') return commandTask(cwd, stdout, stderr, positionals, options);
+  if (command === 'sync') return commandSync(cwd, stdout, stderr, options);
   if (command === 'validate') return commandValidate(cwd, stdout, stderr, options);
   if (command === 'trace') return commandTrace(cwd, stdout, stderr, positionals[1], options);
   return fail(stderr, `Unknown command: ${command}. Run "design-workflow help".`);
