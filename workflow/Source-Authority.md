@@ -1,6 +1,6 @@
 # Source Authority
 
-Source authority defines which artifact owns each kind of decision and how to handle disagreement between design, documentation, repository state, runtime behavior, and stakeholder direction.
+Source authority defines which artifact or consolidated ownership section owns each kind of decision and how to handle disagreement between design, documentation, repository state, runtime behavior, and stakeholder direction.
 
 Authority is contextual. A source may be authoritative for one question and insufficient for another.
 
@@ -22,17 +22,21 @@ A higher position does not permit one source to decide outside its responsibilit
 
 ## Decision ownership
 
-| Decision type | Primary owner | Supporting evidence |
-|---|---|---|
-| Project goal, scope, users, business rule, product quality | `REQUIREMENTS.md` | stakeholder documentation, design evidence |
-| Visual hierarchy, layout intent, responsive transformation, interaction intent | `DESIGN.md` | pinned design source, requirements |
-| Precise behavior, states, validation, accessibility behavior | `SPEC.md` | requirements, design intent |
-| System boundaries, responsibilities, dependency rules, data ownership | `ARCHITECTURE.md` | repository, specification, constraints |
-| File impact, implementation order, dependencies, validation approach | `PLAN.md` | repository, upstream artifacts |
-| Current code, dependencies, scripts, configuration | pinned repository snapshot | repository files and commit |
-| Current deployed behavior | pinned runtime snapshot | deployment and capture evidence |
-| Source identity and revision | `SOURCE-BASELINE.md` | immutable revision or time-bound evidence |
-| Current operational stage and next action | `WORKFLOW-STATE.md` | approved artifacts and blockers |
+| Decision type | Primary owner | Express owner | Supporting evidence |
+|---|---|---|---|
+| Project goal, scope, users, business rule, product quality | `REQUIREMENTS.md` | Workpack Requirements section | stakeholder documentation, design evidence |
+| Visual hierarchy, layout intent, responsive transformation, interaction intent | `DESIGN.md` | Workpack Design intent section | pinned design source, requirements |
+| Precise behavior, states, validation, accessibility behavior | `SPEC.md` | Workpack Specification section | requirements, design intent |
+| System boundaries, responsibilities, dependency rules, data ownership | `ARCHITECTURE.md` | Not permitted; upgrade profile | repository, specification, constraints |
+| File impact, implementation order, dependencies, validation approach | `PLAN.md` | Workpack implementation approach | repository, upstream responsibilities |
+| Task scope, task-start state, and output lineage | Task file | Workpack single implementation unit and implementation record | plan, repository snapshots |
+| Final acceptance and implementation findings | `IMPLEMENTATION-REVIEW.md` | Workpack final implementation review | exact inputs, output commit, validation evidence |
+| Current code, dependencies, scripts, configuration | pinned repository snapshot | pinned repository snapshot | repository files and commit |
+| Current deployed behavior | pinned runtime snapshot | pinned runtime snapshot | deployment and capture evidence |
+| Source identity and revision | `SOURCE-BASELINE.md` | Workpack Source baseline section | immutable revision or time-bound evidence |
+| Current operational stage and next action | `WORKFLOW-STATE.md` | Workpack Control state section | approved responsibilities and blockers |
+
+Express consolidation changes file placement, not decision authority. A workpack section may not decide outside the responsibility represented by that section.
 
 ## Current versus target truth
 
@@ -55,9 +59,9 @@ When sources disagree:
 1. identify the exact conflicting claims;
 2. identify each source and snapshot ID;
 3. classify the decision type;
-4. identify the owning artifact or human decision owner;
+4. identify the owning artifact, consolidated section, or human decision owner;
 5. determine whether one source is outdated, incomplete, or outside its authority;
-6. correct the owning artifact when evidence supports a resolution;
+6. correct the owning area when evidence supports a resolution;
 7. propagate affected references;
 8. preserve superseded decisions when history matters;
 9. record unresolved conflicts as blocking or non-blocking questions;
@@ -68,6 +72,8 @@ Use a table such as:
 | Conflict | Sources | Decision type | Owner | Impact | Resolution | Status |
 |---|---|---|---|---|---|---|
 | ... | `SRC-DS-*`, `SRC-DOC-*`, `SRC-REPO-*` | ... | ... | ... | ... | Open / Resolved / Blocked |
+
+For Express, a material unresolved conflict that changes expected behavior is a profile-upgrade or blocking trigger. Do not hide it inside an implementation recommendation.
 
 ## Source limitations
 
@@ -126,10 +132,11 @@ Never promote an inference or recommendation to Confirmed without new authority.
 
 ## Review checklist
 
-- [ ] Every material decision is in its owning artifact.
+- [ ] Every material decision is in its owning artifact or consolidated section.
 - [ ] Current and target behavior are distinguished.
 - [ ] Repository and runtime evidence use pinned snapshots.
 - [ ] Design evidence is not used to invent product, security, or backend rules.
 - [ ] Conflicts identify source, owner, impact, and status.
 - [ ] Superseded sources and decisions remain traceable.
-- [ ] Unresolved decisions are visible in `WORKFLOW-STATE.md`.
+- [ ] Unresolved decisions are visible in the active control record.
+- [ ] Express work has no hidden architecture or material unresolved product decision.
