@@ -1,8 +1,25 @@
 # Documentation Review Template
 
-Use this template to create a project-specific `DOCUMENT-REVIEW.md`.
+Use this template to create a project-specific `DOCUMENT-REVIEW.md`. Correct problems in the owning document, then record the finding and resolution here.
 
-This document is an audit trail for the documentation consistency gate. Correct problems in the document that owns each decision, then record the finding and resolution here.
+Reference only snapshot IDs defined in `SOURCE-BASELINE.md`.
+
+```yaml
+---
+artifact: DOCUMENT-REVIEW
+status: In progress
+baseline:
+  design:
+    - SRC-DS-001
+  repository: []
+  runtime: []
+  documentation:
+    - SRC-DOC-001
+  assets: []
+created: YYYY-MM-DD
+updated: YYYY-MM-DD
+---
+```
 
 # Documentation Review
 
@@ -12,153 +29,129 @@ This document is an audit trail for the documentation consistency gate. Correct 
 - Review date: YYYY-MM-DD
 - Reviewer:
 - Project:
-- Reviewed versions or commits:
+- Source baseline: `SOURCE-BASELINE.md`
+- Reviewed artifact versions or commits:
 
 ## 2. Review Scope
 
-Reviewed sources:
+Reviewed sources and artifacts:
 
-- Design source
+- Active `SRC-*` snapshots
 - `DESIGN-AUDIT.md`
 - `REQUIREMENTS.md`
 - `DESIGN.md`
 - `SPEC.md`
-- Other authoritative project documentation:
+- Other authoritative project documentation
 
 Excluded sources or areas:
 
 - ...
 
-## 3. Review Method
+## 3. Baseline Integrity Check
+
+| Artifact | Snapshot IDs declared | IDs exist | Source verified | Silent newer source detected | Action |
+|---|---|---|---|---|---|
+| ... | ... | Yes / No | Verified / Changed / Unavailable | Yes / No / Unknown | ... |
+
+Do not review artifacts as one coherent set when they unknowingly use different source revisions.
+
+## 4. Review Method
 
 ### Pass 1 — Completeness and correctness
 
-Check each document against its own responsibility and source evidence.
+Check each document against its responsibility and pinned source evidence.
 
-### Pass 2 — Consistency, traceability, risks, and uncertainty
+### Pass 2 — Consistency, traceability, source integrity, risks, and uncertainty
 
-Check relationships across documents after corrections from the first pass have been applied.
+Check relationships after first-pass corrections. Verify baseline alignment and complete traceability without unsupported behavior.
 
-## 4. Executive Summary
+## 5. Executive Summary
 
-Summarize:
+Summarize overall quality, source integrity, findings, blocking decisions, corrections, and remaining uncertainty.
 
-- overall documentation quality;
-- number and severity of findings;
-- blocking decisions;
-- corrections applied;
-- remaining non-blocking uncertainty.
-
-## 5. Source-of-Truth Rules
+## 6. Source-of-Truth Rules
 
 | Decision type | Owning document |
 |---|---|
+| Source identity, revision, and pin strength | `SOURCE-BASELINE.md` |
 | Product outcome, rule, constraint, or quality expectation | `REQUIREMENTS.md` |
 | Visual, responsive, or interaction intent | `DESIGN.md` |
 | Precise and testable behavior | `SPEC.md` |
 | Structural technical decision | `ARCHITECTURE.md`, when applicable |
 | Implementation order and file impact | `PLAN.md` |
 
-Do not resolve stakeholder decisions through guesswork.
+Do not resolve stakeholder or source-version decisions through guesswork.
 
-## 6. Coverage Overview
+## 7. Coverage Overview
 
-| Requirement ID | Design support | Specification support | Evidence reference | Coverage status | Notes |
+| Requirement ID | Snapshot or evidence | Design support | Specification support | Coverage status | Notes |
 |---|---|---|---|---|---|
 | ... | ... | ... | ... | Complete / Partial / Missing / N/A | ... |
 
-## 7. Findings
-
-Use a stable finding ID. Do not reuse IDs after a finding has been removed or superseded.
+## 8. Findings
 
 ### DOC-001 — Finding title
 
-**Severity:** Critical / High / Medium / Low  
-**Category:** Contradiction / Missing coverage / Unsupported behavior / Untestable language / Responsive / Accessibility / State / Content / Data / Traceability / Assumption / Other  
-**Blocking:** Yes / No
-
-**Finding**
-
-Describe the problem precisely.
-
-**Evidence**
-
-- Design-source reference:
-- Requirement or specification IDs:
-- Document sections:
-- Repository evidence, when relevant:
-
-**Affected documents**
-
-- ...
-
-**Decision owner**
-
-- `REQUIREMENTS.md` / `DESIGN.md` / `SPEC.md` / Other
-
-**Resolution**
-
-Describe the accepted correction or explain why it remains unresolved.
-
-**Changes applied**
-
-| Document | Section or ID | Change |
-|---|---|---|
-| ... | ... | ... |
-
-**Remaining uncertainty**
-
-- ...
-
-**Status:** Open / Corrected / Accepted deviation / Blocked
+- **Severity:** Critical / High / Medium / Low
+- **Category:** Source baseline / Contradiction / Missing coverage / Unsupported behavior / Untestable language / Responsive / Accessibility / State / Content / Data / Traceability / Assumption / Other
+- **Blocking:** Yes / No
+- **Finding:**
+- **Snapshot and evidence:**
+- **Affected documents:**
+- **Decision owner:**
+- **Resolution:**
+- **Changes applied:**
+- **Remaining uncertainty:**
+- **Status:** Open / Corrected / Accepted deviation / Blocked
 
 Repeat for each finding.
 
-## 8. Traceability Problems
+## 9. Traceability and Source Problems
 
-| Finding ID | Source item | Missing or incorrect link | Required correction | Status |
+| Finding ID | Source item | Missing, stale, or incorrect link | Required correction | Status |
 |---|---|---|---|---|
 | ... | ... | ... | ... | ... |
 
-## 9. Open Questions and Decisions
+## 10. Open Questions and Decisions
 
 | Question ID | Question | Decision owner | Impact | Blocking | Needed by |
 |---|---|---|---|---|---|
 | ... | ... | ... | ... | Yes / No | ... |
 
-## 10. Corrections Applied
+## 11. Corrections Applied
 
 | Document | Change summary | Findings resolved | Validation performed |
 |---|---|---|---|
 | ... | ... | ... | ... |
 
-## 11. Remaining Risks
+## 12. Remaining Risks
 
 | Risk | Impact | Likelihood | Mitigation | Blocking |
 |---|---|---|---|---|
 | ... | ... | ... | ... | Yes / No |
 
-## 12. Final Cross-Document Review
+## 13. Final Cross-Document Review
 
 ### Completeness and correctness
 
 - [ ] Every must-have requirement has specification coverage.
 - [ ] Design decisions support relevant requirements.
-- [ ] Applicable states and edge cases are documented.
-- [ ] Responsive and accessibility expectations are represented.
-- [ ] Validation, error, and content behavior are defined where needed.
+- [ ] Applicable states, edge cases, responsive behavior, accessibility, validation, errors, and content are covered.
 - [ ] Requirements and specifications are objectively testable.
+- [ ] Every artifact declares valid snapshot IDs.
 
-### Consistency, traceability, risks, and uncertainty
+### Consistency, traceability, source integrity, risks, and uncertainty
 
 - [ ] IDs and cross-references are valid.
+- [ ] Artifacts use a compatible baseline or document justified differences.
+- [ ] No artifact silently relies on newer source content.
 - [ ] No specification behavior lacks requirement or design support.
 - [ ] No inference or recommendation is presented as confirmed.
-- [ ] Corrections were made in the document that owns the decision.
+- [ ] Corrections were made in the owning document.
 - [ ] Remaining uncertainty and blockers are visible.
 - [ ] A second review was performed after corrections.
 
-## 13. Completion Status
+## 14. Completion Status
 
 Select exactly one:
 
@@ -166,9 +159,11 @@ Select exactly one:
 - `Ready with documented non-blocking assumptions`
 - `Blocked by unresolved decisions`
 
-## 14. Completion Summary
+## 15. Completion Summary
 
 - Files created or modified:
+- Snapshot IDs reviewed:
+- Source verification performed:
 - Important findings:
 - Assumptions introduced:
 - Open questions or blockers:
