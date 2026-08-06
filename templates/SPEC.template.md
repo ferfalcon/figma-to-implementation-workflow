@@ -2,6 +2,25 @@
 
 Use with `Document-Guidelines-SPEC.md` to define precise, observable, testable behavior without prescribing unsupported repository structure.
 
+Reference only snapshot IDs defined in `SOURCE-BASELINE.md`.
+
+```yaml
+---
+artifact: SPEC
+status: Draft
+baseline:
+  design:
+    - SRC-DS-001
+  repository: []
+  runtime: []
+  documentation:
+    - SRC-DOC-001
+  assets: []
+created: YYYY-MM-DD
+updated: YYYY-MM-DD
+---
+```
+
 # Specification
 
 ## 1. Document Information
@@ -9,6 +28,7 @@ Use with `Document-Guidelines-SPEC.md` to define precise, observable, testable b
 - Status: Draft
 - Scope:
 - Last updated:
+- Source baseline: `SOURCE-BASELINE.md`
 - Related requirements: `REQUIREMENTS.md`
 - Related design intent: `DESIGN.md`
 
@@ -34,6 +54,7 @@ Use with `Document-Guidelines-SPEC.md` to define precise, observable, testable b
 
 - **Requirement references:** `REQ-*`
 - **Design references:** `DES-*`
+- **Source snapshots:** `SRC-*`
 - **Required behavior:**
 - **Applicable states:**
 - **Acceptance criteria:** `AC-*`
@@ -42,6 +63,7 @@ Use with `Document-Guidelines-SPEC.md` to define precise, observable, testable b
 
 ### SPEC-INT-001 — Interaction title
 
+- Source snapshots and evidence:
 - Trigger:
 - Preconditions:
 - Result:
@@ -57,6 +79,7 @@ Identify the interaction pattern before defining focus management. Do not apply 
 
 Describe observable behavior at supplied viewports, between them, and beyond them.
 
+- Design snapshot and evidence:
 - Fixed versus fluid behavior:
 - Wrapping, stacking, reordering, hiding, or replacement:
 - Content-driven transition condition:
@@ -83,6 +106,7 @@ Do not default to a familiar breakpoint number without evidence. When the exact 
 
 ### SPEC-ACC-001 — Accessibility behavior title
 
+- Source snapshot, requirement, or standard:
 - Semantic structure:
 - Accessible name and relationships:
 - Keyboard operation:
@@ -95,6 +119,7 @@ Do not default to a familiar breakpoint number without evidence. When the exact 
 
 ### SPEC-DATA-001 — Data specification title
 
+- Source documentation snapshot: `SRC-DOC-*`
 - Inputs:
 - Outputs:
 - Required and optional fields:
@@ -125,6 +150,7 @@ Reference approved performance, compatibility, security, privacy, reliability, S
 - When:
 - Then:
 - Requirement or specification references:
+- Source snapshots:
 - Validation method:
 
 ## 13. Assumptions, Risks, and Open Questions
@@ -143,9 +169,9 @@ Reference approved performance, compatibility, security, privacy, reliability, S
 
 ## 14. Traceability
 
-| Specification | Requirement | Design evidence or decision | Acceptance criteria | Validation |
-|---|---|---|---|---|
-| ... | ... | ... | ... | ... |
+| Specification | Snapshot | Requirement | Design evidence or decision | Acceptance criteria | Validation |
+|---|---|---|---|---|---|
+| ... | ... | ... | ... | ... | ... |
 
 ## 15. Review
 
@@ -153,10 +179,12 @@ Reference approved performance, compatibility, security, privacy, reliability, S
 
 - [ ] Material behavior, interactions, states, responsive behavior, accessibility, data, validation, errors, and edge cases are testable.
 - [ ] The specification does not prescribe implementation paths or task order without a genuine constraint.
+- [ ] Snapshot IDs in metadata exist and support the specified behavior.
 
-### Pass 2 — Consistency, traceability, risks, and uncertainty
+### Pass 2 — Consistency, traceability, source integrity, risks, and uncertainty
 
 - [ ] Identifiers follow `Identifier-Conventions.md`.
-- [ ] Every material specification maps to requirements and relevant design evidence.
+- [ ] Every material specification maps to requirements and relevant pinned design or documentation evidence.
+- [ ] No source changed silently after the artifact baseline was recorded.
 - [ ] No arbitrary breakpoint, focus rule, threshold, or unsupported behavior is presented as confirmed.
 - [ ] Open questions and assumptions remain visible.
