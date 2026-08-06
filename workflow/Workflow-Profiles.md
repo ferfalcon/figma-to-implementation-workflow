@@ -2,7 +2,9 @@
 
 Workflow profiles keep the process proportional to project risk and complexity without removing essential design, accessibility, source integrity, implementation, or validation concerns.
 
-Select a profile before substantive documentation or implementation begins. Express records its profile and control state inside `WORKPACK.md`. Lite, Standard, and Full record them in `PROJECT-CONTEXT.md` and `WORKFLOW-STATE.md`.
+Select a profile before substantive documentation or implementation begins. When `.workflow/workflow-record.json` exists, it is canonical for the current profile, execution mode, stage, and other mutable control fields. Narrative artifacts retain profile rationale, eligibility evidence, decisions, and change history.
+
+Follow [`State-Ownership.md`](State-Ownership.md). Do not maintain the same mutable state independently in the record and Markdown artifacts.
 
 A profile controls artifact granularity. It does not permit unsupported assumptions, unpinned material sources, skipped validation, or implementation without evidence.
 
@@ -36,7 +38,9 @@ Every profile requires:
 - implementation-output lineage;
 - evidence-backed final validation.
 
-Express owns these controls inside `WORKPACK.md`. Lite, Standard, and Full use `SOURCE-BASELINE.md`, `PROJECT-CONTEXT.md`, and `WORKFLOW-STATE.md`.
+Express owns narrative controls inside `WORKPACK.md`. Lite, Standard, and Full use `SOURCE-BASELINE.md`, `PROJECT-CONTEXT.md`, and `WORKFLOW-STATE.md`.
+
+In CLI-managed mode, the workflow record owns mutable control, source-registry, artifact-registry, and task-registry fields. Generated views under `.workflow/generated/` replace copied operational tables. The Markdown artifacts keep evidence, rationale, blockers, assumptions, decisions, coverage, and history.
 
 Every downstream artifact or consolidated section must reference the snapshot IDs it actually used.
 
@@ -73,22 +77,22 @@ Use [`../templates/WORKPACK.template.md`](../templates/WORKPACK.template.md) and
 
 `WORKPACK.md` owns, in clearly separated sections:
 
-- control state and profile eligibility;
-- source baseline, authority, verification, and limitations;
+- profile eligibility rationale and narrative control information;
+- source scope, authority, evidence, verification, and limitations;
 - scope and constraints;
 - design evidence and audit findings;
 - requirements, design intent, specification, and acceptance criteria;
 - repository-aware implementation approach;
-- one implementation task;
+- one implementation task's detailed objective and steps;
 - two review passes;
-- implementation discoveries, deviations, and output lineage;
+- implementation discoveries and deviations;
 - validation evidence and final implementation review.
 
 Use the normal identifier namespaces inside the workpack. Consolidation does not merge the responsibilities of requirements, design intent, specification, planning, task execution, and validation.
 
 Do not create separate `SOURCE-BASELINE.md`, `PROJECT-CONTEXT.md`, `WORKFLOW-STATE.md`, `DESIGN-AUDIT.md`, `IMPLEMENTATION-BRIEF.md`, requirements, design, specification, plan, task, or implementation-review artifacts while the work remains Express-eligible.
 
-A machine-readable workflow record may accompany the workpack as an executable projection; it is not a second normative artifact.
+A machine-readable workflow record may accompany the workpack. When present, it is canonical for mutable profile, mode, stage, snapshot registry, artifact registry, task state, validation state, and output lineage. It is not a second normative product or design artifact.
 
 ### Upgrade triggers
 
@@ -192,7 +196,8 @@ Full-profile work should explicitly cover, when applicable:
 | Concern | Express | Lite | Standard | Full |
 |---|---|---|---|---|
 | Normative Markdown artifacts | One `WORKPACK.md` | Separate controls, audit, brief, task, and final review | Separate core artifacts | Complete artifact set |
-| Source baseline, context, and state | Consolidated in workpack | Required separately | Required separately | Required separately |
+| Source baseline, context, and state | Consolidated narrative in workpack | Required separately | Required separately | Required separately |
+| Mutable operational state in CLI-managed mode | Workflow record + generated views | Workflow record + generated views | Workflow record + generated views | Workflow record + generated views |
 | Design audit | Workpack section | Required | Required | Required |
 | Requirements, design, and specification | Separate workpack sections | Consolidated in brief | Separate artifacts | Separate artifacts |
 | Documentation consistency gate | Two workpack reviews | In brief | Separate artifact | Separate artifact |
@@ -203,7 +208,7 @@ Full-profile work should explicitly cover, when applicable:
 
 ## Execution modes
 
-Record one execution mode in `WORKPACK.md` for Express or `WORKFLOW-STATE.md` for other profiles.
+In CLI-managed mode, record the current execution mode in the workflow record. In Markdown-only mode, record it in `WORKPACK.md` for Express or `WORKFLOW-STATE.md` for other profiles.
 
 ### Gated
 
@@ -239,16 +244,17 @@ When Express upgrades:
 
 1. record the trigger and target profile in `WORKPACK.md`;
 2. preserve source IDs, evidence IDs, domain IDs, task IDs, decisions, and history;
-3. create the target profile's required control artifacts;
-4. move or copy each workpack section into its owning artifact without changing meaning;
-5. mark the workpack as Superseded after the new artifact set is internally consistent;
-6. resume at the earliest affected stage.
+3. update the workflow record and generated views when CLI-managed mode is active;
+4. create the target profile's required narrative artifacts;
+5. move or copy each workpack section into its owning artifact without changing meaning;
+6. mark the workpack as Superseded after the new artifact set is internally consistent;
+7. resume at the earliest affected stage.
 
 When Lite, Standard, or Full changes profile or mode:
 
 1. update `PROJECT-CONTEXT.md` when the profile decision changes materially;
-2. update `WORKFLOW-STATE.md` immediately;
-3. record the reason and effective stage;
+2. update the workflow record and run `design-workflow sync` in CLI-managed mode, or update `WORKFLOW-STATE.md` in Markdown-only mode;
+3. record the reason and effective stage in the narrative history;
 4. create any newly required artifacts before advancing;
 5. do not discard stable IDs or approved decisions.
 

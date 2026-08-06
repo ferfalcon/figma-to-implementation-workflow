@@ -9,6 +9,7 @@
   },
   "files": [
     "cli",
+    "workflow",
     "templates",
     "schemas",
     "scripts/lib",
@@ -16,8 +17,9 @@
     "LICENSE"
   ],
   "scripts": {
-    "validate": "node scripts/validate-workflow.mjs && node scripts/test-workflow-record.mjs && node scripts/test-cli.mjs",
+    "validate": "node scripts/validate-workflow.mjs && node scripts/test-workflow-record.mjs && node scripts/test-generated-state.mjs && node scripts/test-cli.mjs",
     "test:records": "node scripts/test-workflow-record.mjs",
+    "test:state": "node scripts/test-generated-state.mjs",
     "test:cli": "node scripts/test-cli.mjs"
   },
   "engines": {

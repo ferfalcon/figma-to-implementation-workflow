@@ -1,86 +1,59 @@
 # Workflow State Template
 
-Use this file as the operational control record for the current project. Update it whenever stage, readiness, profile, execution mode, blockers, active inputs, implementation outputs, or next permitted action changes.
+Use this file for workflow-control information that cannot be derived from the machine-readable record: blockers, assumptions, decisions, verification history, exceptions, and completion narrative.
+
+Follow [`../workflow/State-Ownership.md`](../workflow/State-Ownership.md).
+
+When `.workflow/workflow-record.json` exists, do not manually repeat its current profile, mode, stage, status, active inputs, current task, latest output, artifact statuses, or task statuses here. Use the generated views instead.
 
 # Workflow State
 
-## 1. Current Control State
+## 1. State Ownership Mode
 
-- Profile: Lite / Standard / Full
-- Execution mode: Gated / Continuous documentation / Task-by-task
-- Current stage:
-- Current status: Not started / In progress / Ready / Blocked / Complete
-- Last updated:
-- Last completed action:
-- Next permitted action:
+Choose one mode for the project:
 
-## 2. Active Input Baseline
+- [ ] **CLI-managed:** `.workflow/workflow-record.json` is canonical for mutable operational state.
+- [ ] **Markdown-only:** this file and the related Markdown artifacts are canonical because no workflow record is used.
 
-- Source baseline: `SOURCE-BASELINE.md`
-- Design inputs: `SRC-DS-*` / None
-- Repository input baseline: `SRC-REPO-*` / None
-- Documentation inputs: `SRC-DOC-*` / None
-- Asset inputs: `SRC-ASSET-*` / None
-- Supporting runtime inputs: `SRC-RUN-*` / None
-- Last input verification date and method:
-- Input baseline status: Verified / Changed / Partially verified / Unverified
+### CLI-managed generated views
 
-## 3. Implementation and Validation Lineage
+- Current status: `.workflow/generated/WORKFLOW-STATUS.md`
+- Source registry and lineage: `.workflow/generated/SOURCE-INDEX.md`
+- Artifact inventory: `.workflow/generated/ARTIFACT-INDEX.md`
+- Task status and dependencies: `.workflow/generated/TASK-INDEX.md`
 
-- Current task-start repository snapshot: `SRC-REPO-*` / None
-- Latest approved implementation-output snapshot: `SRC-REPO-*` / None
-- Current validation-runtime snapshot: `SRC-RUN-*` / None
-- Last completed task: task ID / None
-- Lineage status: Complete / In progress / Broken / Unverified
+Run:
 
-Approved task outputs advance implementation lineage. They do not replace or supersede the original repository input baseline.
+```bash
+design-workflow sync --check
+```
 
-## 4. Stage Registry
+Do not edit generated files manually.
 
-| Stage | Purpose | Artifact or result | Status | Exit result |
-|---:|---|---|---|---|
-| 0 | Establish context, snapshots, and control | `SOURCE-BASELINE.md`, `PROJECT-CONTEXT.md`, `WORKFLOW-STATE.md` | ... | ... |
-| 1 | Audit pinned design evidence | `DESIGN-AUDIT.md` | ... | ... |
-| 2 | Define requirements | `REQUIREMENTS.md` or Lite brief section | ... | ... |
-| 3 | Document design intent | `DESIGN.md` or Lite brief section | ... | ... |
-| 4 | Define testable behavior | `SPEC.md` or Lite brief section | ... | ... |
-| 5 | Review documentation | `DOCUMENT-REVIEW.md` or Lite brief review | ... | ... |
-| 6 | Define architecture when applicable | `ARCHITECTURE.md` or recorded skip | ... | ... |
-| 7 | Plan implementation | `PLAN.md` or Lite brief section | ... | ... |
-| 8 | Review the plan | `PLAN-REVIEW.md` or Lite brief review | ... | ... |
-| 9 | Decompose tasks | Task file(s) and optional `TASKS-INDEX.md` | ... | ... |
-| 10 | Implement tasks and record output lineage | Code and updated task records | ... | ... |
-| 11 | Validate implementation against pinned inputs and outputs | `IMPLEMENTATION-REVIEW.md` | ... | ... |
+## 2. Blocking Questions
 
-Use `N/A — profile` only when the selected profile explicitly consolidates or omits the artifact.
+| ID | Question | Decision owner | Impact | Required before | Status |
+|---|---|---|---|---|---|
+| ... | ... | ... | ... | ... | Open / Resolved / Blocked |
 
-## 5. Approved Artifacts
+## 3. Non-blocking Assumptions
 
-| Artifact | Status | Version, commit, or date | Baseline snapshot IDs | Approved by or evidence |
+| Assumption | Classification | Impact | Validation or correction point | Status |
 |---|---|---|---|---|
-| ... | Draft / Reviewed / Approved / Superseded | ... | ... | ... |
+| ... | Inferred / Recommended | ... | ... | Open / Confirmed / Rejected |
 
-## 6. Blocking Questions
-
-| ID | Question | Decision owner | Impact | Required before |
-|---|---|---|---|---|
-| ... | ... | ... | ... | ... |
-
-## 7. Non-blocking Assumptions
-
-| Assumption | Classification | Impact | Validation or correction point |
-|---|---|---|---|
-| ... | Inferred / Recommended | ... | ... |
-
-## 8. Architecture Decision
+## 4. Architecture Decision
 
 - Separate `ARCHITECTURE.md`: Required / Not required / Undecided
 - Reason:
+- Evidence and constraints:
 - Recorded by:
 
 When architecture is skipped, place behavioral structural constraints in `SPEC.md` and repository or implementation structure in `PLAN.md`, or in their clearly separated Lite brief sections.
 
-## 9. Source Verification, Outputs, and Rebaseline History
+## 5. Source Verification, Outputs, and Rebaseline History
+
+Record narrative history and impact here. Current snapshot status and lineage belong in the workflow record when CLI-managed mode is active.
 
 | Date | Classification | Previous snapshot | New snapshot | Change or result | Affected stage or task | Action | Status |
 |---|---|---|---|---|---|---|---|
@@ -88,13 +61,21 @@ When architecture is skipped, place behavioral structural constraints in `SPEC.m
 
 Expected task outputs update lineage without rolling back upstream stages. Unexpected material input or concurrent changes require impact assessment in `SOURCE-BASELINE.md` and may move the workflow backward.
 
-## 10. Profile or Mode Changes
+## 6. Profile or Mode Change History
 
-| Date | Previous | New | Reason | Effective stage |
-|---|---|---|---|---|
-| ... | ... | ... | ... | ... |
+The current profile and mode belong in the workflow record in CLI-managed mode. Record only the decision history here.
 
-## 11. Stage Advancement Rules
+| Date | Previous | New | Reason | Effective stage | Decision owner |
+|---|---|---|---|---|---|
+| ... | ... | ... | ... | ... | ... |
+
+## 7. Exceptions and Deviations
+
+| ID | Expected process or behavior | Deviation | Reason | Impact | Approval or resolution | Status |
+|---|---|---|---|---|---|---|
+| ... | ... | ... | ... | ... | ... | Open / Accepted / Corrected |
+
+## 8. Stage Advancement Rules
 
 - Verify relevant input and task-start snapshots before a stage, after a meaningful pause, before a task, and before final acceptance.
 - Classify differences as Unchanged, Expected output, Unexpected upstream change, or Unavailable.
@@ -107,8 +88,9 @@ Expected task outputs update lineage without rolling back upstream stages. Unexp
 - In Task-by-task mode, select only an incomplete task whose prerequisites are satisfied.
 - Do not treat silence as approval for unresolved product, design, source, or architecture decisions.
 - Do not bypass a blocked stage through unsupported assumptions.
+- In CLI-managed mode, update operational state through the CLI and keep generated views synchronized.
 
-## 12. Latest Completion Summary
+## 9. Latest Completion Summary
 
 - Files created or modified:
 - Input snapshot IDs used:
@@ -122,3 +104,63 @@ Expected task outputs update lineage without rolling back upstream stages. Unexp
 - Deviations:
 - Remaining risks:
 - Next permitted action:
+
+Do not use this narrative summary as a second mutable status registry.
+
+---
+
+# Markdown-only Fallback
+
+Complete this appendix only when the project does not use `.workflow/workflow-record.json`.
+
+## F1. Current Control State
+
+- Profile: Express / Lite / Standard / Full
+- Execution mode: Gated / Continuous documentation / Task-by-task
+- Current stage:
+- Current status: Not started / In progress / Ready / Blocked / Complete
+- Last updated:
+- Last completed action:
+- Next permitted action:
+
+## F2. Active Input Baseline
+
+- Source baseline: `SOURCE-BASELINE.md`
+- Design inputs: `SRC-DS-*` / None
+- Repository input baseline: `SRC-REPO-*` / None
+- Documentation inputs: `SRC-DOC-*` / None
+- Asset inputs: `SRC-ASSET-*` / None
+- Supporting runtime inputs: `SRC-RUN-*` / None
+- Last input verification date and method:
+- Input baseline status: Verified / Changed / Partially verified / Unverified
+
+## F3. Implementation and Validation Lineage
+
+- Current task-start repository snapshot: `SRC-REPO-*` / None
+- Latest approved implementation-output snapshot: `SRC-REPO-*` / None
+- Current validation-runtime snapshot: `SRC-RUN-*` / None
+- Last completed task: task ID / None
+- Lineage status: Complete / In progress / Broken / Unverified
+
+## F4. Stage Registry
+
+| Stage | Purpose | Artifact or result | Status | Exit result |
+|---:|---|---|---|---|
+| 0 | Establish context, snapshots, and control | Stage 0 artifacts | ... | ... |
+| 1 | Audit pinned design evidence | `DESIGN-AUDIT.md` | ... | ... |
+| 2 | Define requirements | `REQUIREMENTS.md` or consolidated section | ... | ... |
+| 3 | Document design intent | `DESIGN.md` or consolidated section | ... | ... |
+| 4 | Define testable behavior | `SPEC.md` or consolidated section | ... | ... |
+| 5 | Review documentation | Review artifact or consolidated review | ... | ... |
+| 6 | Define architecture when applicable | `ARCHITECTURE.md` or recorded skip | ... | ... |
+| 7 | Plan implementation | `PLAN.md` or consolidated section | ... | ... |
+| 8 | Review the plan | `PLAN-REVIEW.md` or consolidated review | ... | ... |
+| 9 | Decompose tasks | Task file(s) and index | ... | ... |
+| 10 | Implement tasks and record output lineage | Code and task records | ... | ... |
+| 11 | Validate implementation | `IMPLEMENTATION-REVIEW.md` | ... | ... |
+
+## F5. Artifact Registry
+
+| Artifact | Status | Version, commit, or date | Baseline snapshot IDs | Approved by or evidence |
+|---|---|---|---|---|
+| ... | Draft / Reviewed / Approved / Superseded | ... | ... | ... |

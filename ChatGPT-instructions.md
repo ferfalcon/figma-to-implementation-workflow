@@ -13,6 +13,7 @@ Follow:
 - `workflow/Workflow-Profiles.md`;
 - `workflow/Source-Snapshots.md`;
 - `workflow/Source-Authority.md`;
+- `workflow/State-Ownership.md`;
 - `workflow/Identifier-Conventions.md`;
 - `workflow/Validation-Rules.md`;
 - the relevant source adapter in `source-adapters/`;
@@ -29,28 +30,55 @@ Choose from actual complexity and risk, not only visual size.
 
 Upgrade immediately when complexity, uncertainty, or risk exceeds the selected profile. Preserve stable IDs and source records when upgrading.
 
+# Canonical workflow state
+
+Determine the project's control mode before updating state.
+
+## CLI-managed mode
+
+When `.workflow/workflow-record.json` exists:
+
+- treat it as canonical for mutable profile, execution mode, stage, status, active inputs, snapshot registry, artifact inventory, current task, task status, prerequisites, validation state, outputs, and implementation lineage;
+- use `.workflow/generated/WORKFLOW-STATUS.md`, `SOURCE-INDEX.md`, `ARTIFACT-INDEX.md`, and `TASK-INDEX.md` as generated human-readable views;
+- never manually edit generated views;
+- update managed state through `design-workflow` commands when possible;
+- run `design-workflow sync` after an intentional direct record edit;
+- run `design-workflow sync --check` or `design-workflow validate` before claiming state consistency;
+- do not copy record-owned values into narrative Markdown tables.
+
+Markdown artifacts continue to own source evidence and limitations, product and design rationale, behavior, architecture, implementation reasoning, blockers, assumptions, decisions, coverage, deviations, and narrative history.
+
+## Markdown-only mode
+
+When no workflow record is used, maintain the fallback state tables in the appropriate Markdown artifacts. Do not claim generated-state validation in this mode.
+
+Do not mix control modes for the same field.
+
 # Express rules
 
 For Express, use `templates/WORKPACK.template.md` and `prompts/00-express-workpack.md`.
 
 `WORKPACK.md` is the single normative Markdown artifact and must keep separate sections for:
 
-- control state and eligibility;
-- source baseline, authority, verification, and limitations;
+- profile eligibility and narrative control context;
+- source scope, authority, evidence, verification, and limitations;
 - scope and constraints;
 - design evidence and audit findings;
 - requirements, design intent, specification, and acceptance criteria;
 - repository-aware implementation approach;
-- exactly one task;
+- exactly one task's detailed objective and steps;
 - two review passes;
-- implementation discoveries, deviations, and output lineage;
+- implementation discoveries and deviations;
 - validation evidence and final implementation review.
+
+In CLI-managed mode, the workflow record owns the workpack's mutable snapshot, task, validation-state, and output-lineage registry fields. The workpack references IDs and keeps their evidence and rationale without maintaining a conflicting status copy.
 
 Do not create separate workflow artifacts while the work remains Express-eligible. A second independent task or any material architecture, integration, operational, or product-decision concern requires an upgrade before continuing.
 
 # Source snapshot control
 
-- Express records source snapshots in `WORKPACK.md`. Other profiles use `SOURCE-BASELINE.md`.
+- In CLI-managed mode, snapshot identity, status, role, pin strength, reference, commit, parent, and producing task belong in the workflow record; detailed evidence and limitations remain in `WORKPACK.md` or `SOURCE-BASELINE.md`.
+- In Markdown-only mode, Express records snapshot state in `WORKPACK.md`; other profiles use `SOURCE-BASELINE.md`.
 - Use `SRC-DS-*`, `SRC-REPO-*`, `SRC-RUN-*`, `SRC-DOC-*`, and `SRC-ASSET-*` records.
 - Do not treat a mutable URL, Figma file, branch, shared document, or live website as immutable.
 - Pin repository states to commit SHAs.
@@ -65,14 +93,17 @@ Do not create separate workflow artifacts while the work remains Express-eligibl
 # Stage and execution control
 
 - Start at Stage 0 unless the current control state and source baseline are accurate.
-- Express records control in `WORKPACK.md`; other profiles use `PROJECT-CONTEXT.md` and `WORKFLOW-STATE.md`.
+- In CLI-managed mode, read and update current control through the workflow record and generated views.
+- In Markdown-only mode, Express records control in `WORKPACK.md`; other profiles use `PROJECT-CONTEXT.md` and `WORKFLOW-STATE.md`.
 - Respect current stage, profile, execution mode, status, active inputs, task-start snapshot, latest output, blockers, and next action.
 - When asked only to inspect or analyze, do not create planning or implementation artifacts.
 - In `Gated` mode, stop after each stage or consolidated checkpoint until explicitly advanced.
 - In `Continuous documentation` mode, continue through documentation, review, planning, and task decomposition while unblocked, then stop before implementation.
 - In `Task-by-task` mode, implement only one unblocked task. Express has exactly one task.
 - Do not bypass a blocked stage through assumptions or Unverified material inputs.
-- Update the active control record whenever stage, readiness, profile, mode, blockers, snapshots, lineage, or next action changes.
+- Update the canonical control owner whenever stage, readiness, profile, mode, snapshots, lineage, current task, or next action changes.
+- Keep blockers and decision detail in their narrative Markdown owner when the record cannot represent them.
+- Synchronize generated views after direct record edits and verify freshness before advancing.
 
 # Evidence and ownership
 
@@ -82,12 +113,14 @@ Use globally distinct IDs from `workflow/Identifier-Conventions.md`, including `
 
 Keep responsibilities distinct even when consolidated:
 
+- the workflow record owns mutable operational registries in CLI-managed mode;
+- generated views are derived and never own decisions;
 - requirements own outcomes, rules, constraints, and quality expectations;
 - design owns visual, responsive, content, and interaction intent;
 - specification owns precise observable behavior and acceptance criteria;
 - architecture owns structural technical decisions;
 - planning owns repository-aware approach, ordering, dependencies, risks, and validation;
-- tasks own implementation scope, task-start state, checks, and output lineage;
+- task narrative owns implementation objective, scope, steps, risk, and detailed evidence;
 - final review owns acceptance against exact inputs and outputs.
 
 Apply `workflow/Source-Authority.md` when sources conflict. Identify the conflict and impact. Correct the owning area when evidence supports it; otherwise record an open question.
@@ -131,6 +164,8 @@ After an approved task is committed:
 
 - create an Implementation output `SRC-REPO-*` record;
 - connect it to its parent task-start snapshot and task ID;
+- update the canonical task and output state;
+- synchronize generated views in CLI-managed mode;
 - do not treat the expected output as an upstream rebaseline.
 
 # Reviews and validation
@@ -142,11 +177,12 @@ Perform two distinct review passes:
 
 Follow `workflow/Validation-Rules.md`.
 
-- Never claim tests, builds, linting, type checks, accessibility checks, source checks, or manual validation passed unless executed successfully.
+- Never claim tests, builds, linting, type checks, accessibility checks, source checks, synchronization checks, or manual validation passed unless executed successfully.
 - A passed check requires evidence.
 - Failed, blocked, unexecuted, or not-applicable checks require a reason.
 - Corrected findings require retesting.
 - Validate the changed scope and likely regressions.
+- In CLI-managed mode, validation includes semantic record checks and generated-view freshness.
 - Final acceptance must reference exact input snapshots, the implementation-output commit, and the validation runtime when applicable.
 
-End task-oriented responses with files changed, input snapshots, task-start and output snapshots, source verification, decisions, validation, deviations, blockers, remaining risks, and the next permitted action.
+End task-oriented responses with files changed, input snapshots, task-start and output snapshots, source verification, decisions, validation, deviations, blockers, remaining risks, generated-state status when applicable, and the next permitted action.

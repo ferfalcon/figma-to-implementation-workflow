@@ -8,6 +8,13 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 
 ### Added
 
+- Canonical workflow-state ownership rules for CLI-managed and Markdown-only projects.
+- Deterministic generated Markdown views for workflow status, sources, artifacts, and tasks.
+- Canonical SHA-256 record digests embedded in generated views.
+- `design-workflow sync` and `design-workflow sync --check` commands.
+- Automatic generated-view synchronization after every CLI-managed record mutation.
+- Stale or missing generated-view detection in CLI and repository validation.
+- Focused generated-state tests covering key-order stability, record drift, manual edits, and repair.
 - Dependency-free `design-workflow` CLI package and executable entry point.
 - CLI commands for project initialization, status, next-action guidance, stage and mode control, source snapshots, artifact creation, task lifecycle, validation, and identifier tracing.
 - Profile-aware artifact generation from the toolkit templates.
@@ -31,11 +38,15 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 
 ### Changed
 
+- `WORKFLOW-STATE.md`, `SOURCE-BASELINE.md`, and `TASKS-INDEX.md` templates now separate record-owned mutable state from narrative evidence, decisions, coverage, and history.
+- Snapshot creation now uses the same synchronized save path as other CLI mutations.
+- CLI status, next-action, and validation commands now detect generated-state drift.
+- Repository validation now checks generated views for every discovered workflow record.
 - Reorganized normative workflow documents into `workflow/`.
 - Reorganized artifact-writing guidance into `guidelines/`.
 - Moved source-specific Figma preparation into `source-adapters/`.
 - Reorganized examples by Express, Lite, Standard, and Full profiles.
-- Extended repository CI to validate schemas, fixtures, Express resources, workflow CLI behavior, package contents, and discovered workflow records.
+- Extended repository CI to validate schemas, fixtures, generated state, workflow CLI behavior, package contents, and discovered workflow records.
 - Updated internal links and assistant instructions for the v2 structure and Express path.
 
 ### Removed

@@ -1,12 +1,21 @@
 # Source Baseline Template
 
-Use this template during Stage 0 to create `SOURCE-BASELINE.md`. Follow [`../workflow/Source-Snapshots.md`](../workflow/Source-Snapshots.md) and [`../workflow/Identifier-Conventions.md`](../workflow/Identifier-Conventions.md).
+Use this template during Stage 0 to create `SOURCE-BASELINE.md`. Follow [`../workflow/Source-Snapshots.md`](../workflow/Source-Snapshots.md), [`../workflow/Identifier-Conventions.md`](../workflow/Identifier-Conventions.md), and [`../workflow/State-Ownership.md`](../workflow/State-Ownership.md).
 
-Do not replace a snapshot record with newer content. Create a new ID. Use rebaseline impact assessment for changed upstream inputs and lineage tracking for expected implementation outputs.
+When `.workflow/workflow-record.json` exists, it owns mutable snapshot identity, status, role, pin strength, reference, commit, parent, and producing-task fields. Use `.workflow/generated/SOURCE-INDEX.md` as the human-readable registry and do not maintain a second mutable snapshot table here.
+
+This document owns detailed scope, evidence, reproduction instructions, authority, dependencies, limitations, verification narrative, and rebaseline impact.
 
 # Source Baseline
 
-## 1. Document Information
+## 1. State Ownership Mode
+
+- [ ] CLI-managed — snapshot registry: `.workflow/generated/SOURCE-INDEX.md`
+- [ ] Markdown-only — complete the fallback registry in Appendix A
+
+Run `design-workflow sync --check` before relying on generated source status.
+
+## 2. Document Information
 
 - Status: Draft
 - Project:
@@ -16,7 +25,125 @@ Do not replace a snapshot record with newer content. Create a new ID. Use rebase
 - Related context: `PROJECT-CONTEXT.md`
 - Operational state: `WORKFLOW-STATE.md`
 
-## 2. Active Input Baseline and Output Lineage
+## 3. Design Source Evidence
+
+### SRC-DS-001 — Snapshot title
+
+The ID and current registry fields belong in the workflow record in CLI-managed mode.
+
+- **Source type:** Figma / Screenshot / Image / PDF / Existing website / Other
+- **Purpose:**
+- **Included scope:**
+- **Excluded scope:**
+- **Captured or inspected at:** YYYY-MM-DDTHH:MM:SS±HH:MM
+- **Version, revision, or checksum evidence:**
+- **Captured evidence:**
+- **Access and reproduction instructions:**
+- **Dependencies:**
+- **Authority for this project:**
+- **Known limitations:**
+
+For Figma, record file key, page and node IDs, named version when available, library dependencies, and inspection mode.
+
+## 4. Repository Source Evidence
+
+### SRC-REPO-001 — Repository snapshot title
+
+- **Repository:**
+- **Relevant application, package, or directory:**
+- **Branch at capture:**
+- **Captured at:** YYYY-MM-DDTHH:MM:SS±HH:MM
+- **Lockfile, submodule, or workspace state:**
+- **Uncommitted changes or patch:** None / reference
+- **Access and reproduction instructions:**
+- **Build or inspection context:**
+- **Known limitations:**
+
+Commit, parent, role, task, and current status belong in the workflow record in CLI-managed mode.
+
+## 5. Runtime Source Evidence
+
+### SRC-RUN-001 — Runtime snapshot title
+
+- **Environment:** Production / Preview / Staging / Local / Other
+- **URL or entry point:**
+- **Deployment or release evidence:**
+- **Associated repository evidence:**
+- **Captured at:** YYYY-MM-DDTHH:MM:SS±HH:MM
+- **Browser, viewport, and device context:**
+- **Authentication, personalization, or feature-flag state:**
+- **Test data context:**
+- **Captured evidence:**
+- **Known limitations:**
+
+## 6. Documentation Source Evidence
+
+### SRC-DOC-001 — Document title
+
+- **Authority:** Normative / Informative / Historical
+- **Path or URL:**
+- **Included sections:**
+- **Revision, version, date, commit, or checksum evidence:**
+- **Captured at:** YYYY-MM-DDTHH:MM:SS±HH:MM
+- **Access and reproduction instructions:**
+- **Known limitations:**
+
+## 7. Asset Source Evidence
+
+### SRC-ASSET-001 — Asset or bundle title
+
+- **Type:** Image / Icon / Font / Archive / Other
+- **Path or reference:**
+- **Included contents:**
+- **Format and size:**
+- **SHA-256 checksum evidence:**
+- **Captured at:** YYYY-MM-DDTHH:MM:SS±HH:MM
+- **Licensing or usage constraints:**
+- **Known limitations:**
+
+## 8. Source Verification Log
+
+| Date and time | Snapshot | Verification method | Result classification | Change detected | Action |
+|---|---|---|---|---|---|
+| ... | ... | Commit comparison / named-version check / visual comparison / checksum / other | Unchanged / Expected output / Unexpected change / Unavailable | Yes / No / Unknown | ... |
+
+Record checks before stages, after meaningful pauses, before tasks, and before final acceptance. Current snapshot status remains in the workflow record in CLI-managed mode.
+
+## 9. Upstream Rebaseline and Impact Assessments
+
+| New snapshot | Previous snapshot | Change summary | Affected artifacts | Earliest affected stage | Required action | Status |
+|---|---|---|---|---:|---|---|
+| ... | ... | ... | ... | ... | ... | Open / In progress / Complete |
+
+Use this table for changed upstream inputs or unexpected concurrent changes, not for approved task output commits.
+
+## 10. Baseline Review
+
+### Pass 1 — Completeness and correctness
+
+- [ ] Every material source has a snapshot ID and evidence section.
+- [ ] Exact scope and capture time are recorded.
+- [ ] Repository snapshots use commit SHAs in the canonical registry.
+- [ ] Task outputs have parent snapshots and task IDs in the canonical registry.
+- [ ] Mutable sources are not mislabeled as immutable.
+- [ ] Access and reproduction limitations are explicit.
+
+### Pass 2 — Consistency, traceability, source integrity, risks, and uncertainty
+
+- [ ] Generated source state is current in CLI-managed mode.
+- [ ] Identifiers follow `Identifier-Conventions.md`.
+- [ ] Expected implementation outputs are distinguished from upstream source changes.
+- [ ] Rebaseline impact assessments cover unexpected upstream changes.
+- [ ] Evidence sections do not redefine record-owned status or lineage.
+- [ ] No artifact silently relies on undefined or newer source content.
+
+---
+
+# Appendix A — Markdown-only Snapshot Registry
+
+Complete this appendix only when the project does not use `.workflow/workflow-record.json`.
+
+## A1. Active Baseline and Lineage
 
 | Purpose | Active snapshot IDs | Required for current scope | Notes |
 |---|---|---|---|
@@ -28,154 +155,8 @@ Do not replace a snapshot record with newer content. Create a new ID. Use rebase
 | Latest implementation output | `SRC-REPO-002` / None | Yes / No | ... |
 | Current validation runtime | `SRC-RUN-001` / None | Yes / No | ... |
 
-Use `None` when a purpose is not applicable. Do not reference an undefined ID.
+## A2. Snapshot Registry
 
-## 3. Design Source Snapshots
-
-### SRC-DS-001 — Snapshot title
-
-- **Status:** Active / Superseded / Invalid / Unverified
-- **Role:** Input baseline / Supporting source / Historical reference
-- **Source type:** Figma / Screenshot / Image / PDF / Existing website / Other
-- **Purpose:**
-- **Canonical reference:**
-- **Included scope:**
-- **Excluded scope:**
-- **Captured or inspected at:** YYYY-MM-DDTHH:MM:SS±HH:MM
-- **Pin strength:** Immutable / Versioned / Time-bound / Unverified
-- **Version, revision, or checksum:**
-- **Captured evidence:**
-- **Access and reproduction instructions:**
-- **Dependencies:**
-- **Known limitations:**
-- **Supersedes:** None / snapshot ID
-- **Superseded by:** None / snapshot ID
-
-For Figma, record file key, page and node IDs, named version when available, library dependencies, and inspection mode.
-
-## 4. Repository Snapshots
-
-### SRC-REPO-001 — Repository input baseline
-
-- **Status:** Active / Superseded / Invalid / Unverified
-- **Role:** Input baseline / Task start / Implementation output / Historical reference
-- **Repository:**
-- **Commit SHA:**
-- **Branch at capture:**
-- **Relevant application, package, or directory:**
-- **Captured at:** YYYY-MM-DDTHH:MM:SS±HH:MM
-- **Pin strength:** Immutable
-- **Parent implementation snapshot:** None / `SRC-REPO-*`
-- **Produced by task:** None / task ID
-- **Lockfile, submodule, or workspace state:**
-- **Uncommitted changes or patch:** None / reference
-- **Access and reproduction instructions:**
-- **Known limitations:**
-- **Supersedes:** None / snapshot ID
-- **Superseded by:** None / snapshot ID
-
-A branch without a commit SHA is not a pinned repository snapshot. An approved task output normally creates a new record with role Implementation output; it does not supersede the original input baseline.
-
-## 5. Runtime Snapshots
-
-### SRC-RUN-001 — Runtime snapshot title
-
-- **Status:** Active / Superseded / Invalid / Unverified
-- **Role:** Input baseline / Supporting source / Validation runtime / Historical reference
-- **Environment:** Production / Preview / Staging / Local / Other
-- **URL or entry point:**
-- **Deployment or release ID:**
-- **Associated repository snapshot:** `SRC-REPO-*` / Unknown
-- **Captured at:** YYYY-MM-DDTHH:MM:SS±HH:MM
-- **Pin strength:** Immutable / Versioned / Time-bound / Unverified
-- **Browser, viewport, and device context:**
-- **Authentication, personalization, or feature-flag state:**
-- **Test data context:**
-- **Captured evidence:**
-- **Known limitations:**
-- **Supersedes:** None / snapshot ID
-- **Superseded by:** None / snapshot ID
-
-## 6. Documentation Snapshots
-
-### SRC-DOC-001 — Document title
-
-- **Status:** Active / Superseded / Invalid / Unverified
-- **Role:** Input baseline / Supporting source / Historical reference
-- **Authority:** Normative / Informative / Historical
-- **Path or URL:**
-- **Included sections:**
-- **Revision, version, date, commit, or checksum:**
-- **Captured at:** YYYY-MM-DDTHH:MM:SS±HH:MM
-- **Pin strength:** Immutable / Versioned / Time-bound / Unverified
-- **Access and reproduction instructions:**
-- **Known limitations:**
-- **Supersedes:** None / snapshot ID
-- **Superseded by:** None / snapshot ID
-
-## 7. Asset Snapshots
-
-### SRC-ASSET-001 — Asset or bundle title
-
-- **Status:** Active / Superseded / Invalid / Unverified
-- **Role:** Input baseline / Supporting source / Historical reference
-- **Type:** Image / Icon / Font / Archive / Other
-- **Path or reference:**
-- **Included contents:**
-- **Format and size:**
-- **SHA-256 checksum:**
-- **Captured at:** YYYY-MM-DDTHH:MM:SS±HH:MM
-- **Pin strength:** Immutable / Versioned / Time-bound / Unverified
-- **Licensing or usage constraints:**
-- **Known limitations:**
-- **Supersedes:** None / snapshot ID
-- **Superseded by:** None / snapshot ID
-
-## 8. Repository Implementation Lineage
-
-| Snapshot | Role | Parent snapshot | Produced by task | Commit | Validation status | Used as next task start |
-|---|---|---|---|---|---|---|
-| `SRC-REPO-001` | Input baseline / Task start | None | None | ... | ... | Yes / No |
-| `SRC-REPO-002` | Implementation output | `SRC-REPO-001` | `P01-T01` | ... | ... | Yes / No |
-
-Expected implementation outputs belong here and do not require upstream rebaseline rollback.
-
-## 9. Source Verification Log
-
-| Date and time | Snapshot | Verification method | Result classification | Change detected | Action |
-|---|---|---|---|---|---|
-| ... | ... | Commit comparison / named-version check / visual comparison / checksum / other | Unchanged / Expected output / Unexpected change / Unavailable | Yes / No / Unknown | ... |
-
-Record checks before stages, after meaningful pauses, before tasks, and before final acceptance.
-
-## 10. Upstream Rebaseline and Impact Assessments
-
-| New snapshot | Previous snapshot | Change summary | Affected artifacts | Earliest affected stage | Required action | Status |
-|---|---|---|---|---:|---|---|
-| ... | ... | ... | ... | ... | ... | Open / In progress / Complete |
-
-Use this table for changed upstream inputs or unexpected concurrent changes, not for approved task output commits.
-
-## 11. Baseline Review
-
-### Pass 1 — Completeness and correctness
-
-- [ ] Every material source has a snapshot record and role.
-- [ ] Exact scope and capture time are recorded.
-- [ ] Repository snapshots use commit SHAs.
-- [ ] Task outputs have parent snapshots and task IDs.
-- [ ] Runtime validation snapshots identify their repository output.
-- [ ] Mutable sources are not mislabeled as immutable.
-- [ ] Available versions, checksums, exports, and deployment IDs are included.
-- [ ] Access and reproduction limitations are explicit.
-
-### Pass 2 — Consistency, traceability, source integrity, risks, and uncertainty
-
-- [ ] Active input and output snapshot IDs exist.
-- [ ] Identifiers follow `Identifier-Conventions.md`.
-- [ ] Expected implementation outputs are distinguished from upstream source changes.
-- [ ] Superseded records remain preserved.
-- [ ] Rebaseline impact assessments cover unexpected upstream changes.
-- [ ] Repository implementation lineage is complete.
-- [ ] `PROJECT-CONTEXT.md` and `WORKFLOW-STATE.md` reference compatible active snapshots.
-- [ ] No artifact silently relies on undefined or newer source content.
+| ID | Role | Status | Pin strength | Canonical reference | Commit or version | Parent | Produced by task |
+|---|---|---|---|---|---|---|---|
+| ... | ... | ... | ... | ... | ... | ... | ... |

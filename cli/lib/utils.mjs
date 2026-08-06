@@ -3,6 +3,10 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ARTIFACT_ALIASES, ARTIFACT_FILES } from './constants.mjs';
+import {
+  generatedStateFindings,
+  syncGeneratedState,
+} from './generated-state.mjs';
 import { validateWorkflowRecord } from '../../scripts/lib/validate-workflow-record.mjs';
 
 const moduleDirectory = dirname(fileURLToPath(import.meta.url));
@@ -66,8 +70,23 @@ export function writeRecord(path, record) {
   writeFileSync(path, `${JSON.stringify(record, null, 2)}\n`, 'utf8');
 }
 
+export function syncWorkflowViews(path, record, options) {
+  return syncGeneratedState(path, record, options);
+}
+
+export function workflowFindings(path, record) {
+  const findings = validateWorkflowRecord(record);
+  try {
+    findings.push(...generatedStateFindings(path, record));
+  } catch (error) {
+    findings.push(`Generated workflow views could not be evaluated: ${error instanceof Error ? error.message : String(error)}`);
+  }
+  return findings;
+}
+
 export function saveRecord(path, record) {
   writeRecord(path, record);
+  syncGeneratedState(path, record);
   return validateWorkflowRecord(record);
 }
 

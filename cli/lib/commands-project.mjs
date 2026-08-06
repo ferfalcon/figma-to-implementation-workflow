@@ -3,10 +3,11 @@ import { isAbsolute, resolve } from 'node:path';
 import {
   MODES, PROFILES, PROFILE_ARTIFACTS, STAGES, WORKFLOW_STATUSES,
 } from './constants.mjs';
+import { deriveNextAction } from './generated-state.mjs';
 import {
   artifactId, createArtifactFile, fail, gitCommit, normalizeChoice,
   printFindings, readRecord, relativeDisplay, resolveRecordPath,
-  saveRecord, validateWorkflowRecord, write,
+  saveRecord, syncWorkflowViews, workflowFindings, write,
 } from './utils.mjs';
 
 export function commandHelp(stdout) {
@@ -23,6 +24,7 @@ Usage:
   design-workflow task create [--title <title>] [options]
   design-workflow task start <task-id>
   design-workflow task complete <task-id> --commit <sha> --check <name=evidence>
+  design-workflow sync [--check]
   design-workflow validate
   design-workflow trace <domain-id>
 
@@ -83,6 +85,7 @@ export function commandInit(cwd, stdout, stderr, options) {
   write(stdout, `Record: ${relativeDisplay(cwd, recordPath)}`);
   write(stdout, `Generated ${generated.length} artifact file(s):`);
   generated.forEach((file) => write(stdout, `- ${file}`));
+  write(stdout, 'Generated workflow views: .workflow/generated/');
   printFindings(stdout, errors);
   return errors.length === 0 ? 0 : 1;
 }
@@ -91,7 +94,7 @@ export function commandStatus(cwd, stdout, stderr, options) {
   const recordPath = resolveRecordPath(cwd, options.record);
   let record;
   try { record = readRecord(recordPath); } catch (error) { return fail(stderr, error.message); }
-  const errors = validateWorkflowRecord(record);
+  const errors = workflowFindings(recordPath, record);
   if (options.json) {
     write(stdout, JSON.stringify({
       record: relativeDisplay(cwd, recordPath), project: record.project, state: record.state,
@@ -100,7 +103,9 @@ export function commandStatus(cwd, stdout, stderr, options) {
         tasks: record.tasks.length,
         completeTasks: record.tasks.filter((task) => task.status === 'Complete').length,
       },
-      valid: errors.length === 0, findings: errors,
+      generatedViewsCurrent: !errors.some((finding) => finding.startsWith('Generated workflow view')),
+      valid: errors.length === 0,
+      findings: errors,
     }, null, 2));
     return errors.length === 0 ? 0 : 1;
   }
@@ -121,20 +126,13 @@ export function commandNext(cwd, stdout, stderr, options) {
   const recordPath = resolveRecordPath(cwd, options.record);
   let record;
   try { record = readRecord(recordPath); } catch (error) { return fail(stderr, error.message); }
-  const errors = validateWorkflowRecord(record);
+  const errors = workflowFindings(recordPath, record);
   if (errors.length > 0) {
     write(stdout, 'Resolve workflow findings before advancing:');
     errors.forEach((error) => write(stdout, `- ${error}`));
     return 1;
   }
-  if (record.state.status === 'Blocked') { write(stdout, 'Next action: resolve the recorded blocker before advancing.'); return 0; }
-  if (record.state.currentTask) { write(stdout, `Next action: continue ${record.state.currentTask} and run its required validation.`); return 0; }
-  const readyTask = record.tasks.find((task) => task.status !== 'Complete' && task.status !== 'Blocked'
-    && task.prerequisites.every((id) => record.tasks.find((candidate) => candidate.id === id)?.status === 'Complete'));
-  if (record.state.stage >= 9 && readyTask) { write(stdout, `Next action: start ${readyTask.id}.`); return 0; }
-  if (record.state.stage < 11) write(stdout, `Next action: Stage ${record.state.stage + 1} — ${STAGES[record.state.stage + 1]}.`);
-  else if (record.state.status === 'Complete') write(stdout, 'Workflow complete. No next action is recorded.');
-  else write(stdout, 'Next action: resolve final implementation-review findings and mark the workflow complete.');
+  write(stdout, `Next action: ${deriveNextAction(record)}`);
   return 0;
 }
 
@@ -171,11 +169,34 @@ export function commandMode(cwd, stdout, stderr, positionals, options) {
   return errors.length === 0 ? 0 : 1;
 }
 
+export function commandSync(cwd, stdout, stderr, options) {
+  const recordPath = resolveRecordPath(cwd, options.record);
+  let record;
+  try { record = readRecord(recordPath); } catch (error) { return fail(stderr, error.message); }
+  const result = syncWorkflowViews(recordPath, record, { check: Boolean(options.check) });
+  if (options.check) {
+    if (result.current) {
+      write(stdout, 'Generated workflow views are current.');
+      return 0;
+    }
+    write(stderr, 'Generated workflow views are missing or stale:');
+    result.stale.forEach((path) => write(stderr, `- ${relativeDisplay(cwd, path)}`));
+    return 1;
+  }
+  if (result.updated.length === 0) {
+    write(stdout, 'Generated workflow views were already current.');
+  } else {
+    write(stdout, `Updated ${result.updated.length} generated workflow view(s):`);
+    result.updated.forEach((path) => write(stdout, `- ${relativeDisplay(cwd, path)}`));
+  }
+  return 0;
+}
+
 export function commandValidate(cwd, stdout, stderr, options) {
   const recordPath = resolveRecordPath(cwd, options.record);
   let record;
   try { record = readRecord(recordPath); } catch (error) { return fail(stderr, error.message); }
-  const errors = validateWorkflowRecord(record);
+  const errors = workflowFindings(recordPath, record);
   printFindings(stdout, errors);
   return errors.length === 0 ? 0 : 1;
 }
