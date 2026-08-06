@@ -1,0 +1,157 @@
+# Implementation Plan Template
+
+Use with `Document-Guidelines-PLAN.md`. Inspect the real repository before naming files, commands, dependencies, or conventions.
+
+# Implementation Plan
+
+## 1. Document Information
+
+- Status: Draft
+- Scope:
+- Last updated:
+- Repository baseline:
+- Source documents:
+  - `PROJECT-CONTEXT.md`
+  - `REQUIREMENTS.md`
+  - `DESIGN.md`
+  - `SPEC.md`
+  - `ARCHITECTURE.md`, when applicable
+  - `DOCUMENT-REVIEW.md`
+
+## 2. Objective and Scope
+
+### Included
+
+- ...
+
+### Excluded
+
+- ...
+
+## 3. Current Repository State
+
+Document observed framework, structure, dependencies, scripts, reusable components, tokens, tests, constraints, and technical debt.
+
+Distinguish existing paths from proposed paths.
+
+## 4. Technical Approach
+
+Describe the smallest approach that satisfies the approved requirements and specification while fitting repository conventions.
+
+- Component and module boundaries:
+- Data and state flow:
+- Styling and design-system integration:
+- Responsive strategy:
+- Accessibility strategy:
+- Error and state handling:
+- Testing and validation strategy:
+
+Accessibility, responsiveness, states, errors, and tests must be integrated into the plan items that create or change the affected behavior. A later phase may verify them, but must not be where they are first implemented.
+
+## 5. Files and Modules
+
+| Path | Action | Existing or proposed | Responsibility | Evidence |
+|---|---|---|---|---|
+| ... | Create / Modify / Delete | ... | ... | ... |
+
+## 6. Plan Items
+
+### PLAN-001 — Plan item title
+
+- **Objective:**
+- **Requirement and specification references:**
+- **File impact:**
+- **Dependencies:**
+- **Implementation approach:**
+- **Integrated accessibility, responsive, state, and error work:**
+- **Validation:**
+- **Risks:**
+
+Each item must produce a meaningful, verifiable result.
+
+## 7. Recommended Phase Shape
+
+Adapt phases to repository and scope. Do not use an isolated accessibility implementation phase.
+
+### Phase 1 — Accessible foundation
+
+- semantic structure and existing design-system integration;
+- required types, tokens, and reusable primitives;
+- baseline responsive constraints.
+
+### Phase 2 — Core behavior and integration
+
+- state, interactions, data, APIs, keyboard behavior, focus behavior, loading, validation, and errors as applicable.
+
+### Phase 3 — Responsive, content, and edge-case completion
+
+- intermediate-width behavior, long content, missing data or assets, failure conditions, and reduced-motion behavior.
+
+### Phase 4 — Regression protection and final validation
+
+- automated tests, keyboard and screen-reader review, visual comparison, responsive checks, build, lint, type checking, and regression review.
+
+## 8. Responsive Decision Process
+
+For each breakpoint or layout transition:
+
+1. identify the observed design evidence;
+2. describe the content or layout failure condition;
+3. check existing repository or design-system breakpoints;
+4. select and test the narrowest justified transition;
+5. record the final implementation value and rationale.
+
+Do not default to `768px` or another familiar value without evidence.
+
+## 9. Dependencies and Ordering
+
+| Plan item | Depends on | May run in parallel | Reason |
+|---|---|---|---|
+| ... | ... | Yes / No | ... |
+
+## 10. Architecture Handling
+
+- Separate `ARCHITECTURE.md`: Required / Skipped
+- Reason:
+
+When architecture is skipped:
+
+- the reason belongs in `WORKFLOW-STATE.md`;
+- behavioral structural constraints remain in `SPEC.md`;
+- repository and implementation structure belongs in this plan.
+
+## 11. Migration, Compatibility, Deployment, and Rollback
+
+Address only when applicable and supported by evidence.
+
+## 12. Risks and Open Questions
+
+| Risk or question | Impact | Blocking | Mitigation or owner |
+|---|---|---|---|
+| ... | ... | Yes / No | ... |
+
+## 13. Definition of Done
+
+- [ ] Every must-have requirement and material specification is covered.
+- [ ] Every plan item has file impact, dependencies, and validation.
+- [ ] Accessibility and responsive behavior are integrated into relevant work.
+- [ ] Required tests and manual validation are identified.
+- [ ] Migration, deployment, rollback, security, and privacy are addressed when applicable.
+- [ ] No proposed file or convention is presented as existing.
+
+## 14. Review
+
+### Pass 1 — Feasibility and completeness
+
+- [ ] The plan reflects the actual repository.
+- [ ] Scope, ordering, dependencies, integration, and validation are complete.
+- [ ] Plan items are small enough to decompose into coherent tasks.
+
+### Pass 2 — Consistency, traceability, risks, and uncertainty
+
+- [ ] `PLAN-*` identifiers follow `Identifier-Conventions.md`.
+- [ ] Every plan item maps to approved requirements or specifications.
+- [ ] No unsupported product scope was introduced.
+- [ ] Accessibility is not deferred to cleanup.
+- [ ] Architecture-skip handling is consistent.
+- [ ] Risks, assumptions, and blockers remain visible.
