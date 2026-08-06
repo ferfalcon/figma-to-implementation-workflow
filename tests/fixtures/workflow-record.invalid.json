@@ -43,7 +43,8 @@
       "references": ["REQ-FUNC-001"],
       "output": "SRC-REPO-002",
       "validation": [
-        { "name": "Build", "status": "Passed" }
+        { "name": "Build", "status": "Passed" },
+        { "name": "Responsive review", "status": "Not executed", "reason": "Fixture intentionally leaves a required check unresolved" }
       ]
     },
     {
