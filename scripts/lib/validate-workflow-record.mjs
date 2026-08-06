@@ -1,4 +1,7 @@
 const PROFILE_ARTIFACTS = {
+  Express: new Set([
+    'WORKPACK',
+  ]),
   Lite: new Set([
     'SOURCE-BASELINE',
     'PROJECT-CONTEXT',
@@ -38,6 +41,43 @@ const PROFILE_ARTIFACTS = {
   ]),
 };
 
+const EXPRESS_FORBIDDEN_ARTIFACTS = new Set([
+  'SOURCE-BASELINE',
+  'PROJECT-CONTEXT',
+  'WORKFLOW-STATE',
+  'DESIGN-AUDIT',
+  'IMPLEMENTATION-BRIEF',
+  'REQUIREMENTS',
+  'DESIGN',
+  'SPEC',
+  'DOCUMENT-REVIEW',
+  'ARCHITECTURE',
+  'PLAN',
+  'PLAN-REVIEW',
+  'TASKS-INDEX',
+  'TASK',
+  'IMPLEMENTATION-REVIEW',
+]);
+
+const ARTIFACT_TYPES = [
+  'WORKPACK',
+  'SOURCE-BASELINE',
+  'PROJECT-CONTEXT',
+  'WORKFLOW-STATE',
+  'DESIGN-AUDIT',
+  'IMPLEMENTATION-BRIEF',
+  'REQUIREMENTS',
+  'DESIGN',
+  'SPEC',
+  'DOCUMENT-REVIEW',
+  'ARCHITECTURE',
+  'PLAN',
+  'PLAN-REVIEW',
+  'TASKS-INDEX',
+  'TASK',
+  'IMPLEMENTATION-REVIEW',
+];
+
 const ID_PATTERNS = {
   snapshot: /^SRC-(DS|REPO|RUN|DOC|ASSET)-\d{3,}$/,
   repositorySnapshot: /^SRC-REPO-\d{3,}$/,
@@ -48,7 +88,7 @@ const ID_PATTERNS = {
 };
 
 const ENUMS = {
-  profile: ['Lite', 'Standard', 'Full'],
+  profile: ['Express', 'Lite', 'Standard', 'Full'],
   mode: ['Gated', 'Continuous documentation', 'Task-by-task'],
   workflowStatus: ['Not started', 'In progress', 'Ready', 'Blocked', 'Complete'],
   artifactStatus: ['Draft', 'Reviewed', 'Approved', 'Superseded'],
@@ -163,9 +203,7 @@ export function validateWorkflowRecord(record) {
 
   const allIds = new Map();
   const snapshotsById = new Map();
-  const artifactsById = new Map();
   const tasksById = new Map();
-  const domainReferences = new Set();
 
   function registerId(id, path) {
     if (allIds.has(id)) push(errors, path, `duplicate ID; first declared at ${allIds.get(id)}`);
@@ -206,16 +244,15 @@ export function validateWorkflowRecord(record) {
     if (!expectObject(errors, path, artifact)) return;
     if (expectPattern(errors, `${path}.id`, artifact.id, ID_PATTERNS.artifact)) {
       registerId(artifact.id, `${path}.id`);
-      artifactsById.set(artifact.id, artifact);
     }
-    if (typeof artifact.type !== 'string' || artifact.type.trim() === '') push(errors, `${path}.type`, 'must be a non-empty string');
+    expectEnum(errors, `${path}.type`, artifact.type, ARTIFACT_TYPES);
     expectEnum(errors, `${path}.status`, artifact.status, ENUMS.artifactStatus);
     if (expectArray(errors, `${path}.baseline`, artifact.baseline)) {
       artifact.baseline.forEach((id, itemIndex) => expectPattern(errors, `${path}.baseline[${itemIndex}]`, id, ID_PATTERNS.snapshot));
     }
     if (artifact.references !== undefined && expectArray(errors, `${path}.references`, artifact.references)) {
       artifact.references.forEach((id, itemIndex) => {
-        if (expectPattern(errors, `${path}.references[${itemIndex}]`, id, ID_PATTERNS.domain)) domainReferences.add(id);
+        expectPattern(errors, `${path}.references[${itemIndex}]`, id, ID_PATTERNS.domain);
       });
     }
   });
@@ -234,7 +271,7 @@ export function validateWorkflowRecord(record) {
     }
     if (expectArray(errors, `${path}.references`, task.references)) {
       task.references.forEach((id, itemIndex) => {
-        if (expectPattern(errors, `${path}.references[${itemIndex}]`, id, ID_PATTERNS.domain)) domainReferences.add(id);
+        expectPattern(errors, `${path}.references[${itemIndex}]`, id, ID_PATTERNS.domain);
       });
     }
     if (task.output !== null && task.output !== undefined) expectPattern(errors, `${path}.output`, task.output, ID_PATTERNS.repositorySnapshot);
@@ -308,14 +345,33 @@ export function validateWorkflowRecord(record) {
   }
 
   const profile = record.project?.profile;
+  const presentTypes = new Set(artifacts.filter((artifact) => artifact.status !== 'Superseded').map((artifact) => artifact.type));
+
   if (PROFILE_ARTIFACTS[profile]) {
-    const presentTypes = new Set(artifacts.filter((artifact) => artifact.status !== 'Superseded').map((artifact) => artifact.type));
     for (const requiredType of PROFILE_ARTIFACTS[profile]) {
       if (!presentTypes.has(requiredType)) push(errors, '$.artifacts', `${profile} profile requires ${requiredType}`);
     }
-    if (profile === 'Lite' && ['REQUIREMENTS', 'DESIGN', 'SPEC', 'PLAN'].some((type) => presentTypes.has(type))) {
-      push(errors, '$.artifacts', 'Lite profile should consolidate requirements, design, specification, and planning in IMPLEMENTATION-BRIEF');
+  }
+
+  if (profile === 'Express') {
+    for (const artifactType of presentTypes) {
+      if (EXPRESS_FORBIDDEN_ARTIFACTS.has(artifactType)) {
+        push(errors, '$.artifacts', `Express profile must consolidate ${artifactType} responsibility in WORKPACK`);
+      }
     }
+    if (tasks.length > 1) push(errors, '$.tasks', 'Express profile permits at most one implementation task');
+    tasks.forEach((task, index) => {
+      if ((task.prerequisites ?? []).length > 0) {
+        push(errors, `$.tasks[${index}].prerequisites`, 'Express task cannot have task prerequisites');
+      }
+    });
+    if (Number.isInteger(record.state?.stage) && record.state.stage >= 9 && tasks.length !== 1) {
+      push(errors, '$.tasks', 'Express profile requires exactly one task from Stage 9 onward');
+    }
+  }
+
+  if (profile === 'Lite' && ['REQUIREMENTS', 'DESIGN', 'SPEC', 'PLAN'].some((type) => presentTypes.has(type))) {
+    push(errors, '$.artifacts', 'Lite profile should consolidate requirements, design, specification, and planning in IMPLEMENTATION-BRIEF');
   }
 
   if (record.project?.executionMode === 'Task-by-task' && Number.isInteger(record.state?.stage) && record.state.stage < 9) {
@@ -325,6 +381,7 @@ export function validateWorkflowRecord(record) {
   if (record.state?.status === 'Complete') {
     if (record.state.stage !== 11) push(errors, '$.state.stage', 'Complete workflow must be at Stage 11');
     if (tasks.some((task) => task.status !== 'Complete')) push(errors, '$.tasks', 'Complete workflow cannot contain incomplete tasks');
+    if (profile === 'Express' && tasks.length !== 1) push(errors, '$.tasks', 'Complete Express workflow requires exactly one completed task');
   }
 
   return errors;
