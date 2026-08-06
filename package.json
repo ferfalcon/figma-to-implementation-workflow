@@ -1,0 +1,26 @@
+{
+  "name": "@ferfalcon/design-workflow",
+  "version": "0.3.0",
+  "description": "Dependency-free CLI and workflow toolkit for evidence-driven design-to-implementation projects.",
+  "type": "module",
+  "license": "UNLICENSED",
+  "bin": {
+    "design-workflow": "./cli/design-workflow.mjs"
+  },
+  "files": [
+    "cli",
+    "templates",
+    "schemas",
+    "scripts/lib",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "validate": "node scripts/validate-workflow.mjs && node scripts/test-workflow-record.mjs && node scripts/test-cli.mjs",
+    "test:records": "node scripts/test-workflow-record.mjs",
+    "test:cli": "node scripts/test-cli.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
