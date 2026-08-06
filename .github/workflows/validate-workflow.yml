@@ -22,5 +22,8 @@ jobs:
         with:
           node-version: 22
 
-      - name: Validate structure and links
+      - name: Validate structure, links, and workflow records
         run: node scripts/validate-workflow.mjs
+
+      - name: Test semantic workflow validation
+        run: node scripts/test-workflow-record.mjs
