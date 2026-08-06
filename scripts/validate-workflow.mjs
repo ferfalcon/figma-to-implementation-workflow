@@ -3,6 +3,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, extname, join, normalize, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { generatedStateFindings } from '../cli/lib/generated-state.mjs';
 import { validateWorkflowRecord } from './lib/validate-workflow-record.mjs';
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
@@ -14,10 +15,12 @@ const requiredPaths = [
   'CONTRIBUTING.md',
   'CHANGELOG.md',
   'ChatGPT-instructions.md',
+  'package.json',
   'workflow/Design-Implementation-Workflow.md',
   'workflow/Workflow-Profiles.md',
   'workflow/Source-Authority.md',
   'workflow/Source-Snapshots.md',
+  'workflow/State-Ownership.md',
   'workflow/Identifier-Conventions.md',
   'workflow/Validation-Rules.md',
   'source-adapters/FIGMA.md',
@@ -57,8 +60,13 @@ const requiredPaths = [
   'examples/full-application/ARCHITECTURE-full-stack-example.md',
   'schemas/README.md',
   'schemas/workflow-record.schema.json',
+  'cli/README.md',
+  'cli/design-workflow.mjs',
+  'cli/lib/generated-state.mjs',
   'scripts/lib/validate-workflow-record.mjs',
   'scripts/test-workflow-record.mjs',
+  'scripts/test-cli.mjs',
+  'scripts/test-generated-state.mjs',
   'tests/fixtures/workflow-record.valid.json',
   'tests/fixtures/workflow-record.express.valid.json',
   'tests/fixtures/workflow-record.invalid.json',
@@ -242,7 +250,10 @@ for (const recordPath of workflowRecordFiles) {
     continue;
   }
 
-  for (const finding of validateWorkflowRecord(record)) {
+  for (const finding of [
+    ...validateWorkflowRecord(record),
+    ...generatedStateFindings(recordPath, record),
+  ]) {
     errors.push(`${repositoryPath}: ${finding}`);
   }
 }
