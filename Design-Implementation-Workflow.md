@@ -1,147 +1,89 @@
 # Design-to-Implementation Workflow
 
-This workflow converts a design source into a documented, planned, implemented, and validated web project.
-
-A **design source** may be a Figma file, screenshots, images, a PDF, an existing website, or another structured design artifact. Apply source-specific inspection only when the source supports it. For Figma sources, inspect pages, frames, nodes, components, variants, variables, styles, and prototypes.
+This workflow converts a design source into a documented, planned, implemented, and validated web project. Use `Workflow-Profiles.md` to keep artifact depth proportional and `Identifier-Conventions.md` to keep traceability unambiguous.
 
 ## Shared execution rules
 
-Apply these rules to every stage:
+1. Respect `PROJECT-CONTEXT.md`, `WORKFLOW-STATE.md`, the selected profile, and execution mode.
+2. Inspect actual sources rather than relying on filenames or summaries.
+3. Use matching guidelines and templates; do not copy generic teaching content into project artifacts.
+4. Classify important information as Confirmed, Observed, Inferred, Recommended, or Open question.
+5. Document source conflicts instead of silently choosing an interpretation.
+6. Use stable, globally distinct IDs from `Identifier-Conventions.md`.
+7. Keep document responsibilities separate, even when the Lite profile consolidates them into sections.
+8. Perform two review passes: completeness and correctness; then consistency, traceability, risks, and uncertainty after corrections.
+9. End each stage by updating `WORKFLOW-STATE.md` with findings, blockers, readiness, and the next permitted action.
+10. Never report validation as passed unless it was executed successfully.
 
-1. Read all listed sources before creating or modifying the target document.
-2. Inspect the actual design source, repository files, and project documents; do not rely on filenames or summaries alone.
-3. Use the relevant `Document-Guidelines-*.md` file as the structural and quality guideline for its corresponding document.
-4. When a matching file exists in `templates/`, use it as the starting structure. Remove non-applicable sections and add project-specific sections when needed. Templates do not override guideline files or project evidence.
-5. Apply guidelines and templates to the project; do not copy generic explanatory content into project documents.
-6. Classify important information as:
-   - **Confirmed:** explicitly supported by documentation or a user decision.
-   - **Observed:** directly visible in the design source or repository.
-   - **Inferred:** strongly suggested but not confirmed.
-   - **Recommended:** a proposed resolution.
-   - **Open question:** cannot be determined safely.
-7. Never present an inference or recommendation as confirmed.
-8. Document source conflicts instead of silently selecting an interpretation.
-9. Preserve stable requirement and specification IDs.
-10. Update documents in place; avoid duplicate “new,” “final,” or versioned alternatives.
-11. Keep document responsibilities separate:
-    - Product expectations → `REQUIREMENTS.md`
-    - Visual and interaction intent → `DESIGN.md`
-    - Precise testable behavior → `SPEC.md`
-    - Structural technical decisions → `ARCHITECTURE.md`
-    - Implementation ordering → `PLAN.md`
-    - Executable implementation units → task files
-12. Maintain traceability from design-source evidence through requirements, design, specification, architecture, plan, tasks, implementation, and validation.
-13. Perform two review passes:
-    - Completeness and correctness
-    - Consistency, traceability, risks, and uncertainty
-14. End each stage with files changed, findings, assumptions, blockers, and readiness for the next stage.
+---
+
+# Stage 0 — Establish project context and workflow control
+
+Create or update:
+
+- `PROJECT-CONTEXT.md` from `templates/PROJECT-CONTEXT.template.md`;
+- `WORKFLOW-STATE.md` from `templates/WORKFLOW-STATE.template.md`.
+
+Record:
+
+- project goal and type;
+- exact design-source scope and snapshot or inspection reference;
+- repository, target branch, baseline commit, and relevant package or application;
+- production or preview references when available;
+- included, excluded, and deferred scope;
+- authoritative sources and known conflicts;
+- quality expectations supported by evidence;
+- constraints, dependencies, risks, and blocking questions;
+- selected Lite, Standard, or Full profile and rationale;
+- Gated, Continuous documentation, or Task-by-task execution mode.
+
+Do not advance when the baseline is materially ambiguous. Stage 0 is complete when scope, source references, repository baseline, profile, mode, blockers, and next permitted action are explicit.
 
 ---
 
 # Stage 1 — Audit the design source
 
-Create or update `DESIGN-AUDIT.md` using `templates/DESIGN-AUDIT.template.md` as the starting structure.
+Create or update `DESIGN-AUDIT.md` using its template.
 
-## Inspect
+Inspect source scope, screens and flows, viewports, components and variants, styles and variables, visual system, content hierarchy, interactions, states, responsive transformations, edge cases, assets, accessibility implications, inconsistencies, and missing evidence.
 
-- Source format, scope, identifiers, and references
-- Screens, pages, sections, flows, frames, or equivalent source regions
-- Desktop, tablet, mobile, and alternative layouts
-- Components, variants, reusable patterns, styles, variables, and tokens when available
-- Typography, color, spacing, grids, imagery, icons, and assets
-- Content hierarchy and repeated data structures
-- Interactions, transitions, and responsive transformations
-- Default, hover, focus, active, selected, disabled, loading, empty, error, and success states
-- Long-content, missing-content, and narrow-viewport behavior
-- Accessibility implications and implementation risks
-
-For Figma sources, include relevant page, frame, component, and node references. For other sources, use the most precise available location or evidence reference.
-
-Identify missing states, inconsistent patterns, conflicting values, unclear responsive behavior, incomplete flows, and decisions that cannot be determined safely.
-
-Organize unresolved findings into product, design, content, and technical questions.
-
-`DESIGN-AUDIT.md` must become the factual evidence baseline for later stages.
+Use `EVD-*` for evidence and `AUD-*` for findings. The audit owns observed evidence, not product or implementation decisions.
 
 ---
 
-# Stage 2 — Create project requirements
+# Stages 2–4 — Requirements, design intent, and specification
 
-Analyze:
+## Standard and Full
 
-- The design source
-- `DESIGN-AUDIT.md`
-- Existing stakeholder or project documentation
-- `Document-Guidelines-REQUIREMENTS.md`
+Create:
 
-Create or update `REQUIREMENTS.md`.
+- `REQUIREMENTS.md` from `templates/REQUIREMENTS.template.md`;
+- `DESIGN.md` from `templates/DESIGN.template.md`;
+- `SPEC.md` from `templates/SPEC.template.md`.
 
-Define the problem, goals, non-goals, users, user needs, functional requirements, business rules, data requirements, non-functional requirements, accessibility, responsive behavior, content, constraints, dependencies, risks, assumptions, open questions, and Definition of Done.
+`REQUIREMENTS.md` owns outcomes, rules, constraints, and quality expectations using `REQ-*` IDs.
 
-Use stable identifiers such as `FR-*`, `BR-*`, `DR-*`, `NFR-*`, `AR-*`, `SEC-*`, and `CON-*`.
+`DESIGN.md` owns visual, responsive, content, and interaction intent using `DES-*`, `DES-RWD-*`, and `DES-INT-*` IDs.
 
-Each material requirement must include description, priority, rationale, acceptance criteria, and evidence. Separate confirmed, inferred, and recommended requirements. Do not invent business rules, permissions, backend behavior, thresholds, browser targets, security policies, or retention rules.
+`SPEC.md` owns precise, observable, testable behavior using `SPEC-*` and `AC-*` IDs.
 
-Add traceability from each requirement to design-source evidence or another authoritative source.
+Do not reuse a requirement ID as a specification ID. Do not invent business rules, thresholds, breakpoints, focus behavior, security policies, or backend behavior.
 
----
+## Lite
 
-# Stage 3 — Document design intent
-
-Analyze:
-
-- The design source
-- `DESIGN-AUDIT.md`
-- `REQUIREMENTS.md`
-- Existing stakeholder or project documentation
-- `Document-Guidelines-DESIGN.md`
-
-Create or update `DESIGN.md`.
-
-Document design purpose, information architecture, reading order, screen structure, layout, hierarchy, typography, colors, tokens, spacing, components, variants, interactions, responsive behavior, states, edge cases, accessibility intent, assets, and design-system mapping.
-
-Reference the most precise available design-source evidence. Map important design decisions to requirement IDs. Describe relationships and intent rather than producing a property or CSS dump.
-
-Keep observed, inferred, recommended, and unresolved information clearly separated.
+Create `IMPLEMENTATION-BRIEF.md` from its template. Keep requirements, design intent, specification, and planning in separate ownership sections using the same global namespaces.
 
 ---
 
-# Stage 4 — Create the technical specification
+# Stage 5 — Documentation consistency gate
 
-Analyze:
+For Standard and Full, correct issues in the owning document and create or update `DOCUMENT-REVIEW.md`.
 
-- The design source
-- `DESIGN-AUDIT.md`
-- `REQUIREMENTS.md`
-- `DESIGN.md`
-- Existing stakeholder or project documentation
-- `Document-Guidelines-SPEC.md`
+Check contradictions, missing coverage, unsupported behavior, untestable language, responsive gaps, accessibility gaps, missing states, unclear data ownership, unsupported thresholds, and assumptions presented as facts.
 
-Create or update `SPEC.md`.
+For Lite, perform the two review passes inside `IMPLEMENTATION-BRIEF.md` after completing its requirements, design, and specification sections.
 
-Translate requirements and design intent into precise, observable, testable behavior. Define scope, terminology, functionality, content, conceptual component structure, states, interactions, keyboard behavior, focus behavior, responsive behavior, accessibility, data, validation, error handling, edge cases, non-functional requirements, and acceptance criteria.
-
-Every material specification must reference its requirement and relevant design evidence. Cover applicable interaction states and edge cases. Do not prescribe repository structure or implementation order unless they are genuine constraints.
-
----
-
-# Stage 5 — Run the documentation consistency gate
-
-Review:
-
-- The design source
-- `DESIGN-AUDIT.md`
-- `REQUIREMENTS.md`
-- `DESIGN.md`
-- `SPEC.md`
-
-Correct issues in the document that owns each decision and create or update `DOCUMENT-REVIEW.md` using `templates/DOCUMENT-REVIEW.template.md`.
-
-Check for contradictions, missing coverage, unsupported behavior, untestable requirements, missing responsive or accessibility behavior, missing states, unclear data ownership, unsupported thresholds, assumptions presented as facts, and blocking open questions.
-
-Record each finding, severity, affected documents, resolution, remaining uncertainty, and blocking status.
-
-End with one status:
+End with exactly one readiness status:
 
 - `Ready for architecture and planning`
 - `Ready with documented non-blocking assumptions`
@@ -151,41 +93,40 @@ End with one status:
 
 # Stage 6 — Define architecture when applicable
 
-Use this stage for projects with meaningful routing, state, data flow, integrations, authentication, persistence, build infrastructure, or deployment concerns.
+Create `ARCHITECTURE.md` for meaningful routing, shared state, data flow, APIs, integrations, persistence, authentication, build, deployment, security, reliability, observability, or migration decisions.
 
-For a genuinely simple static site or component, record why a separate architecture document is unnecessary and place the relevant structural decisions in `PLAN.md`.
+## When architecture is skipped
 
-Analyze the repository and all upstream documents. Follow `Document-Guidelines-ARCHITECTURE.md` and use `templates/ARCHITECTURE.template.md` when creating or updating `ARCHITECTURE.md`.
+1. Record the decision and reason in `WORKFLOW-STATE.md`.
+2. Place behavioral structural constraints in `SPEC.md`, or the Lite specification section.
+3. Place repository and implementation structure in `PLAN.md`, or the Lite plan section.
+4. Treat later architecture references as optional.
 
-Document system boundaries, frontend and backend structure, routes, component boundaries, data flow, state ownership, API and integration boundaries, persistence, authentication, styling and design-system integration, assets, error handling, accessibility architecture, testing layers, build and deployment, security, observability, constraints, alternatives, tradeoffs, risks, and open technical decisions.
-
-Map significant architectural decisions to requirement and specification IDs.
+Skipping the artifact never means skipping technical reasoning.
 
 ---
 
 # Stage 7 — Create the implementation plan
 
-Analyze the repository, design source, all upstream documents, and `Document-Guidelines-PLAN.md`.
+For Standard and Full, create or update `PLAN.md` from `templates/PLAN.template.md`. For Lite, complete the plan section of `IMPLEMENTATION-BRIEF.md`.
 
-Create or update `PLAN.md`.
+Inspect the repository before naming paths, commands, dependencies, or conventions. Distinguish existing from proposed files.
 
-Document current state, included and excluded scope, technical approach, files and modules, implementation phases, dependencies, validation strategy, migration or compatibility work, risks, mitigations, open questions, and Definition of Done.
+Each `PLAN-*` item must include objective, requirement or specification references, file impact, dependencies, implementation approach, integrated accessibility and responsive work, state and error handling, validation, and risks.
 
-Inspect the repository before naming paths, modules, commands, dependencies, or conventions. Distinguish confirmed existing files from proposed files and unresolved locations.
+Accessibility, responsive behavior, errors, states, and tests belong in the work that creates or changes the relevant behavior. A final phase may verify them, but must not be where they are first implemented.
 
-Every material plan item must reference its requirement or specification, file impact, dependencies, and validation method.
+Select breakpoints from design evidence, content or layout failure, and existing project conventions rather than default device numbers.
 
 ---
 
 # Stage 8 — Challenge and refine the plan
 
-Perform an adversarial review of `PLAN.md` against all upstream documents and the repository.
+For Standard and Full, perform an adversarial review, correct `PLAN.md`, and create or update `PLAN-REVIEW.md`.
 
-Update `PLAN.md` where needed and create or update `PLAN-REVIEW.md` using `templates/PLAN-REVIEW.template.md`.
+For Lite, complete the second review pass in `IMPLEMENTATION-BRIEF.md` after first-pass corrections.
 
-Check repository assumptions, dependencies, ordering, task size, integration work, migrations, states, responsiveness, accessibility, validation, regressions, abstractions, dependencies, security, privacy, deployment, rollback, and traceability.
-
-Record each finding, impact, resolution, plan change, and remaining risk.
+Check repository assumptions, scope, ordering, dependencies, integration, migrations, task size, accessibility, responsiveness, states, validation, regressions, abstraction, security, privacy, deployment, rollback, and traceability.
 
 End with:
 
@@ -195,74 +136,37 @@ End with:
 
 ---
 
-# Stage 9 — Decompose the plan into tasks
+# Stage 9 — Decompose into tasks
 
-Create `TASKS-INDEX.md` using `templates/TASKS-INDEX.template.md` and create one file per implementation task using `templates/TASK.template.md`.
+Standard and Full require `TASKS-INDEX.md` and task files. Lite may use one task file when the work is a single coherent result; use an index when multiple tasks or dependencies exist.
 
-Use zero-padded filenames:
+Each task must have one independently verifiable objective, source references, prerequisites, scope, repository context, files, ordered steps, integrated responsive and accessibility requirements, validation, acceptance criteria, risks, and Definition of Done.
 
-```text
-Phase-01--Task-01.md
-Phase-01--Task-02.md
-Phase-02--Task-01.md
-```
+Use zero-padded task IDs such as `P01-T01` and filenames such as `Phase-01--Task-01.md`.
 
-`TASKS-INDEX.md` must contain phases, task order, titles, statuses, dependencies, parallelization, requirement and specification coverage, and completion criteria.
-
-Each task file must include:
-
-- Status
-- Objective
-- Source references
-- Prerequisites
-- Included and excluded scope
-- Repository context
-- Files and modules
-- Ordered implementation steps
-- Validation
-- Acceptance criteria
-- Risks and considerations
-- Definition of Done
-
-Each task must produce one coherent, independently verifiable result. Do not defer all accessibility, responsiveness, error handling, or tests to a final cleanup task. Do not write implementation code during decomposition.
-
-Verify that every plan item and every must-have requirement is covered.
+Do not defer all accessibility, responsiveness, errors, or tests to final cleanup.
 
 ---
 
 # Stage 10 — Implement one task at a time
 
-Select the first incomplete task whose prerequisites are satisfied.
+Select only an incomplete task whose prerequisites are satisfied. Inspect affected files first and implement only the task scope.
 
-Implement only its scope. Inspect affected files first, follow established project conventions, and do not silently expand scope.
+When implementation exposes a documentation error, update the owning artifact and propagate references. Run required validation and do not mark the task complete while required checks fail or remain unverified.
 
-When implementation reveals a documentation problem, update the document that owns the decision and propagate affected references.
-
-Run the task’s required validation. Do not mark it complete while required validation fails.
-
-Update the task status, `TASKS-INDEX.md`, and relevant documentation. Report files changed, behavior implemented, validation results, deviations, remaining risks, and the next unblocked task.
+Update the task, optional index, and `WORKFLOW-STATE.md` with files changed, behavior, validation evidence, discoveries, deviations, risks, and next permitted action.
 
 ---
 
 # Stage 11 — Validate the completed implementation
 
-Compare the implemented project against:
+Create or update `IMPLEMENTATION-REVIEW.md` and compare the result against the design source, approved requirements, design intent, specification, architecture when applicable, plan or brief, tasks, and repository baseline.
 
-- The design source
-- `REQUIREMENTS.md`
-- `DESIGN.md`
-- `SPEC.md`
-- `ARCHITECTURE.md`, when applicable
-- `PLAN.md`
-- All task files
+Validate requirement and acceptance-criterion coverage, fidelity, states, responsiveness, content edge cases, keyboard operation, focus, semantics, accessible names and relationships, announcements, contrast, reflow, reduced motion, data and APIs, validation, errors, compatibility, performance, security, tests, build, lint, type checking, deployment readiness, and regressions as applicable.
 
-Create or update `IMPLEMENTATION-REVIEW.md` using `templates/IMPLEMENTATION-REVIEW.template.md`.
+Record `IMPL-*` findings with expected behavior, actual behavior, severity, evidence, correction, status, and retest evidence.
 
-Validate requirement coverage, acceptance criteria, design fidelity, states, responsiveness, keyboard operation, focus, semantics, screen-reader relationships, contrast, reduced motion, content behavior, validation, errors, loading and empty states, data and API behavior, compatibility, performance, security, tests, build, lint, type checking, deployment readiness, and regressions.
-
-For each finding, record source requirement or specification, expected behavior, actual behavior, severity, evidence, correction, and status.
-
-End with:
+End with exactly one result:
 
 - `Implementation accepted`
 - `Implementation accepted with documented non-blocking deviations`
