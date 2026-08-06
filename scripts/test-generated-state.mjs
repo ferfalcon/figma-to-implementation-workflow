@@ -103,6 +103,14 @@ try {
     throw new Error('Manual generated-file edits were not detected precisely');
   }
 
+  const malformed = generatedStateFindings(recordPath, {
+    schemaVersion: 1,
+    project: {},
+  });
+  if (malformed.length !== 1 || !malformed[0].includes('could not be evaluated')) {
+    throw new Error('Malformed record did not produce a controlled state finding');
+  }
+
   console.log('Generated workflow state tests passed.');
 } finally {
   rmSync(project, { recursive: true, force: true });
