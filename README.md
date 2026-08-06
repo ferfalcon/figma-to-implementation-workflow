@@ -1,328 +1,186 @@
 # Design-to-Implementation Workflow
 
-A structured, evidence-driven workflow for turning a design source into a documented, planned, implemented, and validated web project.
+A structured, evidence-driven workflow for turning a Figma file or another design source into a documented, planned, implemented, and validated web project.
 
-The workflow is designed for AI-assisted and human-led implementation. It emphasizes design fidelity, responsive behavior, accessibility, repository evidence, explicit uncertainty, traceability, and small reviewable implementation steps.
-
-A design source may be:
-
-- a Figma file;
-- screenshots or images;
-- a PDF;
-- an existing website;
-- another structured design artifact.
-
-Figma-specific inspection is used only when the source provides Figma concepts such as pages, frames, nodes, components, variants, variables, styles, and prototypes.
+The toolkit is designed for AI-assisted and human-led work. It emphasizes design fidelity, accessibility, responsive behavior, repository evidence, explicit uncertainty, traceability, stage control, and small reviewable implementation steps.
 
 ## Start here
 
-Read [`Design-Implementation-Workflow.md`](Design-Implementation-Workflow.md).
+1. Read [`Design-Implementation-Workflow.md`](Design-Implementation-Workflow.md).
+2. Select a proportional profile using [`Workflow-Profiles.md`](Workflow-Profiles.md).
+3. Use [`Identifier-Conventions.md`](Identifier-Conventions.md) for stable cross-document IDs.
+4. Configure the assistant with [`ChatGPT-instructions.md`](ChatGPT-instructions.md).
 
-It defines the complete eleven-stage process:
+## Workflow overview
 
 ```text
-Design source
+Stage 0: PROJECT-CONTEXT.md + WORKFLOW-STATE.md
     ↓
-DESIGN-AUDIT.md
+Design-source audit
     ↓
-REQUIREMENTS.md
+Requirements → Design intent → Specification
     ↓
-DESIGN.md
+Documentation consistency gate
     ↓
-SPEC.md
+Architecture, when applicable
     ↓
-DOCUMENT-REVIEW.md
+Implementation plan → Adversarial plan review
     ↓
-ARCHITECTURE.md, when applicable
-    ↓
-PLAN.md
-    ↓
-PLAN-REVIEW.md
-    ↓
-TASKS-INDEX.md + task files
-    ↓
-Implementation
+Tasks → One-task-at-a-time implementation
     ↓
 IMPLEMENTATION-REVIEW.md
 ```
 
-## What this repository contains
+The Lite profile consolidates requirements, design intent, specification, and planning into clearly separated sections of `IMPLEMENTATION-BRIEF.md`. Standard and Full use separate artifacts.
 
-This repository is a reusable workflow toolkit. It contains:
+## Stage 0
 
-- project instructions for an AI assistant;
-- the complete design-to-implementation workflow;
-- document-specific writing guidelines;
-- reusable project-document templates;
-- non-normative architecture examples.
+Every new application of the workflow begins by creating or validating:
 
-The project-specific documents created while applying the workflow should normally be stored in the target implementation repository, not in this toolkit repository.
+- `PROJECT-CONTEXT.md` — stable scope, source, repository baseline, constraints, profile, and quality expectations;
+- `WORKFLOW-STATE.md` — current stage, execution mode, readiness, blockers, approved artifacts, and next permitted action.
 
-## Quick start
+Stage 0 prevents a new conversation or implementation agent from guessing whether it should inspect, document, plan, or implement.
 
-### 1. Prepare the project context
+## Workflow profiles
 
-Make the following sources available:
+### Lite
 
-- the design source;
-- the target implementation repository;
-- existing stakeholder or product documentation;
-- API, deployment, design-system, or technical documentation when relevant.
+For isolated components, small static pages, and narrowly scoped changes without meaningful architecture or integration risk.
 
-Do not begin implementation from the design source alone when a repository or authoritative project documentation already exists.
+Primary artifacts:
 
-### 2. Configure the assistant
+- `PROJECT-CONTEXT.md`
+- `WORKFLOW-STATE.md`
+- `DESIGN-AUDIT.md`
+- `IMPLEMENTATION-BRIEF.md`
+- one task file or a proportional task set
+- `IMPLEMENTATION-REVIEW.md`
 
-Use [`ChatGPT-instructions.md`](ChatGPT-instructions.md) as the project instruction baseline.
+### Standard
 
-Update these placeholders before starting:
+For multi-page sites, substantial UI features, or meaningful repository integration.
 
-```md
-- Design source: <url or file reference>
-- Repository: <url>
-- Live site: <url>
-```
+Uses separate requirements, design, specification, review, plan, plan-review, task, and final-review artifacts. Architecture remains conditional.
 
-The live-site value may remain empty when no deployed version exists.
+### Full
 
-### 3. Open the workflow
+For full-stack applications, authentication, persistence, complex integrations, multiple services, migrations, or high security, privacy, deployment, or operational risk.
 
-Follow [`Design-Implementation-Workflow.md`](Design-Implementation-Workflow.md) from Stage 1.
+Uses the complete workflow including architecture and architecture decision records when required.
 
-Do not skip directly to implementation unless the earlier artifacts already exist and have been reviewed against the current design source and repository.
+## Execution modes
 
-### 4. Create artifacts in the target repository
+- `Gated` — stop after every stage or consolidated Lite artifact until explicitly advanced.
+- `Continuous documentation` — continue through documentation and task decomposition while unblocked, but stop before implementation.
+- `Task-by-task` — after planning approval, implement one unblocked task at a time.
 
-Use the matching template when one exists. Apply the relevant guideline file instead of copying generic explanatory content.
-
-Templates are starting structures. Remove sections that do not apply and add project-specific sections when necessary.
-
-### 5. Implement one task at a time
-
-After the plan has passed its adversarial review:
-
-1. Create `TASKS-INDEX.md`.
-2. Create one Markdown file per implementation task.
-3. Select the first incomplete task whose prerequisites are satisfied.
-4. Implement only that task's scope.
-5. Run its required validation.
-6. Update task status and traceability before continuing.
-
-## Workflow stages
-
-| Stage | Purpose | Primary artifact |
-|---:|---|---|
-| 1 | Audit the design source and establish evidence | `DESIGN-AUDIT.md` |
-| 2 | Define product outcomes, rules, and constraints | `REQUIREMENTS.md` |
-| 3 | Document visual, responsive, and interaction intent | `DESIGN.md` |
-| 4 | Define precise, testable behavior | `SPEC.md` |
-| 5 | Review documentation for contradictions and gaps | `DOCUMENT-REVIEW.md` |
-| 6 | Define structural technical decisions when needed | `ARCHITECTURE.md` |
-| 7 | Plan implementation against the real repository | `PLAN.md` |
-| 8 | Challenge and correct the implementation plan | `PLAN-REVIEW.md` |
-| 9 | Decompose the plan into executable units | `TASKS-INDEX.md` and task files |
-| 10 | Implement and validate one task at a time | Code and updated task files |
-| 11 | Validate the completed implementation | `IMPLEMENTATION-REVIEW.md` |
-
-## Architecture is conditional
-
-A separate `ARCHITECTURE.md` is appropriate when the project has meaningful structural decisions involving areas such as:
-
-- multiple applications, packages, services, or runtime boundaries;
-- routing or significant component boundaries;
-- shared state or complex data flow;
-- APIs or third-party integrations;
-- persistence or migrations;
-- authentication or authorization;
-- build, deployment, security, reliability, or observability.
-
-For a genuinely small static page or isolated component with no meaningful architectural decisions:
-
-1. Record why the architecture stage was skipped.
-2. Preserve the necessary structural decisions in `SPEC.md` or `PLAN.md`.
-3. Treat architecture references as optional in later stages.
-
-Skipping `ARCHITECTURE.md` does not mean skipping technical reasoning.
+Record the selected mode in `WORKFLOW-STATE.md`.
 
 ## Document ownership
 
-Each project document has a distinct responsibility.
+| Artifact | Owns |
+|---|---|
+| `PROJECT-CONTEXT.md` | Stable project, source, repository, scope, profile, and quality baseline |
+| `WORKFLOW-STATE.md` | Current operational control and next permitted action |
+| `DESIGN-AUDIT.md` | Observed evidence and audit findings |
+| `REQUIREMENTS.md` | Product outcomes, rules, constraints, and quality expectations |
+| `DESIGN.md` | Visual, responsive, content, and interaction intent |
+| `SPEC.md` | Precise, observable, testable behavior |
+| `ARCHITECTURE.md` | Structural technical decisions and boundaries |
+| `PLAN.md` | Repository-aware approach, ordering, dependencies, risks, and validation |
+| Task files | Coherent independently verifiable implementation units |
+| `IMPLEMENTATION-REVIEW.md` | Final validation evidence, findings, deviations, and result |
 
-| Document | Owns | Does not own |
-|---|---|---|
-| `DESIGN-AUDIT.md` | Evidence observed in the design source | Product decisions or implementation choices |
-| `REQUIREMENTS.md` | Product outcomes, rules, constraints, and quality expectations | Detailed visual design or file-level implementation |
-| `DESIGN.md` | Visual, responsive, content, and interaction intent | Repository structure or implementation ordering |
-| `SPEC.md` | Precise, observable, testable behavior | File paths, task ordering, or unsupported architecture |
-| `DOCUMENT-REVIEW.md` | Audit trail for documentation findings and corrections | A competing source of product or design decisions |
-| `ARCHITECTURE.md` | System boundaries, responsibilities, dependencies, and technical decisions | Detailed implementation sequence |
-| `PLAN.md` | Technical approach, files, phases, dependencies, risks, and validation | New product requirements |
-| `PLAN-REVIEW.md` | Audit trail for adversarial plan review | A replacement implementation plan |
-| `TASKS-INDEX.md` | Authoritative task order, status, dependencies, and coverage | Detailed implementation instructions for every task |
-| Task files | One coherent, independently verifiable implementation unit | Unrelated refactors or silently expanded scope |
-| `IMPLEMENTATION-REVIEW.md` | Final validation evidence, findings, deviations, and result | Unsupported claims that checks passed |
+Lite consolidation does not merge these responsibilities; it only places them in separate sections of one brief.
 
-When sources conflict, identify the conflict and correct the document that owns the decision. Do not silently choose an interpretation.
+## Architecture is conditional
 
-## Evidence and uncertainty
+Create `ARCHITECTURE.md` when meaningful routing, shared state, APIs, persistence, authentication, integrations, build, deployment, security, reliability, observability, or migration decisions exist.
 
-Use these labels consistently:
+When it is skipped:
 
-- **Confirmed:** established by authoritative documentation or a user decision.
-- **Observed:** directly visible in the design source or repository.
-- **Inferred:** strongly suggested but not confirmed.
-- **Recommended:** proposed to resolve a gap or risk.
-- **Open question:** cannot be determined safely from available evidence.
+1. record the reason in `WORKFLOW-STATE.md`;
+2. place behavioral structural constraints in `SPEC.md` or the Lite specification section;
+3. place repository and implementation structure in `PLAN.md` or the Lite plan section.
 
-Never present an inference or recommendation as confirmed.
-
-## Repository structure
-
-```text
-.
-├── README.md
-├── ChatGPT-instructions.md
-├── Design-Implementation-Workflow.md
-├── Document-Guidelines-REQUIREMENTS.md
-├── Document-Guidelines-DESIGN.md
-├── Document-Guidelines-SPEC.md
-├── Document-Guidelines-ARCHITECTURE.md
-├── Document-Guidelines-PLAN.md
-├── templates/
-│   ├── ARCHITECTURE.template.md
-│   ├── DESIGN-AUDIT.template.md
-│   ├── DOCUMENT-REVIEW.template.md
-│   ├── IMPLEMENTATION-REVIEW.template.md
-│   ├── PLAN-REVIEW.template.md
-│   ├── TASK.template.md
-│   └── TASKS-INDEX.template.md
-└── examples/
-    ├── ARCHITECTURE-component-example.md
-    └── ARCHITECTURE-full-stack-example.md
-```
-
-## Guidelines
-
-Guideline files explain the responsibility, expected content, quality criteria, and common failure modes of each main document.
-
-- [`Document-Guidelines-REQUIREMENTS.md`](Document-Guidelines-REQUIREMENTS.md)
-- [`Document-Guidelines-DESIGN.md`](Document-Guidelines-DESIGN.md)
-- [`Document-Guidelines-SPEC.md`](Document-Guidelines-SPEC.md)
-- [`Document-Guidelines-ARCHITECTURE.md`](Document-Guidelines-ARCHITECTURE.md)
-- [`Document-Guidelines-PLAN.md`](Document-Guidelines-PLAN.md)
-
-Apply the guideline to the project. Do not copy its generic teaching content into the project artifact.
+Skipping the artifact never means skipping technical reasoning.
 
 ## Templates
 
-Templates provide reusable structure for workflow artifacts.
+Core control and profile templates:
+
+- [`templates/PROJECT-CONTEXT.template.md`](templates/PROJECT-CONTEXT.template.md)
+- [`templates/WORKFLOW-STATE.template.md`](templates/WORKFLOW-STATE.template.md)
+- [`templates/IMPLEMENTATION-BRIEF.template.md`](templates/IMPLEMENTATION-BRIEF.template.md)
+
+Core Standard and Full templates:
 
 - [`templates/DESIGN-AUDIT.template.md`](templates/DESIGN-AUDIT.template.md)
+- [`templates/REQUIREMENTS.template.md`](templates/REQUIREMENTS.template.md)
+- [`templates/DESIGN.template.md`](templates/DESIGN.template.md)
+- [`templates/SPEC.template.md`](templates/SPEC.template.md)
 - [`templates/DOCUMENT-REVIEW.template.md`](templates/DOCUMENT-REVIEW.template.md)
 - [`templates/ARCHITECTURE.template.md`](templates/ARCHITECTURE.template.md)
+- [`templates/PLAN.template.md`](templates/PLAN.template.md)
 - [`templates/PLAN-REVIEW.template.md`](templates/PLAN-REVIEW.template.md)
 - [`templates/TASKS-INDEX.template.md`](templates/TASKS-INDEX.template.md)
 - [`templates/TASK.template.md`](templates/TASK.template.md)
 - [`templates/IMPLEMENTATION-REVIEW.template.md`](templates/IMPLEMENTATION-REVIEW.template.md)
 
-A template does not override:
+Templates are starting structures. They do not override evidence, approved project decisions, the target repository, or matching guidelines.
 
-- the matching guideline;
-- the design source;
-- authoritative project documentation;
-- repository evidence;
-- an approved project decision.
+## Identifier system
 
-## Examples
-
-Architecture examples are intentionally separated from normative guidance:
-
-- [`examples/ARCHITECTURE-full-stack-example.md`](examples/ARCHITECTURE-full-stack-example.md)
-- [`examples/ARCHITECTURE-component-example.md`](examples/ARCHITECTURE-component-example.md)
-
-Their technologies, directory structures, hosting providers, authentication choices, and architectural patterns are illustrative only.
-
-Do not adopt an example pattern unless it is supported by the target repository, requirements, constraints, or an explicitly approved architectural decision.
-
-## Traceability
-
-Important work should remain traceable across the complete chain:
+Use globally distinct namespaces such as:
 
 ```text
-Design-source evidence
-    → requirement ID
-    → design decision
-    → specification or acceptance criterion
-    → architecture decision, when applicable
-    → plan item
-    → task
-    → implementation
-    → test or validation evidence
+EVD-001
+REQ-FR-001
+REQ-AR-001
+DES-001
+DES-RWD-001
+DES-INT-001
+SPEC-BEH-001
+SPEC-ACC-001
+AC-001
+ADR-001
+PLAN-001
+P01-T01
+DOC-001
+PLANREV-001
+IMPL-001
 ```
 
-Stable IDs should be preserved after creation. When a decision changes, update affected references rather than creating disconnected replacements.
+Do not reuse a requirement ID as a specification ID. Never renumber or reuse an ID after it has been referenced.
 
-## Review model
+## Integrated implementation quality
 
-Every documentation and planning stage uses two distinct review passes:
+Accessibility, responsiveness, states, errors, and tests must be implemented with the component, interaction, or feature they affect. A final phase may verify these concerns, but must not be where they are first added.
 
-1. **Completeness and correctness**
-2. **Consistency, traceability, risks, and uncertainty**
+Responsive breakpoints should be selected from design evidence, actual content or layout failure, and existing project conventions—not from a familiar device number by default.
 
-The second pass must occur after corrections from the first pass have been applied.
+Interaction specifications must identify the intended pattern before prescribing focus behavior. Disclosures, menus, drawers, and modal dialogs do not share identical keyboard and focus requirements.
 
-A request to "review twice" does not mean rereading the same text without changing the review focus.
+## Two-pass review model
 
-## Implementation principles
+Every documentation and planning review uses two distinct passes:
 
-The workflow expects implementation to:
+1. completeness and correctness;
+2. consistency, traceability, risks, and uncertainty after first-pass corrections.
 
-- follow the actual repository's conventions;
-- use semantic HTML and native controls where possible;
-- support keyboard access and visible focus;
-- preserve accessible names, relationships, announcements, reflow, contrast, touch targets, and reduced motion;
-- define responsive behavior between supplied design widths;
-- handle applicable loading, empty, error, success, disabled, long-content, missing-content, and failed-request states;
-- avoid unsupported dependencies and premature abstractions;
-- keep changes small and reviewable;
-- run relevant validation before declaring work complete.
-
-Do not claim a build, test, lint, type check, accessibility review, or manual check passed unless it was actually executed successfully.
-
-## Typical usage patterns
-
-### Complete project
-
-Use all stages, including architecture when the project has meaningful structural decisions.
-
-### Small static site
-
-Use the full documentation and review sequence, but skip a separate architecture artifact when the skip is justified and structural decisions are preserved in the plan.
-
-### Isolated component
-
-Limit the design-source audit and documents to the component's relevant scope. Keep task decomposition proportional to the work while preserving responsive, state, accessibility, and validation requirements.
-
-### Existing implementation
-
-Document the current repository before proposing a target architecture or plan. Separate:
-
-- observed current structure;
-- proposed target structure;
-- temporary transitional structure.
-
-Do not describe proposed files or patterns as if they already exist.
+Rereading the same material without changing review focus does not satisfy the requirement.
 
 ## Expected outcome
 
-A successful application of this workflow produces:
+A successful application produces:
 
-- an evidence-based understanding of the design source;
-- explicit and testable requirements;
-- documented design intent;
-- a precise behavioral specification;
-- reviewed structural decisions when needed;
-- a repository-aware implementation plan;
-- small traceable implementation tasks;
-- validated code;
-- an honest final review with evidence, deviations, and remaining risks.
+- an explicit project and source baseline;
+- controlled stage advancement;
+- evidence-based design understanding;
+- proportional documentation;
+- distinct and traceable decisions;
+- repository-aware planning;
+- small executable tasks;
+- integrated accessibility and responsive behavior;
+- validated implementation with honest evidence and remaining risks.
