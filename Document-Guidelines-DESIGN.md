@@ -1,259 +1,118 @@
-A **`DESIGN.md` file is a project-specific design reference written in Markdown**. It documents how a product, page, or component is intended to look, behave, and adapt—especially when the source of truth begins as a Figma design.
+# `DESIGN.md` Guidelines
 
-## What `DESIGN.md` should answer
+`DESIGN.md` records project-specific visual, responsive, content, and interaction intent. It explains relationships and purpose rather than copying every property from the design source.
 
-A useful `DESIGN.md` explains:
+Use `templates/DESIGN.template.md` and `Identifier-Conventions.md`.
 
-* What is being designed?
-* What is the visual structure?
-* Which design-system rules are being used?
-* How should the interface behave?
-* What changes across viewport sizes?
-* What states and variants exist?
-* What accessibility expectations are visible or implied?
-* Which details are confirmed, inferred, or still unclear?
+## Ownership
 
-It should capture the **design intent**, not merely list pixel measurements copied from the design source.
+`DESIGN.md` owns:
 
-## Typical relationship with other files
+- information architecture and reading order;
+- layout, hierarchy, typography, color, spacing, imagery, and assets;
+- component anatomy, variants, and visual states;
+- responsive transformations;
+- interaction and motion intent;
+- content behavior and edge cases;
+- accessibility intent visible or implied by the design;
+- design-system mapping and deviations.
 
-In your workflow, the files can have distinct responsibilities:
+It does not own business rules, precise testable behavior, repository structure, or task order.
 
-| File        | Main question                                              |
-| ----------- | ---------------------------------------------------------- |
-| `DESIGN.md` | What is the design, and how is it intended to work?        |
-| `SPEC.md`   | What precise requirements must the implementation satisfy? |
-| `PLAN.md`   | How will we build it in the repository?                    |
+## Identifiers
 
-For example:
+Use:
 
-* `DESIGN.md`: “The navigation collapses into a menu on small screens.”
-* `SPEC.md`: “Below 768 px, hide the desktop navigation and expose a keyboard-accessible menu button.”
-* `PLAN.md`: “Create `MobileNavigation.tsx`, add menu state, and use the existing `useMediaQuery` utility.”
+- `DES-*` for general design decisions;
+- `DES-RWD-*` for responsive decisions;
+- `DES-INT-*` for interaction decisions.
 
-## Recommended format
+Each decision should reference supporting `EVD-*` evidence and relevant `REQ-*` requirements.
 
-```md
-# Component or Page Name
+## Observation and uncertainty
 
-## 1. Overview
+Separate:
 
-Briefly explain what the design represents, its purpose, and where it appears.
+- **Observed:** directly visible or explicitly defined;
+- **Inferred:** strongly suggested but not demonstrated;
+- **Recommended:** proposed to resolve a gap;
+- **Open question:** requires a decision;
+- **Confirmed:** approved through authoritative documentation or a user decision.
 
-## 2. Source
+Do not make a recommendation appear to be part of the source design.
 
-- Design source:
-- Analyzed node:
-- Relevant pages or frames:
-- Analysis date:
+## Responsive intent
 
-## 3. Design Intent
+Do not document only supplied viewport widths. Explain:
 
-Explain the user goal, visual direction, hierarchy, and important design decisions.
+- what remains fixed and what becomes fluid;
+- what wraps, stacks, reorders, hides, or is replaced;
+- how hierarchy and content priority change;
+- how the design behaves between supplied examples;
+- what happens at unusually narrow or wide widths;
+- the content or layout failure that requires a transition.
 
-## 4. Structure
+Do not infer a breakpoint merely because `768px` or another familiar value is common. The design document should describe the intended transformation and evidence. The specification makes it observable, and the plan selects and validates an implementation value when needed.
 
-Describe the interface from top to bottom.
+## Interaction intent
 
-- Header
-- Main content
-- Supporting content
-- Actions
-- Footer
-
-## 5. Layout
+Identify the intended pattern before describing behavior. A disclosure, menu widget, non-modal drawer, and modal dialog have different semantic, keyboard, and focus implications.
 
 Document:
 
-- Container behavior
-- Grid or column structure
-- Alignment
-- Spacing relationships
-- Maximum widths
-- Fixed versus fluid dimensions
-- Overflow behavior
+- trigger and intended result;
+- open, closed, selected, or active states;
+- cancellation and closing intent;
+- motion and reduced-motion implications;
+- focus and keyboard implications appropriate to the identified pattern;
+- missing evidence or unresolved pattern choices.
 
-## 6. Visual Hierarchy
+Do not prescribe moving focus merely because content becomes visible.
 
-Explain:
+## Accessibility intent
 
-- Primary and secondary elements
-- Reading order
-- Emphasis
-- Grouping
-- Density
+Document expected semantic hierarchy, reading order, keyboard implications, visible focus, contrast, touch targets, zoom and reflow, alternative text, announcements, and reduced motion.
 
-## 7. Typography
+A design source can suggest accessibility intent but cannot prove implementation compliance.
 
-Document the observed typography roles.
+## Design-system mapping
 
-| Role | Font | Weight | Size | Line height | Usage |
-|---|---|---:|---:|---:|---|
-| Page title | ... | ... | ... | ... | ... |
-| Body | ... | ... | ... | ... | ... |
+Map important patterns to existing tokens, components, and resources when evidence exists. Distinguish:
 
-## 8. Colors and Visual Tokens
+- observed design-source resources;
+- observed repository resources;
+- proposed mappings;
+- missing or conflicting resources.
 
-Document semantic usage rather than only raw values.
+Do not turn this section into an implementation plan.
 
-| Token or role | Value | Usage |
-|---|---|---|
-| Surface | ... | Main background |
-| Primary text | ... | Headings and body |
-| Accent | ... | Primary actions |
+## Lite profile
 
-## 9. Components
+For Lite work, use the design section of `IMPLEMENTATION-BRIEF.md`, preserving `DES-*` ownership and identifiers.
 
-For each important component, describe:
+## Common failure modes
 
-- Purpose
-- Anatomy
-- Variants
-- States
-- Content rules
-- Reuse expectations
+Avoid:
 
-## 10. Interaction Behavior
+- a raw property or CSS dump;
+- invented responsive behavior presented as observed;
+- arbitrary breakpoint values;
+- generic component descriptions without anatomy, variants, states, or content rules;
+- treating hover as a substitute for focus;
+- applying one interaction pattern's focus rules to another pattern;
+- omitting long content, missing content, or intermediate widths;
+- describing proposed project components as already existing.
 
-Document:
+## Review
 
-- Click or tap behavior
-- Hover behavior
-- Focus behavior
-- Keyboard behavior
-- Transitions
-- Open and closed states
-- Validation or feedback behavior
+### Pass 1 — Completeness and correctness
 
-## 11. Responsive Behavior
+- [ ] Purpose, hierarchy, structure, visual system, components, interactions, responsive intent, states, content, accessibility, assets, and design-system mapping are covered as applicable.
+- [ ] The document captures intent rather than copying properties.
 
-### Small screens
+### Pass 2 — Consistency, traceability, risks, and uncertainty
 
-Describe stacking, resizing, hiding, reordering, and navigation changes.
-
-### Medium screens
-
-Describe transitional layout behavior.
-
-### Large screens
-
-Describe maximum widths, columns, and expanded navigation.
-
-## 12. States and Edge Cases
-
-Include relevant states such as:
-
-- Default
-- Hover
-- Focus
-- Active
-- Selected
-- Disabled
-- Loading
-- Empty
-- Error
-- Success
-- Long content
-- Missing image
-
-## 13. Accessibility Intent
-
-Document:
-
-- Semantic structure
-- Heading hierarchy
-- Keyboard access
-- Visible focus
-- Contrast expectations
-- Touch-target expectations
-- Alternative text
-- Reduced-motion considerations
-- Screen-reader behavior
-
-## 14. Assets and Iconography
-
-List:
-
-- Images
-- Logos
-- Icons
-- Illustrations
-- Export requirements
-- Aspect-ratio behavior
-
-## 15. Design-System Mapping
-
-Identify:
-
-- Existing components
-- Tokens
-- Reusable patterns
-- New patterns that may be required
-- Deviations from the current design system
-
-## 16. Assumptions and Inferences
-
-Clearly distinguish details inferred from the design from confirmed requirements.
-
-## 17. Open Questions
-
-List anything that cannot be determined safely from the design source.
-
-## 18. Risks and Potential Inconsistencies
-
-Document contradictions, incomplete states, unusual dimensions, or implementation concerns.
-```
-
-## What it should not become
-
-A `DESIGN.md` should not be:
-
-* A dump of every design source property.
-* A replacement for the design source.
-* A component implementation plan.
-* A list of CSS declarations.
-* A requirements document disguised as design documentation.
-* A place where uncertain behavior is presented as confirmed fact.
-
-For instance, avoid writing only:
-
-> Card width: 384 px. Padding: 24 px. Gap: 16 px.
-
-A better explanation would be:
-
-> Cards use a fixed-width presentation in the desktop composition, but the surrounding layout suggests they should become fluid on smaller screens. Internal spacing follows an apparent 8 px scale, with 24 px container padding and 16 px separation between content groups.
-
-The second version preserves both the observed values and the design intent.
-
-## Observation versus inference
-
-This distinction is especially important when generating `DESIGN.md` from design sources.
-
-Use language such as:
-
-* **Observed:** directly visible or explicitly defined in the design source.
-* **Inferred:** strongly suggested but not explicitly demonstrated.
-* **Recommended:** proposed to resolve a missing design decision.
-* **Open question:** requires confirmation.
-
-Example:
-
-```md
-### Mobile navigation
-
-- **Observed:** The supplied node contains only the desktop navigation.
-- **Inferred:** The navigation cannot fit unchanged below approximately 700 px.
-- **Recommended:** Replace the links with a menu button on narrow screens.
-- **Open question:** Should the mobile menu use a drawer, dropdown, or full-screen overlay?
-```
-
-This prevents invented responsive behavior from being confused with the original design.
-
-## Concentrate on:
-
-1. **Visual interpretation** — layout, typography, spacing, colors, hierarchy, assets.
-2. **Behavioral intent** — interactions, states, variants, and content behavior.
-3. **Responsive interpretation** — what changes and what remains consistent.
-4. **Uncertainty management** — observations, assumptions, contradictions, and open questions.
-
-That makes `DESIGN.md` a durable explanation of the design rather than a temporary design source inspection report.
+- [ ] IDs follow `Identifier-Conventions.md`.
+- [ ] Decisions reference evidence and requirements.
+- [ ] Observed, inferred, recommended, confirmed, and open information remain distinct.
+- [ ] No arbitrary breakpoint or unsupported interaction rule appears as confirmed.
