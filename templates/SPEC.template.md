@@ -1,6 +1,6 @@
 # Specification Template
 
-Use with `Document-Guidelines-SPEC.md` to define precise, observable, testable behavior without prescribing unsupported repository structure.
+Use with [`../guidelines/SPEC.md`](../guidelines/SPEC.md) and [`../workflow/Identifier-Conventions.md`](../workflow/Identifier-Conventions.md) to define precise, observable, testable behavior without prescribing unsupported repository structure.
 
 Reference only snapshot IDs defined in `SOURCE-BASELINE.md`.
 
