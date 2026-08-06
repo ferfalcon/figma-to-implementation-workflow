@@ -2,7 +2,7 @@
 
 A structured, evidence-driven toolkit for turning a Figma file or another design source into a documented, planned, implemented, and validated web project.
 
-The workflow supports AI-assisted and human-led work with explicit source baselines, proportional documentation, accessibility, responsive behavior, repository-aware planning, small implementation tasks, and evidence-backed validation.
+The workflow supports AI-assisted and human-led work with explicit source baselines, proportional documentation, accessibility, responsive behavior, repository-aware planning, small implementation tasks, evidence-backed validation, and machine-checkable workflow control.
 
 ## Start here
 
@@ -10,10 +10,12 @@ The workflow supports AI-assisted and human-led work with explicit source baseli
 2. [`workflow/Workflow-Profiles.md`](workflow/Workflow-Profiles.md)
 3. [`workflow/Source-Snapshots.md`](workflow/Source-Snapshots.md)
 4. [`workflow/Source-Authority.md`](workflow/Source-Authority.md)
-5. [`workflow/Identifier-Conventions.md`](workflow/Identifier-Conventions.md)
-6. [`workflow/Validation-Rules.md`](workflow/Validation-Rules.md)
-7. [`schemas/README.md`](schemas/README.md)
-8. [`ChatGPT-instructions.md`](ChatGPT-instructions.md)
+5. [`workflow/State-Ownership.md`](workflow/State-Ownership.md)
+6. [`workflow/Identifier-Conventions.md`](workflow/Identifier-Conventions.md)
+7. [`workflow/Validation-Rules.md`](workflow/Validation-Rules.md)
+8. [`cli/README.md`](cli/README.md)
+9. [`schemas/README.md`](schemas/README.md)
+10. [`ChatGPT-instructions.md`](ChatGPT-instructions.md)
 
 ## Workflow overview
 
@@ -36,10 +38,7 @@ Express is for one narrow, coherent implementation result with at most one task 
 ### Lite, Standard, and Full path
 
 ```text
-Stage 0: SOURCE-BASELINE.md
-       + PROJECT-CONTEXT.md
-       + WORKFLOW-STATE.md
-       + optional workflow-record.json
+Stage 0 controls + optional workflow-record.json
     ↓
 Pinned design-source audit
     ↓
@@ -55,60 +54,72 @@ Tasks → One-task-at-a-time implementation
     ↓
 Pinned implementation output + validation runtime
     ↓
-IMPLEMENTATION-REVIEW.md
+Final implementation review
 ```
 
 Lite consolidates requirements, design intent, specification, and planning into separate sections of `IMPLEMENTATION-BRIEF.md`. Standard and Full use separate artifacts.
+
+## Canonical workflow state
+
+Projects may operate in either:
+
+- **CLI-managed mode:** `.workflow/workflow-record.json` is canonical for mutable control state. The CLI generates status and index views under `.workflow/generated/`.
+- **Markdown-only mode:** the normal Markdown artifacts remain the manually maintained control records.
+
+Do not maintain the same mutable field in both modes. In CLI-managed mode, these generated files replace manually synchronized status tables:
+
+```text
+.workflow/generated/WORKFLOW-STATUS.md
+.workflow/generated/SOURCE-INDEX.md
+.workflow/generated/ARTIFACT-INDEX.md
+.workflow/generated/TASK-INDEX.md
+```
+
+Every CLI mutation refreshes the generated views. Direct record edits require:
+
+```bash
+design-workflow sync
+```
+
+Freshness can be checked without modifying files:
+
+```bash
+design-workflow sync --check
+```
+
+See [`workflow/State-Ownership.md`](workflow/State-Ownership.md).
 
 ## Repository areas
 
 ### `workflow/`
 
-Normative process rules:
-
-- complete stage sequence;
-- Express, Lite, Standard, and Full profiles;
-- execution modes;
-- source snapshots and rebaseline behavior;
-- source authority and conflict resolution;
-- global identifiers;
-- validation and acceptance rules.
+Normative process rules for stages, profiles, execution modes, source snapshots, source authority, state ownership, identifiers, validation, and acceptance.
 
 ### `source-adapters/`
 
-Source-format inspection guidance:
-
-- Figma capture and audit;
-- Figma file preparation and normalization;
-- screenshots and images;
-- PDFs;
-- existing websites;
-- mixed-source projects.
+Inspection guidance for Figma, screenshots, PDFs, existing websites, and mixed-source projects.
 
 ### `guidelines/`
 
-Artifact-specific writing and review guidance for:
-
-- `REQUIREMENTS.md`;
-- `DESIGN.md`;
-- `SPEC.md`;
-- `ARCHITECTURE.md`;
-- `PLAN.md`.
+Artifact-writing and review guidance for requirements, design, specification, architecture, and planning.
 
 ### `templates/`
 
 Reusable structures for Express workpacks, Stage 0 controls, audits, Lite briefs, requirements, design, specifications, reviews, architecture, plans, tasks, and final implementation validation.
 
+Templates distinguish CLI-managed state from Markdown-only fallback fields so mutable status is not maintained twice.
+
 ### `prompts/`
 
-- one consolidated Express workpack prompt;
-- one executable prompt per normal workflow stage, from intake through final implementation review.
+A consolidated Express prompt and one executable prompt per normal workflow stage.
+
+### `cli/`
+
+The dependency-free `design-workflow` CLI initializes projects, manages snapshots and task lineage, validates records, traces identifiers, and synchronizes generated state views.
 
 ### `schemas/`
 
-Machine-readable workflow control definitions. A project may add `.workflow/workflow-record.json` or any `*.workflow.json` file to enable semantic CI checks without replacing the normative Markdown artifacts.
-
-The executable validator checks identifier uniqueness, references, profile requirements, Express one-workpack and one-task rules, task dependency cycles, snapshot lineage, completion rules, and validation evidence.
+Machine-readable workflow control definitions. In CLI-managed mode the workflow record is the canonical mutable control source, while Markdown retains product, design, technical, evidence, and decision rationale.
 
 ### `examples/`
 
@@ -116,20 +127,22 @@ Non-normative examples organized by Express, Lite, Standard, and Full profiles.
 
 ### `scripts/`
 
-Repository integrity and executable workflow tooling. Run:
+Repository integrity, semantic validation, generated-state checks, and CLI integration tests.
+
+Run:
 
 ```bash
-node scripts/validate-workflow.mjs
-node scripts/test-workflow-record.mjs
+npm run validate
+npm run test:records
+npm run test:state
+npm run test:cli
 ```
-
-The first command checks repository structure, Markdown links, JSON syntax, and any discovered project workflow records. The second command verifies valid general and Express fixtures and detects known semantic failures.
 
 ## Source snapshots
 
 A URL alone is not a reliable baseline. Figma files, websites, branches, shared documents, and preview environments can change without changing address.
 
-Express defines source records inside `WORKPACK.md`. Lite, Standard, and Full create `SOURCE-BASELINE.md`. All profiles use stable IDs:
+All profiles use stable IDs:
 
 ```text
 SRC-DS-001      Design source
@@ -172,29 +185,24 @@ For full-stack applications, authentication, persistence, complex integrations, 
 - `Continuous documentation` — continue through documentation and task decomposition while unblocked, then stop before implementation.
 - `Task-by-task` — implement one unblocked task at a time after planning approval. Express has exactly one task.
 
-## Artifact ownership
+## Ownership summary
 
-| Artifact | Owns |
+| Owner | Responsibility |
 |---|---|
-| `WORKPACK.md` | Express control, source baseline, scope, audit, expected result, plan, one task, lineage, validation, and final review in separate sections |
-| `SOURCE-BASELINE.md` | Lite, Standard, and Full source identity, revision, role, pin strength, output lineage, and rebaseline impact |
-| `PROJECT-CONTEXT.md` | Stable project scope, profile, quality baseline, and input references |
-| `WORKFLOW-STATE.md` | Operational control, verification, lineage, blockers, and next action |
-| `DESIGN-AUDIT.md` | Evidence observed within pinned design snapshots |
-| `REQUIREMENTS.md` | Product outcomes, rules, constraints, and quality expectations |
-| `DESIGN.md` | Visual, responsive, content, and interaction intent |
-| `SPEC.md` | Precise, observable, testable behavior |
-| `ARCHITECTURE.md` | Structural technical decisions and boundaries |
-| `PLAN.md` | Repository-aware approach, ordering, dependencies, risks, and validation |
-| Task files | Task-start state, coherent implementation scope, validation, and output lineage |
-| `IMPLEMENTATION-REVIEW.md` | Final validation against exact inputs, implementation output, and runtime |
-| Workflow record | Machine-readable projection of control state, references, tasks, and lineage for automated checks |
+| Workflow record | Mutable profile, mode, stage, status, active inputs, snapshot registry, artifact inventory, task lifecycle, validation state, and output lineage in CLI-managed mode |
+| Generated views | Deterministic human-readable projections of record-owned state; never edited manually |
+| `WORKPACK.md` | Express scope, evidence, rationale, expected behavior, plan, task detail, decisions, and final review |
+| `SOURCE-BASELINE.md` | Detailed source scope, evidence, reproduction, authority, limitations, and rebaseline impact |
+| `WORKFLOW-STATE.md` | Blockers, assumptions, decisions, exceptions, and narrative history not represented by the record |
+| `TASKS-INDEX.md` | Phase rationale, coverage, coordination, blockers, and cross-cutting concerns |
+| Requirements, design, specification, architecture, and plan artifacts | Their normal product, design, behavioral, structural, and implementation responsibilities |
 
 ## Repository structure
 
 ```text
 .
 ├── README.md
+├── package.json
 ├── LICENSE
 ├── CONTRIBUTING.md
 ├── CHANGELOG.md
@@ -205,6 +213,7 @@ For full-stack applications, authentication, persistence, complex integrations, 
 ├── templates/
 ├── prompts/
 ├── schemas/
+├── cli/
 ├── examples/
 ├── scripts/
 ├── tests/
