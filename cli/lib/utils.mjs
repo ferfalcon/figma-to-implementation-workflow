@@ -3,6 +3,10 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ARTIFACT_ALIASES, ARTIFACT_FILES } from './constants.mjs';
+import {
+  generatedStateFindings,
+  syncGeneratedState,
+} from './generated-state.mjs';
 import { validateWorkflowRecord } from '../../scripts/lib/validate-workflow-record.mjs';
 
 const moduleDirectory = dirname(fileURLToPath(import.meta.url));
@@ -66,8 +70,20 @@ export function writeRecord(path, record) {
   writeFileSync(path, `${JSON.stringify(record, null, 2)}\n`, 'utf8');
 }
 
+export function syncWorkflowViews(path, record, options) {
+  return syncGeneratedState(path, record, options);
+}
+
+export function workflowFindings(path, record) {
+  return [
+    ...validateWorkflowRecord(record),
+    ...generatedStateFindings(path, record),
+  ];
+}
+
 export function saveRecord(path, record) {
   writeRecord(path, record);
+  syncGeneratedState(path, record);
   return validateWorkflowRecord(record);
 }
 
@@ -83,7 +99,7 @@ export function nextId(items, prefix, field = 'id') {
 
 export function nextTaskId(tasks) {
   const highest = tasks.reduce((max, task) => {
-    const match = /^P01-T(\d{2})$/.exec(task.id ?? '');
+    const match = /^P\d{2}-T(\d{2})$/.exec(task.id ?? '');
     return match ? Math.max(max, Number(match[1])) : max;
   }, 0);
   return `P01-T${String(highest + 1).padStart(2, '0')}`;
