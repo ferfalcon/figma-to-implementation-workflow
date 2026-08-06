@@ -9,6 +9,7 @@
   },
   "files": [
     "cli",
+    "workflow",
     "templates",
     "schemas",
     "scripts/lib",
