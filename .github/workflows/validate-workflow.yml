@@ -4,8 +4,11 @@ on:
   push:
     branches:
       - main
-      - 'agent/**'
   pull_request:
+
+concurrency:
+  group: validate-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref_name }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -27,3 +30,9 @@ jobs:
 
       - name: Test semantic workflow validation
         run: node scripts/test-workflow-record.mjs
+
+      - name: Test workflow CLI
+        run: node scripts/test-cli.mjs
+
+      - name: Verify package contents
+        run: npm pack --dry-run
