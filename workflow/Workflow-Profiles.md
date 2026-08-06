@@ -2,7 +2,7 @@
 
 Workflow profiles keep the process proportional to project risk and complexity without removing essential design, accessibility, source integrity, implementation, or validation concerns.
 
-Select a profile during Stage 0 and record it in `PROJECT-CONTEXT.md` and `WORKFLOW-STATE.md`. Create `SOURCE-BASELINE.md` for every profile.
+Select a profile before substantive documentation or implementation begins. Express records its profile and control state inside `WORKPACK.md`. Lite, Standard, and Full record them in `PROJECT-CONTEXT.md` and `WORKFLOW-STATE.md`.
 
 A profile controls artifact granularity. It does not permit unsupported assumptions, unpinned material sources, skipped validation, or implementation without evidence.
 
@@ -13,6 +13,7 @@ Choose a profile from actual complexity, not only file count or visual size.
 Consider:
 
 - number and complexity of user flows;
+- number of independent implementation results;
 - routes, screens, and reusable patterns;
 - persistence, APIs, and third-party integrations;
 - authentication or authorization;
@@ -28,15 +29,89 @@ When uncertain, select the lower profile only when its consolidation rules can p
 
 Every profile requires:
 
-- `SOURCE-BASELINE.md` — pinned or honestly time-bound source records;
-- `PROJECT-CONTEXT.md` — stable project and scope baseline;
-- `WORKFLOW-STATE.md` — active stage, snapshot IDs, blockers, and next action.
+- pinned or honestly time-bound source records;
+- stable project scope and quality expectations;
+- active workflow state, blockers, and next action;
+- source verification before material work;
+- implementation-output lineage;
+- evidence-backed final validation.
 
-Every downstream artifact must reference the snapshot IDs it actually used.
+Express owns these controls inside `WORKPACK.md`. Lite, Standard, and Full use `SOURCE-BASELINE.md`, `PROJECT-CONTEXT.md`, and `WORKFLOW-STATE.md`.
+
+Every downstream artifact or consolidated section must reference the snapshot IDs it actually used.
+
+## Express profile
+
+Use for one narrow, coherent implementation result that can be represented, implemented, and validated in one workpack.
+
+Typical examples:
+
+- correct one existing component;
+- consolidate one repeated UI pattern;
+- implement one isolated static component;
+- make one bounded responsive or accessibility correction;
+- perform one narrowly scoped design-source normalization change.
+
+### Eligibility conditions
+
+All conditions must be true:
+
+- one clearly bounded design-source scope or source bundle;
+- one coherent implementation result;
+- at most one implementation task;
+- no persistence, authentication, authorization, or external API work;
+- no meaningful routing, shared-state, migration, deployment, security, privacy, or rollback decision;
+- no unresolved product decision that materially changes expected behavior;
+- no multi-contributor coordination requiring separate task ownership;
+- the result can be independently validated without reconstructing a broader feature.
+
+### Required artifact
+
+- `WORKPACK.md`
+
+Use [`../templates/WORKPACK.template.md`](../templates/WORKPACK.template.md) and [`../prompts/00-express-workpack.md`](../prompts/00-express-workpack.md).
+
+`WORKPACK.md` owns, in clearly separated sections:
+
+- control state and profile eligibility;
+- source baseline, authority, verification, and limitations;
+- scope and constraints;
+- design evidence and audit findings;
+- requirements, design intent, specification, and acceptance criteria;
+- repository-aware implementation approach;
+- one implementation task;
+- two review passes;
+- implementation discoveries, deviations, and output lineage;
+- validation evidence and final implementation review.
+
+Use the normal identifier namespaces inside the workpack. Consolidation does not merge the responsibilities of requirements, design intent, specification, planning, task execution, and validation.
+
+Do not create separate `SOURCE-BASELINE.md`, `PROJECT-CONTEXT.md`, `WORKFLOW-STATE.md`, `DESIGN-AUDIT.md`, `IMPLEMENTATION-BRIEF.md`, requirements, design, specification, plan, task, or implementation-review artifacts while the work remains Express-eligible.
+
+A machine-readable workflow record may accompany the workpack as an executable projection; it is not a second normative artifact.
+
+### Upgrade triggers
+
+Stop affected work and upgrade when inspection or implementation introduces:
+
+- a second independent implementation result or task;
+- connected routes, screens, or flows;
+- shared state or cross-feature integration;
+- persistence, authentication, authorization, or external APIs;
+- architectural migration;
+- meaningful deployment, security, privacy, reliability, or rollback risk;
+- a material source conflict or unresolved product decision;
+- enough uncertainty that one workpack cannot preserve clear ownership and review.
+
+Upgrade to Lite for a still-small change that benefits from separate control, audit, task, and final-review artifacts. Upgrade to Standard or Full when the corresponding complexity or risk exists.
+
+When upgrading, preserve stable IDs and source records. Split the workpack sections into their owning artifacts rather than rewriting confirmed content from scratch.
 
 ## Lite profile
 
-Use for an isolated component, a small static page, or a narrowly scoped change with no meaningful architecture, persistence, authentication, or complex integration decisions.
+Use for an isolated component, small static page, or narrow change that exceeds Express limits but has no meaningful architecture, persistence, authentication, or complex integration decisions.
+
+Lite is appropriate when the work needs separate source control, audit, task tracking, or final review; contains more than one tightly related task; or carries enough uncertainty that one workpack would become difficult to maintain.
 
 ### Required artifacts
 
@@ -114,32 +189,37 @@ Full-profile work should explicitly cover, when applicable:
 
 ## Profile comparison
 
-| Concern | Lite | Standard | Full |
-|---|---|---|---|
-| Stage 0 snapshots, context, and state | Required | Required | Required |
-| Design audit | Required | Required | Required |
-| Separate requirements, design, and specification files | Consolidated | Required | Required |
-| Documentation consistency gate | In brief | Separate artifact | Separate artifact |
-| Separate architecture | No, unless upgraded | Conditional | Normally required |
-| Separate plan and adversarial plan review | Consolidated | Required | Required |
-| Task decomposition | Proportional | Required | Required |
-| Final implementation review | Required | Required | Required |
+| Concern | Express | Lite | Standard | Full |
+|---|---|---|---|---|
+| Normative Markdown artifacts | One `WORKPACK.md` | Separate controls, audit, brief, task, and final review | Separate core artifacts | Complete artifact set |
+| Source baseline, context, and state | Consolidated in workpack | Required separately | Required separately | Required separately |
+| Design audit | Workpack section | Required | Required | Required |
+| Requirements, design, and specification | Separate workpack sections | Consolidated in brief | Separate artifacts | Separate artifacts |
+| Documentation consistency gate | Two workpack reviews | In brief | Separate artifact | Separate artifact |
+| Separate architecture | Not allowed; upgrade instead | No, unless upgraded | Conditional | Normally required |
+| Plan and adversarial review | Workpack sections | Consolidated | Separate artifacts | Separate artifacts |
+| Task decomposition | Exactly one task in workpack | Proportional | Required | Required |
+| Final implementation review | Workpack section | Required separately | Required separately | Required separately |
 
 ## Execution modes
 
-Record one execution mode in `WORKFLOW-STATE.md`.
+Record one execution mode in `WORKPACK.md` for Express or `WORKFLOW-STATE.md` for other profiles.
 
 ### Gated
 
-- Stop after every stage or consolidated Lite artifact.
+- Stop after every stage or consolidated checkpoint.
 - Advance only after an explicit user request or approval.
 - Use when decisions require close review or the scope is still changing.
 
+For Express, reasonable checkpoints are source and evidence capture, expected result and plan readiness, implementation, and final validation.
+
 ### Continuous documentation
 
-- Continue through permitted documentation, review, planning, and task-decomposition stages while no blocker exists.
+- Continue through permitted documentation, review, planning, and task-decomposition work while no blocker exists.
 - Stop before implementation.
 - Do not treat silence as approval for unresolved product, design, architectural, or source-baseline decisions.
+
+For Express, complete the workpack through implementation readiness and stop before editing code.
 
 ### Task-by-task
 
@@ -149,11 +229,22 @@ Record one execution mode in `WORKFLOW-STATE.md`.
 - Run validation and update workflow state before selecting the next task.
 - Do not silently combine unrelated tasks.
 
+Express has exactly one task. Discovery of a second independent task requires a profile upgrade.
+
 ## Changing profiles, modes, or baselines
 
 A profile or execution mode may change when new evidence changes project complexity or risk. A source baseline changes through the rebaseline protocol in [`Source-Snapshots.md`](Source-Snapshots.md).
 
-When a profile or mode changes:
+When Express upgrades:
+
+1. record the trigger and target profile in `WORKPACK.md`;
+2. preserve source IDs, evidence IDs, domain IDs, task IDs, decisions, and history;
+3. create the target profile's required control artifacts;
+4. move or copy each workpack section into its owning artifact without changing meaning;
+5. mark the workpack as Superseded after the new artifact set is internally consistent;
+6. resume at the earliest affected stage.
+
+When Lite, Standard, or Full changes profile or mode:
 
 1. update `PROJECT-CONTEXT.md` when the profile decision changes materially;
 2. update `WORKFLOW-STATE.md` immediately;
