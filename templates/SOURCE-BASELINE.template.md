@@ -1,6 +1,6 @@
 # Source Baseline Template
 
-Use this template during Stage 0 to create `SOURCE-BASELINE.md`. Follow `Source-Snapshots.md`.
+Use this template during Stage 0 to create `SOURCE-BASELINE.md`. Follow [`../workflow/Source-Snapshots.md`](../workflow/Source-Snapshots.md) and [`../workflow/Identifier-Conventions.md`](../workflow/Identifier-Conventions.md).
 
 Do not replace a snapshot record with newer content. Create a new ID. Use rebaseline impact assessment for changed upstream inputs and lineage tracking for expected implementation outputs.
 
