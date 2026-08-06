@@ -2,13 +2,13 @@
 
 Source snapshots make project artifacts reproducible by recording the exact design, repository, runtime, documentation, and asset baselines used to create them.
 
-A source URL by itself is not a snapshot. Many URLs point to mutable content. The workflow must record either an immutable revision or enough time-bound evidence to describe what was actually inspected.
+A source URL by itself is not a snapshot. Many URLs point to mutable content. Record either an immutable revision or enough time-bound evidence to describe what was actually inspected.
 
 ## Core model
 
 Every project creates `SOURCE-BASELINE.md` during Stage 0 from `templates/SOURCE-BASELINE.template.md`.
 
-`SOURCE-BASELINE.md` owns snapshot identity and details. Other artifacts reference snapshot IDs instead of copying mutable URLs, dates, or commit values throughout the documentation set.
+`SOURCE-BASELINE.md` owns snapshot identity and details. Other artifacts reference snapshot IDs instead of copying mutable URLs, dates, or commits throughout the documentation set.
 
 Example artifact metadata:
 
@@ -29,66 +29,65 @@ updated: YYYY-MM-DD
 ---
 ```
 
-Use an empty list when a source category does not apply. Do not insert a placeholder snapshot ID that has not been defined.
+Use an empty list when a category does not apply. Do not insert an undefined placeholder ID.
 
 ## Snapshot namespaces
 
-- `SRC-DS-*` — design sources such as Figma, screenshots, images, or PDFs;
-- `SRC-REPO-*` — repository and code baselines;
+- `SRC-DS-*` — Figma, screenshots, images, PDFs, websites used as design evidence;
+- `SRC-REPO-*` — repository input baselines, task-start commits, and implementation outputs;
 - `SRC-RUN-*` — production, preview, staging, or local runtime observations;
 - `SRC-DOC-*` — product, API, legal, design-system, or technical documentation;
-- `SRC-ASSET-*` — asset bundles, fonts, images, icons, or other implementation inputs when they need independent pinning.
+- `SRC-ASSET-*` — asset bundles, fonts, images, icons, or other implementation inputs.
 
 Each ID is defined once in `SOURCE-BASELINE.md` and never reused.
 
-## Pin strength
+## Snapshot roles
 
-Classify every snapshot honestly.
+Identity category and workflow role are separate.
+
+Use one role for each snapshot:
+
+- **Input baseline** — an upstream source used to define expected work;
+- **Supporting source** — additional evidence or documentation;
+- **Task start** — repository state from which a task begins;
+- **Implementation output** — repository state produced by approved implementation work;
+- **Validation runtime** — deployed or local runtime used for validation;
+- **Historical reference** — preserved prior state no longer active.
+
+A repository commit produced by an approved task is an Implementation output, not an unexpected upstream source change.
+
+## Pin strength
 
 ### Immutable
 
-The referenced content cannot change without receiving a different identity.
+Content cannot change without receiving a different identity.
 
-Examples:
-
-- Git commit SHA;
-- content-addressed object;
-- file with a recorded cryptographic checksum;
-- immutable deployment identifier.
+Examples: Git commit SHA, content-addressed object, checksum-backed file, immutable deployment ID.
 
 ### Versioned
 
-The source provides a stable named or numbered revision, but the workflow cannot independently guarantee content immutability.
+The source provides a stable named or numbered revision, but immutability cannot be independently guaranteed.
 
-Examples:
-
-- a named Figma version;
-- a versioned API specification;
-- a release or document revision.
+Examples: named Figma version, versioned API specification, document revision.
 
 ### Time-bound
 
 The source was inspected at a recorded time, but the original location may change later.
 
-Examples:
+Examples: live Figma file without a named version, existing website, shared document without revision access.
 
-- a live Figma file without a pinned version;
-- an existing website captured at a timestamp;
-- a shared document without revision history access.
-
-Time-bound snapshots must state their reproducibility limitations and should include exported evidence when practical.
+Time-bound snapshots must state reproducibility limitations and should include exported evidence when practical.
 
 ### Unverified
 
-The source identity or revision could not be confirmed. This classification is allowed only when the limitation is explicit.
-
-A material Unverified source may block later stages.
+Identity or revision could not be confirmed. A material Unverified source may block later stages.
 
 ## Required fields
 
 Every snapshot record must include:
 
 - snapshot ID;
+- role;
 - source category and type;
 - title or purpose;
 - canonical reference;
@@ -101,156 +100,139 @@ Every snapshot record must include:
 - known limitations;
 - status: Active / Superseded / Invalid / Unverified.
 
-Do not claim a source is immutable when only a timestamp or mutable URL is available.
+Do not claim immutability when only a timestamp or mutable URL is available.
 
 ## Source-specific rules
 
 ### Figma
 
-Record:
+Record file URL and key, page and node scope, named version when available, timestamp, access mode, library dependencies, exports when practical, role, pin strength, and limitations.
 
-- file URL and file key when available;
-- page, section, frame, component, or node IDs in scope;
-- named version, version URL, or version identifier when available;
-- inspection timestamp and timezone;
-- access mode and library dependencies;
-- exported screenshots, PDFs, or other captured evidence when practical;
-- whether the source is Immutable, Versioned, Time-bound, or Unverified.
-
-A normal Figma design URL is mutable. Without a named version or exported checksum-backed capture, classify it as Time-bound.
+A normal Figma design URL is mutable. Without a named version or checksum-backed export, classify it as Time-bound.
 
 ### Screenshots, images, and PDFs
 
-Record:
+Record file name, format, size when available, SHA-256 checksum when tooling permits, exact page or region scope, acquisition date, storage reference, and transformations already applied.
 
-- file name and format;
-- file size when available;
-- SHA-256 checksum when tooling permits;
-- page, region, or image scope;
-- upload or acquisition date;
-- storage or attachment reference;
-- transformations or compression already applied.
-
-A checksum pins the supplied file, not the unseen source from which it may have been exported.
+A checksum pins the supplied file, not its unseen original source.
 
 ### Existing websites
 
-Record:
-
-- exact page URLs;
-- capture timestamp and timezone;
-- viewport sizes;
-- browser and relevant environment details;
-- authentication or personalization state;
-- screenshots, recordings, or archives when available;
-- dynamic data and known capture limitations.
+Record exact URLs, timestamp, viewports, browser and environment, authentication or personalization state, screenshots or recordings, dynamic data, and limitations.
 
 A live website observation is normally Time-bound even when its URL is stable.
 
 ### Repositories
 
-Record:
+Record repository URL, commit SHA, role, branch for context, relevant package or directory, lockfile or submodule state, uncommitted patch when applicable, and access limitations.
 
-- repository URL;
-- commit SHA;
-- branch for context;
-- relevant application, package, or directory scope;
-- submodule or lockfile state when relevant;
-- uncommitted local changes or patches, when applicable;
-- access or tooling limitations.
+Use the commit SHA as the pin. A branch name alone is mutable and insufficient.
 
-Use the commit SHA as the pin. A branch name alone is mutable and is not sufficient.
+Repository snapshot roles typically progress as:
+
+```text
+Input baseline → Task start → Implementation output → Next task start
+```
+
+A single commit may serve as both one task's Implementation output and the next task's Task start. Reference the same snapshot ID rather than duplicating it.
 
 ### Runtime deployments
 
-Record:
-
-- environment and URL;
-- deployment or release ID;
-- associated repository commit when known;
-- capture timestamp;
-- configuration or feature-flag state relevant to the review;
-- test data or authentication state;
-- known environment differences.
+Record environment and URL, deployment or release ID, associated repository snapshot, timestamp, configuration or feature-flag state, test data, authentication state, captured evidence, and environment differences.
 
 ### Documentation
 
-Record:
-
-- path or URL;
-- title and authority;
-- revision, version, date, commit, or checksum;
-- exact sections used;
-- access limitations;
-- whether the document is normative, informative, or historical.
+Record path or URL, authority, revision or checksum, exact sections used, access limitations, and normative, informative, or historical status.
 
 ## Artifact baseline references
 
 Every workflow artifact created after Stage 0 must identify the snapshot IDs it relies on.
 
-At minimum, metadata must reference:
+Metadata should reference design snapshots used for visual evidence, repository snapshots used for current-state claims, documentation snapshots used for requirements, runtime snapshots used for observed behavior, and asset snapshots used as implementation inputs.
 
-- design snapshot IDs used for visual, interaction, content, or responsive evidence;
-- repository snapshot IDs used for implementation or current-state claims;
-- documentation snapshot IDs used for authoritative requirements or constraints;
-- runtime snapshot IDs used for current-behavior or final-validation claims.
+Reference only sources actually used.
 
-The artifact should reference only sources actually used.
+## Active input baseline and implementation lineage
 
-## Active baseline
+`WORKFLOW-STATE.md` distinguishes:
 
-`WORKFLOW-STATE.md` records the currently active snapshot IDs.
+- active upstream input snapshots;
+- current task-start repository snapshot;
+- latest approved implementation-output snapshot;
+- current validation-runtime snapshot.
 
-An artifact remains valid against the snapshots listed in its own metadata even after the active project baseline changes. It becomes stale only when a newer baseline affects its scope or conclusions.
+An artifact remains valid against the snapshots in its metadata after the active baseline changes. It becomes stale only when a newer upstream input affects its scope or conclusions.
 
-## Detecting source changes
+## Expected workflow outputs
 
-Before starting a stage, resuming after a meaningful pause, or declaring final acceptance:
+Approved implementation naturally changes the repository and runtime.
 
-1. compare the available source identity with the active snapshot;
-2. determine whether the source changed or cannot be verified;
+When a task completes successfully:
+
+1. create a new `SRC-REPO-*` record with role Implementation output;
+2. record the output commit SHA;
+3. use it as the next task's Task start when applicable;
+4. update `WORKFLOW-STATE.md` and task completion evidence;
+5. do not roll the workflow back merely because the approved task changed the repository.
+
+When the output is deployed for validation:
+
+1. create a `SRC-RUN-*` record with role Validation runtime;
+2. connect it to the implementation repository snapshot;
+3. record environment differences and capture conditions.
+
+Expected outputs require lineage and validation, not an upstream rebaseline impact assessment.
+
+## Detecting changes
+
+Before a stage, after a meaningful pause, before a task, and before final acceptance:
+
+1. compare available source identity with the referenced snapshot;
+2. classify the difference as unchanged, expected workflow output, or unexpected upstream/concurrent change;
 3. record the check in `WORKFLOW-STATE.md`;
-4. do not silently use a newer source under an older snapshot ID.
+4. do not silently use newer content under an older ID.
 
-For mutable Time-bound sources, a new inspection time alone does not require rebasing when the relevant content is demonstrably unchanged. Record the verification method.
+For Time-bound sources, a new inspection time alone does not require rebasing when relevant content is demonstrably unchanged. Record the method.
+
+Unexpected concurrent repository changes within task scope require impact assessment. Approved commits produced by the workflow do not.
 
 ## Rebaseline protocol
 
-When a material source changes:
+Use this protocol when a material upstream input changes unexpectedly or an approved source revision is intentionally replaced:
 
 1. create a new snapshot ID;
 2. preserve the previous record and mark it Superseded when appropriate;
-3. record the reason, detected changes, and effective date;
-4. perform an impact assessment across project artifacts;
-5. identify the earliest affected workflow stage;
-6. move `WORKFLOW-STATE.md` back to that stage when correction is required;
-7. update affected artifacts to reference the new snapshot only after reviewing them;
-8. preserve stable requirement, design, specification, architecture, plan, and task IDs unless the underlying item is genuinely replaced;
-9. record superseded decisions and changed acceptance criteria explicitly;
-10. rerun required review and validation gates.
+3. record reason, detected changes, and effective date;
+4. perform an impact assessment across artifacts;
+5. identify the earliest affected stage;
+6. move `WORKFLOW-STATE.md` back when correction is required;
+7. update affected artifacts only after review;
+8. preserve stable requirement, design, specification, architecture, plan, and task IDs unless genuinely replaced;
+9. record superseded decisions and changed criteria;
+10. rerun required gates.
 
 Never edit an existing snapshot ID to point silently to different content.
 
 ## Impact assessment
 
-Use a table such as:
-
 | New snapshot | Previous snapshot | Change summary | Affected artifacts | Earliest affected stage | Action | Status |
 |---|---|---|---|---:|---|---|
 | `SRC-DS-002` | `SRC-DS-001` | ... | `DESIGN-AUDIT.md`, `DESIGN.md`, `SPEC.md` | 1 | Re-audit affected nodes | Open |
 
-A source change does not require rewriting unaffected artifacts. Record why an artifact is unaffected when that conclusion is not obvious.
+A change does not require rewriting unaffected artifacts. Record why an artifact is unaffected when not obvious.
 
 ## Final baseline integrity check
 
-Before final implementation acceptance, verify:
+Before final acceptance, verify:
 
 - every referenced snapshot ID exists;
-- no artifact depends silently on a newer source;
-- the implementation commit is pinned;
-- the runtime or preview used for validation is identified;
-- source changes during implementation received an impact assessment;
-- superseded artifacts or decisions are visible;
-- skipped or unavailable captures are documented honestly.
+- no artifact silently depends on newer input content;
+- the original repository input baseline is identified;
+- the implementation commit is a pinned `SRC-REPO-*` Implementation output;
+- the validation runtime is a pinned `SRC-RUN-*` snapshot tied to that output;
+- unexpected input changes received impact assessment;
+- expected task outputs have complete lineage;
+- superseded artifacts or decisions remain visible;
+- unavailable captures are documented honestly.
 
 An implementation must not be described as matching “the design” without identifying which design snapshot was used.
