@@ -2,6 +2,25 @@
 
 Use with `Document-Guidelines-DESIGN.md` to create a project-specific record of visual, responsive, content, and interaction intent.
 
+Reference only snapshot IDs defined in `SOURCE-BASELINE.md`.
+
+```yaml
+---
+artifact: DESIGN
+status: Draft
+baseline:
+  design:
+    - SRC-DS-001
+  repository: []
+  runtime: []
+  documentation: []
+  assets:
+    - SRC-ASSET-001
+created: YYYY-MM-DD
+updated: YYYY-MM-DD
+---
+```
+
 # Design
 
 ## 1. Document Information
@@ -9,7 +28,7 @@ Use with `Document-Guidelines-DESIGN.md` to create a project-specific record of 
 - Status: Draft
 - Scope:
 - Last updated:
-- Design source:
+- Source baseline: `SOURCE-BASELINE.md`
 - Evidence baseline: `DESIGN-AUDIT.md`
 - Related requirements: `REQUIREMENTS.md`
 
@@ -19,9 +38,12 @@ Describe the user goal, visual direction, hierarchy, and experience principles.
 
 ## 3. Source and Scope
 
+- Design snapshot IDs: `SRC-DS-*`
 - Included design-source regions:
 - Excluded regions:
-- Source version or inspection date:
+- Captured evidence or reproduction limitations:
+
+Do not repeat mutable source identity as if it were a version. The snapshot records own revision and capture details.
 
 ## 4. Information Architecture and Reading Order
 
@@ -37,7 +59,7 @@ Describe containers, grids, alignment, flow, fixed and fluid dimensions, and ove
 
 - **Classification:** Observed / Inferred / Recommended / Confirmed
 - **Intent:**
-- **Evidence:** `EVD-*`
+- **Evidence:** `EVD-*` in `SRC-DS-*`
 - **Requirement references:** `REQ-*`
 - **Implications:**
 
@@ -47,13 +69,13 @@ Describe containers, grids, alignment, flow, fixed and fluid dimensions, and ove
 
 | Role | Style or value | Usage | Evidence |
 |---|---|---|---|
-| ... | ... | ... | ... |
+| ... | ... | ... | `EVD-*` / `SRC-DS-*` |
 
 ### Color and tokens
 
 | Semantic role | Token or value | Usage | Evidence |
 |---|---|---|---|
-| ... | ... | ... | ... |
+| ... | ... | ... | `EVD-*` / `SRC-DS-*` |
 
 ### Spacing, borders, radii, shadows, imagery, and icons
 
@@ -74,7 +96,7 @@ Describe containers, grids, alignment, flow, fixed and fluid dimensions, and ove
 - Pattern:
 - Motion:
 - Focus or keyboard implication:
-- Evidence:
+- Evidence and snapshot:
 
 Do not prescribe a widget interaction pattern until the intended pattern is identified.
 
@@ -86,7 +108,7 @@ Do not prescribe a widget interaction pattern until the intended pattern is iden
 - What becomes fluid:
 - What wraps, stacks, reorders, hides, or is replaced:
 - Content-driven transition condition:
-- Evidence and uncertainty:
+- Evidence, snapshot, and uncertainty:
 
 Do not invent a familiar breakpoint value. Record supplied viewport evidence and describe behavior between examples.
 
@@ -110,9 +132,9 @@ Document semantic hierarchy, reading order, keyboard implications, focus visibil
 
 ## 13. Assets and Design-system Mapping
 
-| Asset or pattern | Source | Existing project resource | Required action | Risk |
+| Asset or pattern | Snapshot or evidence | Existing project resource | Required action | Risk |
 |---|---|---|---|---|
-| ... | ... | ... | ... | ... |
+| ... | `SRC-ASSET-*` / `EVD-*` | ... | ... | ... |
 
 ## 14. Inferences, Recommendations, and Open Questions
 
@@ -130,7 +152,7 @@ Document semantic hierarchy, reading order, keyboard implications, focus visibil
 
 ## 15. Risks and Inconsistencies
 
-| Finding | Evidence | Impact | Resolution owner |
+| Finding | Snapshot or evidence | Impact | Resolution owner |
 |---|---|---|---|
 | ... | ... | ... | ... |
 
@@ -140,10 +162,12 @@ Document semantic hierarchy, reading order, keyboard implications, focus visibil
 
 - [ ] Important structure, visual roles, components, states, interactions, responsive behavior, accessibility intent, and assets are covered.
 - [ ] Design intent is documented rather than copied as a property dump.
+- [ ] Snapshot IDs in metadata exist and were actually inspected.
 
-### Pass 2 — Consistency, traceability, risks, and uncertainty
+### Pass 2 — Consistency, traceability, source integrity, risks, and uncertainty
 
 - [ ] `DES-*` identifiers follow `Identifier-Conventions.md`.
-- [ ] Decisions map to evidence and requirements.
+- [ ] Decisions map to evidence, snapshots, and requirements.
+- [ ] No source changed silently after the artifact baseline was recorded.
 - [ ] Observed, inferred, recommended, confirmed, and open information remain distinct.
 - [ ] No arbitrary breakpoint or unsupported interaction behavior is presented as confirmed.
