@@ -1,6 +1,6 @@
 # Requirements Template
 
-Use with `Document-Guidelines-REQUIREMENTS.md`. Remove non-applicable sections without removing material project concerns.
+Use with [`../guidelines/REQUIREMENTS.md`](../guidelines/REQUIREMENTS.md). Follow [`../workflow/Identifier-Conventions.md`](../workflow/Identifier-Conventions.md). Remove non-applicable sections without removing material project concerns.
 
 Reference only snapshot IDs defined in `SOURCE-BASELINE.md`.
 
