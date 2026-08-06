@@ -1,0 +1,217 @@
+#!/usr/bin/env node
+
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { dirname, extname, join, normalize, relative, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const scriptDirectory = dirname(fileURLToPath(import.meta.url));
+const root = resolve(scriptDirectory, '..');
+
+const requiredPaths = [
+  'README.md',
+  'LICENSE',
+  'CONTRIBUTING.md',
+  'CHANGELOG.md',
+  'ChatGPT-instructions.md',
+  'workflow/Design-Implementation-Workflow.md',
+  'workflow/Workflow-Profiles.md',
+  'workflow/Source-Authority.md',
+  'workflow/Source-Snapshots.md',
+  'workflow/Identifier-Conventions.md',
+  'workflow/Validation-Rules.md',
+  'source-adapters/FIGMA.md',
+  'source-adapters/FIGMA-PREPARATION.md',
+  'source-adapters/SCREENSHOTS.md',
+  'source-adapters/PDF.md',
+  'source-adapters/EXISTING-WEBSITE.md',
+  'source-adapters/MIXED-SOURCES.md',
+  'guidelines/REQUIREMENTS.md',
+  'guidelines/DESIGN.md',
+  'guidelines/SPEC.md',
+  'guidelines/ARCHITECTURE.md',
+  'guidelines/PLAN.md',
+  'templates/SOURCE-BASELINE.template.md',
+  'templates/PROJECT-CONTEXT.template.md',
+  'templates/WORKFLOW-STATE.template.md',
+  'templates/DESIGN-AUDIT.template.md',
+  'templates/IMPLEMENTATION-BRIEF.template.md',
+  'templates/REQUIREMENTS.template.md',
+  'templates/DESIGN.template.md',
+  'templates/SPEC.template.md',
+  'templates/DOCUMENT-REVIEW.template.md',
+  'templates/ARCHITECTURE.template.md',
+  'templates/PLAN.template.md',
+  'templates/PLAN-REVIEW.template.md',
+  'templates/TASKS-INDEX.template.md',
+  'templates/TASK.template.md',
+  'templates/IMPLEMENTATION-REVIEW.template.md',
+  'examples/lite-component/README.md',
+  'examples/standard-site/README.md',
+  'examples/standard-site/ARCHITECTURE-component-example.md',
+  'examples/full-application/README.md',
+  'examples/full-application/ARCHITECTURE-full-stack-example.md',
+  'scripts/validate-workflow.mjs',
+];
+
+const promptPaths = [
+  'prompts/00-intake.md',
+  'prompts/01-audit.md',
+  'prompts/02-requirements.md',
+  'prompts/03-design.md',
+  'prompts/04-specification.md',
+  'prompts/05-document-review.md',
+  'prompts/06-architecture.md',
+  'prompts/07-plan.md',
+  'prompts/08-plan-review.md',
+  'prompts/09-task-decomposition.md',
+  'prompts/10-implement-task.md',
+  'prompts/11-implementation-review.md',
+];
+
+const legacyRootPaths = [
+  'Design-Implementation-Workflow.md',
+  'Workflow-Profiles.md',
+  'Source-Snapshots.md',
+  'Identifier-Conventions.md',
+  'Figma-file-preparation.md',
+  'Document-Guidelines-REQUIREMENTS.md',
+  'Document-Guidelines-DESIGN.md',
+  'Document-Guidelines-SPEC.md',
+  'Document-Guidelines-ARCHITECTURE.md',
+  'Document-Guidelines-PLAN.md',
+  'examples/ARCHITECTURE-component-example.md',
+  'examples/ARCHITECTURE-full-stack-example.md',
+];
+
+const errors = [];
+const warnings = [];
+
+function toRepositoryPath(path) {
+  return relative(root, path).split('\\').join('/');
+}
+
+function walk(directory) {
+  const files = [];
+
+  for (const entry of readdirSync(directory, { withFileTypes: true })) {
+    if (entry.name === '.git' || entry.name === 'node_modules') continue;
+
+    const path = join(directory, entry.name);
+    if (entry.isDirectory()) files.push(...walk(path));
+    else files.push(path);
+  }
+
+  return files;
+}
+
+function stripCodeFences(markdown) {
+  return markdown.replace(/```[\s\S]*?```/g, '');
+}
+
+function normalizeLinkTarget(rawTarget) {
+  let target = rawTarget.trim();
+
+  if (target.startsWith('<') && target.endsWith('>')) {
+    target = target.slice(1, -1);
+  }
+
+  // Remove an optional Markdown title after a whitespace separator.
+  const titleSeparator = target.match(/\s+["']/);
+  if (titleSeparator?.index !== undefined) {
+    target = target.slice(0, titleSeparator.index);
+  }
+
+  try {
+    target = decodeURIComponent(target);
+  } catch {
+    // Keep the original target and report resolution failures below.
+  }
+
+  return target.split('#')[0].split('?')[0];
+}
+
+function isExternalOrVirtual(target) {
+  return (
+    target.length === 0 ||
+    target.startsWith('#') ||
+    target.startsWith('http://') ||
+    target.startsWith('https://') ||
+    target.startsWith('mailto:') ||
+    target.startsWith('tel:') ||
+    target.startsWith('data:') ||
+    target.includes('<') ||
+    target.includes('>')
+  );
+}
+
+for (const repositoryPath of [...requiredPaths, ...promptPaths]) {
+  if (!existsSync(join(root, repositoryPath))) {
+    errors.push(`Missing required path: ${repositoryPath}`);
+  }
+}
+
+for (const repositoryPath of legacyRootPaths) {
+  if (existsSync(join(root, repositoryPath))) {
+    errors.push(`Legacy path still exists: ${repositoryPath}`);
+  }
+}
+
+const markdownFiles = walk(root).filter((path) => extname(path).toLowerCase() === '.md');
+const linkPattern = /\[[^\]]*\]\(([^)]+)\)/g;
+
+for (const markdownPath of markdownFiles) {
+  const repositoryPath = toRepositoryPath(markdownPath);
+  const markdown = stripCodeFences(readFileSync(markdownPath, 'utf8'));
+  let match;
+
+  while ((match = linkPattern.exec(markdown)) !== null) {
+    const rawTarget = match[1];
+    const target = normalizeLinkTarget(rawTarget);
+
+    if (isExternalOrVirtual(target)) continue;
+
+    const resolvedTarget = normalize(resolve(dirname(markdownPath), target));
+
+    if (!resolvedTarget.startsWith(root)) {
+      errors.push(`${repositoryPath}: link escapes repository: ${rawTarget}`);
+      continue;
+    }
+
+    if (!existsSync(resolvedTarget)) {
+      errors.push(`${repositoryPath}: broken relative link: ${rawTarget}`);
+    }
+  }
+}
+
+for (const promptPath of promptPaths) {
+  const absolutePath = join(root, promptPath);
+  if (!existsSync(absolutePath)) continue;
+
+  const content = readFileSync(absolutePath, 'utf8');
+  if (!/^# Stage \d+|^# Stage 0/m.test(content)) {
+    warnings.push(`${promptPath}: expected a Stage heading`);
+  }
+}
+
+const templateFiles = readdirSync(join(root, 'templates'))
+  .filter((name) => name.endsWith('.template.md'))
+  .sort();
+
+if (templateFiles.length < 14) {
+  errors.push(`Expected at least 14 templates, found ${templateFiles.length}`);
+}
+
+if (warnings.length > 0) {
+  console.warn('Warnings:');
+  for (const warning of warnings) console.warn(`- ${warning}`);
+  console.warn('');
+}
+
+if (errors.length > 0) {
+  console.error('Workflow repository validation failed:');
+  for (const error of errors) console.error(`- ${error}`);
+  process.exitCode = 1;
+} else {
+  console.log(`Workflow repository validation passed.`);
+  console.log(`Checked ${requiredPaths.length + promptPaths.length} required paths and ${markdownFiles.length} Markdown files.`);
+}
