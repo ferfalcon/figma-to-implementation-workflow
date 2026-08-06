@@ -1,8 +1,26 @@
 # Plan Review Template
 
-Use this template to create a project-specific `PLAN-REVIEW.md`.
+Use this template to create a project-specific `PLAN-REVIEW.md`. Correct `PLAN.md` directly when evidence supports a change, then record the finding and residual risk here.
 
-This document records an adversarial review of `PLAN.md`. Correct the plan directly when evidence supports a change, then record the finding, impact, correction, and remaining risk here.
+Reference only snapshot IDs defined in `SOURCE-BASELINE.md`.
+
+```yaml
+---
+artifact: PLAN-REVIEW
+status: In progress
+baseline:
+  design:
+    - SRC-DS-001
+  repository:
+    - SRC-REPO-001
+  runtime: []
+  documentation:
+    - SRC-DOC-001
+  assets: []
+created: YYYY-MM-DD
+updated: YYYY-MM-DD
+---
+```
 
 # Plan Review
 
@@ -12,88 +30,61 @@ This document records an adversarial review of `PLAN.md`. Correct the plan direc
 - Review date: YYYY-MM-DD
 - Reviewer:
 - Project:
+- Source baseline: `SOURCE-BASELINE.md`
 - Reviewed `PLAN.md` version or commit:
 
 ## 2. Review Sources
 
 - `PLAN.md`
-- `PLAN-REVIEW.md`, when updating an existing review
 - `REQUIREMENTS.md`
 - `DESIGN.md`
 - `SPEC.md`
 - `ARCHITECTURE.md`, when applicable
 - `DOCUMENT-REVIEW.md`
-- Design source
-- Current repository
-- Other relevant technical sources:
+- Active `SRC-*` snapshots
+- Other relevant technical sources
 
-## 3. Review Method
+## 3. Baseline Integrity and Repository Assumption Check
+
+| Plan claim | Snapshot and repository evidence | Accurate at pinned commit | Newer source detected | Required correction |
+|---|---|---|---|---|
+| Existing path, script, dependency, pattern, or capability | `SRC-REPO-*` | Yes / No / Unconfirmed | Yes / No / Unknown | ... |
+
+Do not allow proposed files, branch-head changes, or later design revisions to be described as part of the pinned baseline.
+
+## 4. Review Method
 
 ### Pass 1 — Feasibility and completeness
 
-Challenge repository assumptions, technical approach, scope, ordering, dependencies, task size, integration work, migration work, and validation.
+Challenge snapshot validity, repository assumptions, technical approach, scope, ordering, dependencies, task size, integration, migration, and validation.
 
-### Pass 2 — Consistency, traceability, risks, and uncertainty
+### Pass 2 — Consistency, traceability, source integrity, risks, and uncertainty
 
-Review the corrected plan against upstream documents and verify complete requirement coverage without unsupported work.
+Review the corrected plan against upstream artifacts and pinned sources. Verify complete requirement coverage without unsupported work.
 
-## 4. Executive Summary
+## 5. Executive Summary
 
-Summarize:
+Summarize feasibility, source integrity, major corrections, blockers, residual risks, and readiness.
 
-- overall feasibility;
-- major corrections;
-- blocking technical decisions;
-- residual risks;
-- readiness for task decomposition.
+## 6. Plan Coverage
 
-## 5. Plan Coverage
-
-| Requirement or specification | Plan section or item | Coverage | Validation defined | Notes |
-|---|---|---|---|---|
-| ... | ... | Complete / Partial / Missing / N/A | Yes / No | ... |
-
-## 6. Repository Assumption Check
-
-| Plan claim | Repository evidence | Accurate | Required correction |
-|---|---|---|---|
-| Existing path, script, dependency, pattern, or capability | ... | Yes / No / Unconfirmed | ... |
-
-Do not allow proposed files or conventions to be described as existing.
+| Requirement or specification | Snapshot or evidence | Plan item | Coverage | Validation defined | Notes |
+|---|---|---|---|---|---|
+| ... | ... | ... | Complete / Partial / Missing / N/A | Yes / No | ... |
 
 ## 7. Findings
 
-Use stable finding IDs.
-
 ### PLANREV-001 — Finding title
 
-**Impact:** Critical / High / Medium / Low  
-**Category:** Scope / Repository assumption / Dependency / Ordering / Task size / Integration / Migration / State / Responsive / Accessibility / Validation / Regression / Abstraction / Security / Privacy / Deployment / Rollback / Traceability / Other
-
-**Finding**
-
-Describe the weakness or failure mode.
-
-**Evidence**
-
-- Requirement or specification IDs:
-- Architecture reference:
-- Repository evidence:
-- Plan section:
-
-**Resolution**
-
-Describe the correction selected.
-
-**Change made to `PLAN.md`**
-
-Identify the exact section, phase, task, dependency, or validation change.
-
-**Remaining risk**
-
-- ...
-
-**Status:** Open / Corrected / Accepted risk / Blocked
+- **Impact:** Critical / High / Medium / Low
+- **Category:** Source baseline / Scope / Repository assumption / Dependency / Ordering / Task size / Integration / Migration / State / Responsive / Accessibility / Validation / Regression / Abstraction / Security / Privacy / Deployment / Rollback / Traceability / Other
+- **Finding:**
+- **Snapshot and evidence:**
+- **Plan section:**
+- **Resolution:**
+- **Change made to `PLAN.md`:**
+- **Remaining risk:**
+- **Status:** Open / Corrected / Accepted risk / Blocked
 
 Repeat for each finding.
 
@@ -107,6 +98,7 @@ Repeat for each finding.
 
 | Concern | Covered in plan | Location | Gap or correction |
 |---|---|---|---|
+| Source verification and rebaseline | Yes / No / N/A | ... | ... |
 | Accessibility | Yes / No / N/A | ... | ... |
 | Responsive behavior | Yes / No / N/A | ... | ... |
 | Loading, empty, error, and success states | Yes / No / N/A | ... | ... |
@@ -123,42 +115,35 @@ Repeat for each finding.
 |---|---|---|---|
 | ... | ... | ... | ... |
 
-## 11. Residual Risks
+## 11. Residual Risks and Blocking Decisions
 
-| Risk | Impact | Likelihood | Mitigation or contingency | Owner | Status |
+| Risk or decision | Impact | Likelihood | Mitigation or evidence needed | Owner | Status |
 |---|---|---|---|---|---|
 | ... | ... | ... | ... | ... | ... |
 
-## 12. Blocking Decisions
-
-| Decision | Why it blocks | Decision owner | Evidence needed | Next action |
-|---|---|---|---|---|
-| ... | ... | ... | ... | ... |
-
-## 13. Final Review Checklist
+## 12. Final Review Checklist
 
 ### Feasibility and completeness
 
-- [ ] The plan reflects the actual repository.
+- [ ] The plan reflects the pinned repository snapshot.
+- [ ] Snapshot IDs exist and source verification was performed.
 - [ ] Included and excluded scope are explicit.
 - [ ] Phases produce meaningful, verifiable outcomes.
-- [ ] Dependencies and ordering are valid.
-- [ ] Integration, migration, and compatibility work are included.
-- [ ] Accessibility, responsiveness, states, errors, and tests are integrated into relevant work.
-- [ ] Validation is defined for every material plan item.
+- [ ] Dependencies, ordering, integration, migration, compatibility, and validation are complete.
+- [ ] Accessibility, responsiveness, states, errors, and tests are integrated.
 - [ ] Rollback or recovery is addressed where relevant.
 
-### Consistency, traceability, risks, and uncertainty
+### Consistency, traceability, source integrity, risks, and uncertainty
 
 - [ ] Every must-have requirement and material specification is covered.
 - [ ] No plan item introduces unsupported product scope.
 - [ ] Proposed and existing files are distinguished.
+- [ ] No plan claim silently relies on newer source content.
 - [ ] Architecture decisions are respected when applicable.
-- [ ] Residual risks and accepted tradeoffs are explicit.
-- [ ] Blocking decisions remain visible.
-- [ ] The updated `PLAN.md` received a second end-to-end review.
+- [ ] Residual risks, accepted tradeoffs, and blockers are explicit.
+- [ ] The updated plan received a second end-to-end review.
 
-## 14. Final Readiness Status
+## 13. Final Readiness Status
 
 Select exactly one:
 
@@ -166,9 +151,11 @@ Select exactly one:
 - `Ready with documented risks`
 - `Blocked by unresolved technical decisions`
 
-## 15. Completion Summary
+## 14. Completion Summary
 
 - Files created or modified:
+- Snapshot IDs reviewed:
+- Source verification performed:
 - Important findings:
 - Plan corrections:
 - Remaining risks:
