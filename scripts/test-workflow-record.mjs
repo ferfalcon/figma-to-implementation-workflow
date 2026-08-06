@@ -12,12 +12,17 @@ function readFixture(name) {
   return JSON.parse(readFileSync(join(root, 'tests', 'fixtures', name), 'utf8'));
 }
 
-const validErrors = validateWorkflowRecord(readFixture('workflow-record.valid.json'));
-if (validErrors.length > 0) {
-  console.error('Expected valid fixture to pass:');
-  validErrors.forEach((error) => console.error(`- ${error}`));
-  process.exit(1);
+function expectValid(name) {
+  const errors = validateWorkflowRecord(readFixture(name));
+  if (errors.length > 0) {
+    console.error(`Expected ${name} to pass:`);
+    errors.forEach((error) => console.error(`- ${error}`));
+    process.exit(1);
+  }
 }
+
+expectValid('workflow-record.valid.json');
+expectValid('workflow-record.express.valid.json');
 
 const invalidErrors = validateWorkflowRecord(readFixture('workflow-record.invalid.json'));
 const expectedFragments = [
@@ -40,4 +45,48 @@ if (missing.length > 0) {
   process.exit(1);
 }
 
-console.log(`Workflow record validator tests passed (${invalidErrors.length} expected findings detected).`);
+const invalidExpress = structuredClone(readFixture('workflow-record.express.valid.json'));
+invalidExpress.artifacts.push({
+  id: 'ART-PLAN',
+  type: 'PLAN',
+  status: 'Approved',
+  baseline: ['SRC-REPO-001'],
+});
+invalidExpress.tasks[0].prerequisites = ['P01-T02'];
+invalidExpress.tasks.push({
+  id: 'P01-T02',
+  status: 'Ready',
+  baseline: 'SRC-REPO-001',
+  prerequisites: [],
+  references: ['AC-002'],
+  output: null,
+  validation: [
+    {
+      name: 'Second task validation',
+      status: 'Not executed',
+      reason: 'Second task should force a profile upgrade',
+    },
+  ],
+});
+
+const invalidExpressErrors = validateWorkflowRecord(invalidExpress);
+const expectedExpressFragments = [
+  'Express profile must consolidate PLAN responsibility in WORKPACK',
+  'Express profile permits at most one implementation task',
+  'Express task cannot have task prerequisites',
+];
+
+const missingExpress = expectedExpressFragments.filter(
+  (fragment) => !invalidExpressErrors.some((error) => error.includes(fragment)),
+);
+if (missingExpress.length > 0) {
+  console.error('Invalid Express record did not produce all expected findings:');
+  missingExpress.forEach((fragment) => console.error(`- ${fragment}`));
+  console.error('\nActual findings:');
+  invalidExpressErrors.forEach((error) => console.error(`- ${error}`));
+  process.exit(1);
+}
+
+console.log(
+  `Workflow record validator tests passed (${invalidErrors.length + invalidExpressErrors.length} expected findings detected across general and Express cases).`,
+);
