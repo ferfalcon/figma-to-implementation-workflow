@@ -2,6 +2,8 @@
 
 Use this template during Stage 0 to establish the stable project baseline before auditing, documenting, planning, or implementing.
 
+Create `SOURCE-BASELINE.md` first or alongside this file. Follow `Source-Snapshots.md` and reference snapshot IDs rather than describing mutable sources as if they were pinned.
+
 # Project Context
 
 ## 1. Project
@@ -14,37 +16,45 @@ Use this template during Stage 0 to establish the stable project baseline before
 - Created:
 - Last updated:
 
-## 2. Design Source
+## 2. Active Source Baseline
 
-- Source type:
-- URL or file reference:
-- Included pages, frames, nodes, screens, or regions:
+- Source baseline: `SOURCE-BASELINE.md`
+- Design snapshots: `SRC-DS-*` / None
+- Repository snapshots: `SRC-REPO-*` / None
+- Runtime snapshots: `SRC-RUN-*` / None
+- Documentation snapshots: `SRC-DOC-*` / None
+- Asset snapshots: `SRC-ASSET-*` / None
+
+Every listed ID must exist in `SOURCE-BASELINE.md` with Active status.
+
+## 3. Design Scope
+
+- Included pages, frames, nodes, screens, files, URLs, or regions:
 - Explicitly excluded areas:
-- Source version, timestamp, or snapshot reference:
 - Access limitations:
-- Known source dependencies:
+- Known design-source dependencies:
 
-## 3. Repository Baseline
+Do not repeat source identity details already owned by `SOURCE-BASELINE.md`.
 
-- Repository:
-- Default branch:
+## 4. Repository Scope
+
 - Target branch:
-- Baseline commit:
-- Relevant application or package:
+- Relevant application, package, or directory:
 - Existing implementation state:
 - Known technical constraints:
 - Access or tooling limitations:
 
-## 4. Runtime References
+The pinned repository identity and commit belong to `SRC-REPO-*` records.
 
-- Production URL:
-- Preview or staging URL:
-- Local development entry point:
-- Supported environments already confirmed:
+## 5. Runtime References
 
-Use `Not available` rather than inventing a value.
+- Production snapshot: `SRC-RUN-*` / None
+- Preview or staging snapshot: `SRC-RUN-*` / None
+- Local runtime snapshot: `SRC-RUN-*` / None
 
-## 5. Scope
+Use `Not available` rather than inventing a runtime state.
+
+## 6. Scope
 
 ### Included
 
@@ -58,15 +68,17 @@ Use `Not available` rather than inventing a value.
 
 - ...
 
-## 6. Authoritative Sources
+## 7. Authoritative Sources
 
-| Source | Authority | Scope | Version or date |
+| Snapshot ID | Authority | Scope | Notes |
 |---|---|---|---|
-| ... | Product / Design / Current implementation / Technical constraint / Other | ... | ... |
+| `SRC-DOC-001` | Product / Design / Current implementation / Technical constraint / Other | ... | ... |
 
-## 7. Quality Baseline
+The authority classification does not change snapshot identity.
 
-Record only approved or repository-supported expectations.
+## 8. Quality Baseline
+
+Record only approved or source-supported expectations.
 
 - Accessibility standard or expectations:
 - Responsive coverage:
@@ -76,34 +88,37 @@ Record only approved or repository-supported expectations.
 - Testing expectations:
 - Deployment expectations:
 
-## 8. Constraints and Dependencies
+## 9. Constraints and Dependencies
 
-| ID | Constraint or dependency | Evidence | Impact | Status |
+| ID | Constraint or dependency | Evidence or snapshot | Impact | Status |
 |---|---|---|---|---|
-| `REQ-CON-001` | ... | ... | ... | Confirmed / Inferred / Open |
+| `REQ-CON-001` | ... | `SRC-*` / `EVD-*` | ... | Confirmed / Inferred / Open |
 
-## 9. Known Decisions
+## 10. Known Decisions
 
-| Decision | Owner | Evidence | Status |
+| Decision | Owner | Evidence or snapshot | Status |
 |---|---|---|---|
 | ... | ... | ... | Confirmed / Proposed / Open |
 
-## 10. Initial Risks and Questions
+## 11. Initial Risks and Questions
 
 ### Blocking
 
+- Missing or Unverified material snapshots
 - ...
 
 ### Non-blocking
 
 - ...
 
-## 11. Stage 0 Completion
+## 12. Stage 0 Completion
 
 - [ ] Scope is explicit.
-- [ ] Design-source scope and reference are recorded.
-- [ ] Repository and baseline are recorded when available.
+- [ ] `SOURCE-BASELINE.md` exists.
+- [ ] Every active snapshot ID exists and its pin strength is honest.
+- [ ] Design and repository scope are recorded when applicable.
+- [ ] The repository baseline uses a commit SHA when repository evidence is required.
 - [ ] Workflow profile is selected and justified.
 - [ ] Quality expectations are evidence-based.
-- [ ] Blocking questions are visible.
-- [ ] `WORKFLOW-STATE.md` has been created.
+- [ ] Blocking questions and source limitations are visible.
+- [ ] `WORKFLOW-STATE.md` has been created and references the same active baseline.
