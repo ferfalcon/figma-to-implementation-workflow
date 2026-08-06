@@ -99,7 +99,7 @@ export function nextId(items, prefix, field = 'id') {
 
 export function nextTaskId(tasks) {
   const highest = tasks.reduce((max, task) => {
-    const match = /^P\d{2}-T(\d{2})$/.exec(task.id ?? '');
+    const match = /^P01-T(\d{2})$/.exec(task.id ?? '');
     return match ? Math.max(max, Number(match[1])) : max;
   }, 0);
   return `P01-T${String(highest + 1).padStart(2, '0')}`;
