@@ -2,6 +2,25 @@
 
 Use with `Document-Guidelines-REQUIREMENTS.md`. Remove non-applicable sections without removing material project concerns.
 
+Reference only snapshot IDs defined in `SOURCE-BASELINE.md`.
+
+```yaml
+---
+artifact: REQUIREMENTS
+status: Draft
+baseline:
+  design:
+    - SRC-DS-001
+  repository: []
+  runtime: []
+  documentation:
+    - SRC-DOC-001
+  assets: []
+created: YYYY-MM-DD
+updated: YYYY-MM-DD
+---
+```
+
 # Project Requirements
 
 ## 1. Document Information
@@ -10,7 +29,8 @@ Use with `Document-Guidelines-REQUIREMENTS.md`. Remove non-applicable sections w
 - Scope:
 - Last updated:
 - Owners:
-- Related context: `PROJECT-CONTEXT.md`
+- Project context: `PROJECT-CONTEXT.md`
+- Source baseline: `SOURCE-BASELINE.md`
 - Evidence baseline: `DESIGN-AUDIT.md`
 
 ## 2. Overview and Problem
@@ -29,9 +49,9 @@ Describe the project, the problem, and the intended outcome.
 
 ## 4. Users and Needs
 
-| User or actor | Need | Evidence |
+| User or actor | Need | Evidence or snapshot |
 |---|---|---|
-| ... | ... | ... |
+| ... | ... | `EVD-*` / `SRC-DOC-*` |
 
 ## 5. Functional Requirements
 
@@ -41,7 +61,7 @@ Describe the project, the problem, and the intended outcome.
 - **Priority:** Must / Should / Could
 - **Description:**
 - **Rationale:**
-- **Evidence:** `EVD-*` or authoritative source
+- **Evidence:** `EVD-*` or `SRC-DOC-*`
 - **Acceptance criteria:** `AC-*`
 
 Repeat as required.
@@ -107,9 +127,9 @@ Record outcome-level expectations without choosing arbitrary breakpoints or impl
 
 ## 13. Dependencies
 
-| Dependency | Purpose | Availability | Risk |
-|---|---|---|---|
-| ... | ... | ... | ... |
+| Dependency | Snapshot or evidence | Purpose | Availability | Risk |
+|---|---|---|---|---|
+| ... | `SRC-*` | ... | ... | ... |
 
 ## 14. Assumptions and Open Questions
 
@@ -141,7 +161,7 @@ Record outcome-level expectations without choosing arbitrary breakpoints or impl
 
 ## 17. Traceability
 
-| Requirement | Evidence | Design decision | Specification | Validation |
+| Requirement | Snapshot or evidence | Design decision | Specification | Validation |
 |---|---|---|---|---|
 | ... | ... | ... | ... | ... |
 
@@ -152,10 +172,12 @@ Record outcome-level expectations without choosing arbitrary breakpoints or impl
 - [ ] Requirements cover the agreed scope.
 - [ ] Requirements are necessary, specific, testable, and prioritized.
 - [ ] Unsupported business, security, retention, browser, or performance rules were not invented.
+- [ ] Snapshot IDs in metadata exist and were actually used.
 
-### Pass 2 — Consistency, traceability, risks, and uncertainty
+### Pass 2 — Consistency, traceability, source integrity, risks, and uncertainty
 
 - [ ] Identifiers follow `Identifier-Conventions.md`.
-- [ ] Every material requirement has evidence.
+- [ ] Every material requirement has evidence from a pinned snapshot.
+- [ ] No source changed silently after the artifact baseline was recorded.
 - [ ] Confirmed, inferred, recommended, and open information remain distinct.
 - [ ] Blocking questions are visible.
