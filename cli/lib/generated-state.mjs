@@ -200,9 +200,15 @@ export function syncGeneratedState(recordPath, record, { check = false } = {}) {
 }
 
 export function generatedStateFindings(recordPath, record) {
-  const result = syncGeneratedState(recordPath, record, { check: true });
-  const base = dirname(recordPath);
-  return result.stale.map((path) => (
-    `Generated workflow view is missing or stale: ${relative(base, path)}`
-  ));
+  try {
+    const result = syncGeneratedState(recordPath, record, { check: true });
+    const base = dirname(recordPath);
+    return result.stale.map((path) => (
+      `Generated workflow view is missing or stale: ${relative(base, path)}`
+    ));
+  } catch (error) {
+    return [
+      `Generated workflow views could not be evaluated: ${error instanceof Error ? error.message : String(error)}`,
+    ];
+  }
 }
