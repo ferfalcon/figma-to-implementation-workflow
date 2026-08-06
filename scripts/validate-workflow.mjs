@@ -31,6 +31,7 @@ const requiredPaths = [
   'guidelines/SPEC.md',
   'guidelines/ARCHITECTURE.md',
   'guidelines/PLAN.md',
+  'templates/WORKPACK.template.md',
   'templates/SOURCE-BASELINE.template.md',
   'templates/PROJECT-CONTEXT.template.md',
   'templates/WORKFLOW-STATE.template.md',
@@ -46,15 +47,20 @@ const requiredPaths = [
   'templates/TASKS-INDEX.template.md',
   'templates/TASK.template.md',
   'templates/IMPLEMENTATION-REVIEW.template.md',
+  'prompts/00-express-workpack.md',
+  'examples/express-component/README.md',
+  'examples/express-component/WORKPACK.md',
   'examples/lite-component/README.md',
   'examples/standard-site/README.md',
   'examples/standard-site/ARCHITECTURE-component-example.md',
   'examples/full-application/README.md',
   'examples/full-application/ARCHITECTURE-full-stack-example.md',
+  'schemas/README.md',
   'schemas/workflow-record.schema.json',
   'scripts/lib/validate-workflow-record.mjs',
   'scripts/test-workflow-record.mjs',
   'tests/fixtures/workflow-record.valid.json',
+  'tests/fixtures/workflow-record.express.valid.json',
   'tests/fixtures/workflow-record.invalid.json',
   'scripts/validate-workflow.mjs',
 ];
@@ -203,13 +209,14 @@ const templateFiles = readdirSync(join(root, 'templates'))
   .filter((name) => name.endsWith('.template.md'))
   .sort();
 
-if (templateFiles.length < 14) {
-  errors.push(`Expected at least 14 templates, found ${templateFiles.length}`);
+if (templateFiles.length < 15) {
+  errors.push(`Expected at least 15 templates, found ${templateFiles.length}`);
 }
 
 for (const jsonPath of [
   join(root, 'schemas', 'workflow-record.schema.json'),
   join(root, 'tests', 'fixtures', 'workflow-record.valid.json'),
+  join(root, 'tests', 'fixtures', 'workflow-record.express.valid.json'),
   join(root, 'tests', 'fixtures', 'workflow-record.invalid.json'),
 ]) {
   try {
