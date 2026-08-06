@@ -1,10 +1,10 @@
 # Workflow Profiles
 
-Workflow profiles keep the process proportional to project risk and complexity without removing essential design, accessibility, implementation, or validation concerns.
+Workflow profiles keep the process proportional to project risk and complexity without removing essential design, accessibility, source integrity, implementation, or validation concerns.
 
-Select a profile during Stage 0 and record it in both `PROJECT-CONTEXT.md` and `WORKFLOW-STATE.md`.
+Select a profile during Stage 0 and record it in `PROJECT-CONTEXT.md` and `WORKFLOW-STATE.md`. Create `SOURCE-BASELINE.md` for every profile.
 
-A profile controls artifact granularity. It does not permit unsupported assumptions, skipped validation, or implementation without evidence.
+A profile controls artifact granularity. It does not permit unsupported assumptions, unpinned material sources, skipped validation, or implementation without evidence.
 
 ## Selection principles
 
@@ -24,12 +24,23 @@ Consider:
 
 When uncertain, select the lower profile only if its consolidation rules can preserve every material concern. Upgrade the profile as soon as the work exceeds those limits.
 
+## Shared required controls
+
+Every profile requires:
+
+- `SOURCE-BASELINE.md` — pinned or honestly time-bound source records;
+- `PROJECT-CONTEXT.md` — stable project and scope baseline;
+- `WORKFLOW-STATE.md` — active stage, snapshot IDs, blockers, and next action.
+
+Every downstream artifact must reference the snapshot IDs it actually used.
+
 ## Lite profile
 
 Use for an isolated component, a small static page, or a narrowly scoped change with no meaningful architecture, persistence, authentication, or complex integration decisions.
 
 ### Required artifacts
 
+- `SOURCE-BASELINE.md`
 - `PROJECT-CONTEXT.md`
 - `WORKFLOW-STATE.md`
 - `DESIGN-AUDIT.md`
@@ -43,6 +54,7 @@ Use for an isolated component, a small static page, or a narrowly scoped change 
 
 The brief must include:
 
+- baseline snapshot references;
 - product outcomes and constraints;
 - visual, responsive, content, and interaction intent;
 - precise, testable behavior and acceptance criteria;
@@ -69,6 +81,7 @@ Use for multi-page sites, substantial UI features, existing application features
 
 ### Required artifacts
 
+- `SOURCE-BASELINE.md`
 - `PROJECT-CONTEXT.md`
 - `WORKFLOW-STATE.md`
 - `DESIGN-AUDIT.md`
@@ -105,7 +118,7 @@ Full-profile work should explicitly cover, when applicable:
 
 | Concern | Lite | Standard | Full |
 |---|---|---|---|
-| Stage 0 context and state | Required | Required | Required |
+| Stage 0 snapshots, context, and state | Required | Required | Required |
 | Design audit | Required | Required | Required |
 | Separate requirements, design, and specification files | Consolidated | Required | Required |
 | Documentation consistency gate | In brief | Separate artifact | Separate artifact |
@@ -128,23 +141,26 @@ Record one execution mode in `WORKFLOW-STATE.md`.
 
 - Continue through permitted documentation, review, planning, and task-decomposition stages while no blocker exists.
 - Stop before implementation.
-- Do not treat silence as approval for unresolved product, design, or architectural decisions.
+- Do not treat silence as approval for unresolved product, design, architectural, or source-baseline decisions.
 
 ### Task-by-task
 
 - Use only after the documentation and planning gates have passed.
 - Implement one unblocked task at a time.
-- Run its validation and update workflow state before selecting the next task.
+- Verify the relevant snapshots before implementation when the source may have changed.
+- Run validation and update workflow state before selecting the next task.
 - Do not silently combine unrelated tasks.
 
-## Changing profiles or modes
+## Changing profiles, modes, or baselines
 
-A profile or execution mode may change when new evidence changes project complexity or risk.
+A profile or execution mode may change when new evidence changes project complexity or risk. A source baseline changes through the rebaseline protocol in `Source-Snapshots.md`.
 
-When it changes:
+When a profile or mode changes:
 
 1. update `PROJECT-CONTEXT.md` when the profile decision changes materially;
 2. update `WORKFLOW-STATE.md` immediately;
 3. record the reason and effective stage;
 4. create any newly required artifacts before advancing;
 5. do not discard stable IDs or approved decisions.
+
+When a source changes, create new `SRC-*` IDs and assess affected artifacts rather than silently replacing the existing baseline.
