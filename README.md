@@ -6,16 +6,17 @@ The workflow supports AI-assisted and human-led work with explicit source baseli
 
 ## Start here
 
-1. [`workflow/Design-Implementation-Workflow.md`](workflow/Design-Implementation-Workflow.md)
-2. [`workflow/Workflow-Profiles.md`](workflow/Workflow-Profiles.md)
-3. [`workflow/Source-Snapshots.md`](workflow/Source-Snapshots.md)
-4. [`workflow/Source-Authority.md`](workflow/Source-Authority.md)
-5. [`workflow/State-Ownership.md`](workflow/State-Ownership.md)
-6. [`workflow/Identifier-Conventions.md`](workflow/Identifier-Conventions.md)
-7. [`workflow/Validation-Rules.md`](workflow/Validation-Rules.md)
-8. [`cli/README.md`](cli/README.md)
-9. [`schemas/README.md`](schemas/README.md)
-10. [`ChatGPT-instructions.md`](ChatGPT-instructions.md)
+1. [`QUICKSTART.md`](QUICKSTART.md)
+2. [`workflow/Design-Implementation-Workflow.md`](workflow/Design-Implementation-Workflow.md)
+3. [`workflow/Workflow-Profiles.md`](workflow/Workflow-Profiles.md)
+4. [`workflow/Source-Snapshots.md`](workflow/Source-Snapshots.md)
+5. [`workflow/Source-Authority.md`](workflow/Source-Authority.md)
+6. [`workflow/State-Ownership.md`](workflow/State-Ownership.md)
+7. [`workflow/Identifier-Conventions.md`](workflow/Identifier-Conventions.md)
+8. [`workflow/Validation-Rules.md`](workflow/Validation-Rules.md)
+9. [`cli/README.md`](cli/README.md)
+10. [`schemas/README.md`](schemas/README.md)
+11. [`ChatGPT-instructions.md`](ChatGPT-instructions.md)
 
 ## Workflow overview
 
@@ -202,6 +203,7 @@ For full-stack applications, authentication, persistence, complex integrations, 
 ```text
 .
 ├── README.md
+├── QUICKSTART.md
 ├── package.json
 ├── LICENSE
 ├── CONTRIBUTING.md

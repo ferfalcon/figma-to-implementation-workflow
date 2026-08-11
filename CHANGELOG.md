@@ -8,6 +8,7 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 
 ### Added
 
+- End-to-end Express quickstart with an explicit automatically-enforced versus human-reviewed responsibility matrix.
 - Canonical workflow-state ownership rules for CLI-managed and Markdown-only projects.
 - Deterministic generated Markdown views for workflow status, sources, artifacts, and tasks.
 - Canonical SHA-256 record digests embedded in generated views.

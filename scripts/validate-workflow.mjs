@@ -11,6 +11,7 @@ const root = resolve(scriptDirectory, '..');
 
 const requiredPaths = [
   'README.md',
+  'QUICKSTART.md',
   'LICENSE',
   'CONTRIBUTING.md',
   'CHANGELOG.md',
