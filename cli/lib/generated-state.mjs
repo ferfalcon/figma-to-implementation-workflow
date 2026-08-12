@@ -2,6 +2,9 @@ import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, relative } from 'node:path';
 import { domainKind, STAGES } from './workflow-model.mjs';
+import { deriveNextAction } from './workflow-actions.mjs';
+
+export { deriveNextAction } from './workflow-actions.mjs';
 
 export const GENERATED_STATE_DIRECTORY = 'generated';
 export const GENERATED_STATE_FILES = [
@@ -50,33 +53,6 @@ function header(recordPath, digest, title) {
     '> This file is a generated view of the canonical workflow record. Update the record through the CLI, then run `design-workflow sync`.',
     '',
   ];
-}
-
-function activePassingGate(record, stage) {
-  return [...(record.gates ?? [])].reverse().find((gate) => (
-    gate.stage === stage
-    && gate.status === 'Active'
-    && ['Passed', 'Passed with assumptions'].includes(gate.result)
-  ));
-}
-
-export function deriveNextAction(record) {
-  if (record.state.status === 'Blocked') return 'Resolve the recorded blocker before advancing.';
-  const transition = record.profileTransitions?.find((item) => item.status === 'In progress');
-  if (transition) return `Reconcile ${transition.to} artifacts through Stage ${transition.resumeStage}, then finish profile upgrade ${transition.id}.`;
-  if (record.state.currentTask) return `Continue ${record.state.currentTask} and record its required validation before completion.`;
-  const readyTask = record.tasks.find((task) => (
-    task.status === 'Ready'
-    && task.prerequisites.every((id) => record.tasks.find((candidate) => candidate.id === id)?.status === 'Complete')
-  ));
-  if (record.state.stage >= 9 && readyTask) return `Start ${readyTask.id}.`;
-  if (record.schemaVersion === 2 && record.state.stage < 11) {
-    if (activePassingGate(record, record.state.stage)) return `Advance to Stage ${record.state.stage + 1} — ${STAGES[record.state.stage + 1]}.`;
-    return `Review Stage ${record.state.stage} — ${STAGES[record.state.stage]} — then advance.`;
-  }
-  if (record.state.stage < 11) return `Stage ${record.state.stage + 1} — ${STAGES[record.state.stage + 1]}.`;
-  if (record.state.status === 'Complete') return 'Workflow complete. No next action is recorded.';
-  return 'Record the final implementation-review result.';
 }
 
 function renderStatus(record, recordPath, digest) {
