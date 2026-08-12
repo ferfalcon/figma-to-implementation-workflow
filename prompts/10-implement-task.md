@@ -1,26 +1,14 @@
 # Stage 10 — Implement One Task
 
-Select the first incomplete task whose prerequisites are satisfied. Implement only that task's scope.
+Implementation edits are permitted only when orchestration context reports `policy.codeEdits: allowed-with-current-task-scope`.
 
-Before editing:
+## Profile targets
 
-1. verify active design and documentation inputs;
-2. verify the task-start `SRC-REPO-*` commit;
-3. inspect affected files and repository conventions;
-4. classify differences as Unchanged, Expected output, Unexpected upstream or concurrent change, or Unavailable.
+- Express: implement the single CLI task and record implementation discoveries/deviations/completion narrative in `WORKPACK.md`.
+- Lite, Standard, Full: implement the current CLI task and update its `TASK` narrative artifact.
 
-Stop and perform impact assessment for an unexpected material change. Do not reopen upstream stages for an approved previous-task output.
+Before editing, verify active design/documentation inputs, verify the task-start `SRC-REPO-*` commit, inspect affected files/conventions, and classify differences as Unchanged, Expected workflow output, Unexpected upstream/concurrent change, or Unavailable. Stop for impact assessment on unexpected material changes.
 
-Implement the task in small, reviewable changes. Integrate required semantics, keyboard and focus behavior, responsive behavior, states, errors, content edges, and tests with the affected feature.
+Implement only the current task in small reviewable changes. Integrate required semantics/keyboard/focus, responsive behavior, states/errors/content edges, and tests.
 
-Run every required validation. Do not mark the task complete while a required check fails or remains unverified.
-
-After successful implementation:
-
-- commit the approved result;
-- create an Implementation output `SRC-REPO-*` record;
-- connect it to the task-start snapshot and task ID;
-- update the task, index, source baseline, documentation discoveries, deviations, and workflow state;
-- identify the next unblocked task.
-
-Report files changed, behavior, validation executed and results, output snapshot, deviations, remaining risks, documentation updates, and next permitted action.
+Run all required validations honestly. Record structured check results/output lineage through the CLI; keep implementation discoveries/deviations/rationale in narrative Markdown. Commit the approved result and complete the task with the exact HEAD commit so the CLI creates the Implementation-output `SRC-REPO-*`.

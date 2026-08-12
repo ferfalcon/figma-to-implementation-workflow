@@ -1,27 +1,14 @@
-# Stage 11 — Implementation Review
+# Stage 11 — Complete Final Implementation Review
 
-Verify the final input snapshots, approved artifacts, implementation-output repository snapshot, validation-runtime snapshot, and complete repository lineage.
+Verify exact final input snapshots, approved artifacts, implementation-output repository snapshot, validation runtime when applicable, and complete repository lineage.
 
-Create or update `IMPLEMENTATION-REVIEW.md` from `templates/IMPLEMENTATION-REVIEW.template.md` and follow `workflow/Validation-Rules.md`.
+## Profile targets
 
-Validate as applicable:
+- Express: final implementation review narrative stays in `WORKPACK.md`.
+- Lite, Standard, Full: update `IMPLEMENTATION-REVIEW.md`.
 
-- source and lineage integrity;
-- every must-have requirement and material specification;
-- design fidelity against named `SRC-DS-*` snapshots;
-- states, responsive behavior, content and asset edge cases;
-- semantics, keyboard, focus, names, relationships, announcements, contrast, reflow, reduced motion, and screen-reader behavior;
-- data, APIs, validation, errors, recovery, authentication, authorization, persistence, and migrations;
-- compatibility, performance, security, privacy, SEO, deployment, rollback, tests, build, lint, type checking, and regressions.
+Validate applicable requirements/acceptance criteria, design fidelity, states/responsive/content edges, semantics/keyboard/focus/names/relationships/announcements/contrast/reflow/reduced motion, data/API/errors/auth/persistence/migrations, compatibility/performance/security/privacy/SEO/deployment/tests/build/lint/types/regressions.
 
-Record `IMPL-*` findings with severity, source expectation, actual behavior, reproducible evidence, required correction, status, and retest evidence.
+Record `IMPL-*` findings with expected/actual/severity/evidence/correction/status/retest evidence. Never report unavailable checks as passed; corrected findings require retesting.
 
-Do not report unavailable checks as passed. Corrected findings must be retested against the corrected output snapshot.
-
-End with exactly one result:
-
-- `Implementation accepted`
-- `Implementation accepted with documented non-blocking deviations`
-- `Implementation requires corrections`
-
-Update `WORKFLOW-STATE.md` and report snapshots validated, checks executed, findings by severity, deviations, remaining risks, and recommended next action.
+End with exactly one narrative result: Implementation accepted; Implementation accepted with documented non-blocking deviations; or Implementation requires corrections. Run stage preflight, then record the final result through the CLI with a real approval actor.

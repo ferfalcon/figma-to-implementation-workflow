@@ -8,6 +8,11 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 
 ### Added
 
+- Deterministic agent-orchestration protocol with `design-workflow context --json` and `design-workflow stage check --json`.
+- Shared executable action-eligibility checks for stage advancement and task start.
+- `workflow/Agent-Orchestration.md` as the canonical AI-agent runtime contract.
+- Profile-aware stage prompts for Express, Lite, Standard, and Full execution.
+- Orchestration regression tests covering Stage 9/10 boundaries, Continuous-documentation stop behavior, profile targets, and architecture-triggered upgrades.
 - End-to-end Express quickstart with an explicit automatically-enforced versus human-reviewed responsibility matrix.
 - Canonical workflow-state ownership rules for CLI-managed and Markdown-only projects.
 - Deterministic generated Markdown views for workflow status, sources, artifacts, and tasks.
@@ -39,6 +44,9 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 
 ### Changed
 
+- Generated next-action guidance now requires Stage 9 advancement before a Ready task can start and explicitly stops Continuous-documentation mode before Stage 10.
+- Express workpack rendering now preserves implementation discoveries/deviations as narrative while keeping structured validation and output lineage record-owned.
+- Agent instructions now consume canonical orchestration context instead of reinterpreting workflow state from Markdown.
 - `WORKFLOW-STATE.md`, `SOURCE-BASELINE.md`, and `TASKS-INDEX.md` templates now separate record-owned mutable state from narrative evidence, decisions, coverage, and history.
 - Snapshot creation now uses the same synchronized save path as other CLI mutations.
 - CLI status, next-action, and validation commands now detect generated-state drift.
