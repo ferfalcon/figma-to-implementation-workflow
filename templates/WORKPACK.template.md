@@ -4,6 +4,8 @@ Use this template only for the Express profile. `WORKPACK.md` is the single norm
 
 Do not create separate source-baseline, context, audit, requirements, design, specification, plan, task, or implementation-review files while the work remains eligible for Express. Preserve the normal identifier namespaces inside the sections below.
 
+<!-- artifact:start -->
+
 ```yaml
 ---
 artifact: WORKPACK
@@ -17,8 +19,14 @@ updated: YYYY-MM-DD
 ---
 ```
 
+<!-- control:cli-managed:start -->
+<!-- control:cli-managed:end -->
+<!-- control:markdown-only:start -->
+<!-- control:markdown-only:end -->
+
 # Workpack: Result title
 
+<!-- control:markdown-only:start -->
 ## 1. Control state
 
 - Objective:
@@ -30,6 +38,8 @@ updated: YYYY-MM-DD
 - Last completed action:
 - Next permitted action:
 - Blocking questions: None / ...
+
+<!-- control:markdown-only:end -->
 
 ## 2. Express eligibility
 
@@ -60,12 +70,15 @@ If any trigger is material, stop affected work and upgrade to Lite, Standard, or
 
 ## 3. Source baseline
 
+<!-- control:markdown-only:start -->
 Define every source ID once. A mutable URL alone is not an immutable snapshot.
 
 | Snapshot ID | Role | Category and type | Canonical reference | Included scope | Revision, version, checksum, or commit | Captured or inspected | Pin strength | Status | Limitations |
 |---|---|---|---|---|---|---|---|---|---|
 | `SRC-DS-001` | Input baseline | Design source | ... | ... | ... | ... | Immutable / Versioned / Time-bound / Unverified | Active | ... |
 | `SRC-REPO-001` | Task start | Repository | ... | ... | Commit SHA | ... | Immutable | Active | ... |
+
+<!-- control:markdown-only:end -->
 
 ### Source authority and conflicts
 
@@ -120,7 +133,7 @@ Keep ownership distinct even though it is consolidated.
 
 | Requirement ID | Outcome, rule, or constraint | Priority | Evidence or authority |
 |---|---|---|---|
-| `REQ-FUNC-001` | ... | Must / Should / Could | ... |
+| `REQ-FR-001` | ... | Must / Should / Could | ... |
 
 ### Design intent
 
@@ -134,7 +147,7 @@ Use `DES-RWD-*` for responsive intent and `DES-INT-*` for interaction intent.
 
 | Specification ID | Observable behavior | Related requirement |
 |---|---|---|
-| `SPEC-001` | ... | `REQ-FUNC-001` |
+| `SPEC-BEH-001` | ... | `REQ-FR-001` |
 
 - [ ] `AC-001` ...
 - [ ] `AC-002` ...
@@ -213,6 +226,7 @@ After pass-1 corrections, review:
 - Ready with documented non-blocking risks
 - Blocked or must upgrade profile
 
+<!-- control:markdown-only:start -->
 ## 11. Implementation record and output lineage
 
 Complete only after implementation.
@@ -244,6 +258,8 @@ Use Passed, Failed, Blocked, Not executed, or Not applicable. A passed check req
 
 Corrected findings require retesting.
 
+<!-- control:markdown-only:end -->
+
 ## 13. Final implementation review
 
 - Exact design inputs reviewed:
@@ -273,3 +289,5 @@ Use exactly one:
 | Date | Change, rebaseline, or profile decision | Reason | Affected IDs or sections | Result |
 |---|---|---|---|---|
 | ... | ... | ... | ... | ... |
+
+<!-- artifact:end -->

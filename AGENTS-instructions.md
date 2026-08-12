@@ -39,7 +39,7 @@ Determine the project's control mode before updating state.
 When `.workflow/workflow-record.json` exists:
 
 - treat it as canonical for mutable profile, execution mode, stage, status, active inputs, snapshot registry, artifact inventory, current task, task status, prerequisites, validation state, outputs, and implementation lineage;
-- use `.workflow/generated/WORKFLOW-STATUS.md`, `SOURCE-INDEX.md`, `ARTIFACT-INDEX.md`, and `TASK-INDEX.md` as generated human-readable views;
+- use `.workflow/generated/WORKFLOW-STATUS.md`, `SOURCE-INDEX.md`, `ARTIFACT-INDEX.md`, `TASK-INDEX.md`, and `TRACEABILITY.md` as generated human-readable views;
 - never manually edit generated views;
 - update managed state through `design-workflow` commands when possible;
 - run `design-workflow sync` after an intentional direct record edit;

@@ -4,6 +4,8 @@ Use this template to create one implementation task file. Name files with zero-p
 
 A task must produce one coherent, independently verifiable result. Reference only snapshot IDs defined in `SOURCE-BASELINE.md`.
 
+<!-- artifact:start -->
+
 ```yaml
 ---
 artifact: TASK
@@ -23,15 +25,23 @@ updated: YYYY-MM-DD
 ---
 ```
 
+<!-- control:cli-managed:start -->
+<!-- control:cli-managed:end -->
+<!-- control:markdown-only:start -->
+<!-- control:markdown-only:end -->
+
 The repository snapshot in metadata is the task-start state. Record the Implementation output snapshot after the task is committed.
 
 # Phase 01 — Task 01: Task title
 
+<!-- control:markdown-only:start -->
 ## 1. Status
 
 `Not started`
 
 Use the status vocabulary defined in `TASKS-INDEX.md`.
+
+<!-- control:markdown-only:end -->
 
 ## 2. Objective
 
@@ -208,6 +218,7 @@ Do not silently work around documentation or source-baseline errors.
 
 Use `None` when implementation followed the task exactly.
 
+<!-- control:markdown-only:start -->
 ## 17. Output Lineage
 
 Complete after implementation is committed.
@@ -220,6 +231,8 @@ Complete after implementation is committed.
 - Approved as next task start: Yes / No / N/A
 
 Creating an expected task output does not supersede the original project input baseline or require upstream rollback.
+
+<!-- control:markdown-only:end -->
 
 ## 18. Definition of Done
 
@@ -248,3 +261,5 @@ Creating an expected task output does not supersede the original project input b
 - Remaining risks:
 - Documentation updated:
 - Next unblocked task:
+
+<!-- artifact:end -->

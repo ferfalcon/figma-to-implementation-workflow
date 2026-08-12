@@ -1,36 +1,28 @@
 # Quickstart: Complete an Express Workflow
 
-This tutorial walks one narrow design-to-implementation change from intake to final review. It uses the Express profile because Express demonstrates the complete workflow with one `WORKPACK.md` and exactly one implementation task.
-
-Use Lite, Standard, or Full when the work exceeds the Express eligibility rules in [`workflow/Workflow-Profiles.md`](workflow/Workflow-Profiles.md).
+This walkthrough takes one narrow design-to-implementation result through the executable schema-v2 workflow. Express uses one `WORKPACK.md` and exactly one implementation task. Upgrade when the scope needs separate artifacts, multiple tasks, architecture, integration, persistence, authentication, migration, deployment planning, or a material unresolved product decision.
 
 ## Prerequisites
 
 - Node.js 22 or newer;
-- a Git repository for the implementation project with at least one commit;
-- a design source or another reference that can be recorded precisely;
-- the toolkit installed as `@ferfalcon/design-workflow`, or the repository available for direct CLI execution.
+- a Git repository with at least one commit;
+- a precisely identifiable design source or other input;
+- the installed `design-workflow` command, or the repository CLI invoked with `node /path/to/cli/design-workflow.mjs`.
 
-The examples use the installed `design-workflow` command. During toolkit development, replace it with:
+Run commands from the implementation repository root.
 
-```bash
-node /path/to/figma-to-implementation-workflow/cli/design-workflow.mjs
-```
-
-Run the commands from the implementation project's root directory, not from this toolkit repository.
-
-## 1. Initialize the workflow
+## 1. Initialize Stage 0
 
 ```bash
 design-workflow init \
   --name "Article preview card" \
   --profile Express \
   --mode Gated \
-  --design "https://www.figma.com/design/...?..." \
+  --design "https://www.figma.com/design/..." \
   --repository .
 ```
 
-Initialization creates:
+This creates only the Express Stage 0 artifact and canonical controls:
 
 ```text
 WORKPACK.md
@@ -39,136 +31,183 @@ WORKPACK.md
 .workflow/generated/SOURCE-INDEX.md
 .workflow/generated/ARTIFACT-INDEX.md
 .workflow/generated/TASK-INDEX.md
+.workflow/generated/TRACEABILITY.md
 ```
 
-The workflow record owns mutable control state. `WORKPACK.md` owns the evidence, decisions, requirements, design intent, specification, plan, task detail, validation narrative, and final review. Files under `.workflow/generated/` are derived views and must not be edited manually.
+`WORKPACK.md` contains evidence, rationale, expected behavior, planning, task detail, and review narrative. The record owns mutable status, snapshots, gates, task state, validation results, and trace definitions. Generated views must not be edited.
 
-Confirm the initial state:
+## 2. Verify inputs and approve the workpack
+
+Complete the Stage 0 source and scope narrative, then record actual verification:
 
 ```bash
-design-workflow status
-design-workflow sync --check
+design-workflow snapshot verify SRC-DS-001 \
+  --result Unchanged \
+  --method "Named-version comparison" \
+  --evidence "File version and scoped nodes matched"
+
+design-workflow snapshot verify SRC-REPO-001 \
+  --result Unchanged \
+  --method "Git rev-parse" \
+  --evidence "Recorded commit matched repository HEAD"
 ```
 
-## 2. Establish and inspect the baseline
-
-Complete the source-baseline and scope sections of `WORKPACK.md`. Record what was inspected, which design frame or node is in scope, when mutable sources were observed, repository state, source limitations, and any authority conflicts.
-
-Add supporting sources when needed:
+Move the workpack through its explicit lifecycle:
 
 ```bash
-design-workflow snapshot add \
-  --kind doc \
-  --role "Supporting source" \
-  --reference "Approved content brief revision 3"
+design-workflow artifact review ART-WORKPACK --evidence "Completeness review passed"
+design-workflow artifact approve ART-WORKPACK --evidence "Stage 0 workpack approved" --approved-by "Owner"
 ```
 
-Do not mark a mutable URL as immutable. If the design, repository, documentation, assets, or runtime changes materially, create a new snapshot and assess the impact before continuing.
-
-## 3. Complete the documentation stages
-
-Work through the corresponding `WORKPACK.md` sections before each stage change. Stage changes are explicit; the CLI records them but does not decide whether the prose or design reasoning is good enough.
+Record and advance the Stage 0 decision:
 
 ```bash
-design-workflow stage set 1 --status "In progress"
-# Audit the pinned design evidence.
-
-design-workflow stage set 2 --status "In progress"
-# Define requirements and constraints.
-
-design-workflow stage set 3 --status "In progress"
-# Document visual, responsive, content, and interaction intent.
-
-design-workflow stage set 4 --status "In progress"
-# Define observable behavior, states, accessibility, and acceptance criteria.
-
-design-workflow stage set 5 --status "In progress"
-# Perform the two required documentation-review passes.
-
-design-workflow stage set 6 --status "In progress"
-# Confirm that Express still has no architecture concern; upgrade if it does.
-
-design-workflow stage set 7 --status "In progress"
-# Write the repository-aware implementation approach.
-
-design-workflow stage set 8 --status "In progress"
-# Challenge the plan and correct it before task creation.
+design-workflow stage review --result Passed --evidence "Stage 0 exit requirements met" --approved-by "Owner"
+design-workflow stage advance
 ```
 
-At any point, inspect the recorded next action:
+## 3. Complete consolidated documentation gates
+
+For Express, Stages 1–5 and 7–8 are reviewed against the appropriate workpack sections. Each transition is a decision followed by an advance:
 
 ```bash
-design-workflow next
+design-workflow stage review --result Passed --evidence "Current stage reviewed" --approved-by "Owner"
+design-workflow stage advance
 ```
 
-If the work now needs a second independent task, architecture, integration, migration, persistence, authentication, deployment planning, or a material unresolved product decision, stop and upgrade the profile.
+Repeat after completing each current stage. At Stage 6, record the architecture decision first:
 
-## 4. Create and implement the task
+```bash
+design-workflow architecture decide not-required \
+  --reason "One isolated component; no shared state, persistence, integration, or operational decision"
 
-Create the single Express task after the plan review is complete. Task creation advances the record to Stage 9.
+design-workflow stage review --result Passed --evidence "Architecture skip is supported" --approved-by "Owner"
+design-workflow stage advance
+```
+
+If architecture is required, Express cannot pass Stage 6. Start a profile upgrade instead:
+
+```bash
+design-workflow profile upgrade start Standard \
+  --resume-stage 2 \
+  --reason "The discovered architecture concern requires separate documentation"
+```
+
+## 4. Define traceability and the task
+
+After entering Stage 9, define the canonical chain before marking its upstream requirement required:
+
+```bash
+design-workflow trace define REQ-FR-001 --owner ART-WORKPACK
+design-workflow trace define SPEC-BEH-001 --owner ART-WORKPACK --references REQ-FR-001
+design-workflow trace define AC-001 --owner ART-WORKPACK --references SPEC-BEH-001
+design-workflow trace define PLAN-001 --owner ART-WORKPACK --references AC-001
+design-workflow trace update REQ-FR-001 --required true
+```
+
+Create the one Express task and declare validation before completion:
 
 ```bash
 design-workflow task create \
-  --title "Implement the article preview card" \
-  --references REQ-FR-001,SPEC-BEH-001,AC-001
+  --title "Implement article preview card" \
+  --references PLAN-001
 
+design-workflow task validation set P01-T01 \
+  --name Build \
+  --kind Build \
+  --required true \
+  --status "Not executed" \
+  --expected "Production build succeeds" \
+  --reason "Pending implementation" \
+  --references PLAN-001
+
+design-workflow task ready P01-T01
+design-workflow stage review --result Passed --evidence "Task is Ready and required trace coverage resolves" --approved-by "Owner"
+design-workflow stage advance
+```
+
+## 5. Implement against verified Git lineage
+
+```bash
 design-workflow task start P01-T01
 ```
 
-Before editing code, verify that the task baseline still describes the repository state you are about to change. Record discoveries and approved deviations in `WORKPACK.md` while implementing.
-
-Commit the completed implementation, then record the full output commit and executed validation:
+Implement and commit the result. Supply the real full `HEAD` SHA:
 
 ```bash
 design-workflow task complete P01-T01 \
-  --commit 2222222222222222222222222222222222222222 \
-  --check "Tests=npm test completed successfully" \
-  --check "Keyboard=manual keyboard review passed"
+  --commit <current-head-sha> \
+  --check "Build=Production build completed successfully"
 ```
 
-Replace the example SHA and evidence with actual results. Use `--na "Check name=reason"` only when a check genuinely does not apply. Task completion creates an immutable Implementation output snapshot linked to the task and its repository baseline.
+The shorthand updates only the already-declared Build check. Completion rejects an unknown check, missing commit, non-HEAD commit, or commit that does not descend from the task baseline. On success it creates the Implementation-output snapshot.
 
-## 5. Perform final review and close the workflow
-
-Complete the final-review section of `WORKPACK.md` against the exact input snapshots and implementation-output commit. Review responsive behavior, accessibility, required states, visual fidelity, content, executed automated checks, applicable manual checks, deviations, and remaining risk.
-
-After the final review supports acceptance:
+Review and advance Stage 10:
 
 ```bash
-design-workflow stage set 11 --status Complete
+design-workflow stage review \
+  --result Passed \
+  --evidence "Task complete, validation passed, and Git lineage verified" \
+  --approved-by "Owner"
+
+design-workflow stage advance
+```
+
+## 6. Reverify and accept
+
+Reverify the exact output before final acceptance:
+
+```bash
+design-workflow snapshot verify SRC-REPO-002 \
+  --result "Expected workflow output" \
+  --method "Git and final implementation comparison" \
+  --evidence "Reviewed result remained at the recorded output commit"
+```
+
+Review Stage 11 after the output is reverified and the final-review artifact is approved:
+
+```bash
+design-workflow stage review \
+  --result Passed \
+  --evidence "Output reverified and final-review artifact approved" \
+  --approved-by "Owner"
+```
+
+Express uses the approved workpack as its final-review artifact:
+
+```bash
+design-workflow review set-result accepted \
+  --artifact ART-WORKPACK \
+  --output SRC-REPO-002 \
+  --evidence "Final implementation review passed" \
+  --approved-by "Owner"
+```
+
+Only this command sets final completion. Finish by checking the complete record and projections:
+
+```bash
 design-workflow validate
 design-workflow sync --check
 design-workflow status
 ```
 
-Commit the canonical record, generated views, `WORKPACK.md`, implementation, and relevant evidence together. Never claim a check passed merely because its name appears in the record.
+Commit the implementation, narrative artifact, workflow record, and generated views together.
 
-## What Is Automatically Enforced?
+## Recovery and source change
 
-Automation protects record structure and traceability. Human review establishes whether the design interpretation, product decisions, implementation, and evidence are actually correct.
+An active-input verification of `Unexpected upstream or concurrent change` or `Unavailable` blocks progression. Create or register the replacement snapshot, record impact, and use explicit supersession. Snapshot supersession does not silently rewrite artifact baselines.
 
-| Concern | Automatically enforced by the CLI, schema, or validator | Requires human review or external tooling |
-|---|---|---|
-| Profile structure | Required artifact types; Express workpack consolidation, one-task limit, and no task prerequisites; Lite consolidation rules | Profile eligibility, risk assessment, and the decision to upgrade when complexity grows |
-| Workflow control | Stage range, allowed status values, and Task-by-task mode not beginning before task decomposition | Whether a stage's substantive exit criteria are truly satisfied before advancing |
-| Source registry | Snapshot ID syntax, roles, statuses, pin-strength values, references, and internal snapshot relationships | Source identity, freshness, authority, completeness, limitations, and whether a mutable source changed |
-| Repository lineage | Full commit-SHA shape for implementation outputs; output-to-task and output-to-baseline relationships | Commit existence, repository cleanliness, ancestry, concurrent changes, and whether the commit contains the reviewed work |
-| Artifact inventory | Artifact IDs, types, statuses, required profile inventory, baselines, and reference syntax | Content quality, approval authority, internal consistency, and whether Markdown accurately reflects its sources |
-| Requirements, design, and specification | Identifier syntax when IDs are recorded in the workflow record | Correctness, completeness, accessibility intent, responsive behavior, product rules, and resolution of source conflicts |
-| Task dependencies | Referenced tasks, self-dependencies, dependency cycles, prerequisite completion at task start, and one current task through CLI commands | Task scope, implementation quality, repository impact, and whether the selected checks cover likely regressions |
-| Validation state | Allowed result states; evidence text for Passed results; reasons for blocked, failed, unexecuted, or not-applicable results; no unresolved required checks on a completed task | Whether evidence is truthful and reproducible, expected results were correct, manual checks were competent, and coverage is sufficient |
-| Generated views | Deterministic rendering, record digest, missing-file detection, and manual-edit or record-drift detection | Decisions, rationale, and narrative history, which must remain in their owning Markdown artifacts |
-| Final acceptance | Completion-state consistency, Stage 11 requirement, completed recorded tasks, and generated-view freshness | Acceptance judgment against exact inputs and outputs, severity decisions, approved deviations, and remaining-risk ownership |
-
-The practical rule is: a passing validator means the recorded workflow is structurally and semantically consistent. It does not prove that the design was interpreted correctly, the implementation works, accessibility is complete, or the recorded evidence is true.
-
-## Useful recovery commands
-
-After an intentional direct edit to `.workflow/workflow-record.json`:
+If a destination narrative already exists, stage advancement stops without changing any workflow file. Register the file, then retry:
 
 ```bash
-design-workflow sync
-design-workflow validate
+design-workflow artifact adopt requirements --path REQUIREMENTS.md
 ```
 
-When `next` refuses to advance, resolve the reported record or generated-state findings rather than bypassing them. When a substantive product, design, architecture, or source question is unresolved, record it in `WORKPACK.md` and treat it as blocking when its answer could change the implementation.
+Schema-v1 projects must migrate before any mutation:
+
+```bash
+design-workflow migrate --check
+design-workflow migrate
+```
+
+A passing validator proves that the recorded control relationships are consistent; it does not replace competent design, accessibility, implementation, or evidence review.

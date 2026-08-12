@@ -4,6 +4,8 @@ Use with [`../guidelines/PLAN.md`](../guidelines/PLAN.md) and [`../workflow/Iden
 
 Reference only snapshot IDs defined in `SOURCE-BASELINE.md`.
 
+<!-- artifact:start -->
+
 ```yaml
 ---
 artifact: PLAN
@@ -21,6 +23,11 @@ created: YYYY-MM-DD
 updated: YYYY-MM-DD
 ---
 ```
+
+<!-- control:cli-managed:start -->
+<!-- control:cli-managed:end -->
+<!-- control:markdown-only:start -->
+<!-- control:markdown-only:end -->
 
 # Implementation Plan
 
@@ -187,3 +194,5 @@ Do not update this plan to newer source content without creating new snapshot ID
 - [ ] Accessibility is not deferred to cleanup.
 - [ ] Architecture-skip handling is consistent.
 - [ ] Risks, assumptions, and blockers remain visible.
+
+<!-- artifact:end -->

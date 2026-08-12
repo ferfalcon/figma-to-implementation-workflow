@@ -6,6 +6,8 @@ Do not report a test, build, lint, type check, accessibility check, source check
 
 Reference only snapshot IDs defined in `SOURCE-BASELINE.md`.
 
+<!-- artifact:start -->
+
 ```yaml
 ---
 artifact: IMPLEMENTATION-REVIEW
@@ -26,6 +28,11 @@ created: YYYY-MM-DD
 updated: YYYY-MM-DD
 ---
 ```
+
+<!-- control:cli-managed:start -->
+<!-- control:cli-managed:end -->
+<!-- control:markdown-only:start -->
+<!-- control:markdown-only:end -->
 
 # Implementation Review
 
@@ -259,3 +266,5 @@ Select exactly one:
 - Approved deviations:
 - Remaining risks:
 - Recommended next action:
+
+<!-- artifact:end -->

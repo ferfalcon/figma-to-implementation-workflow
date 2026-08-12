@@ -97,8 +97,8 @@ Upgrade triggers: None observed.
 
 | Requirement ID | Outcome, rule, or constraint | Priority | Evidence or authority |
 |---|---|---|---|
-| `REQ-FUNC-001` | The entire card exposes one clear article navigation target. | Must | Existing component behavior and design composition. |
-| `REQ-QUAL-001` | The card remains readable and operable at narrow widths and with long titles. | Must | Accessibility baseline and `AUD-002`. |
+| `REQ-FR-001` | The entire card exposes one clear article navigation target. | Must | Existing component behavior and design composition. |
+| `REQ-NFR-001` | The card remains readable and operable at narrow widths and with long titles. | Must | Accessibility baseline and `AUD-002`. |
 
 ### Design intent
 
@@ -112,9 +112,9 @@ Upgrade triggers: None observed.
 
 | Specification ID | Observable behavior | Related requirement |
 |---|---|---|
-| `SPEC-001` | The component uses an `article` container and one descriptive link target. | `REQ-FUNC-001` |
-| `SPEC-002` | The title wraps naturally and does not overlap, clip, or force horizontal scrolling. | `REQ-QUAL-001` |
-| `SPEC-003` | The card uses horizontal layout while content fits and vertical layout below the verified failure point. | `REQ-QUAL-001` |
+| `SPEC-BEH-001` | The component uses an `article` container and one descriptive link target. | `REQ-FR-001` |
+| `SPEC-BEH-002` | The title wraps naturally and does not overlap, clip, or force horizontal scrolling. | `REQ-NFR-001` |
+| `SPEC-BEH-003` | The card uses horizontal layout while content fits and vertical layout below the verified failure point. | `REQ-NFR-001` |
 
 - [ ] `AC-001` Keyboard focus is visible without changing layout.
 - [ ] `AC-002` The supplied desktop and mobile compositions are reproduced within approved rendering variance.
@@ -138,7 +138,7 @@ Upgrade triggers: None observed.
 - Status: Ready
 - Objective: Correct the existing article preview card within the defined scope.
 - Baseline repository snapshot: `SRC-REPO-001`
-- Upstream references: `REQ-FUNC-001`, `REQ-QUAL-001`, `DES-001`, `DES-RWD-001`, `DES-INT-001`, `SPEC-001`, `SPEC-002`, `SPEC-003`, `AC-001`–`AC-004`
+- Upstream references: `REQ-FR-001`, `REQ-NFR-001`, `DES-001`, `DES-RWD-001`, `DES-INT-001`, `SPEC-BEH-001`, `SPEC-BEH-002`, `SPEC-BEH-003`, `AC-001`–`AC-004`
 - Prerequisites: None
 - Included files and behavior: Component markup, styles, tests, responsive layout, focus, and long content.
 - Excluded work: Routing, APIs, listing layout, and unrelated refactoring.

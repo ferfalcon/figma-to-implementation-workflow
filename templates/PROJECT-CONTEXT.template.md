@@ -4,6 +4,25 @@ Use this template during Stage 0 to establish the stable project baseline before
 
 Create `SOURCE-BASELINE.md` first or alongside this file. Follow `Source-Snapshots.md` and reference snapshot IDs rather than describing mutable sources as if they were pinned.
 
+<!-- artifact:start -->
+
+```yaml
+---
+artifact: PROJECT-CONTEXT
+project: Project name
+profile: Lite | Standard | Full
+execution_mode: Gated | Continuous documentation | Task-by-task
+status: Draft
+created: YYYY-MM-DD
+updated: YYYY-MM-DD
+---
+```
+
+<!-- control:cli-managed:start -->
+<!-- control:cli-managed:end -->
+<!-- control:markdown-only:start -->
+<!-- control:markdown-only:end -->
+
 # Project Context
 
 ## 1. Project
@@ -122,3 +141,5 @@ Record only approved or source-supported expectations.
 - [ ] Quality expectations are evidence-based.
 - [ ] Blocking questions and source limitations are visible.
 - [ ] `WORKFLOW-STATE.md` has been created and references the same active baseline.
+
+<!-- artifact:end -->

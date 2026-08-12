@@ -4,6 +4,8 @@ Use this template to create a project-specific `PLAN-REVIEW.md`. Correct `PLAN.m
 
 Reference only snapshot IDs defined in `SOURCE-BASELINE.md`.
 
+<!-- artifact:start -->
+
 ```yaml
 ---
 artifact: PLAN-REVIEW
@@ -21,6 +23,11 @@ created: YYYY-MM-DD
 updated: YYYY-MM-DD
 ---
 ```
+
+<!-- control:cli-managed:start -->
+<!-- control:cli-managed:end -->
+<!-- control:markdown-only:start -->
+<!-- control:markdown-only:end -->
 
 # Plan Review
 
@@ -161,3 +168,5 @@ Select exactly one:
 - Remaining risks:
 - Open questions or blockers:
 - Recommended next stage:
+
+<!-- artifact:end -->

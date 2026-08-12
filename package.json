@@ -8,20 +8,33 @@
     "design-workflow": "./cli/design-workflow.mjs"
   },
   "files": [
-    "cli",
-    "workflow",
-    "templates",
-    "schemas",
-    "scripts/lib",
-    "README.md",
+    "AGENTS.md",
+    "AGENTS-instructions.md",
+    "AGENTS-PROMPT-Figma-file-preparation.md",
+    "CHANGELOG.md",
+    "CONTRIBUTING.md",
+    "LICENSE",
     "QUICKSTART.md",
-    "LICENSE"
+    "README.md",
+    "cli",
+    "examples",
+    "guidelines",
+    "prompts",
+    "schemas",
+    "scripts",
+    "source-adapters",
+    "templates",
+    "tests",
+    "workflow"
   ],
   "scripts": {
-    "validate": "node scripts/validate-workflow.mjs && node scripts/test-workflow-record.mjs && node scripts/test-generated-state.mjs && node scripts/test-cli.mjs",
+    "validate": "node scripts/generate-workflow-schema.mjs --check && node scripts/validate-workflow.mjs && node scripts/test-workflow-record.mjs && node scripts/test-stage-gates.mjs && node scripts/test-generated-state.mjs && node scripts/test-artifact-renderer.mjs && node scripts/test-cli.mjs && node scripts/test-package-manifest.mjs",
     "test:records": "node scripts/test-workflow-record.mjs",
+    "test:gates": "node scripts/test-stage-gates.mjs",
     "test:state": "node scripts/test-generated-state.mjs",
-    "test:cli": "node scripts/test-cli.mjs"
+    "test:render": "node scripts/test-artifact-renderer.mjs",
+    "test:cli": "node scripts/test-cli.mjs",
+    "test:package": "node scripts/test-package-manifest.mjs"
   },
   "engines": {
     "node": ">=22"

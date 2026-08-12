@@ -1,8 +1,8 @@
 # Design Workflow CLI
 
-The CLI maintains `.workflow/workflow-record.json` as the canonical mutable workflow-control record, generates profile-appropriate Markdown artifacts, produces deterministic human-readable state views, and applies the same validation used by repository CI.
+The dependency-free CLI owns executable workflow state in `.workflow/workflow-record.json`. Schema-v2 mutations are validated and committed with their generated views and newly scaffolded artifacts as one rollback-capable file set.
 
-See [`../workflow/State-Ownership.md`](../workflow/State-Ownership.md) for the ownership model.
+See [`../workflow/State-Ownership.md`](../workflow/State-Ownership.md) for ownership rules and [`../schemas/README.md`](../schemas/README.md) for the record model.
 
 ## Run locally
 
@@ -16,154 +16,222 @@ After packaging or installation:
 npx @ferfalcon/design-workflow help
 ```
 
-## Initialize a project
+Node.js 22 or newer is required.
+
+## Control modes
+
+CLI-managed is the default and the only executable control mode:
 
 ```bash
-npx @ferfalcon/design-workflow init \
+design-workflow init \
   --name "Article preview component" \
   --profile Express \
   --mode Gated \
+  --control cli-managed \
   --design "https://www.figma.com/design/..." \
   --repository .
 ```
 
-`init` creates the workflow record, profile-required Markdown artifacts, and these generated state views:
+Initialization creates a schema-v2 record and only the Stage 0 artifacts for the selected profile. Later artifacts are scaffolded atomically when a passing gate is advanced.
 
-```text
-.workflow/generated/WORKFLOW-STATUS.md
-.workflow/generated/SOURCE-INDEX.md
-.workflow/generated/ARTIFACT-INDEX.md
-.workflow/generated/TASK-INDEX.md
-```
-
-Task-by-task mode cannot begin at Stage 0. Initialize with `Gated` or `Continuous documentation`, reach Stage 9, then switch modes.
-
-## Canonical state and generated views
-
-The record owns mutable profile, execution mode, stage, status, active inputs, snapshots, artifact inventory, task lifecycle, validation state, and implementation-output lineage.
-
-Generated views are deterministic projections of that record. Do not edit them manually. Every CLI mutation synchronizes them automatically.
-
-Repair or regenerate views after a direct JSON edit:
+Markdown-only mode creates Stage 0 narrative artifacts without a record, generated views, lifecycle enforcement, or Markdown parsing:
 
 ```bash
+design-workflow init --name "Documentation fixture" --profile Standard --control markdown-only
+design-workflow artifact scaffold plan --control markdown-only --project "Documentation fixture" --profile Standard
+```
+
+## Generated views
+
+CLI-managed projects receive deterministic projections under `.workflow/generated/`:
+
+```text
+WORKFLOW-STATUS.md
+SOURCE-INDEX.md
+ARTIFACT-INDEX.md
+TASK-INDEX.md
+TRACEABILITY.md
+```
+
+Every successful record mutation refreshes all views. Check or repair projections with:
+
+```bash
+design-workflow sync --check
 design-workflow sync
-```
-
-Check freshness without changing files:
-
-```bash
-design-workflow sync --check
-```
-
-`design-workflow validate` checks both semantic validity and generated-view freshness.
-
-## Commands
-
-### Inspect control state
-
-```bash
-design-workflow status
-design-workflow status --json
-design-workflow next
-design-workflow sync --check
 design-workflow validate
 ```
 
-### Change stage or execution mode
+## Schema-v1 migration
+
+Schema-v1 records remain readable by `status`, `validate`, `sync`, and trace inspection, but are read-only:
 
 ```bash
-design-workflow stage set 9 --status "In progress"
-design-workflow mode set "Task-by-task"
+design-workflow migrate --check
+design-workflow migrate
 ```
 
-Stage changes are explicit. `next` reports the next permitted action but does not silently advance the workflow.
+`--check` reports the deterministic conversion without writing and exits non-zero when migration is required. Migration assigns artifact paths, infers optional trace definitions, converts legacy checks to structured `kind: Other` checks, and records a `legacyBoundary` at the current stage. A legacy Passed check without a trustworthy execution timestamp is preserved as evidence but changed to `Not executed` so it must be rerun before completion. Running `migrate` again is a no-op.
 
-### Add source snapshots
+## Stage decisions
+
+Direct stage assignment is intentionally disabled. `stage set` returns a compatibility error and does not mutate files.
 
 ```bash
-design-workflow snapshot add \
-  --kind design \
-  --reference "Figma node 41:22 inspected 2026-08-06T13:00:00-03:00" \
-  --activate
+design-workflow stage review \
+  --result Passed \
+  --evidence "Exit requirements and evidence reviewed" \
+  --approved-by "Reviewer"
 
-design-workflow snapshot add \
-  --kind repo \
-  --reference "Implementation repository baseline" \
-  --commit 1111111111111111111111111111111111111111 \
-  --activate
+design-workflow stage advance
+design-workflow stage rewind 4 --reason "New behavior invalidated the specification"
 ```
 
-Supported kinds are `design`, `repo`, `runtime`, `doc`, and `asset`. IDs are allocated automatically unless `--id` is supplied.
+Gate results are `Passed`, `Passed with assumptions`, `Blocked`, and `Must upgrade`. Every Gated decision requires `--approved-by`. Advancement accepts only the current stage’s latest active passing gate. Rewind preserves history, supersedes decisions at and after the target, leaves narrative baselines unchanged, and returns the workflow to `In progress`.
 
-Detailed source scope, evidence, reproduction information, authority, and limitations remain in `SOURCE-BASELINE.md` or `WORKPACK.md`; the record owns the mutable registry fields.
-
-### Create artifacts
+Architecture is an explicit Stage 6 decision:
 
 ```bash
-design-workflow artifact create design
-design-workflow artifact create plan --baseline SRC-DS-001,SRC-REPO-001
+design-workflow architecture decide not-required --reason "No cross-cutting structural decision"
+design-workflow architecture decide required --reason "Shared state and persistence are in scope"
 ```
 
-The matching template is copied into the current project. Express projects reject separate artifacts because their responsibilities remain consolidated in `WORKPACK.md`.
+Architecture-required Express and Lite work must upgrade. Full, and architecture-required Standard work, require an approved architecture artifact.
 
-### Manage tasks
+## Source lifecycle
 
 ```bash
-design-workflow task create \
-  --title "Implement article preview card" \
-  --references REQ-FR-001,SPEC-BEH-001,AC-001
+design-workflow snapshot add --kind design --reference "Pinned Figma version" --activate
+design-workflow snapshot add --kind repo --reference . --commit <40-character-sha> --activate
 
-design-workflow task start P01-T01
-design-workflow task complete P01-T01 \
-  --commit 2222222222222222222222222222222222222222 \
-  --check "Build=npm run build completed successfully" \
-  --check "Keyboard=manual keyboard review passed"
+design-workflow snapshot verify SRC-DS-001 \
+  --result Unchanged \
+  --method "Named-version comparison" \
+  --evidence "Version and scoped nodes matched"
+
+design-workflow snapshot supersede SRC-DS-001 \
+  --by SRC-DS-002 \
+  --reason "Approved upstream revision"
 ```
 
-Non-Express profiles receive a task file generated from `TASK.template.md`. Express keeps its single task inside `WORKPACK.md` while still recording task state and output lineage in the workflow record.
+Verification events are append-only. `Unexpected upstream or concurrent change` and `Unavailable` block active-input progression. Snapshot supersession never rewrites artifact baselines automatically.
 
-`task complete` creates the Implementation output snapshot automatically. Every completed task requires at least one passed or explicitly not-applicable validation result.
+## Artifact lifecycle
 
-Use `--na "Check name=reason"` only when a check genuinely does not apply.
-
-### Trace identifiers
+New narrative files are rendered from the artifact body only, with real YAML frontmatter and substituted project values:
 
 ```bash
+design-workflow artifact scaffold requirements --control cli-managed
+design-workflow artifact adopt requirements --path REQUIREMENTS.md
+design-workflow artifact review ART-REQUIREMENTS --evidence "Completeness review passed"
+design-workflow artifact approve ART-REQUIREMENTS --evidence "Approved requirements" --approved-by "Owner"
+design-workflow artifact reopen ART-REQUIREMENTS --evidence "New source changes behavior"
+design-workflow artifact baseline ART-REQUIREMENTS --baseline SRC-DS-002,SRC-REPO-001
+design-workflow artifact supersede ART-REQUIREMENTS --by ART-REQUIREMENTS-2 --reason "Replacement approved"
+```
+
+Transitions are `Draft → Reviewed → Approved`. Reopen is explicit. Changing an approved baseline reopens the artifact. The CLI never overwrites an unregistered existing narrative; register it with `artifact adopt` and retry the stage advance.
+
+## Canonical traceability
+
+```bash
+design-workflow trace define REQ-FR-001 --owner ART-REQUIREMENTS --required true
+design-workflow trace define SPEC-BEH-001 --owner ART-SPEC --references REQ-FR-001
+design-workflow trace define AC-001 --owner ART-SPEC --references SPEC-BEH-001
+design-workflow trace define PLAN-001 --owner ART-PLAN --references AC-001
+
+design-workflow trace update REQ-FR-001 --required true
+design-workflow trace supersede REQ-FR-001 --by REQ-FR-002
+design-workflow trace show REQ-FR-001
 design-workflow trace REQ-FR-001
-design-workflow trace SRC-REPO-002
 ```
 
-The command reports artifacts, tasks, snapshots, and control-state fields that reference the identifier.
+The last form is an alias for `trace show`. References and owners must resolve, owner types must be compatible with the profile, and the domain graph must remain acyclic. `.workflow/generated/TRACEABILITY.md` reports owners, upstream definitions, downstream plans, tasks, validation checks, unresolved references, orphans, cycles, and coverage gaps.
 
-## Record location
+## Tasks and validation
 
-The default record is:
-
-```text
-.workflow/workflow-record.json
-```
-
-Generated views are placed in the `generated/` directory beside the selected record. Use `--record path/to/record.json` with any command to override the default.
-
-## Version-control behavior
-
-In CLI-managed projects, commit the record and generated views together. CI can run:
+Task lifecycle is explicit:
 
 ```bash
-design-workflow sync --check
-design-workflow validate
+design-workflow task create --title "Implement article card" --references PLAN-001
+design-workflow task ready P01-T01
+design-workflow task start P01-T01
+design-workflow task block P01-T01 --reason "Waiting for approved copy"
+design-workflow task unblock P01-T01
 ```
 
-A stale or missing generated file is a validation failure. Generated views are disposable and can always be recreated from the record.
+Declare structured checks before completion:
 
-## Safety behavior
+```bash
+design-workflow task validation set P01-T01 \
+  --name Build \
+  --kind Build \
+  --required true \
+  --status "Not executed" \
+  --expected "Production build succeeds" \
+  --reason "Pending implementation" \
+  --references PLAN-001
+```
 
-- Existing records are not replaced without `init --force`.
-- Express cannot silently expand into a multi-artifact or multi-task workflow.
-- Task prerequisites must be complete before task start.
-- A second current task cannot be started.
-- Completion requires a full Git SHA and resolved validation.
-- Passed validation requires evidence.
-- Generated views cannot silently diverge from the record.
-- Semantic or synchronization findings produce a non-zero exit code for CI use.
+A Passed result requires `--actual`, `--executed-at`, and at least one `--evidence`. Required checks cannot be `Not applicable`.
+
+Completion accepts the existing `--check name=evidence` shorthand only for checks already declared on the task:
+
+```bash
+design-workflow task complete P01-T01 \
+  --commit <current-head-sha> \
+  --check "Build=Production build completed successfully"
+```
+
+Completion verifies that the commit exists in the task baseline’s repository, equals `HEAD`, and descends from the recorded baseline commit. Only then does it create the Implementation-output snapshot. Task-by-task execution cannot begin before Stage 9, and Continuous-documentation mode cannot enter Stage 10.
+
+## Profile upgrades
+
+Profile changes are two-phase and upgrade-only:
+
+```bash
+design-workflow profile upgrade start Standard \
+  --resume-stage 2 \
+  --reason "Separate requirements, design, and specification are required"
+
+# Reconcile the scaffolded target artifacts through the resume stage.
+
+design-workflow profile upgrade finish \
+  --evidence "Target artifacts reconciled" \
+  --approved-by "Reviewer"
+```
+
+`start` selects the higher profile, rewinds, blocks advancement, and scaffolds missing target artifacts—including compatible owner artifacts for active trace items. Before `finish`, reconcile those artifacts and move active trace items off any obsolete Workpack or Implementation Brief with `trace update --owner`. `finish` then supersedes obsolete consolidated artifacts. Downgrades are rejected.
+
+## Final review
+
+Stage 11 completion is set only through a final-result event:
+
+```bash
+design-workflow snapshot verify SRC-REPO-002 \
+  --result "Expected workflow output" \
+  --method "Git and runtime comparison" \
+  --evidence "Reviewed output still matches HEAD"
+
+design-workflow stage review \
+  --result Passed \
+  --evidence "Output reverified and final-review artifact approved" \
+  --approved-by "Reviewer"
+
+design-workflow review set-result accepted \
+  --artifact ART-IMPLEMENTATION-REVIEW \
+  --output SRC-REPO-002 \
+  --runtime SRC-RUN-001 \
+  --evidence "Acceptance review passed" \
+  --approved-by "Reviewer"
+```
+
+Results are `accepted`, `accepted-with-deviations`, and `requires-corrections`. Accepted-with-deviations uses the supplied evidence as explicit deviation evidence. Requires-corrections leaves Stage 11 Blocked.
+
+## Safety contract
+
+- The current record must be clean before advancement, task execution, or acceptance.
+- A candidate record, all generated views, and new artifact files are rendered and validated before any target is replaced.
+- Writes use sibling temporary files and rollback on an I/O failure.
+- Rejected mutations leave the record, generated views, and narrative files byte-identical.
+- Existing unregistered narrative files are never overwritten.
+- Use `--record path/to/workflow-record.json` to override the default record location.

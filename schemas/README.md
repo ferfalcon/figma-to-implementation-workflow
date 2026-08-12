@@ -1,70 +1,104 @@
 # Executable Workflow Records
 
-A workflow record provides a compact machine-readable control layer so CI and local tooling can detect inconsistent state before implementation or acceptance.
+CLI-managed projects use `.workflow/workflow-record.json` as the canonical mutable control record. Markdown-only projects have no executable record and maintain the complete fallback registries rendered into their Stage 0 artifacts.
 
-Projects choose one control mode:
+See [`../workflow/State-Ownership.md`](../workflow/State-Ownership.md) for ownership rules.
 
-- **CLI-managed:** the workflow record is canonical for mutable workflow-control state, and generated Markdown views provide human-readable indexes.
-- **Markdown-only:** normal Markdown artifacts remain the manually maintained control records.
+## Schema versions
 
-See [`../workflow/State-Ownership.md`](../workflow/State-Ownership.md).
+- [`workflow-record.schema.json`](workflow-record.schema.json) is generated schema v2.
+- [`workflow-record.v1.schema.json`](workflow-record.v1.schema.json) preserves the readable legacy shape.
 
-For Express, `WORKPACK.md` remains the single normative narrative artifact. The record owns mutable control state only; it does not become a second product or design specification.
+The v2 schema is generated from the shared model in [`../cli/lib/workflow-model.mjs`](../cli/lib/workflow-model.mjs). CI checks freshness before other validation:
 
-## File convention
-
-Place one record at either:
-
-```text
-.workflow/workflow-record.json
+```bash
+node scripts/generate-workflow-schema.mjs --check
 ```
 
-or use a file ending in:
+Schema-v1 records may be inspected, validated, and synchronized, but mutations are rejected until explicit migration:
 
-```text
-*.workflow.json
+```bash
+design-workflow migrate --check
+design-workflow migrate
 ```
 
-The repository validator discovers those files automatically.
+Migration is atomic and idempotent. It records the current stage as `legacyBoundary`, infers trace owners, leaves migrated trace definitions optional, and never fabricates execution timestamps.
 
-Use [`workflow-record.schema.json`](workflow-record.schema.json) for editor completion and basic structural validation. The semantic validator in [`../scripts/lib/validate-workflow-record.mjs`](../scripts/lib/validate-workflow-record.mjs) enforces relationships that JSON Schema alone cannot reliably express.
+## Schema-v2 collections
 
-## What the record owns in CLI-managed mode
+The root object is strict: all required keys must exist and unknown properties are rejected.
 
-- selected profile and execution mode;
-- current stage and status;
-- active source inputs, current task, and latest output;
-- source snapshot identity, state, pin strength, reference, and lineage;
-- artifact inventory, status, baseline, and references;
-- task status, prerequisites, references, validation state, and outputs.
+| Collection | Responsibility |
+|---|---|
+| `project` | Project name, selected profile, and execution mode |
+| `state` | Current stage/status, active inputs, current task, latest output/runtime, and current architecture decision |
+| `snapshots` | Source and output identities, roles, pin strength, status, references, and Git lineage |
+| `verifications` | Append-only `VER-*` observations of source availability or change |
+| `artifacts` | Narrative registration, type, path, lifecycle state, baseline, and replacement |
+| `traceItems` | Canonical domain definitions, owner, required classification, upstream references, and replacement |
+| `gates` | Append-only `GATE-*` stage decisions, evidence, baselines, verification IDs, artifacts, time, and approver |
+| `tasks` | Task lifecycle, repository baseline, dependencies, trace references, blocker restoration, output, and structured validation |
+| `profileTransitions` | Two-phase `PROFILE-*` upgrade history |
+| `implementationReviews` | Append-only `REVIEW-*` final-result history |
+| `legacyBoundary` | Optional v1-migration boundary for future gate and required-trace enforcement |
 
-The record does not replace:
+## Canonical identifiers
 
-- source scope, evidence, reproduction instructions, authority, or limitations;
-- product requirements;
-- visual and interaction rationale;
-- behavioral specifications;
-- architecture decisions;
-- implementation-plan rationale;
-- blocker detail, assumptions, exceptions, or narrative history;
-- detailed validation evidence and final review prose.
+Concrete domain IDs are strict:
 
-Those remain in their owning Markdown artifacts or consolidated Express and Lite sections.
+```text
+REQ-(FR|BR|DR|NFR|AR|SEC|CON)-###
+DES-###
+DES-(RWD|INT)-###
+SPEC-(BEH|INT|VAL|ACC|DATA)-###
+EVD-###  AUD-###  AC-###  ADR-###
+PLAN-### DOC-### PLANREV-### IMPL-###
+```
+
+Control namespaces include `SRC-*`, `ART-*`, `P##-T##`, `VER-*`, `GATE-*`, `PROFILE-*`, and `REVIEW-*`. Duplicate IDs, duplicate array values, unresolved references, incompatible owners, and graph cycles are semantic errors.
+
+## Structured validation
+
+Each task check uses:
+
+```text
+name, kind, required, status, expected, actual,
+command, environment, executedAt, evidence[], reason, references[]
+```
+
+`name`, `kind`, `required`, `status`, `expected`, `evidence`, and `references` are always present. A Passed check requires a non-empty actual result, ISO-8601 execution time, and evidence. Every non-passing state requires a reason. A required check cannot be `Not applicable`.
+
+Completion also requires the CLI to verify the supplied output commit against the real repository: it must exist, equal `HEAD`, and descend from the task baseline commit.
+
+## Gates and completion
+
+Stage decisions are append-only. A new review supersedes the previous active decision for that stage. Rewind supersedes active gates at and after the target without deleting history or rewriting artifact baselines.
+
+The validator enforces:
+
+- a passing active decision for every crossed post-boundary stage;
+- profile-aware artifact and approval exits;
+- explicit architecture handling;
+- execution-mode restrictions;
+- Ready task and required-trace coverage at the Stage 9 exit;
+- completed tasks, resolved required validation, output lineage, and latest output at the Stage 10 exit;
+- output re-verification, an approved review artifact, an active passing Stage 11 gate, accepted final-review history, and validation coverage for final completion.
+
+`state.status: Complete` is valid only at Stage 11 with an active passing Stage 11 gate and an active `accepted` or `accepted-with-deviations` review event. `requires-corrections` leaves the state Blocked.
 
 ## Generated views
 
-The CLI renders deterministic views beside the record:
+The record renders deterministic files beside itself:
 
 ```text
 .workflow/generated/WORKFLOW-STATUS.md
 .workflow/generated/SOURCE-INDEX.md
 .workflow/generated/ARTIFACT-INDEX.md
 .workflow/generated/TASK-INDEX.md
+.workflow/generated/TRACEABILITY.md
 ```
 
-Every file includes a canonical SHA-256 digest of the record. The digest ignores object-key ordering but preserves meaningful array order.
-
-Generated views are disposable and must not be edited manually.
+Each contains a canonical SHA-256 record digest. `TRACEABILITY.md` shows every domain ID, kind, owner, classification, upstream references, downstream plans/tasks/checks, and graph or coverage findings.
 
 ```bash
 design-workflow sync
@@ -72,82 +106,37 @@ design-workflow sync --check
 design-workflow validate
 ```
 
-The first command writes or repairs views. The second checks freshness without writing. The third checks both record semantics and generated-view freshness.
+Generated files are disposable projections and must never be edited manually.
 
-## Semantic and synchronization checks
+## Transaction contract
 
-Validation currently checks:
+Every executable record mutation uses one store:
 
-- identifier syntax and global uniqueness;
-- references to missing snapshots or tasks;
-- profile-required artifact presence;
-- Express one-workpack and one-task constraints;
-- Express rejection of separate larger-profile artifacts and task prerequisites;
-- Lite-profile consolidation rules;
-- task prerequisite cycles and self-dependencies;
-- task-start and output repository snapshot relationships;
-- implementation-output commit, parent, and producing-task lineage;
-- complete-task output and validation requirements;
-- evidence for passed validation;
-- reasons for failed, blocked, skipped, or not-applicable validation;
-- workflow completion and execution-mode consistency;
-- missing or stale generated state views.
+1. read and validate the current record;
+2. clone it and apply the proposed mutation in memory;
+3. render the candidate record, generated views, and new artifact files in memory;
+4. validate the complete candidate and registered narrative paths;
+5. write sibling temporary files and rename the full file set;
+6. roll back committed targets and remove temporary files if any write fails.
 
-## Commands
+Validation failure happens before target writes. Existing unregistered narrative files stop scaffolding and must be explicitly adopted.
 
-Run repository and project-record validation:
+## Validation commands
+
+Run the complete local and CI contract:
 
 ```bash
-node scripts/validate-workflow.mjs
+npm run validate
 ```
 
-Run focused tests:
+Focused commands are:
 
 ```bash
-node scripts/test-workflow-record.mjs
-node scripts/test-generated-state.mjs
-node scripts/test-cli.mjs
+npm run test:records
+npm run test:state
+npm run test:render
+npm run test:cli
+npm run test:package
 ```
 
-## Express example
-
-```json
-{
-  "schemaVersion": 1,
-  "project": {
-    "name": "Article preview card",
-    "profile": "Express",
-    "executionMode": "Task-by-task"
-  },
-  "state": {
-    "stage": 9,
-    "status": "Ready",
-    "activeInputs": ["SRC-DS-001", "SRC-REPO-001"],
-    "currentTask": "P01-T01",
-    "latestOutput": null
-  },
-  "snapshots": [],
-  "artifacts": [
-    {
-      "id": "ART-WORKPACK",
-      "type": "WORKPACK",
-      "status": "Approved",
-      "baseline": []
-    }
-  ],
-  "tasks": []
-}
-```
-
-The shape above is structurally illustrative only. Semantic validation will correctly report missing snapshot definitions and the missing Express task from Stage 9 onward. See [`../tests/fixtures/workflow-record.express.valid.json`](../tests/fixtures/workflow-record.express.valid.json) for a complete valid record.
-
-## Adoption strategy
-
-Existing projects can continue using Markdown-only mode. To migrate:
-
-1. reconcile duplicated values;
-2. create or validate the workflow record;
-3. run `design-workflow sync`;
-4. replace copied operational tables with links to generated views;
-5. retain narrative evidence, rationale, decisions, blockers, and history in their Markdown owners;
-6. validate and commit the record and generated views together.
+Golden migration fixtures live in [`../tests/fixtures/workflow-record.migration.v1.json`](../tests/fixtures/workflow-record.migration.v1.json) and [`../tests/fixtures/workflow-record.migration.v2.json`](../tests/fixtures/workflow-record.migration.v2.json).

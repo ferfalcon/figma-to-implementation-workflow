@@ -16,7 +16,7 @@ The workflow supports AI-assisted and human-led work with explicit source baseli
 8. [`workflow/Validation-Rules.md`](workflow/Validation-Rules.md)
 9. [`cli/README.md`](cli/README.md)
 10. [`schemas/README.md`](schemas/README.md)
-11. [`ChatGPT-instructions.md`](ChatGPT-instructions.md)
+11. [`AGENTS-instructions.md`](AGENTS-instructions.md)
 
 ## Workflow overview
 
@@ -74,6 +74,7 @@ Do not maintain the same mutable field in both modes. In CLI-managed mode, these
 .workflow/generated/SOURCE-INDEX.md
 .workflow/generated/ARTIFACT-INDEX.md
 .workflow/generated/TASK-INDEX.md
+.workflow/generated/TRACEABILITY.md
 ```
 
 Every CLI mutation refreshes the generated views. Direct record edits require:
@@ -89,6 +90,8 @@ design-workflow sync --check
 ```
 
 See [`workflow/State-Ownership.md`](workflow/State-Ownership.md).
+
+CLI-managed initialization creates only Stage 0 artifacts. Passing and advancing each gate scaffolds the next stage atomically. Existing schema-v1 records remain readable but require `design-workflow migrate` before mutation.
 
 ## Repository areas
 
@@ -116,7 +119,7 @@ A consolidated Express prompt and one executable prompt per normal workflow stag
 
 ### `cli/`
 
-The dependency-free `design-workflow` CLI initializes projects, manages snapshots and task lineage, validates records, traces identifiers, and synchronizes generated state views.
+The dependency-free `design-workflow` CLI initializes Stage 0, records source verification and stage gates, manages artifact and task lifecycle, verifies Git lineage, enforces trace coverage, migrates schema-v1 records, and synchronizes generated views.
 
 ### `schemas/`
 
@@ -136,6 +139,8 @@ Run:
 npm run validate
 npm run test:records
 npm run test:state
+npm run test:render
+npm run test:package
 npm run test:cli
 ```
 
@@ -190,8 +195,8 @@ For full-stack applications, authentication, persistence, complex integrations, 
 
 | Owner | Responsibility |
 |---|---|
-| Workflow record | Mutable profile, mode, stage, status, active inputs, snapshot registry, artifact inventory, task lifecycle, validation state, and output lineage in CLI-managed mode |
-| Generated views | Deterministic human-readable projections of record-owned state; never edited manually |
+| Workflow record | Mutable profile, mode, stage, architecture decision, snapshots and verifications, artifact lifecycle, gates, trace definitions, tasks and structured validation, profile upgrades, final reviews, and output lineage |
+| Generated views | Deterministic human-readable projections of record-owned state and trace coverage; never edited manually |
 | `WORKPACK.md` | Express scope, evidence, rationale, expected behavior, plan, task detail, decisions, and final review |
 | `SOURCE-BASELINE.md` | Detailed source scope, evidence, reproduction, authority, limitations, and rebaseline impact |
 | `WORKFLOW-STATE.md` | Blockers, assumptions, decisions, exceptions, and narrative history not represented by the record |
@@ -208,7 +213,7 @@ For full-stack applications, authentication, persistence, complex integrations, 
 ├── LICENSE
 ├── CONTRIBUTING.md
 ├── CHANGELOG.md
-├── ChatGPT-instructions.md
+├── AGENTS-instructions.md
 ├── workflow/
 ├── source-adapters/
 ├── guidelines/

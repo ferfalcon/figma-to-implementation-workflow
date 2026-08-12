@@ -4,6 +4,8 @@ Use this template only with the Lite profile. It consolidates requirements, desi
 
 Reference only snapshot IDs defined in `SOURCE-BASELINE.md`.
 
+<!-- artifact:start -->
+
 ```yaml
 ---
 artifact: IMPLEMENTATION-BRIEF
@@ -20,6 +22,11 @@ created: YYYY-MM-DD
 updated: YYYY-MM-DD
 ---
 ```
+
+<!-- control:cli-managed:start -->
+<!-- control:cli-managed:end -->
+<!-- control:markdown-only:start -->
+<!-- control:markdown-only:end -->
 
 # Implementation Brief
 
@@ -160,3 +167,5 @@ Select exactly one:
 - `Ready for task decomposition`
 - `Ready with documented non-blocking assumptions`
 - `Blocked by unresolved decisions`
+
+<!-- artifact:end -->

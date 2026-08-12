@@ -6,6 +6,23 @@ When `.workflow/workflow-record.json` exists, it owns mutable snapshot identity,
 
 This document owns detailed scope, evidence, reproduction instructions, authority, dependencies, limitations, verification narrative, and rebaseline impact.
 
+<!-- artifact:start -->
+
+```yaml
+---
+artifact: SOURCE-BASELINE
+project: Project name
+profile: Lite | Standard | Full
+execution_mode: Gated | Continuous documentation | Task-by-task
+status: Draft
+created: YYYY-MM-DD
+updated: YYYY-MM-DD
+---
+```
+
+<!-- control:cli-managed:start -->
+<!-- control:cli-managed:end -->
+
 # Source Baseline
 
 ## 1. State Ownership Mode
@@ -137,6 +154,8 @@ Use this table for changed upstream inputs or unexpected concurrent changes, not
 - [ ] Evidence sections do not redefine record-owned status or lineage.
 - [ ] No artifact silently relies on undefined or newer source content.
 
+<!-- control:markdown-only:start -->
+
 ---
 
 # Appendix A — Markdown-only Snapshot Registry
@@ -160,3 +179,7 @@ Complete this appendix only when the project does not use `.workflow/workflow-re
 | ID | Role | Status | Pin strength | Canonical reference | Commit or version | Parent | Produced by task |
 |---|---|---|---|---|---|---|---|
 | ... | ... | ... | ... | ... | ... | ... | ... |
+
+<!-- control:markdown-only:end -->
+
+<!-- artifact:end -->

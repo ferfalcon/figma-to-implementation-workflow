@@ -25,17 +25,8 @@ jobs:
         with:
           node-version: 22
 
-      - name: Validate structure, links, workflow records, and generated views
-        run: node scripts/validate-workflow.mjs
-
-      - name: Test semantic workflow validation
-        run: node scripts/test-workflow-record.mjs
-
-      - name: Test generated workflow state
-        run: node scripts/test-generated-state.mjs
-
-      - name: Test workflow CLI
-        run: node scripts/test-cli.mjs
+      - name: Run the repository validation contract
+        run: npm run validate
 
       - name: Verify package contents
         run: npm pack --dry-run

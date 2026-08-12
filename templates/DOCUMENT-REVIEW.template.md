@@ -4,6 +4,8 @@ Use this template to create a project-specific `DOCUMENT-REVIEW.md`. Correct pro
 
 Reference only snapshot IDs defined in `SOURCE-BASELINE.md`.
 
+<!-- artifact:start -->
+
 ```yaml
 ---
 artifact: DOCUMENT-REVIEW
@@ -20,6 +22,11 @@ created: YYYY-MM-DD
 updated: YYYY-MM-DD
 ---
 ```
+
+<!-- control:cli-managed:start -->
+<!-- control:cli-managed:end -->
+<!-- control:markdown-only:start -->
+<!-- control:markdown-only:end -->
 
 # Documentation Review
 
@@ -168,3 +175,5 @@ Select exactly one:
 - Assumptions introduced:
 - Open questions or blockers:
 - Recommended next stage:
+
+<!-- artifact:end -->

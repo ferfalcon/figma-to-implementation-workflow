@@ -33,8 +33,8 @@
     { "id": "ART-SOURCE-BASELINE", "type": "SOURCE-BASELINE", "status": "Approved", "baseline": ["SRC-DS-001", "SRC-REPO-001"] },
     { "id": "ART-PROJECT-CONTEXT", "type": "PROJECT-CONTEXT", "status": "Approved", "baseline": ["SRC-DS-001", "SRC-REPO-001"] },
     { "id": "ART-WORKFLOW-STATE", "type": "WORKFLOW-STATE", "status": "Approved", "baseline": ["SRC-DS-001", "SRC-REPO-001"] },
-    { "id": "ART-DESIGN-AUDIT", "type": "DESIGN-AUDIT", "status": "Approved", "baseline": ["SRC-DS-001"], "references": ["EVD-FIGMA-001", "AUD-RESPONSIVE-001"] },
-    { "id": "ART-IMPLEMENTATION-BRIEF", "type": "IMPLEMENTATION-BRIEF", "status": "Approved", "baseline": ["SRC-DS-001", "SRC-REPO-001"], "references": ["REQ-FUNC-001", "DES-COMP-001", "SPEC-BEHAVIOR-001", "AC-001", "PLAN-001"] },
+    { "id": "ART-DESIGN-AUDIT", "type": "DESIGN-AUDIT", "status": "Approved", "baseline": ["SRC-DS-001"], "references": ["EVD-001", "AUD-001"] },
+    { "id": "ART-IMPLEMENTATION-BRIEF", "type": "IMPLEMENTATION-BRIEF", "status": "Approved", "baseline": ["SRC-DS-001", "SRC-REPO-001"], "references": ["REQ-FR-001", "DES-001", "SPEC-BEH-001", "AC-001", "PLAN-001"] },
     { "id": "ART-IMPLEMENTATION-REVIEW", "type": "IMPLEMENTATION-REVIEW", "status": "Draft", "baseline": ["SRC-DS-001", "SRC-REPO-001"] }
   ],
   "tasks": [
@@ -43,7 +43,7 @@
       "status": "In progress",
       "baseline": "SRC-REPO-001",
       "prerequisites": [],
-      "references": ["REQ-FUNC-001", "SPEC-BEHAVIOR-001", "AC-001", "PLAN-001"],
+      "references": ["REQ-FR-001", "SPEC-BEH-001", "AC-001", "PLAN-001"],
       "output": null,
       "validation": [
         { "name": "Build", "status": "Not executed", "reason": "Implementation is still in progress" }

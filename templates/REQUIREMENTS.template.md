@@ -4,6 +4,8 @@ Use with [`../guidelines/REQUIREMENTS.md`](../guidelines/REQUIREMENTS.md). Follo
 
 Reference only snapshot IDs defined in `SOURCE-BASELINE.md`.
 
+<!-- artifact:start -->
+
 ```yaml
 ---
 artifact: REQUIREMENTS
@@ -20,6 +22,11 @@ created: YYYY-MM-DD
 updated: YYYY-MM-DD
 ---
 ```
+
+<!-- control:cli-managed:start -->
+<!-- control:cli-managed:end -->
+<!-- control:markdown-only:start -->
+<!-- control:markdown-only:end -->
 
 # Project Requirements
 
@@ -181,3 +188,5 @@ Record outcome-level expectations without choosing arbitrary breakpoints or impl
 - [ ] No source changed silently after the artifact baseline was recorded.
 - [ ] Confirmed, inferred, recommended, and open information remain distinct.
 - [ ] Blocking questions are visible.
+
+<!-- artifact:end -->

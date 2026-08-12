@@ -6,6 +6,23 @@ Follow [`../workflow/State-Ownership.md`](../workflow/State-Ownership.md).
 
 When `.workflow/workflow-record.json` exists, do not manually repeat its current profile, mode, stage, status, active inputs, current task, latest output, artifact statuses, or task statuses here. Use the generated views instead.
 
+<!-- artifact:start -->
+
+```yaml
+---
+artifact: WORKFLOW-STATE
+project: Project name
+profile: Lite | Standard | Full
+execution_mode: Gated | Continuous documentation | Task-by-task
+status: Draft
+created: YYYY-MM-DD
+updated: YYYY-MM-DD
+---
+```
+
+<!-- control:cli-managed:start -->
+<!-- control:cli-managed:end -->
+
 # Workflow State
 
 ## 1. State Ownership Mode
@@ -21,6 +38,7 @@ Choose one mode for the project:
 - Source registry and lineage: `.workflow/generated/SOURCE-INDEX.md`
 - Artifact inventory: `.workflow/generated/ARTIFACT-INDEX.md`
 - Task status and dependencies: `.workflow/generated/TASK-INDEX.md`
+- Canonical domain graph and coverage: `.workflow/generated/TRACEABILITY.md`
 
 Run:
 
@@ -107,6 +125,8 @@ The current profile and mode belong in the workflow record in CLI-managed mode. 
 
 Do not use this narrative summary as a second mutable status registry.
 
+<!-- control:markdown-only:start -->
+
 ---
 
 # Markdown-only Fallback
@@ -164,3 +184,7 @@ Complete this appendix only when the project does not use `.workflow/workflow-re
 | Artifact | Status | Version, commit, or date | Baseline snapshot IDs | Approved by or evidence |
 |---|---|---|---|---|
 | ... | Draft / Reviewed / Approved / Superseded | ... | ... | ... |
+
+<!-- control:markdown-only:end -->
+
+<!-- artifact:end -->

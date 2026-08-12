@@ -4,6 +4,8 @@ Use this template to create a project-specific `ARCHITECTURE.md`. Do not adopt e
 
 Reference only snapshot IDs defined in `SOURCE-BASELINE.md`.
 
+<!-- artifact:start -->
+
 ```yaml
 ---
 artifact: ARCHITECTURE
@@ -22,6 +24,11 @@ created: YYYY-MM-DD
 updated: YYYY-MM-DD
 ---
 ```
+
+<!-- control:cli-managed:start -->
+<!-- control:cli-managed:end -->
+<!-- control:markdown-only:start -->
+<!-- control:markdown-only:end -->
 
 # Architecture
 
@@ -200,3 +207,5 @@ Create new snapshot IDs and perform a rebaseline impact assessment rather than s
 - [ ] Decisions are traceable to requirements, specifications, and source evidence.
 - [ ] Tradeoffs, risks, assumptions, and open questions are visible.
 - [ ] No example technology or pattern was adopted without evidence.
+
+<!-- artifact:end -->

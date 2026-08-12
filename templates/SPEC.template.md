@@ -4,6 +4,8 @@ Use with [`../guidelines/SPEC.md`](../guidelines/SPEC.md) and [`../workflow/Iden
 
 Reference only snapshot IDs defined in `SOURCE-BASELINE.md`.
 
+<!-- artifact:start -->
+
 ```yaml
 ---
 artifact: SPEC
@@ -20,6 +22,11 @@ created: YYYY-MM-DD
 updated: YYYY-MM-DD
 ---
 ```
+
+<!-- control:cli-managed:start -->
+<!-- control:cli-managed:end -->
+<!-- control:markdown-only:start -->
+<!-- control:markdown-only:end -->
 
 # Specification
 
@@ -188,3 +195,5 @@ Reference approved performance, compatibility, security, privacy, reliability, S
 - [ ] No source changed silently after the artifact baseline was recorded.
 - [ ] No arbitrary breakpoint, focus rule, threshold, or unsupported behavior is presented as confirmed.
 - [ ] Open questions and assumptions remain visible.
+
+<!-- artifact:end -->

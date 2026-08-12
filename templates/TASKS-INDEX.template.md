@@ -6,6 +6,8 @@ Follow [`../workflow/State-Ownership.md`](../workflow/State-Ownership.md).
 
 When `.workflow/workflow-record.json` exists, task IDs, status, prerequisites, baseline, references, output, and validation-state summaries belong in the record and `.workflow/generated/TASK-INDEX.md`. Do not maintain a second mutable task registry here.
 
+<!-- artifact:start -->
+
 ```yaml
 ---
 artifact: TASKS-INDEX
@@ -19,6 +21,11 @@ created: YYYY-MM-DD
 updated: YYYY-MM-DD
 ---
 ```
+
+<!-- control:cli-managed:start -->
+<!-- control:cli-managed:end -->
+<!-- control:markdown-only:start -->
+<!-- control:markdown-only:end -->
 
 # Tasks Index
 
@@ -143,6 +150,8 @@ The task record owns task status. This section owns blocker detail and coordinat
 - [ ] Blockers and unresolved decisions are visible without copying task status.
 - [ ] No task introduces unsupported scope or silently newer source content.
 
+<!-- control:markdown-only:start -->
+
 ---
 
 # Appendix A — Markdown-only Task Registry
@@ -169,3 +178,7 @@ Complete this appendix only when the project does not use `.workflow/workflow-re
 P01-T01 → P01-T02 → P02-T01
                   ↘ P02-T02
 ```
+
+<!-- control:markdown-only:end -->
+
+<!-- artifact:end -->

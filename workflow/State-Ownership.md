@@ -1,109 +1,127 @@
 # Workflow State Ownership
 
-This document prevents mutable workflow state from being maintained independently in several files.
+This document prevents executable state from being maintained independently in several files.
 
-The workflow supports two control modes:
+The workflow has two control modes:
 
-- **CLI-managed mode:** `.workflow/workflow-record.json` is the canonical mutable control record. Markdown status and index files under `.workflow/generated/` are derived views.
-- **Markdown-only mode:** projects that do not use the machine-readable record maintain operational state manually in the normal Markdown artifacts.
+- **CLI-managed:** `.workflow/workflow-record.json` is canonical. Generated Markdown under `.workflow/generated/` is read-only projection state.
+- **Markdown-only:** no workflow record exists. Rendered fallback registries in the narrative artifacts are maintained manually. This mode is scaffolded but not executable.
 
-Do not mix the two modes for the same state field. When a workflow record exists, its managed fields are authoritative.
+Never mix ownership modes for the same field.
 
 ## Canonical ownership in CLI-managed mode
 
-| Information | Canonical owner | Human-readable view |
+| Information | Canonical owner | Human-readable projection |
 |---|---|---|
 | Profile and execution mode | `workflow-record.json` | `generated/WORKFLOW-STATUS.md` |
-| Current stage and workflow status | `workflow-record.json` | `generated/WORKFLOW-STATUS.md` |
-| Active input snapshots, current task, and latest output | `workflow-record.json` | `generated/WORKFLOW-STATUS.md` |
-| Snapshot ID, role, status, pin strength, reference, commit, parent, and producing task | `workflow-record.json` | `generated/SOURCE-INDEX.md` |
-| Artifact ID, type, status, baseline, and references | `workflow-record.json` | `generated/ARTIFACT-INDEX.md` |
-| Task ID, status, baseline, prerequisites, references, output, and validation result state | `workflow-record.json` | `generated/TASK-INDEX.md` |
-| Source scope, evidence, reproduction details, and limitations | `SOURCE-BASELINE.md`, `WORKPACK.md`, or the relevant source artifact | Not generated |
-| Product, design, behavioral, architecture, and implementation rationale | The matching normative Markdown artifact | Not generated |
-| Blocking questions, assumptions, decisions, and narrative history not represented by the record | `WORKFLOW-STATE.md` or `WORKPACK.md` | Not generated |
-| Detailed task objective, implementation steps, risk, and completion narrative | Task file or `WORKPACK.md` | Not generated |
+| Stage, workflow status, current task, latest output, and latest validation runtime | `workflow-record.json` | `generated/WORKFLOW-STATUS.md` |
+| Current architecture decision | `workflow-record.json` | `generated/WORKFLOW-STATUS.md` |
+| Snapshot registry and output lineage | `workflow-record.json` | `generated/SOURCE-INDEX.md` |
+| Append-only source verification history | `workflow-record.json` | `generated/SOURCE-INDEX.md` |
+| Artifact ID, type, narrative path, lifecycle state, baseline, and replacement | `workflow-record.json` | `generated/ARTIFACT-INDEX.md` |
+| Stage-decision history and approval actors | `workflow-record.json` | `generated/WORKFLOW-STATUS.md` |
+| Task state, blockers, dependencies, structured checks, and outputs | `workflow-record.json` | `generated/TASK-INDEX.md` |
+| Canonical domain definitions, owners, required classification, and upstream graph | `workflow-record.json` | `generated/TRACEABILITY.md` |
+| Downstream plan, task, and validation coverage | Derived from the record | `generated/TRACEABILITY.md` |
+| Profile-upgrade and final-result history | `workflow-record.json` | Status and artifact projections |
+| Detailed source scope, reproduction, authority, and limitations | `SOURCE-BASELINE.md`, `WORKPACK.md`, or the relevant narrative artifact | Not generated |
+| Product, design, behavioral, architecture, and implementation rationale | Matching narrative artifact | Not generated |
+| Human-readable blockers, assumptions, exceptions, and decision rationale beyond structured fields | `WORKFLOW-STATE.md` or `WORKPACK.md` | Not generated |
+| Task objective, implementation steps, discoveries, risks, and completion narrative | Task file or `WORKPACK.md` | Not generated |
 
-Generated files are not independent artifacts and must never become decision owners.
+Generated files are never decision owners.
 
 ## Generated views
 
-The CLI generates:
+The CLI renders:
 
 ```text
 .workflow/generated/WORKFLOW-STATUS.md
 .workflow/generated/SOURCE-INDEX.md
 .workflow/generated/ARTIFACT-INDEX.md
 .workflow/generated/TASK-INDEX.md
+.workflow/generated/TRACEABILITY.md
 ```
 
-Each file contains:
+Each view includes a generated-file warning, source record name, and canonical SHA-256 digest. Object-key ordering does not affect the digest; meaningful array ordering does.
 
-- a generated-file warning;
-- the source record name;
-- a canonical SHA-256 digest of the record;
-- a deterministic Markdown view of the relevant state.
+## Mutation contract
 
-The digest ignores object-key ordering but preserves meaningful array order. A record change or manual edit makes the generated view stale.
+Every executable record mutation uses the same transaction boundary:
 
-## Mutation rules
+1. read and validate the current record;
+2. clone it and apply the proposal in memory;
+3. render the candidate record, all generated views, and new narrative files in memory;
+4. validate the complete candidate;
+5. write sibling temporary files and atomically rename the file set;
+6. restore original bytes and remove temporary files after any write failure.
 
-1. Change managed state through `design-workflow` commands or by intentionally editing the workflow record.
-2. Run `design-workflow sync` after any direct record edit.
-3. Never manually edit a generated view.
-4. Commit the workflow record and generated views together when the project stores workflow controls in version control.
-5. Run `design-workflow sync --check` or `design-workflow validate` in CI.
-6. Treat a missing or stale generated view as a validation failure, not as an alternative source of truth.
+Validation failure happens before target replacement. A rejected operation must leave the record, generated views, and narrative files byte-identical.
 
-All CLI commands that mutate the workflow record synchronize generated views automatically.
+The current record must be clean before advancement, task execution, or acceptance. A command specifically intended to repair state may commit only when the resulting finding set is strictly smaller and contains no new finding.
 
-## Markdown artifact rules
+## Narrative-file rules
+
+Templates contain explicit artifact and control-mode markers. Rendering extracts only the artifact body, converts fenced example YAML into real frontmatter, substitutes project values, and removes record-owned sections in CLI-managed mode.
 
 When CLI-managed mode is active:
 
-- `WORKFLOW-STATE.md` owns blockers, assumptions, decisions, history, and other narrative control information not represented by the record. It links to generated status rather than copying current stage, mode, task, or output values.
-- `SOURCE-BASELINE.md` owns detailed source scope, evidence, access, reproduction, authority, and limitations. It links to the generated source index rather than maintaining a second mutable snapshot registry.
-- `TASKS-INDEX.md` owns phase rationale, coverage, coordination, and blockers. It links to the generated task index rather than copying task status, prerequisites, baseline, and output fields.
-- Artifact prose may reference IDs but must not redefine record-owned status or lineage.
+- `WORKFLOW-STATE.md` contains narrative blockers, assumptions, exceptions, and decision history without copying current stage, profile, task, output, or registries.
+- `SOURCE-BASELINE.md` contains source scope, evidence, reproduction, authority, limitations, and rebaseline impact without copying the mutable snapshot registry.
+- `TASKS-INDEX.md` contains phase rationale, coverage, coordination, and cross-cutting concerns without copying mutable task status or output tables.
+- task artifacts contain objectives, scope, implementation detail, acceptance criteria, risks, and discoveries without copying record-owned validation result or output-lineage state.
+- any narrative may cite canonical IDs but must not redefine their current record-owned fields.
 
-In Markdown-only mode, the fallback tables in those templates remain the operational source of truth.
+The CLI never overwrites an existing unregistered narrative. If a stage destination exists, use `artifact adopt` before advancement.
+
+Markdown-only rendering includes the complete fallback registries. No record, generated views, parser, or lifecycle enforcement is introduced.
+
+## Lifecycle history
+
+- Verification, gate, and implementation-review events are append-only.
+- A new active stage decision supersedes the previous active decision without deleting it.
+- Rewind supersedes active gates at and after the target while preserving artifact baselines.
+- Snapshot supersession records replacement but never rewrites narrative baselines.
+- Artifact supersession records a replacement; reopening preserves history and returns the artifact to Draft.
+- Profile upgrades are two-phase and downgrade is unsupported.
+- Task blocking stores the previous status so unblocking restores it.
+- Final completion is set only by an accepted final-review event.
+
+## Schema-v1 boundary
+
+Schema-v1 records remain readable but are mutation-locked. Explicit migration assigns the v2 collections and records the existing stage as `legacyBoundary`. Historical gates are not fabricated. Inferred trace definitions remain visible and optional until classified.
+
+```bash
+design-workflow migrate --check
+design-workflow migrate
+```
 
 ## Synchronization commands
 
-Write or repair generated views:
+Normal mutations synchronize views automatically. If a record was intentionally edited outside the CLI, treat it as untrusted until both commands pass:
 
 ```bash
 design-workflow sync
+design-workflow validate
 ```
 
-Check freshness without modifying files:
+Check without writing:
 
 ```bash
 design-workflow sync --check
 ```
 
-Validate both workflow semantics and generated-view freshness:
-
-```bash
-design-workflow validate
-```
-
-## Migration from duplicated state
-
-1. Create or validate `.workflow/workflow-record.json`.
-2. Reconcile conflicting copies before choosing canonical values.
-3. Run `design-workflow sync`.
-4. Replace repeated operational tables with links to the generated views.
-5. Preserve rationale, evidence, decisions, blockers, and historical context in their Markdown owners.
-6. Run validation and review the generated files.
-7. Do not delete historical information merely because current status moved into the record.
+Commit the record and generated views together. A stale or missing view is a validation failure, never an alternative source of truth.
 
 ## Review checklist
 
-- [ ] Every mutable control field has exactly one owner.
-- [ ] Generated views match the current record.
+- [ ] The workflow uses exactly one control mode.
+- [ ] Every executable field has one canonical owner.
+- [ ] The record is schema v2 before mutation.
+- [ ] Generated views match the current record digest.
 - [ ] No generated file contains manual decisions or rationale.
-- [ ] Markdown artifacts retain evidence and context that the record cannot represent.
-- [ ] Snapshot and implementation lineage are not repeated with conflicting values.
-- [ ] Task status and dependencies are not manually synchronized in multiple indexes.
-- [ ] CI detects stale or missing generated views.
+- [ ] CLI-managed artifacts omit record-owned status, registries, validation results, and output lineage.
+- [ ] Markdown-only artifacts retain complete fallback registries.
+- [ ] Snapshot, artifact, gate, task, profile, and final-review history is preserved rather than rewritten.
+- [ ] Trace definitions have active compatible owners and required coverage.
+- [ ] CI detects schema drift, stale generated views, broken packaged links, and invalid records.

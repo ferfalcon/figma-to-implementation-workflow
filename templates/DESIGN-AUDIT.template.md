@@ -6,6 +6,8 @@ The audit is an evidence baseline. Record what the pinned design source demonstr
 
 Reference only snapshot IDs defined in `SOURCE-BASELINE.md`.
 
+<!-- artifact:start -->
+
 ```yaml
 ---
 artifact: DESIGN-AUDIT
@@ -21,6 +23,11 @@ created: YYYY-MM-DD
 updated: YYYY-MM-DD
 ---
 ```
+
+<!-- control:cli-managed:start -->
+<!-- control:cli-managed:end -->
+<!-- control:markdown-only:start -->
+<!-- control:markdown-only:end -->
 
 # Design Audit
 
@@ -230,3 +237,5 @@ Each question should explain why the pinned evidence is insufficient and whether
 - Assumptions introduced:
 - Open questions or blockers:
 - Ready for requirements: Yes / No
+
+<!-- artifact:end -->

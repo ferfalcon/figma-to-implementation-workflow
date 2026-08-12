@@ -15,7 +15,7 @@ const requiredPaths = [
   'LICENSE',
   'CONTRIBUTING.md',
   'CHANGELOG.md',
-  'ChatGPT-instructions.md',
+  'AGENTS-instructions.md',
   'package.json',
   'workflow/Design-Implementation-Workflow.md',
   'workflow/Workflow-Profiles.md',
@@ -61,11 +61,24 @@ const requiredPaths = [
   'examples/full-application/ARCHITECTURE-full-stack-example.md',
   'schemas/README.md',
   'schemas/workflow-record.schema.json',
+  'schemas/workflow-record.v1.schema.json',
+  'cli/lib/workflow-model.mjs',
+  'cli/lib/workflow-schema.mjs',
+  'cli/lib/record-store.mjs',
+  'cli/lib/artifact-renderer.mjs',
+  'cli/lib/migrate-record.mjs',
+  'cli/lib/commands-v2.mjs',
+  'scripts/generate-workflow-schema.mjs',
+  'scripts/test-package-manifest.mjs',
+  'scripts/test-artifact-renderer.mjs',
+  'tests/fixtures/workflow-record.migration.v1.json',
+  'tests/fixtures/workflow-record.migration.v2.json',
   'cli/README.md',
   'cli/design-workflow.mjs',
   'cli/lib/generated-state.mjs',
   'scripts/lib/validate-workflow-record.mjs',
   'scripts/test-workflow-record.mjs',
+  'scripts/test-stage-gates.mjs',
   'scripts/test-cli.mjs',
   'scripts/test-generated-state.mjs',
   'tests/fixtures/workflow-record.valid.json',
@@ -222,9 +235,49 @@ if (templateFiles.length < 15) {
   errors.push(`Expected at least 15 templates, found ${templateFiles.length}`);
 }
 
+for (const name of templateFiles) {
+  const repositoryPath = `templates/${name}`;
+  const content = readFileSync(join(root, repositoryPath), 'utf8');
+  const count = (marker) => content.split(marker).length - 1;
+  const artifactStart = '<!-- artifact:start -->';
+  const artifactEnd = '<!-- artifact:end -->';
+  if (count(artifactStart) !== 1 || count(artifactEnd) !== 1 || content.indexOf(artifactStart) > content.indexOf(artifactEnd)) {
+    errors.push(`${repositoryPath}: expected one well-ordered artifact marker pair`);
+  }
+  for (const control of ['cli-managed', 'markdown-only']) {
+    const start = `<!-- control:${control}:start -->`;
+    const end = `<!-- control:${control}:end -->`;
+    if (count(start) === 0 || count(start) !== count(end)) {
+      errors.push(`${repositoryPath}: expected balanced ${control} control marker pairs`);
+    }
+  }
+}
+
+const canonicalContentRoots = ['templates/', 'examples/', 'workflow/', 'guidelines/', 'prompts/', 'source-adapters/'];
+const deprecatedContracts = [
+  [/REQ-FUNC-/g, 'REQ-FUNC-*'],
+  [/REQ-QUAL-/g, 'REQ-QUAL-*'],
+  [/SPEC-BEHAVIOR-/g, 'SPEC-BEHAVIOR-*'],
+  [/\bSPEC-[0-9]{3,}\b/g, 'unqualified SPEC-*'],
+  [/ChatGPT-instructions\.md/g, 'ChatGPT-instructions.md'],
+];
+for (const path of allFiles) {
+  const repositoryPath = toRepositoryPath(path);
+  if (!canonicalContentRoots.some((prefix) => repositoryPath.startsWith(prefix))) continue;
+  if (!['.md', '.json'].includes(extname(path).toLowerCase())) continue;
+  const content = readFileSync(path, 'utf8');
+  for (const [pattern, label] of deprecatedContracts) {
+    pattern.lastIndex = 0;
+    if (pattern.test(content)) errors.push(`${repositoryPath}: deprecated contract reference ${label}`);
+  }
+}
+
 for (const jsonPath of [
   join(root, 'schemas', 'workflow-record.schema.json'),
   join(root, 'tests', 'fixtures', 'workflow-record.valid.json'),
+  join(root, 'schemas', 'workflow-record.v1.schema.json'),
+  join(root, 'tests', 'fixtures', 'workflow-record.migration.v1.json'),
+  join(root, 'tests', 'fixtures', 'workflow-record.migration.v2.json'),
   join(root, 'tests', 'fixtures', 'workflow-record.express.valid.json'),
   join(root, 'tests', 'fixtures', 'workflow-record.invalid.json'),
 ]) {

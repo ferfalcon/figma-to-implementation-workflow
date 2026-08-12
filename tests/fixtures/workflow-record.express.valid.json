@@ -35,7 +35,7 @@
       "type": "WORKPACK",
       "status": "Approved",
       "baseline": ["SRC-DS-001", "SRC-REPO-001"],
-      "references": ["REQ-FUNC-001", "DES-RWD-001", "SPEC-001", "AC-001"]
+      "references": ["REQ-FR-001", "DES-RWD-001", "SPEC-BEH-001", "AC-001"]
     }
   ],
   "tasks": [
@@ -44,7 +44,7 @@
       "status": "Ready",
       "baseline": "SRC-REPO-001",
       "prerequisites": [],
-      "references": ["REQ-FUNC-001", "SPEC-001", "AC-001"],
+      "references": ["REQ-FR-001", "SPEC-BEH-001", "AC-001"],
       "output": null,
       "validation": [
         {

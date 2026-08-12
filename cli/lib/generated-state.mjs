@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, relative } from 'node:path';
-import { STAGES } from './constants.mjs';
+import { domainKind, STAGES } from './workflow-model.mjs';
 
 export const GENERATED_STATE_DIRECTORY = 'generated';
 export const GENERATED_STATE_FILES = [
@@ -9,22 +9,19 @@ export const GENERATED_STATE_FILES = [
   'SOURCE-INDEX.md',
   'ARTIFACT-INDEX.md',
   'TASK-INDEX.md',
+  'TRACEABILITY.md',
 ];
 
 function canonicalize(value) {
   if (Array.isArray(value)) return value.map(canonicalize);
   if (value !== null && typeof value === 'object') {
-    return Object.fromEntries(
-      Object.keys(value).sort().map((key) => [key, canonicalize(value[key])]),
-    );
+    return Object.fromEntries(Object.keys(value).sort().map((key) => [key, canonicalize(value[key])]));
   }
   return value;
 }
 
 export function workflowRecordDigest(record) {
-  return createHash('sha256')
-    .update(JSON.stringify(canonicalize(record)))
-    .digest('hex');
+  return createHash('sha256').update(JSON.stringify(canonicalize(record))).digest('hex');
 }
 
 function cell(value) {
@@ -55,43 +52,52 @@ function header(recordPath, digest, title) {
   ];
 }
 
+function activePassingGate(record, stage) {
+  return [...(record.gates ?? [])].reverse().find((gate) => (
+    gate.stage === stage
+    && gate.status === 'Active'
+    && ['Passed', 'Passed with assumptions'].includes(gate.result)
+  ));
+}
+
 export function deriveNextAction(record) {
-  if (record.state.status === 'Blocked') {
-    return 'Resolve the recorded blocker before advancing.';
-  }
-  if (record.state.currentTask) {
-    return `Continue ${record.state.currentTask} and run its required validation.`;
-  }
+  if (record.state.status === 'Blocked') return 'Resolve the recorded blocker before advancing.';
+  const transition = record.profileTransitions?.find((item) => item.status === 'In progress');
+  if (transition) return `Reconcile ${transition.to} artifacts through Stage ${transition.resumeStage}, then finish profile upgrade ${transition.id}.`;
+  if (record.state.currentTask) return `Continue ${record.state.currentTask} and record its required validation before completion.`;
   const readyTask = record.tasks.find((task) => (
-    task.status !== 'Complete'
-    && task.status !== 'Blocked'
-    && task.prerequisites.every((id) => (
-      record.tasks.find((candidate) => candidate.id === id)?.status === 'Complete'
-    ))
+    task.status === 'Ready'
+    && task.prerequisites.every((id) => record.tasks.find((candidate) => candidate.id === id)?.status === 'Complete')
   ));
   if (record.state.stage >= 9 && readyTask) return `Start ${readyTask.id}.`;
-  if (record.state.stage < 11) {
-    return `Stage ${record.state.stage + 1} — ${STAGES[record.state.stage + 1]}.`;
+  if (record.schemaVersion === 2 && record.state.stage < 11) {
+    if (activePassingGate(record, record.state.stage)) return `Advance to Stage ${record.state.stage + 1} — ${STAGES[record.state.stage + 1]}.`;
+    return `Review Stage ${record.state.stage} — ${STAGES[record.state.stage]} — then advance.`;
   }
-  if (record.state.status === 'Complete') {
-    return 'Workflow complete. No next action is recorded.';
-  }
-  return 'Resolve final implementation-review findings and mark the workflow complete.';
+  if (record.state.stage < 11) return `Stage ${record.state.stage + 1} — ${STAGES[record.state.stage + 1]}.`;
+  if (record.state.status === 'Complete') return 'Workflow complete. No next action is recorded.';
+  return 'Record the final implementation-review result.';
 }
 
 function renderStatus(record, recordPath, digest) {
   const completeTasks = record.tasks.filter((task) => task.status === 'Complete').length;
+  const activeGate = record.gates?.find((gate) => gate.stage === record.state.stage && gate.status === 'Active');
+  const architecture = record.state.architectureDecision?.result ?? 'Not recorded';
   return [
     ...header(recordPath, digest, 'Workflow Status'),
     '| Field | Value |',
     '|---|---|',
+    `| Schema | ${cell(record.schemaVersion)} |`,
     `| Project | ${cell(record.project.name)} |`,
     `| Profile | ${cell(record.project.profile)} |`,
     `| Execution mode | ${cell(record.project.executionMode)} |`,
     `| Stage | ${record.state.stage} — ${cell(STAGES[record.state.stage])} |`,
     `| Status | ${cell(record.state.status)} |`,
+    `| Current-stage gate | ${activeGate ? `${code(activeGate.id)} — ${cell(activeGate.result)}` : '—'} |`,
+    `| Architecture | ${cell(architecture)} |`,
     `| Current task | ${code(record.state.currentTask)} |`,
     `| Latest implementation output | ${code(record.state.latestOutput)} |`,
+    `| Latest validation runtime | ${code(record.state.latestValidationRuntime)} |`,
     `| Tasks complete | ${completeTasks}/${record.tasks.length} |`,
     '',
     '## Active inputs',
@@ -108,14 +114,13 @@ function renderStatus(record, recordPath, digest) {
 function renderSources(record, recordPath, digest) {
   const lines = [
     ...header(recordPath, digest, 'Source Index'),
-    '| ID | Role | Status | Pin strength | Active input | Reference | Commit | Parent | Task |',
-    '|---|---|---|---|---|---|---|---|---|',
+    '| ID | Role | Status | Pin strength | Active input | Latest verification | Reference | Commit | Parent | Task |',
+    '|---|---|---|---|---|---|---|---|---|---|',
   ];
-  if (record.snapshots.length === 0) {
-    lines.push('| — | — | — | — | — | No source snapshots recorded | — | — | — |');
-  }
+  if (record.snapshots.length === 0) lines.push('| — | — | — | — | — | — | No source snapshots recorded | — | — | — |');
   for (const snapshot of record.snapshots) {
-    lines.push(`| ${code(snapshot.id)} | ${cell(snapshot.role)} | ${cell(snapshot.status)} | ${cell(snapshot.pinStrength)} | ${record.state.activeInputs.includes(snapshot.id) ? 'Yes' : 'No'} | ${cell(snapshot.reference)} | ${code(snapshot.commit)} | ${code(snapshot.parent)} | ${code(snapshot.task)} |`);
+    const verification = [...(record.verifications ?? [])].reverse().find((item) => item.snapshot === snapshot.id);
+    lines.push(`| ${code(snapshot.id)} | ${cell(snapshot.role)} | ${cell(snapshot.status)} | ${cell(snapshot.pinStrength)} | ${record.state.activeInputs.includes(snapshot.id) ? 'Yes' : 'No'} | ${verification ? `${code(verification.id)} — ${cell(verification.result)}` : '—'} | ${cell(snapshot.reference)} | ${code(snapshot.commit)} | ${code(snapshot.parent)} | ${code(snapshot.task)} |`);
   }
   lines.push('');
   return lines.join('\n');
@@ -124,14 +129,12 @@ function renderSources(record, recordPath, digest) {
 function renderArtifacts(record, recordPath, digest) {
   const lines = [
     ...header(recordPath, digest, 'Artifact Index'),
-    '| ID | Type | Status | Baseline snapshots | References |',
+    '| ID | Type | Path | Status | Baseline snapshots |',
     '|---|---|---|---|---|',
   ];
-  if (record.artifacts.length === 0) {
-    lines.push('| — | — | — | — | No artifacts recorded |');
-  }
+  if (record.artifacts.length === 0) lines.push('| — | — | — | — | No artifacts recorded |');
   for (const artifact of record.artifacts) {
-    lines.push(`| ${code(artifact.id)} | ${cell(artifact.type)} | ${cell(artifact.status)} | ${codeList(artifact.baseline)} | ${codeList(artifact.references)} |`);
+    lines.push(`| ${code(artifact.id)} | ${cell(artifact.type)} | ${code(artifact.path)} | ${cell(artifact.status)} | ${codeList(artifact.baseline)} |`);
   }
   lines.push('');
   return lines.join('\n');
@@ -140,12 +143,8 @@ function renderArtifacts(record, recordPath, digest) {
 function validationSummary(validation = []) {
   if (validation.length === 0) return '—';
   const counts = new Map();
-  for (const check of validation) {
-    counts.set(check.status, (counts.get(check.status) ?? 0) + 1);
-  }
-  return [...counts.entries()]
-    .map(([status, count]) => `${status}: ${count}`)
-    .join(', ');
+  for (const check of validation) counts.set(check.status, (counts.get(check.status) ?? 0) + 1);
+  return [...counts.entries()].map(([status, count]) => `${status}: ${count}`).join(', ');
 }
 
 function renderTasks(record, recordPath, digest) {
@@ -154,12 +153,101 @@ function renderTasks(record, recordPath, digest) {
     '| ID | Status | Baseline | Prerequisites | References | Output | Validation |',
     '|---|---|---|---|---|---|---|',
   ];
-  if (record.tasks.length === 0) {
-    lines.push('| — | — | — | — | — | — | No tasks recorded |');
-  }
+  if (record.tasks.length === 0) lines.push('| — | — | — | — | — | — | No tasks recorded |');
   for (const task of record.tasks) {
     lines.push(`| ${code(task.id)} | ${cell(task.status)} | ${code(task.baseline)} | ${codeList(task.prerequisites)} | ${codeList(task.references)} | ${code(task.output)} | ${cell(validationSummary(task.validation))} |`);
   }
+  lines.push('');
+  return lines.join('\n');
+}
+
+function graphCycles(traceById) {
+  const cycles = [];
+  const visiting = new Set();
+  const visited = new Set();
+  const stack = [];
+  function visit(id) {
+    if (visiting.has(id)) {
+      cycles.push([...stack.slice(stack.indexOf(id)), id]);
+      return;
+    }
+    if (visited.has(id)) return;
+    visiting.add(id);
+    stack.push(id);
+    for (const reference of traceById.get(id)?.references ?? []) if (traceById.has(reference)) visit(reference);
+    stack.pop();
+    visiting.delete(id);
+    visited.add(id);
+  }
+  for (const id of traceById.keys()) visit(id);
+  return cycles;
+}
+
+function ancestors(traceById, id, seen = new Set()) {
+  if (seen.has(id)) return seen;
+  seen.add(id);
+  for (const reference of traceById.get(id)?.references ?? []) if (traceById.has(reference)) ancestors(traceById, reference, seen);
+  return seen;
+}
+
+export function analyzeTraceability(record) {
+  const traceItems = record.traceItems ?? [];
+  const traceById = new Map(traceItems.map((item) => [item.id, item]));
+  const unresolved = [];
+  for (const item of traceItems) {
+    for (const reference of item.references ?? []) if (!traceById.has(reference)) unresolved.push(`${item.id} → ${reference}`);
+  }
+  for (const task of record.tasks ?? []) for (const reference of task.references ?? []) if (!traceById.has(reference)) unresolved.push(`${task.id} → ${reference}`);
+  const downstream = new Map(traceItems.map((item) => [item.id, { plans: [], tasks: [], checks: [] }]));
+  for (const candidate of traceItems) {
+    if (candidate.status !== 'Active') continue;
+    for (const ancestor of ancestors(traceById, candidate.id)) {
+      if (candidate.id.startsWith('PLAN-')) downstream.get(ancestor)?.plans.push(candidate.id);
+    }
+  }
+  for (const task of record.tasks ?? []) {
+    const covered = new Set();
+    for (const reference of task.references ?? []) for (const ancestor of ancestors(traceById, reference)) covered.add(ancestor);
+    for (const id of covered) downstream.get(id)?.tasks.push(task.id);
+    for (const check of task.validation ?? []) {
+      const checked = new Set();
+      for (const reference of check.references ?? []) for (const ancestor of ancestors(traceById, reference)) checked.add(ancestor);
+      for (const id of checked) downstream.get(id)?.checks.push(`${task.id}/${check.name} (${check.status})`);
+    }
+  }
+  const required = traceItems.filter((item) => item.status === 'Active' && item.required);
+  const gaps = [];
+  for (const item of required) {
+    const links = downstream.get(item.id);
+    if ((record.state?.stage ?? 0) >= 8 && links.plans.length === 0 && !item.id.startsWith('AC-')) gaps.push(`${item.id}: no active plan or acceptance-criterion path`);
+    if ((record.state?.stage ?? 0) >= 9 && links.tasks.length === 0) gaps.push(`${item.id}: no task path`);
+    if (record.state?.status === 'Complete' && links.checks.length === 0) gaps.push(`${item.id}: no validation path`);
+  }
+  const orphans = traceItems.filter((item) => item.status === 'Active' && (item.references?.length ?? 0) === 0 && (downstream.get(item.id)?.plans.length ?? 0) === 0 && (downstream.get(item.id)?.tasks.length ?? 0) === 0).map((item) => item.id);
+  return { traceById, downstream, unresolved, cycles: graphCycles(traceById), orphans, gaps };
+}
+
+function renderTraceability(record, recordPath, digest) {
+  const analysis = analyzeTraceability(record);
+  const lines = [
+    ...header(recordPath, digest, 'Traceability'),
+    '| Domain ID | Kind | Owner | Required | Status | Upstream | Plans | Tasks | Validation checks |',
+    '|---|---|---|---|---|---|---|---|---|',
+  ];
+  if ((record.traceItems ?? []).length === 0) lines.push('| — | — | — | — | — | — | — | — | No trace definitions recorded |');
+  for (const item of record.traceItems ?? []) {
+    const downstream = analysis.downstream.get(item.id);
+    lines.push(`| ${code(item.id)} | ${cell(domainKind(item.id))} | ${code(item.owner)} | ${item.required ? 'Yes' : 'No'} | ${cell(item.status)} | ${codeList(item.references)} | ${codeList(downstream?.plans)} | ${codeList(downstream?.tasks)} | ${cell(downstream?.checks)} |`);
+  }
+  lines.push('', '## Findings', '');
+  const findings = [
+    ...analysis.unresolved.map((item) => `Unresolved reference: ${item}`),
+    ...analysis.orphans.map((item) => `Orphan: ${item}`),
+    ...analysis.cycles.map((cycle) => `Cycle: ${cycle.join(' → ')}`),
+    ...analysis.gaps.map((item) => `Coverage gap: ${item}`),
+  ];
+  if (findings.length === 0) lines.push('No unresolved references, orphans, cycles, or active coverage gaps.');
+  else findings.forEach((finding) => lines.push(`- ${finding}`));
   lines.push('');
   return lines.join('\n');
 }
@@ -172,6 +260,7 @@ export function renderGeneratedState(recordPath, record) {
     [join(directory, 'SOURCE-INDEX.md'), renderSources(record, recordPath, digest)],
     [join(directory, 'ARTIFACT-INDEX.md'), renderArtifacts(record, recordPath, digest)],
     [join(directory, 'TASK-INDEX.md'), renderTasks(record, recordPath, digest)],
+    [join(directory, 'TRACEABILITY.md'), renderTraceability(record, recordPath, digest)],
   ]);
 }
 
@@ -179,7 +268,6 @@ export function syncGeneratedState(recordPath, record, { check = false } = {}) {
   const rendered = renderGeneratedState(recordPath, record);
   const stale = [];
   const updated = [];
-
   for (const [path, content] of rendered) {
     const current = existsSync(path) ? readFileSync(path, 'utf8') : null;
     if (current === content) continue;
@@ -190,25 +278,15 @@ export function syncGeneratedState(recordPath, record, { check = false } = {}) {
       updated.push(path);
     }
   }
-
-  return {
-    current: stale.length === 0,
-    stale,
-    updated,
-    files: [...rendered.keys()],
-  };
+  return { current: stale.length === 0, stale, updated, files: [...rendered.keys()] };
 }
 
 export function generatedStateFindings(recordPath, record) {
   try {
     const result = syncGeneratedState(recordPath, record, { check: true });
     const base = dirname(recordPath);
-    return result.stale.map((path) => (
-      `Generated workflow view is missing or stale: ${relative(base, path)}`
-    ));
+    return result.stale.map((path) => `Generated workflow view is missing or stale: ${relative(base, path)}`);
   } catch (error) {
-    return [
-      `Generated workflow views could not be evaluated: ${error instanceof Error ? error.message : String(error)}`,
-    ];
+    return [`Generated workflow views could not be evaluated: ${error instanceof Error ? error.message : String(error)}`];
   }
 }

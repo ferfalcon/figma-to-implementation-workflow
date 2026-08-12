@@ -4,6 +4,8 @@ Use with [`../guidelines/DESIGN.md`](../guidelines/DESIGN.md) and [`../workflow/
 
 Reference only snapshot IDs defined in `SOURCE-BASELINE.md`.
 
+<!-- artifact:start -->
+
 ```yaml
 ---
 artifact: DESIGN
@@ -20,6 +22,11 @@ created: YYYY-MM-DD
 updated: YYYY-MM-DD
 ---
 ```
+
+<!-- control:cli-managed:start -->
+<!-- control:cli-managed:end -->
+<!-- control:markdown-only:start -->
+<!-- control:markdown-only:end -->
 
 # Design
 
@@ -171,3 +178,5 @@ Document semantic hierarchy, reading order, keyboard implications, focus visibil
 - [ ] No source changed silently after the artifact baseline was recorded.
 - [ ] Observed, inferred, recommended, confirmed, and open information remain distinct.
 - [ ] No arbitrary breakpoint or unsupported interaction behavior is presented as confirmed.
+
+<!-- artifact:end -->
