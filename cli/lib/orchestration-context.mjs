@@ -37,7 +37,7 @@ export function stageTargets(record) {
   }
   if (stage === 7) return ['PLAN'];
   if (stage === 8) return ['PLAN-REVIEW'];
-  if (stage === 9) return profile === 'Lite' ? ['TASK', 'TASKS-INDEX'] : ['TASKS-INDEX', 'TASK'];
+  if (stage === 9) return profile === 'Lite' ? ['TASK'] : ['TASKS-INDEX', 'TASK'];
   if (stage === 10) return ['TASK'];
   if (stage === 11) return ['IMPLEMENTATION-REVIEW'];
   return [];
@@ -76,6 +76,17 @@ function taskSummary(task) {
   };
 }
 
+export function canEditImplementation(record, diagnostics, currentTask) {
+  return (
+    diagnostics.valid
+    && record.schemaVersion === 2
+    && record.state.stage === 10
+    && record.project.executionMode !== 'Continuous documentation'
+    && currentTask?.status === 'In progress'
+    && record.state.currentTask === currentTask.id
+  );
+}
+
 export function buildOrchestrationContext(recordPath, record, { cwd }) {
   const diagnostics = workflowDiagnostics(recordPath, record);
   const stage = record.state.stage;
@@ -87,12 +98,7 @@ export function buildOrchestrationContext(recordPath, record, { cwd }) {
     : null;
   const nextReadyTask = readyTask(record) ?? null;
   const check = checkStage(recordPath, record);
-  const implementationAllowed = (
-    diagnostics.valid
-    && record.schemaVersion === 2
-    && stage === 10
-    && record.project.executionMode !== 'Continuous documentation'
-  );
+  const implementationAllowed = canEditImplementation(record, diagnostics, currentTask);
 
   return {
     protocolVersion: 1,
