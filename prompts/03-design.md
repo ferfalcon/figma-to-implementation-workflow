@@ -1,15 +1,13 @@
-# Stage 3 — Design Intent
+# Stage 3 — Document Design Intent
 
-Verify active source snapshots, then analyze the pinned design source, `DESIGN-AUDIT.md`, `REQUIREMENTS.md`, and approved design-system documentation.
+Document visual, responsive, content, and interaction intent supported by approved evidence/requirements.
 
-For Standard and Full, create or update `DESIGN.md` from `templates/DESIGN.template.md` and follow `guidelines/DESIGN.md`.
+## Profile targets
 
-For Lite, complete the design section of `IMPLEMENTATION-BRIEF.md`.
+- Express: `WORKPACK.md` → Design intent subsection.
+- Lite: `IMPLEMENTATION-BRIEF.md` → Design Intent.
+- Standard, Full: `DESIGN.md`.
 
-Document information architecture, reading order, layout, hierarchy, typography, color, spacing, components, variants, states, content behavior, responsive transformations, interactions, motion, accessibility intent, assets, and design-system mapping.
+Use `DES-*`, `DES-RWD-*`, and `DES-INT-*`. Cover supplied viewports, transformations between them, states/content edges, accessibility intent, and confidence. Do not prescribe implementation architecture here.
 
-Use `DES-*`, `DES-RWD-*`, and `DES-INT-*` identifiers. Reference `EVD-*`, `REQ-*`, and exact `SRC-DS-*` regions.
-
-Do not create a property dump. Do not invent breakpoints or apply modal, menu, drawer, or disclosure behavior interchangeably.
-
-Perform two reviews, update `WORKFLOW-STATE.md`, and report decisions, uncertainty, risks, blockers, readiness for specification, and next permitted action.
+Perform both review passes before stage preflight.

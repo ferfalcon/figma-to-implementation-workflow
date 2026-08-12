@@ -1,13 +1,13 @@
-# Stage 6 — Architecture
+# Stage 6 — Define or Explicitly Skip Architecture
 
-Determine whether a separate architecture artifact is required using the selected profile, documentation review, repository scope, and `guidelines/ARCHITECTURE.md`.
+Decide whether meaningful architecture reasoning is required based on actual scope/repository risk.
 
-When required, verify the repository snapshot and create or update `ARCHITECTURE.md` from `templates/ARCHITECTURE.template.md`.
+## Profile targets
 
-Document current, target, and transitional architecture; system context; components and responsibilities; dependency rules; state and data ownership; important flows; APIs, persistence, authentication, error handling, accessibility architecture, security, deployment, observability, testing, decisions, tradeoffs, risks, and open questions as applicable.
+- Express/Lite: record the decision rationale in the consolidated artifact; if architecture is Required, do not continue—record the CLI decision and upgrade profile.
+- Standard: use `ARCHITECTURE.md` only when architecture is Required.
+- Full: update `ARCHITECTURE.md`.
 
-Use `ADR-*` for material decisions and reference `REQ-*`, `SPEC-*`, `SRC-REPO-*`, and `SRC-DOC-*`.
+Routing/shared state/data/API/integration/persistence/auth/build/deployment/security/privacy/reliability/observability/migration concerns normally require architecture reasoning. Record `architecture decide required|not-required` through the CLI.
 
-When architecture is skipped, record the reason in `WORKFLOW-STATE.md`, behavioral structural constraints in `SPEC.md`, and repository or implementation structure in `PLAN.md`.
-
-Perform two reviews and report the architecture decision, files changed, tradeoffs, blockers, readiness for planning, and next permitted action.
+Review the decision twice, then run stage preflight. Express/Lite with Required architecture should produce `Must upgrade`, not a passing gate.

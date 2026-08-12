@@ -1,8 +1,6 @@
 # Express Workpack Template
 
-Use this template only for the Express profile. `WORKPACK.md` is the single normative Markdown artifact for one narrow, coherent implementation result.
-
-Do not create separate source-baseline, context, audit, requirements, design, specification, plan, task, or implementation-review files while the work remains eligible for Express. Preserve the normal identifier namespaces inside the sections below.
+Use only for the Express profile. In CLI-managed mode this is the single normative narrative artifact; the workflow record owns mutable control/registry/validation/output-lineage state.
 
 <!-- artifact:start -->
 
@@ -13,7 +11,7 @@ profile: Express
 status: Draft
 execution_mode: Gated | Continuous documentation | Task-by-task
 current_stage: 0
-current_status: Not started | In progress | Ready | Blocked | Complete
+current_status: In progress
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
 ---
@@ -21,11 +19,6 @@ updated: YYYY-MM-DD
 
 <!-- control:cli-managed:start -->
 <!-- control:cli-managed:end -->
-<!-- control:markdown-only:start -->
-<!-- control:markdown-only:end -->
-
-# Workpack: Result title
-
 <!-- control:markdown-only:start -->
 ## 1. Control state
 
@@ -35,113 +28,89 @@ updated: YYYY-MM-DD
 - Execution mode:
 - Current stage:
 - Current status:
-- Last completed action:
 - Next permitted action:
-- Blocking questions: None / ...
-
 <!-- control:markdown-only:end -->
+
+# Workpack: Result title
 
 ## 2. Express eligibility
 
-Confirm every condition before proceeding.
-
-- [ ] One design-source scope or one clearly bounded source bundle
+- [ ] One bounded source scope or coherent source bundle
 - [ ] One coherent implementation result
 - [ ] At most one implementation task
-- [ ] No persistence, authentication, authorization, or external API work
-- [ ] No meaningful routing, shared-state, migration, deployment, security, privacy, or rollback decision
-- [ ] No unresolved product decision that materially changes expected behavior
-- [ ] No multi-contributor coordination requiring separate task ownership
-- [ ] The result can be independently validated without broader feature reconstruction
+- [ ] No meaningful routing, shared state, persistence, auth, API, migration, deployment, security, privacy, or rollback decision
+- [ ] No unresolved material product decision
+- [ ] No coordination requiring separate task ownership
+- [ ] Independently verifiable result
 
 ### Upgrade triggers
 
-Record `None` or identify the trigger and upgrade target.
-
-- Multiple independent results or tasks:
-- Connected routes or flows:
-- Shared state or cross-feature integration:
-- Persistence, authentication, authorization, or APIs:
-- Architectural migration or operational risk:
-- Material source conflict or unresolved product decision:
+- Multiple independent tasks/results:
+- Connected routes/shared state/integration:
+- Persistence/auth/API/architecture/operational risk:
+- Material source conflict/product decision:
 - Other:
 
-If any trigger is material, stop affected work and upgrade to Lite, Standard, or Full. Preserve stable IDs and source records when splitting this workpack into separate artifacts.
-
-## 3. Source baseline
+## 3. Source baseline narrative
 
 <!-- control:markdown-only:start -->
-Define every source ID once. A mutable URL alone is not an immutable snapshot.
-
-| Snapshot ID | Role | Category and type | Canonical reference | Included scope | Revision, version, checksum, or commit | Captured or inspected | Pin strength | Status | Limitations |
-|---|---|---|---|---|---|---|---|---|---|
-| `SRC-DS-001` | Input baseline | Design source | ... | ... | ... | ... | Immutable / Versioned / Time-bound / Unverified | Active | ... |
-| `SRC-REPO-001` | Task start | Repository | ... | ... | Commit SHA | ... | Immutable | Active | ... |
-
+| Snapshot ID | Role | Category | Reference | Scope | Revision/commit | Pin strength | Status | Limitations |
+|---|---|---|---|---|---|---|---|---|
+| `SRC-DS-001` | Input baseline | Design | ... | ... | ... | Time-bound | Active | ... |
+| `SRC-REPO-001` | Input baseline | Repository | ... | ... | Commit SHA | Immutable | Active | ... |
 <!-- control:markdown-only:end -->
 
-### Source authority and conflicts
+### Source authority, scope, and limitations
 
 - Authority order:
-- Conflicts:
-- Resolution or open question:
+- Included scope:
+- Excluded scope:
+- Conflicts/open questions:
+- Reproduction/capture evidence:
+- Limitations:
 
-### Snapshot verification
+### Verification narrative
 
-- Verification date and method:
-- Difference classification: Unchanged / Expected workflow output / Unexpected upstream or concurrent change / Unavailable
-- Rebaseline required: Yes / No
-- Action or limitation:
+- Method and evidence:
+- Difference classification:
+- Rebaseline or impact assessment:
 
 ## 4. Scope and constraints
 
-### Included
-
-- ...
-
-### Excluded
-
-- ...
-
-### Constraints
-
-- Technology and repository constraints:
-- Content and asset constraints:
+- Included:
+- Excluded:
+- Repository/technology constraints:
+- Content/assets constraints:
 - Accessibility baseline:
-- Browser or device constraints:
-- Time or delivery constraints:
+- Browser/device constraints:
 
-## 5. Observed design evidence
-
-Use `EVD-*` for evidence and `AUD-*` for findings. Reference the exact source snapshot and region.
+## 5. Observed design evidence and audit
 
 | Evidence ID | Source and precise region | Observation | Classification | Impact |
 |---|---|---|---|---|
 | `EVD-001` | `SRC-DS-001` → ... | ... | Observed | ... |
 
-| Finding ID | Finding | Severity | Required action or question | Status |
+| Finding ID | Finding | Severity | Required action/question | Status |
 |---|---|---|---|---|
 | `AUD-001` | ... | High / Medium / Low | ... | Open / Resolved |
 
-Inspect applicable component structure, responsive behavior, states, interactions, content edges, assets, and accessibility implications. Do not invent behavior absent from the evidence.
+Cover applicable components/variants, responsive behavior, states/interactions, content edges, assets, variables/tokens, and accessibility implications.
 
 ## 6. Expected result
 
-Keep ownership distinct even though it is consolidated.
-
 ### Requirements
 
-| Requirement ID | Outcome, rule, or constraint | Priority | Evidence or authority |
+| Requirement ID | Outcome, rule, or constraint | Priority | Evidence/authority |
 |---|---|---|---|
 | `REQ-FR-001` | ... | Must / Should / Could | ... |
 
 ### Design intent
 
-| Design ID | Visual, responsive, content, or interaction intent | Evidence | Confidence |
+| Design ID | Intent | Evidence | Confidence |
 |---|---|---|---|
 | `DES-001` | ... | `EVD-001` | Confirmed / Observed / Inferred / Recommended |
 
-Use `DES-RWD-*` for responsive intent and `DES-INT-*` for interaction intent.
+Use `DES-RWD-*` and `DES-INT-*` where applicable.
 
 ### Specification and acceptance criteria
 
@@ -152,125 +121,105 @@ Use `DES-RWD-*` for responsive intent and `DES-INT-*` for interaction intent.
 - [ ] `AC-001` ...
 - [ ] `AC-002` ...
 
-Cover applicable default, hover, focus, active, disabled, loading, empty, error, success, long-content, missing-asset, and reduced-motion behavior.
-
 ## 7. Repository-aware implementation approach
 
-- Task-start snapshot: `SRC-REPO-001`
-- Existing files and patterns:
-- Reusable components, utilities, tokens, and tests:
-- Files to create, modify, or delete:
+- Existing files/patterns:
+- Reusable components/utilities/tokens/tests:
+- Existing versus proposed files:
 - Proposed approach:
 - Responsive implementation:
-- Semantic HTML and accessibility behavior:
-- State and error handling:
-- Tests and manual checks:
-- Risks and likely regressions:
-
-Do not invent paths, commands, dependencies, or conventions without repository evidence.
+- Semantics/accessibility:
+- State/error handling:
+- Tests/manual checks:
+- Risks/regressions:
 
 ## 8. Single implementation unit
 
 - Task ID: `P01-T01`
-- Status: Not started / Ready / In progress / Blocked / Complete
 - Objective:
-- Baseline repository snapshot: `SRC-REPO-001`
 - Upstream references:
 - Prerequisites: None
-- Included files and behavior:
+- Included files/behavior:
 - Excluded work:
 - Ordered implementation steps:
 - Required validation:
 - Definition of Done:
 
-Express permits at most one implementation task. A second independent task is an upgrade trigger.
-
 ## 9. Review pass 1 — Completeness and correctness
 
-Review and correct:
-
-- source identity and scope;
-- Express eligibility;
-- evidence coverage;
-- requirements, design intent, specification, and acceptance criteria;
-- repository assumptions;
-- accessibility, responsive behavior, states, errors, and validation;
-- unsupported claims or missing decisions.
+Review source identity/scope, eligibility, evidence coverage, requirements/design/spec/AC, repository assumptions, accessibility/responsive/states/errors/validation, unsupported claims, and missing decisions.
 
 ### Corrections
 
 - ...
 
-### Pass result
+### Result
 
 Ready for pass 2 / Blocked
 
-## 10. Review pass 2 — Consistency, traceability, and risk
+## 10. Review pass 2 — Consistency, traceability, source integrity, and risk
 
-After pass-1 corrections, review:
-
-- snapshot and ID integrity;
-- requirement → design → specification → acceptance → task traceability;
-- contradictions and hidden assumptions;
-- scope containment and upgrade triggers;
-- repository compatibility and regression risk;
-- whether every required check is executable and evidence-producing.
+Review ID/snapshot integrity, requirement → design → specification → acceptance → task traceability, contradictions/hidden assumptions, scope/upgrade triggers, repository compatibility/regression risk, and validation executability.
 
 ### Corrections
 
 - ...
 
-### Readiness result
+### Readiness
 
-- Ready for implementation
-- Ready with documented non-blocking risks
-- Blocked or must upgrade profile
+Ready for implementation / Ready with non-blocking risks / Blocked or must upgrade
+
+## 11. Implementation narrative
+
+This section remains narrative in CLI-managed mode. Do not duplicate record-owned task status, structured validation state, output snapshot identity, output commit, or lineage.
+
+### Files and behavior
+
+- Files created/modified/deleted:
+- Behavior implemented:
+
+### Implementation discoveries
+
+| Discovery | Impact | Owning artifact/section | Required update |
+|---|---|---|---|
+| ... | ... | ... | ... |
+
+### Deviations
+
+| Planned approach/baseline | Actual approach/baseline | Reason | Approval/evidence | Impact |
+|---|---|---|---|---|
+| ... | ... | ... | ... | ... |
+
+### Remaining risks and documentation updates
+
+- Risks:
+- Documentation updated:
 
 <!-- control:markdown-only:start -->
-## 11. Implementation record and output lineage
+## 12. Output lineage and validation state
 
-Complete only after implementation.
-
-- Files created, modified, or deleted:
-- Behavior implemented:
-- Implementation discoveries:
-- Deviations:
 - Parent task-start snapshot: `SRC-REPO-001`
 - Implementation output snapshot: `SRC-REPO-002`
 - Output commit SHA:
 - Produced by task: `P01-T01`
 
-Add the implementation output snapshot to the source-baseline table. Do not replace the original input baseline.
-
-## 12. Validation evidence
-
-Use Passed, Failed, Blocked, Not executed, or Not applicable. A passed check requires evidence; every other status requires a reason.
-
-| Check | Expected result | Status | Evidence or reason |
+| Check | Expected result | Status | Evidence/reason |
 |---|---|---|---|
-| Build, lint, or type check | ... | ... | ... |
-| Automated behavior | ... | ... | ... |
-| Keyboard and focus | ... | ... | ... |
-| Semantics and accessible names | ... | ... | ... |
-| Responsive and content edges | ... | ... | ... |
-| Visual comparison against `SRC-DS-*` | ... | ... | ... |
-| Regression checks | ... | ... | ... |
-
-Corrected findings require retesting.
-
+| Build/lint/type | ... | ... | ... |
+| Behavior | ... | ... | ... |
+| Accessibility | ... | ... | ... |
+| Responsive/visual | ... | ... | ... |
+| Regression | ... | ... | ... |
 <!-- control:markdown-only:end -->
 
 ## 13. Final implementation review
 
 - Exact design inputs reviewed:
 - Exact repository output reviewed:
-- Validation runtime snapshot, when applicable:
-- Requirements and acceptance criteria result:
-- Remaining deviations:
-- Remaining risks:
-- Baseline and lineage integrity:
-
-### Findings
+- Validation runtime when applicable:
+- Requirements/acceptance result:
+- Remaining deviations/risks:
+- Baseline/lineage integrity:
 
 | Finding ID | Expected | Actual | Severity | Correction | Status | Retest evidence |
 |---|---|---|---|---|---|---|
@@ -286,7 +235,7 @@ Use exactly one:
 
 ## 14. Change and upgrade history
 
-| Date | Change, rebaseline, or profile decision | Reason | Affected IDs or sections | Result |
+| Date | Change/rebaseline/profile decision | Reason | Affected IDs/sections | Result |
 |---|---|---|---|---|
 | ... | ... | ... | ... | ... |
 

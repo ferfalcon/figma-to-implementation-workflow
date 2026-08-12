@@ -7,33 +7,20 @@ import { deriveNextAction, stageAdvanceFindings, taskStartFindings } from './wor
 import { workflowDiagnostics } from './workflow-diagnostics.mjs';
 import { fail, parseArgs, relativeDisplay, resolveRecordPath, write } from './utils.mjs';
 
-function json(stdout, value) {
-  write(stdout, JSON.stringify(value, null, 2));
-}
+function json(stdout, value) { write(stdout, JSON.stringify(value, null, 2)); }
 
 function contextWhenMissing(cwd, recordPath) {
   return {
     protocolVersion: 1,
     initialized: false,
-    control: {
-      mode: null,
-      schemaVersion: null,
-      readOnly: false,
-      record: relativeDisplay(cwd, recordPath),
-    },
+    control: { mode: null, schemaVersion: null, readOnly: false, record: relativeDisplay(cwd, recordPath) },
     execution: {
-      kind: 'initialization',
-      prompt: 'prompts/00-intake.md',
-      primaryArtifactTypes: [],
-      artifacts: [],
+      kind: 'initialization', prompt: 'prompts/00-intake.md', primaryArtifactTypes: [], artifacts: [],
       sourceAdapterPolicy: 'Select the matching source adapter after the actual design source is identified.',
     },
     policy: {
-      workflowMutation: 'initialize-first',
-      implementation: 'forbidden',
-      codeEdits: 'forbidden',
-      stageDecision: 'not-applicable',
-      generatedViews: 'not-initialized',
+      workflowMutation: 'initialize-first', implementation: 'forbidden', codeEdits: 'forbidden',
+      stageDecision: 'not-applicable', generatedViews: 'not-initialized',
     },
     nextAction: 'Initialize the workflow before auditing, planning, or implementation.',
   };
@@ -50,11 +37,18 @@ export async function runCli(args, environment) {
   const command = positionals[0];
   const recordPath = resolveRecordPath(cwd, options.record);
 
+  if (!command || command === 'help' || options.help) {
+    const result = await runWorkflowCli(args, environment);
+    write(stdout, '\nAgent orchestration:');
+    write(stdout, '  design-workflow context [--json]');
+    write(stdout, '  design-workflow stage check [--json]');
+    return result;
+  }
+
   if (command === 'context') {
     if (!existsSync(recordPath)) {
       const value = contextWhenMissing(cwd, recordPath);
-      if (options.json) json(stdout, value);
-      else write(stdout, value.nextAction);
+      if (options.json) json(stdout, value); else write(stdout, value.nextAction);
       return 0;
     }
     try {
@@ -71,11 +65,8 @@ export async function runCli(args, environment) {
       const message = error instanceof Error ? error.message : String(error);
       if (options.json) {
         json(stdout, {
-          protocolVersion: 1,
-          initialized: true,
-          execution: { kind: 'repair' },
-          workflow: { valid: false, findings: [message] },
-          nextAction: 'Repair the workflow record before continuing.',
+          protocolVersion: 1, initialized: true, execution: { kind: 'repair' },
+          workflow: { valid: false, findings: [message] }, nextAction: 'Repair the workflow record before continuing.',
         });
         return 1;
       }

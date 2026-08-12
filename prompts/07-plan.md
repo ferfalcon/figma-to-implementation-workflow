@@ -1,15 +1,13 @@
-# Stage 7 — Implementation Plan
+# Stage 7 — Create Repository-Aware Implementation Plan
 
-Verify the repository input snapshot and inspect the actual repository before naming paths, commands, dependencies, or conventions.
+Inspect the actual pinned repository before planning files, commands, dependencies, tests, or integration details.
 
-For Standard and Full, create or update `PLAN.md` from `templates/PLAN.template.md` and follow `guidelines/PLAN.md`.
+## Profile targets
 
-For Lite, complete the plan section of `IMPLEMENTATION-BRIEF.md`.
+- Express: `WORKPACK.md` → repository-aware implementation approach.
+- Lite: `IMPLEMENTATION-BRIEF.md` → repository context and implementation plan.
+- Standard, Full: `PLAN.md`.
 
-Document current repository state, included and excluded scope, technical approach, existing and proposed files, `PLAN-*` items, dependencies, ordering, integrated accessibility and responsive work, states, errors, tests, migration, compatibility, deployment, rollback, risks, questions, and Definition of Done.
+Use `PLAN-*` references. Integrate semantics/accessibility, responsive behavior, states/errors, tests and regression checks into affected work; do not create late cross-cutting cleanup phases. Distinguish existing from proposed paths.
 
-Every material plan item must map to approved requirements or specifications and define file impact, dependencies, validation, and expected result.
-
-Do not invent repository paths or defer accessibility, responsiveness, states, errors, or tests to cleanup.
-
-Perform two reviews, update `WORKFLOW-STATE.md`, and report files changed, approach, risks, blockers, readiness for adversarial review, and next permitted action.
+Perform two reviews and stage preflight.

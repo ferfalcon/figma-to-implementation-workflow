@@ -1,15 +1,13 @@
-# Stage 2 — Requirements
+# Stage 2 — Define Requirements
 
-Verify relevant input snapshots, then analyze `DESIGN-AUDIT.md`, authoritative documentation, project context, and approved decisions.
+Translate approved evidence and source authority into outcomes, product/business rules, constraints, accessibility expectations, and quality requirements without designing the implementation.
 
-For Standard and Full, create or update `REQUIREMENTS.md` from `templates/REQUIREMENTS.template.md` and follow `guidelines/REQUIREMENTS.md`.
+## Profile targets
 
-For Lite, complete the requirements section of `IMPLEMENTATION-BRIEF.md`.
+- Express: `WORKPACK.md` → Requirements section.
+- Lite: `IMPLEMENTATION-BRIEF.md` → Requirements section.
+- Standard, Full: `REQUIREMENTS.md`.
 
-Define goals, non-goals, users, needs, functional requirements, business rules, data expectations, accessibility and other quality requirements, constraints, dependencies, risks, assumptions, questions, and Definition of Done.
+Use the canonical `REQ-*` namespaces and reference source/evidence IDs. Separate must-have requirements from assumptions/recommendations/open questions. Do not invent unsupported behavior.
 
-Use `REQ-*` identifiers and link material requirements to `EVD-*`, `SRC-*`, authoritative documentation, and `AC-*` as applicable.
-
-Do not invent permissions, backend behavior, thresholds, retention, browser support, security policy, or business rules from visual evidence.
-
-Perform two reviews, update `WORKFLOW-STATE.md`, and report files changed, decisions, assumptions, blockers, readiness for design intent, and next permitted action.
+Perform two reviews for completeness/correctness and cross-artifact/source consistency before stage preflight.
