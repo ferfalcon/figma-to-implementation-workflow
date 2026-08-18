@@ -101,7 +101,7 @@ Normative process rules for stages, profiles, execution modes, source snapshots,
 
 ### `source-adapters/`
 
-Inspection guidance for Figma, screenshots, PDFs, existing websites, and mixed-source projects.
+Inspection guidance for Figma, screenshots, PDFs, existing websites, and mixed-source projects. `source-adapters/FIGMA-PREPARATION.md` is the single normative Figma preparation procedure; `AGENTS-PROMPT-Figma-file-preparation.md` is only a thin launcher that delegates to it.
 
 ### `guidelines/`
 
@@ -137,6 +137,7 @@ Run:
 
 ```bash
 npm run validate
+npm run test:figma-preparation
 npm run test:records
 npm run test:state
 npm run test:render
@@ -214,6 +215,7 @@ For full-stack applications, authentication, persistence, complex integrations, 
 ├── CONTRIBUTING.md
 ├── CHANGELOG.md
 ├── AGENTS-instructions.md
+├── AGENTS-PROMPT-Figma-file-preparation.md
 ├── workflow/
 ├── source-adapters/
 ├── guidelines/
