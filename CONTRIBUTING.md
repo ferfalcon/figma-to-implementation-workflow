@@ -4,7 +4,7 @@ Contributions should improve the workflow without weakening evidence, accessibil
 
 ## Before proposing a change
 
-1. Read [`workflow/Design-Implementation-Workflow.md`](workflow/Design-Implementation-Workflow.md) and [`workflow/Workflow-Profiles.md`](workflow/Workflow-Profiles.md).
+1. Read [`workflow/Design-Implementation-Workflow.md`](workflow/Design-Implementation-Workflow.md) and [`workflow/Workflow-Profiles.md`](workflow/Workflow-Profiles.md). If the change affects CLI-managed or AI-agent execution, also read [`workflow/Agent-Orchestration.md`](workflow/Agent-Orchestration.md).
 2. Identify which artifact or consolidated section owns the decision.
 3. Check whether the change is normative guidance, a template, an adapter, a prompt, an example, a schema, or validation tooling.
 4. Preserve existing identifier and snapshot semantics.
@@ -49,6 +49,17 @@ Changes should:
 - define validation without claiming unexecuted checks passed;
 - preserve backwards traceability when identifiers or source snapshots change;
 - keep low-risk workflows proportionate without hiding complexity that should trigger an upgrade.
+
+## Release and discovery consistency
+
+Repository-level contracts must evolve together:
+
+- the version in `package.json` must have a dated release heading in `CHANGELOG.md`;
+- new work after the current release belongs under `## [Unreleased]` until the next version is intentionally released;
+- a canonical workflow entry point must be linked from the README `Start here` section when it is required to operate the toolkit correctly;
+- canonical workflow contracts must be added to `scripts/validate-workflow.mjs` required paths so CI detects accidental removal.
+
+Do not fix release drift by inventing a version bump. Decide the intended released version first, then align package metadata, changelog history, discovery links, and validation together.
 
 ## Validation
 
