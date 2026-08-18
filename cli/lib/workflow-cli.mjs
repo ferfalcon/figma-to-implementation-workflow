@@ -6,7 +6,7 @@ import { checkStage } from './stage-check.mjs';
 import { deriveNextAction, stageAdvanceFindings, taskStartFindings } from './workflow-actions.mjs';
 import { workflowDiagnostics } from './workflow-diagnostics.mjs';
 import {
-  fail, nextTaskId, parseArgs, relativeDisplay, resolveRecordPath, write,
+  fail, normalizeTaskCreateArgs, parseArgs, relativeDisplay, resolveRecordPath, write,
 } from './utils.mjs';
 
 function json(stdout, value) { write(stdout, JSON.stringify(value, null, 2)); }
@@ -31,30 +31,6 @@ function contextWhenMissing(cwd, recordPath) {
 function load(cwd, options) {
   const recordPath = resolveRecordPath(cwd, options.record);
   return { recordPath, ...readStoredRecord(recordPath) };
-}
-
-function removeOption(args, name) {
-  const result = [];
-  for (let index = 0; index < args.length; index += 1) {
-    const token = args[index];
-    if (token === `--${name}`) {
-      const next = args[index + 1];
-      if (next !== undefined && !next.startsWith('--')) index += 1;
-      continue;
-    }
-    if (token.startsWith(`--${name}=`)) continue;
-    result.push(token);
-  }
-  return result;
-}
-
-export function normalizeTaskCreateArgs(args, record, parsed = parseArgs(args)) {
-  const { positionals, options } = parsed;
-  if (positionals[0] !== 'task' || positionals[1] !== 'create' || options.phase === undefined) return [...args];
-  if (Array.isArray(options.phase)) throw new Error('--phase may be specified only once.');
-  if (options.id !== undefined) throw new Error('--phase cannot be combined with --id; choose one task-ID strategy.');
-  const id = nextTaskId(record.tasks ?? [], options.phase);
-  return [...removeOption(args, 'phase'), '--id', id];
 }
 
 export async function runCli(args, environment) {
@@ -162,7 +138,7 @@ export async function runCli(args, environment) {
   if (command === 'task' && positionals[1] === 'create' && options.phase !== undefined) {
     try {
       const { record } = load(cwd, options);
-      workflowArgs = normalizeTaskCreateArgs(args, record, parsed);
+      workflowArgs = normalizeTaskCreateArgs(args, record.tasks, parsed);
     } catch (error) {
       return fail(stderr, error instanceof Error ? error.message : String(error));
     }
