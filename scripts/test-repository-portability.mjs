@@ -122,6 +122,24 @@ function testProjectSubdirectoryReference() {
   assert(resolveRepositoryWorkspace(workflow, snapshot) === resolve(repository), 'Project subdirectory binding did not resolve');
 }
 
+function testProjectReferenceCannotEscapeRoot() {
+  const parent = temp('escape');
+  const workflow = join(parent, 'workflow');
+  const outside = join(parent, 'outside');
+  mkdirSync(workflow, { recursive: true });
+  mkdirSync(outside, { recursive: true });
+  const commit = initializeRepository(outside);
+  let rejected = false;
+  try {
+    resolveRepositoryWorkspace(workflow, {
+      id: 'SRC-REPO-999', reference: 'project://../outside', commit,
+    });
+  } catch {
+    rejected = true;
+  }
+  assert(rejected, 'project:// reference escaped the workflow root');
+}
+
 function testRemoteIdentityAndLocalBinding() {
   const workflow = temp('external-workflow');
   const repository = temp('external-repository');
@@ -177,11 +195,12 @@ try {
   testRemoteCanonicalization();
   testProjectRelativeSnapshotSurvivesMove();
   testProjectSubdirectoryReference();
+  testProjectReferenceCannotEscapeRoot();
   testRemoteIdentityAndLocalBinding();
   testLegacyAbsolutePathHealsAfterMove();
   testExternalRepositoryWithoutIdentityIsRejected();
   assert(readFileSync(join(root, '.gitignore'), 'utf8').includes('.workflow/local.json'), 'Local binding file is not ignored by Git');
-  console.log('Repository portability, binding, legacy-healing, and identity tests passed.');
+  console.log('Repository portability, binding, containment, legacy-healing, and identity tests passed.');
 } finally {
   for (const path of cleanup) rmSync(path, { recursive: true, force: true });
 }
