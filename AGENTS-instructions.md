@@ -12,15 +12,15 @@ design-workflow context --json
 
 Treat that context as canonical operational state. Do not determine the current stage, task, profile, output, toolkit revision, or next action by parsing narrative or generated Markdown.
 
-When `toolkit.pinned` is `true`, treat `toolkit.repository` + `toolkit.commit` as the exact workflow-toolkit source for the project. Prefer the resolved resource locations returned by context, including `execution.promptSource` and `execution.resources`, over reconstructing GitHub paths yourself. Resolve any additional workflow prompts, guidelines, templates, adapters, or normative documents from that same pinned commit. Never silently fall back to `main`, another branch, a tag, or the latest package contents.
+When `toolkit.pinned` is `true`, treat `toolkit.repository` + `toolkit.revision` as the exact workflow-toolkit dependency for the project. Prefer the resolved resource locations returned by context, including `execution.promptSource` and `execution.resources`, over reconstructing GitHub paths yourself. Resolve any additional workflow prompts, guidelines, templates, adapters, or normative documents from that same pinned revision. Never silently fall back to `main`, another branch, a tag, or the latest package contents.
 
-If a CLI-managed project consumes workflow resources remotely and context reports `toolkit.pinned: false`, pin the intended toolkit revision before relying on mutable GitHub workflow content:
+If a CLI-managed project consumes workflow resources remotely and context reports `toolkit.pinned: false`, pin the intended immutable toolkit revision before relying on mutable GitHub workflow content:
 
 ```bash
-design-workflow toolkit pin --commit <40-character-sha>
+design-workflow toolkit pin --revision <40-character-sha>
 ```
 
-Do not replace an existing pin implicitly. Toolkit upgrades are separate, explicit workflow changes and must preserve the previous source identity.
+If context reports `toolkit.legacy: true`, run `design-workflow toolkit migrate` before continuing remote toolkit resolution. Do not replace an existing pin implicitly. Toolkit upgrades are separate, explicit workflow changes and must preserve the previous dependency identity.
 
 ## Minimal-read policy
 
@@ -29,8 +29,8 @@ For an initialized CLI-managed project, do not recursively inspect or browse the
 After the permanent agent contract is available:
 
 1. Run `design-workflow context --json`.
-2. If remote workflow resources are in use and `toolkit.pinned` is `false`, pin the intended toolkit revision before loading them.
-3. Load `execution.resources.required` and no other workflow prompt/guideline/template by default. When a resource includes `location`, use that exact repository + commit + path.
+2. If remote workflow resources are in use and `toolkit.pinned` is `false`, pin the intended toolkit revision before loading them. If `toolkit.legacy` is `true`, migrate it first.
+3. Load `execution.resources.required` and no other workflow prompt/guideline/template by default. When a resource includes `location`, use that exact toolkit `repository` + `revision` + `path`.
 4. Load an `execution.resources.onDemand` item only when its `when` condition applies.
 5. For format-specific source guidance, choose only the matching entry from `execution.resources.conditional`; do not browse or load the other source adapters.
 6. Do not inspect `README.md`, `QUICKSTART.md`, `cli/README.md`, or unrelated files under `workflow/`, `prompts/`, `guidelines/`, `templates/`, or `source-adapters/` unless the context manifest, a loaded required resource, or an explicit repair/migration task directs you there.
@@ -40,7 +40,7 @@ This policy applies to ordinary initialized execution. Initialization, migration
 Then:
 
 1. Respect `execution.kind`, current profile, stage, mode, blockers, and policy.
-2. Load only the workflow resources permitted by the minimal-read policy, from the pinned toolkit commit when one exists.
+2. Load only the workflow resources permitted by the minimal-read policy, from the pinned toolkit revision when one exists.
 3. Inspect actual design/repository sources; never rely on summaries when precise sources are available.
 4. Perform only the current stage responsibility.
 5. Write narrative reasoning/evidence to the artifact(s) named by `execution.artifacts`/`primaryArtifactTypes`.
@@ -60,7 +60,7 @@ Use the source adapter that matches the actual source. `SRC-DS-*` does not by it
 
 Pin repository snapshots to commits. Treat mutable design URLs, branches, shared docs, and live sites honestly as Versioned/Time-bound/Unverified unless an immutable capture exists. Classify changes as Unchanged, Expected workflow output, Unexpected upstream or concurrent change, or Unavailable.
 
-The workflow toolkit itself is also a source. In CLI-managed remote-toolkit projects, record it as an immutable supporting-source pin and use its exact commit for all workflow-resource lookups.
+The workflow toolkit is not a project source snapshot. In CLI-managed remote-toolkit projects, keep its repository/revision in the dedicated top-level `toolkit` dependency and keep `SRC-*` snapshots reserved for design, document, runtime, and implementation-project lineage.
 
 # Design and repository implementation
 
@@ -72,7 +72,7 @@ Implementation must integrate semantics, keyboard/focus behavior, accessible nam
 
 # Ownership
 
-In CLI-managed mode, `.workflow/workflow-record.json` owns mutable profile/mode/stage/status, snapshots and verification events, artifact lifecycle metadata, gates/approval actors, task state/dependencies/structured validation, trace definitions, output snapshots, and Git lineage. Generated views are read-only projections.
+In CLI-managed mode, `.workflow/workflow-record.json` owns mutable profile/mode/stage/status, toolkit dependency identity, snapshots and verification events, artifact lifecycle metadata, gates/approval actors, task state/dependencies/structured validation, trace definitions, output snapshots, and Git lineage. Generated views are read-only projections.
 
 Narrative artifacts own detailed source evidence/limitations, product/design/spec/architecture/planning rationale, blockers/assumptions, implementation discoveries/deviations, risks, and final-review reasoning. Do not maintain conflicting copies of record-owned mutable state.
 
