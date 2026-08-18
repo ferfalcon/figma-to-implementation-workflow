@@ -40,7 +40,6 @@ function inferOwner(record, id) {
   ))?.id ?? null;
 }
 
-
 function migrateValidation(check) {
   const legacyStatus = check.status ?? 'Not executed';
   const migratedStatus = legacyStatus === 'Passed' ? 'Not executed' : legacyStatus;
@@ -64,6 +63,28 @@ function migrateValidation(check) {
   if (check.environment) structured.environment = check.environment;
   return structured;
 }
+
+function migrateSnapshot(snapshot) {
+  const migrated = structuredClone(snapshot);
+  if (
+    migrated.role === 'Task start'
+    && (!migrated.parent || !migrated.task)
+  ) {
+    migrated.role = 'Input baseline';
+    delete migrated.parent;
+    delete migrated.task;
+  }
+  return migrated;
+}
+
+function migratedCurrentTask(tasks) {
+  const inProgress = tasks.filter((task) => task.status === 'In progress');
+  if (inProgress.length > 1) {
+    throw new Error(`Cannot migrate multiple In progress tasks: ${inProgress.map((task) => task.id).join(', ')}.`);
+  }
+  return inProgress[0]?.id ?? null;
+}
+
 export function migrateRecordV1(record) {
   if (record.schemaVersion === 2) return structuredClone(record);
   if (record.schemaVersion !== 1) throw new Error(`Cannot migrate schema version ${String(record.schemaVersion)}.`);
@@ -85,6 +106,16 @@ export function migrateRecordV1(record) {
     required: false,
     references: [],
   }));
+  const tasks = record.tasks.map((task) => ({
+    id: task.id,
+    status: task.status,
+    baseline: task.baseline,
+    prerequisites: [...task.prerequisites],
+    references: [...task.references],
+    output: task.output ?? null,
+    blocker: null,
+    validation: task.validation.map(migrateValidation),
+  }));
   const migrated = {
     schemaVersion: 2,
     project: structuredClone(record.project),
@@ -92,26 +123,17 @@ export function migrateRecordV1(record) {
       stage: record.state.stage,
       status: record.state.status,
       activeInputs: [...record.state.activeInputs],
-      currentTask: record.state.currentTask ?? null,
+      currentTask: migratedCurrentTask(tasks),
       latestOutput: record.state.latestOutput ?? null,
       latestValidationRuntime: null,
       architectureDecision: null,
     },
-    snapshots: record.snapshots.map((snapshot) => structuredClone(snapshot)),
+    snapshots: record.snapshots.map(migrateSnapshot),
     verifications: [],
     artifacts,
     traceItems,
     gates: [],
-    tasks: record.tasks.map((task) => ({
-      id: task.id,
-      status: task.status,
-      baseline: task.baseline,
-      prerequisites: [...task.prerequisites],
-      references: [...task.references],
-      output: task.output ?? null,
-      blocker: null,
-      validation: task.validation.map(migrateValidation),
-    })),
+    tasks,
     profileTransitions: [],
     implementationReviews: [],
     legacyBoundary: {
@@ -129,11 +151,17 @@ export function migrateRecordV1(record) {
 
 export function migrationSummary(before, after) {
   if (before.schemaVersion === 2) return ['Record already uses schema v2; no changes required.'];
+  const normalizedTaskStarts = before.snapshots.filter((snapshot) => (
+    snapshot.role === 'Task start' && (!snapshot.parent || !snapshot.task)
+  )).length;
+  const currentTaskNormalized = (before.state.currentTask ?? null) !== after.state.currentTask;
   return [
     'Schema version: 1 → 2',
     `Artifacts assigned narrative paths: ${after.artifacts.length}`,
     `Unclassified trace definitions inferred: ${after.traceItems.length}`,
     `Legacy validation entries converted: ${after.tasks.reduce((count, task) => count + task.validation.length, 0)}`,
+    ...(normalizedTaskStarts > 0 ? [`Unlineaged legacy Task start snapshots normalized to Input baseline: ${normalizedTaskStarts}`] : []),
+    ...(currentTaskNormalized ? ['Legacy current-task pointer normalized from task status'] : []),
     `Gate and trace enforcement begins at Stage ${after.legacyBoundary.gatesRequiredFromStage}`,
   ];
 }
