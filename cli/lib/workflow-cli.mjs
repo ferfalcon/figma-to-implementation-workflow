@@ -1,11 +1,17 @@
 import { existsSync } from 'node:fs';
+import { isAbsolute, resolve } from 'node:path';
 import { runWorkflowCli } from './commands-v2.mjs';
-import { readStoredRecord } from './record-store.mjs';
+import { completeTaskAtCurrentHead } from './task-completion.mjs';
+import { startTaskAtCurrentHead } from './task-lineage.mjs';
+import { mutateRecord, readStoredRecord } from './record-store.mjs';
+import { canonicalRepositoryReference } from './repository-binding.mjs';
 import { buildOrchestrationContext } from './orchestration-context.mjs';
 import { checkStage } from './stage-check.mjs';
-import { deriveNextAction, stageAdvanceFindings, taskStartFindings } from './workflow-actions.mjs';
+import { deriveNextAction, stageAdvanceFindings } from './workflow-actions.mjs';
 import { workflowDiagnostics } from './workflow-diagnostics.mjs';
-import { fail, parseArgs, relativeDisplay, resolveRecordPath, write } from './utils.mjs';
+import {
+  fail, normalizeTaskCreateArgs, parseArgs, relativeDisplay, resolveRecordPath, write,
+} from './utils.mjs';
 
 function json(stdout, value) { write(stdout, JSON.stringify(value, null, 2)); }
 
@@ -31,14 +37,31 @@ function load(cwd, options) {
   return { recordPath, ...readStoredRecord(recordPath) };
 }
 
+function canonicalizeInitializedRepository(cwd, options) {
+  if (typeof options.repository !== 'string' || String(options.control ?? '').toLowerCase() === 'markdown-only') return;
+  const recordPath = resolveRecordPath(cwd, options.record);
+  if (!existsSync(recordPath)) return;
+  const repository = isAbsolute(options.repository) ? options.repository : resolve(cwd, options.repository);
+  const reference = canonicalRepositoryReference(cwd, repository);
+  mutateRecord(recordPath, (record) => {
+    const snapshot = record.snapshots.find((item) => item.id === 'SRC-REPO-001');
+    if (snapshot) snapshot.reference = reference;
+  });
+}
+
 export async function runCli(args, environment) {
   const { cwd, stdout, stderr } = environment;
-  const { positionals, options } = parseArgs(args);
+  const parsed = parseArgs(args);
+  const { positionals, options } = parsed;
   const command = positionals[0];
   const recordPath = resolveRecordPath(cwd, options.record);
 
   if (!command || command === 'help' || options.help) {
     const result = await runWorkflowCli(args, environment);
+    write(stdout, '\nTask phases and repository binding:');
+    write(stdout, '  design-workflow task create [--phase <0-99|P00-P99> | --id <Pxx-Txx>] ...');
+    write(stdout, '  design-workflow task start|complete ... [--repository <local-checkout>]');
+    write(stdout, '  --phase and --id are mutually exclusive. Without either, numbering continues in the highest existing phase.');
     write(stdout, '\nAgent orchestration:');
     write(stdout, '  design-workflow context [--json]');
     write(stdout, '  design-workflow stage check [--json]');
@@ -118,15 +141,44 @@ export async function runCli(args, environment) {
 
   if (command === 'task' && positionals[1] === 'start' && positionals[2]) {
     try {
-      const { recordPath: path, record } = load(cwd, options);
-      const diagnostics = workflowDiagnostics(path, record);
-      const task = record.tasks.find((item) => item.id === positionals[2]);
-      const findings = [...diagnostics.findings, ...taskStartFindings(record, task)];
-      if (findings.length > 0) return fail(stderr, findings.join('\n'));
+      const start = startTaskAtCurrentHead(recordPath, positionals[2], {
+        cwd,
+        repository: options.repository,
+      });
+      write(stdout, `Started ${positionals[2]} from ${start.baseline} at HEAD ${start.commit}`);
+      return 0;
     } catch (error) {
       return fail(stderr, error instanceof Error ? error.message : String(error));
     }
   }
 
-  return runWorkflowCli(args, environment);
+  if (command === 'task' && positionals[1] === 'complete' && positionals[2]) {
+    try {
+      const completed = completeTaskAtCurrentHead(recordPath, positionals[2], options, { cwd });
+      write(stdout, `Completed ${positionals[2]}; output ${completed.outputId} at HEAD ${completed.commit}`);
+      return 0;
+    } catch (error) {
+      return fail(stderr, error instanceof Error ? error.message : String(error));
+    }
+  }
+
+  let workflowArgs = args;
+  if (command === 'task' && positionals[1] === 'create' && options.phase !== undefined) {
+    try {
+      const { record } = load(cwd, options);
+      workflowArgs = normalizeTaskCreateArgs(args, record.tasks ?? [], parsed);
+    } catch (error) {
+      return fail(stderr, error instanceof Error ? error.message : String(error));
+    }
+  }
+
+  const result = await runWorkflowCli(workflowArgs, environment);
+  if (result === 0 && command === 'init') {
+    try {
+      canonicalizeInitializedRepository(cwd, options);
+    } catch (error) {
+      return fail(stderr, `Workflow initialized but repository reference normalization failed: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+  return result;
 }
