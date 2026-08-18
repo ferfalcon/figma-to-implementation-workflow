@@ -12,11 +12,12 @@ The workflow supports AI-assisted and human-led work with explicit source baseli
 4. [`workflow/Source-Snapshots.md`](workflow/Source-Snapshots.md)
 5. [`workflow/Source-Authority.md`](workflow/Source-Authority.md)
 6. [`workflow/State-Ownership.md`](workflow/State-Ownership.md)
-7. [`workflow/Identifier-Conventions.md`](workflow/Identifier-Conventions.md)
-8. [`workflow/Validation-Rules.md`](workflow/Validation-Rules.md)
-9. [`cli/README.md`](cli/README.md)
-10. [`schemas/README.md`](schemas/README.md)
-11. [`AGENTS-instructions.md`](AGENTS-instructions.md)
+7. [`workflow/Agent-Orchestration.md`](workflow/Agent-Orchestration.md)
+8. [`workflow/Identifier-Conventions.md`](workflow/Identifier-Conventions.md)
+9. [`workflow/Validation-Rules.md`](workflow/Validation-Rules.md)
+10. [`cli/README.md`](cli/README.md)
+11. [`schemas/README.md`](schemas/README.md)
+12. [`AGENTS-instructions.md`](AGENTS-instructions.md)
 
 ## Workflow overview
 
@@ -97,7 +98,7 @@ CLI-managed initialization creates only Stage 0 artifacts. Passing and advancing
 
 ### `workflow/`
 
-Normative process rules for stages, profiles, execution modes, source snapshots, source authority, state ownership, identifiers, validation, and acceptance.
+Normative process rules for stages, profiles, execution modes, source snapshots, source authority, state ownership, identifiers, validation, acceptance, and the canonical AI-agent orchestration contract.
 
 ### `source-adapters/`
 
