@@ -147,7 +147,17 @@ function testExecutableLifecycle() {
   run(cwd, ['stage', 'review', '--result', 'Blocked', '--evidence', 'Return to gated execution']);
   run(cwd, ['mode', 'set', 'Gated']);
   run(cwd, ['stage', 'review', '--result', 'Passed', '--evidence', 'Task set is ready and traced', '--approved-by', 'Fixture owner']);
+
+  git(cwd, ['add', '.']);
+  git(cwd, ['commit', '-m', 'Record approved task plan']);
+
   run(cwd, ['stage', 'advance']);
+  writeFileSync(join(cwd, 'prestart-dirty.js'), 'export const dirty = true;\n', 'utf8');
+  before = capture(transactionPaths(cwd));
+  run(cwd, ['task', 'start', 'P01-T01'], 1);
+  assertByteIdentical(before, 'task start with dirty implementation scope was mutating');
+  rmSync(join(cwd, 'prestart-dirty.js'));
+
   run(cwd, ['task', 'start', 'P01-T01']);
   run(cwd, ['task', 'block', 'P01-T01', '--reason', 'Temporary fixture blocker']);
   current = record(cwd);
@@ -157,9 +167,15 @@ function testExecutableLifecycle() {
   assert(current.tasks[0].status === 'In progress' && current.state.currentTask === 'P01-T01', 'unblock did not restore the prior in-progress state');
 
   writeFileSync(join(cwd, 'implementation.txt'), 'implemented\n', 'utf8');
-  git(cwd, ['add', '.']);
+  git(cwd, ['add', 'implementation.txt']);
   git(cwd, ['commit', '-m', 'Implement fixture']);
   const implementationCommit = git(cwd, ['rev-parse', 'HEAD']);
+
+  writeFileSync(join(cwd, 'leftover-implementation.js'), 'export const leftover = true;\n', 'utf8');
+  before = capture(transactionPaths(cwd));
+  run(cwd, ['task', 'complete', 'P01-T01', '--commit', implementationCommit, '--check', 'Build=Build passed'], 1);
+  assertByteIdentical(before, 'task completion with dirty implementation scope was mutating');
+  rmSync(join(cwd, 'leftover-implementation.js'));
 
   before = capture(transactionPaths(cwd));
   run(cwd, ['task', 'complete', 'P01-T01', '--commit', baselineCommit, '--check', 'Build=Build passed'], 1);
@@ -297,7 +313,7 @@ function testProfileUpgrades() {
   assert(record(sequential).project.profile === 'Full', 'Standard to Full upgrade failed');
   const before = capture(transactionPaths(sequential));
   run(sequential, ['profile', 'upgrade', 'start', 'Lite', '--resume-stage', '0', '--reason', 'Unsupported downgrade'], 1);
-  assertByteIdentical(before, 'profile downgrade rejection was mutating');
+  assertByteIdentical(before, 'profile downgrade rejection was not mutating');
 
   const direct = project('direct-upgrade');
   run(direct, ['init', '--name', 'Direct upgrade fixture', '--profile', 'Express']);

@@ -8,10 +8,14 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 
 ### Added
 
+- Sequential task-lineage regression coverage proving that a completed task output becomes the next task's effective repository baseline and that unrecognized repository changes block task start without mutation.
 - Repository validation that requires the `package.json` version to have a dated changelog release entry and keeps the canonical agent-orchestration contract discoverable.
+- Exclusive workflow-record mutation locks plus optimistic record-version checks that reject concurrent or stale writers before any transactional file changes.
+- Dedicated concurrency regression coverage for stale prepared mutations, lock contention, byte-identical rejection, and lock cleanup after validation failures.
 
 ### Changed
 
+- `task start` now resolves the task's effective repository baseline against the actual `HEAD`: it reuses the latest recorded Implementation output when that output is `HEAD`, retains the planned baseline only when it is exactly `HEAD`, and rejects every other repository state as an unexpected change.
 - Promoted `workflow/Agent-Orchestration.md` to the README `Start here` sequence and required repository-contract validation.
 
 ## [0.3.0] — 2026-08-18
