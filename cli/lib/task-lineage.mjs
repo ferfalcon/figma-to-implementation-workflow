@@ -113,6 +113,7 @@ export function resolveTaskStartBaseline(recordPath, record, task) {
     && plannedBaseline.task === task.id
     && plannedBaseline.status === 'Active'
   ) {
+    plannedBaseline.role = 'Historical reference';
     plannedBaseline.status = 'Superseded';
     plannedBaseline.supersededBy = startId;
   }
