@@ -132,9 +132,19 @@ See [`../source-adapters/EXISTING-WEBSITE.md`](../source-adapters/EXISTING-WEBSI
 
 ### Repositories
 
-Record repository URL, commit SHA, role, branch for context, relevant package or directory, lockfile or submodule state, uncommitted patch when applicable, and access limitations.
+Record repository identity, commit SHA, role, branch for context, relevant package or directory, lockfile or submodule state, uncommitted patch when applicable, and access limitations.
 
 Use the commit SHA as the pin. A branch name alone is mutable and insufficient.
+
+For CLI-managed repository snapshots, separate **canonical repository identity** from the machine-local checkout used to run Git commands:
+
+- prefer the canonical remote URL when the repository has a usable `origin`;
+- otherwise prefer a path relative to the project root when the checkout is inside the project;
+- use an absolute local path only when no portable identity is available;
+- resolve the active local checkout at execution time from the project checkout or explicit `--repository <path>`;
+- legacy snapshots containing an old absolute path may rebind to the current checkout when the pinned commit proves repository compatibility.
+
+Do not rewrite a snapshot merely because the same repository was cloned to a different machine or directory. The repository identity and pinned commit are canonical; the local workspace is an execution binding.
 
 Repository snapshot roles typically progress as:
 
@@ -143,6 +153,12 @@ Input baseline → Task start → Implementation output → Next task start
 ```
 
 A single commit may serve as both one task's Implementation output and the next task's Task start. Reference the same snapshot ID rather than duplicating it.
+
+When approved planning or workflow-control commits exist after the recorded repository anchor but before implementation begins, `task start` records the actual clean `HEAD` as a new immutable **Task start** snapshot and parents it to the prior baseline or latest Implementation output. This preserves the real execution chain rather than pretending implementation started from an older commit.
+
+A task-start checkpoint is allowed only when the commits between the recorded anchor and `HEAD` affect workflow-owned planning/control paths. Committed implementation-scope changes in that gap are unexpected repository changes and block task start until assessed.
+
+Before task start, approved planning artifacts must therefore be committed. Canonical workflow-control files may be dirty because the CLI updates them while recording state, but uncommitted implementation-scope files block execution.
 
 Express permits one task and therefore normally has one Task start and one Implementation output.
 
@@ -181,14 +197,20 @@ Approved implementation naturally changes the repository and runtime.
 
 When a task completes successfully:
 
-1. create a new `SRC-REPO-*` record with role Implementation output;
-2. record the output commit SHA;
-3. connect it to the task-start snapshot and task ID;
-4. use it as the next task's Task start when applicable;
-5. update the active baseline owner, task record, and control state;
-6. do not roll the workflow back merely because the approved task changed the repository.
+1. require the implementation output commit to equal repository `HEAD`;
+2. require that commit to descend from the task-start snapshot;
+3. require no uncommitted implementation-scope changes to remain;
+4. keep canonical workflow-control files out of the implementation output commit;
+5. create a new `SRC-REPO-*` record with role Implementation output;
+6. record the output commit SHA;
+7. connect it to the task-start snapshot and task ID;
+8. use it as the next task's Task start when applicable;
+9. update the active baseline owner, task record, and control state;
+10. do not roll the workflow back merely because the approved task changed the repository.
 
-For Express, steps 1–5 are recorded inside `WORKPACK.md`. A second independent next task requires an upgrade.
+Workflow-control state may be committed separately before the next task. If that produces a new `HEAD`, the next `task start` records a Task start checkpoint parented to the latest Implementation output, preserving both implementation and workflow-control history without mixing their commit responsibilities.
+
+For Express, the lineage and validation state are recorded inside `WORKPACK.md`. A second independent next task requires an upgrade.
 
 When the output is deployed for validation:
 
@@ -245,7 +267,9 @@ Before final acceptance, verify:
 - every referenced snapshot ID exists in the active baseline owner;
 - no artifact or workpack section silently depends on newer input content;
 - the original repository input baseline is identified;
-- the implementation commit is a pinned `SRC-REPO-*` Implementation output;
+- each implemented task identifies the exact repository snapshot from which it actually started;
+- the implementation commit is a pinned `SRC-REPO-*` Implementation output parented to that task-start snapshot;
+- implementation-output commits exclude workflow-control files and leave no uncommitted implementation-scope changes;
 - the validation runtime is a pinned `SRC-RUN-*` snapshot tied to that output when applicable;
 - unexpected input changes received impact assessment;
 - expected task outputs have complete lineage;
