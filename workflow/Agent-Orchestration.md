@@ -4,7 +4,7 @@ This document defines how an AI design-engineering agent operates the executable
 
 ## Boundary
 
-The agent owns reasoning, source inspection, artifact prose, implementation decisions within approved scope, and evidence collection. The CLI owns executable state, stage/task legality, canonical registries, generated views, trace definitions, validation state, and implementation lineage.
+The agent owns reasoning, source inspection, artifact prose, implementation decisions within approved scope, and evidence collection. The CLI owns executable state, stage/task legality, canonical registries, generated views, trace definitions, validation state, implementation lineage, and the recorded workflow-toolkit source pin.
 
 Never infer executable state from narrative Markdown when `.workflow/workflow-record.json` exists. Never manually edit generated views.
 
@@ -21,7 +21,8 @@ Treat the returned `protocolVersion` independently from the workflow record `sch
 The context reports:
 
 - project profile and execution mode;
-- current stage and stage-local prompt;
+- the pinned workflow-toolkit repository, package version, commit, and source snapshot when available;
+- current stage and stage-local prompt, including a fully resolved `execution.promptSource` when the toolkit is pinned;
 - active source snapshots and latest verification;
 - current target artifact types and registered artifact paths;
 - current and Ready tasks;
@@ -33,9 +34,34 @@ The context reports:
 
 If no record exists, initialize first. If the record is schema v1, migrate before mutation. If context reports `repair`, repair record/generated state before continuing. If a profile upgrade is in progress, reconcile and finish it before ordinary advancement.
 
+### Toolkit source resolution
+
+The workflow toolkit is itself an execution dependency. For projects that consume workflow resources from GitHub or another remote package source, pin the toolkit to an exact commit rather than treating `main`, a branch, or a package version alone as operational identity.
+
+A CLI-managed pin is recorded as an immutable `Supporting source` snapshot with a `toolkit+github://` reference and an exact 40-character commit SHA. It is intentionally not added to `state.activeInputs`: it governs workflow execution, not the product/design implementation baseline.
+
+Inspect the current pin with:
+
+```bash
+design-workflow toolkit show --json
+```
+
+Pin an existing unpinned workflow with:
+
+```bash
+design-workflow toolkit pin \
+  --repository ferfalcon/figma-to-implementation-workflow \
+  --version 0.3.0 \
+  --commit <40-character-sha>
+```
+
+When `toolkit.pinned` is `true`, all workflow prompts, guidelines, templates, adapters, and normative workflow documents used for the turn must come from `toolkit.repository` at exactly `toolkit.commit`. Never fall back to `main` or another mutable ref. A package version is descriptive metadata; the commit is the immutable operational pin.
+
+If more than one toolkit snapshot is active, context reports an ambiguous pin and the workflow must be repaired before remote workflow resources are resolved. Replacing a valid existing pin is not an ordinary mutation; future toolkit upgrades must be explicit and preserve the old pin as history.
+
 ## Stage-local execution
 
-Load the prompt returned in `execution.prompt`. Perform only the responsibility of the current stage.
+Load the prompt returned in `execution.prompt`. When `execution.promptSource` is present, use its repository, version, commit, and path as the authoritative remote lookup instead of reconstructing a GitHub location yourself. Perform only the responsibility of the current stage.
 
 Use the profile targets returned by `execution.primaryArtifactTypes`:
 
@@ -92,6 +118,8 @@ This requires Stage 10, a structurally clean schema-v2 workflow, and an executio
 ## Source and lineage safety
 
 Verify relevant active snapshots before stage closure and before task execution. Unexpected material upstream/concurrent changes block affected work and require a new snapshot or explicit impact assessment. Expected previous-task outputs advance repository lineage without replacing the original project input baseline.
+
+The toolkit pin is separate from the implementation-source lineage. Do not add the toolkit snapshot to artifact baselines or task baselines merely because it is recorded in `snapshots`; use it only to resolve the workflow rules/resources governing the project.
 
 ## Narrative ownership during implementation
 
