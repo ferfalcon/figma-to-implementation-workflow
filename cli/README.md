@@ -127,7 +127,7 @@ If the workflow project and repository checkout live in different directories on
 design-workflow repository bind SRC-REPO-001 --path ../implementation-repository
 ```
 
-The command writes `.workflow/local.json`. That file is Git-ignored and is never part of snapshot identity. A binding is accepted only when the checkout contains the snapshot's pinned commit.
+The command writes `.workflow/local.json`. That file is Git-ignored and is never part of snapshot identity. A binding is accepted only when the checkout contains the snapshot's pinned commit and does not present a conflicting remote identity.
 
 Legacy schema-v2 records that already contain absolute repository paths remain readable. When a later successful mutation can resolve the same repository safely, the persisted reference is healed to a canonical remote or `project://` identity. New repository snapshots are rejected rather than persisting a new machine-specific path when no portable identity can be derived.
 
@@ -175,6 +175,20 @@ design-workflow task block P01-T01 --reason "Waiting for approved copy"
 design-workflow task unblock P01-T01
 ```
 
+Task IDs use `Pxx-Txx`. With no phase or explicit ID, creation starts at `P01-T01` and continues in the highest existing phase. Use `--phase` to start or continue a specific phase; use `--id` only when the exact canonical task ID is intentional. The two options are mutually exclusive:
+
+```bash
+design-workflow task create --phase 2 --title "Build the second-phase interaction"
+# Creates P02-T01 when Phase 02 has no tasks.
+
+design-workflow task create --phase P02 --title "Add the second-phase validation"
+# Creates P02-T02 next.
+
+design-workflow task create --id P03-T05 --title "Create an explicitly numbered task"
+```
+
+CLI-managed task artifacts derive their filename and heading from the same ID, so `P02-T03` renders as `Phase-02--Task-03.md` with a `Phase 02 — Task 03` heading.
+
 Declare structured checks before completion:
 
 ```bash
@@ -198,7 +212,7 @@ design-workflow task complete P01-T01 \
   --check "Build=Production build completed successfully"
 ```
 
-Completion resolves the task baseline's local checkout from its portable identity, project-relative location, or local binding. It then verifies that the commit exists in that repository, equals `HEAD`, and descends from the recorded baseline commit. Only then does it create the Implementation-output snapshot, again using a portable repository identity. Task-by-task execution cannot begin before Stage 9, and Continuous-documentation mode cannot enter Stage 10.
+Task start resolves the effective baseline against the actual local `HEAD`, including the latest approved Implementation output when appropriate. Completion resolves the task baseline's local checkout from its portable identity, project-relative location, or local binding, then verifies that the commit exists in that repository, equals `HEAD`, and descends from the recorded baseline commit. Only then does it create the Implementation-output snapshot, again using a portable repository identity. Task-by-task execution cannot begin before Stage 9, and Continuous-documentation mode cannot enter Stage 10.
 
 ## Profile upgrades
 
