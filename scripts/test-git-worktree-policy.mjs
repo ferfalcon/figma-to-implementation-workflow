@@ -38,20 +38,27 @@ try {
   ]) {
     writeFileSync(join(cwd, '.workflow', 'generated', name), `${name}\n`, 'utf8');
   }
-  writeFileSync(join(cwd, 'TASK.md'), '# Task narrative\n', 'utf8');
 
   const record = {
     snapshots: [{
       id: 'SRC-REPO-001', role: 'Input baseline', reference: cwd, commit: baselineCommit,
     }],
-    artifacts: [{ id: 'ART-TASK-P01-T01', type: 'TASK', path: 'TASK.md', status: 'Draft' }],
+    artifacts: [{ id: 'ART-TASK-P01-T01', type: 'TASK', path: 'TASK.md', status: 'Approved' }],
   };
   const task = { id: 'P01-T01', baseline: 'SRC-REPO-001' };
 
   assert(
     taskStartGitFindings(recordPath, record, task).length === 0,
-    'task start should allow dirty workflow-managed state and active narrative artifacts',
+    'task start should allow dirty canonical workflow-control files',
   );
+
+  writeFileSync(join(cwd, 'TASK.md'), '# Approved task narrative\n', 'utf8');
+  const dirtyNarrativeStart = taskStartGitFindings(recordPath, record, task);
+  assert(
+    dirtyNarrativeStart.some((finding) => finding.includes('TASK.md')),
+    'task start did not require the approved task narrative to be committed',
+  );
+  rmSync(join(cwd, 'TASK.md'));
 
   writeFileSync(join(cwd, 'uncommitted-start.js'), 'export const dirty = true;\n', 'utf8');
   const startFindings = taskStartGitFindings(recordPath, record, task);
@@ -65,9 +72,11 @@ try {
   git(cwd, ['add', 'implementation.js']);
   git(cwd, ['commit', '-m', 'Implement fixture']);
   const implementationCommit = git(cwd, ['rev-parse', 'HEAD']);
+
+  writeFileSync(join(cwd, 'TASK.md'), '# Implementation notes\n', 'utf8');
   assert(
     taskCompletionGitFindings(recordPath, record, task, implementationCommit).length === 0,
-    'task completion should allow workflow-managed dirtiness with a separate implementation commit',
+    'task completion should allow workflow-managed narrative dirtiness outside the implementation commit',
   );
 
   writeFileSync(join(cwd, 'uncommitted-complete.js'), 'export const leftover = true;\n', 'utf8');
@@ -82,8 +91,8 @@ try {
   git(cwd, ['commit', '-m', 'Record workflow control state']);
   writeFileSync(recordPath, '{"state":"changed"}\n', 'utf8');
   writeFileSync(join(cwd, 'implementation-2.js'), 'export const mixed = true;\n', 'utf8');
-  git(cwd, ['add', '.workflow/workflow-record.json', 'implementation-2.js']);
-  git(cwd, ['commit', '-m', 'Mix implementation and workflow control']);
+  git(cwd, ['add', '.workflow/workflow-record.json', 'TASK.md', 'implementation-2.js']);
+  git(cwd, ['commit', '-m', 'Mix implementation and workflow-managed files']);
   const mixedCommit = git(cwd, ['rev-parse', 'HEAD']);
   const mixedFindings = taskCompletionGitFindings(recordPath, record, task, mixedCommit);
   assert(
@@ -91,7 +100,7 @@ try {
     'task completion did not reject an implementation output commit that modifies workflow-managed files',
   );
 
-  console.log('Git working-tree and implementation-output commit policy tests passed.');
+  console.log('Git task-start, completion dirtiness, and implementation-output scope policy tests passed.');
 } finally {
   rmSync(cwd, { recursive: true, force: true });
 }
