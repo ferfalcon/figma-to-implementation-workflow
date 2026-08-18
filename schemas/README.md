@@ -57,6 +57,19 @@ PLAN-### DOC-### PLANREV-### IMPL-###
 
 Control namespaces include `SRC-*`, `ART-*`, `P##-T##`, `VER-*`, `GATE-*`, `PROFILE-*`, and `REVIEW-*`. Duplicate IDs, duplicate array values, unresolved references, incompatible owners, and graph cycles are semantic errors.
 
+## Canonical execution invariants
+
+Schema v2 treats task and repository lineage as reciprocal executable state rather than loose references.
+
+- A **Task start** snapshot must be an Immutable `SRC-REPO-*` snapshot with a commit SHA, repository parent, and task attribution. That task must use the snapshot as its baseline.
+- An **Implementation output** must be an Immutable repository snapshot with a commit SHA, repository parent, and producing task. The producing task must reference it as `output`.
+- An executable task baseline must be an Immutable repository snapshot with a commit SHA and role `Input baseline`, `Task start`, or `Implementation output`. Incomplete tasks require an Active baseline; completed tasks may retain historical superseded baselines.
+- `state.currentTask` is reciprocal with task status: the current task must be `In progress`, an `In progress` task requires `state.currentTask`, and more than one `In progress` task is invalid.
+- `state.latestOutput` must reference an Active Implementation output whose producing task is Complete and points back to that output.
+- `state.latestValidationRuntime`, when present, must reference an Active Validation runtime parented to the latest Implementation output. A final review runtime must likewise parent the exact reviewed output.
+
+These are semantic-validator rules in addition to the generated JSON Schema shape. Schema-v1 compatibility remains unchanged until explicit migration.
+
 ## Structured validation
 
 Each task check uses:
@@ -70,6 +83,8 @@ command, environment, executedAt, evidence[], reason, references[]
 
 Completion also requires the CLI to verify the supplied output commit against the real repository: it must exist, equal `HEAD`, and descend from the task baseline commit.
 
+Before task start, checkpoint inspection is history-aware: every commit between the effective repository anchor and `HEAD` is inspected. A task-start checkpoint is allowed only when all touched paths are workflow-managed. Any intervening implementation-scope touch requires impact assessment even when a later commit reverts it and the endpoint tree is clean.
+
 ## Gates and completion
 
 Stage decisions are append-only. A new review supersedes the previous active decision for that stage. Rewind supersedes active gates at and after the target without deleting history or rewriting artifact baselines.
@@ -80,9 +95,10 @@ The validator enforces:
 - profile-aware artifact and approval exits;
 - explicit architecture handling;
 - execution-mode restrictions;
+- reciprocal current-task and repository-lineage invariants;
 - Ready task and required-trace coverage at the Stage 9 exit;
 - completed tasks, resolved required validation, output lineage, and latest output at the Stage 10 exit;
-- output re-verification, an approved review artifact, an active passing Stage 11 gate, accepted final-review history, and validation coverage for final completion.
+- output re-verification, an approved review artifact, an active passing Stage 11 gate, accepted final-review history, runtime/output lineage when applicable, and validation coverage for final completion.
 
 `state.status: Complete` is valid only at Stage 11 with an active passing Stage 11 gate and an active `accepted` or `accepted-with-deviations` review event. `requires-corrections` leaves the state Blocked.
 
@@ -133,6 +149,7 @@ Focused commands are:
 
 ```bash
 npm run test:records
+npm run test:invariants
 npm run test:state
 npm run test:render
 npm run test:cli

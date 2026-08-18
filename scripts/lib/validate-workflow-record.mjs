@@ -7,6 +7,7 @@ import {
 } from '../../cli/lib/workflow-model.mjs';
 
 const isoTimestamp = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/;
+const EXECUTABLE_REPOSITORY_ROLES = ['Input baseline', 'Task start', 'Implementation output'];
 
 function push(findings, path, message) {
   findings.push(`${path}: ${message}`);
@@ -124,7 +125,7 @@ function validateProject(errors, project) {
   expectEnum(errors, '$.project.executionMode', project.executionMode, MODES);
 }
 
-function validateSnapshot(errors, snapshot, path, registry, snapshotsById) {
+function validateSnapshot(errors, snapshot, path, registry, snapshotsById, version = 2) {
   const required = ['id', 'role', 'pinStrength', 'status', 'reference'];
   const allowed = [...required, 'commit', 'parent', 'task', 'supersededBy'];
   if (!checkShape(errors, path, snapshot, required, allowed)) return;
@@ -146,8 +147,14 @@ function validateSnapshot(errors, snapshot, path, registry, snapshotsById) {
     if (!snapshot.parent) push(errors, `${path}.parent`, 'Implementation output requires a parent repository snapshot');
     if (!snapshot.task) push(errors, `${path}.task`, 'Implementation output requires a producing task');
   }
-  if (snapshot.role === 'Task start' && !snapshot.id?.startsWith('SRC-REPO-')) {
-    push(errors, `${path}.id`, 'Task start must be a repository snapshot');
+  if (snapshot.role === 'Task start') {
+    if (!snapshot.id?.startsWith('SRC-REPO-')) push(errors, `${path}.id`, 'Task start must be a repository snapshot');
+    if (version === 2) {
+      if (snapshot.pinStrength !== 'Immutable') push(errors, `${path}.pinStrength`, 'Task start requires Immutable pin strength');
+      if (!snapshot.commit) push(errors, `${path}.commit`, 'Task start requires a commit SHA');
+      if (!snapshot.parent) push(errors, `${path}.parent`, 'Task start requires a parent repository snapshot');
+      if (!snapshot.task) push(errors, `${path}.task`, 'Task start requires a task');
+    }
   }
   if (snapshot.pinStrength === 'Immutable' && snapshot.id?.startsWith('SRC-REPO-') && !snapshot.commit) {
     push(errors, `${path}.commit`, 'Immutable repository snapshot requires a commit SHA');
@@ -276,7 +283,7 @@ function validateTask(errors, task, path, registry, tasksById, version) {
   }
 }
 
-function validateSharedReferences(errors, record, snapshotsById, artifactsById, tasksById) {
+function validateSharedReferences(errors, record, snapshotsById, artifactsById, tasksById, { version = 2 } = {}) {
   for (const id of record.state?.activeInputs ?? []) {
     const snapshot = snapshotsById.get(id);
     if (!snapshot) push(errors, '$.state.activeInputs', `references missing snapshot ${id}`);
@@ -284,18 +291,49 @@ function validateSharedReferences(errors, record, snapshotsById, artifactsById, 
       push(errors, '$.state.activeInputs', `active input ${id} is ${snapshot.status}`);
     }
   }
-  if (record.state?.currentTask && !tasksById.has(record.state.currentTask)) {
+
+  const currentTask = record.state?.currentTask ? tasksById.get(record.state.currentTask) : null;
+  if (record.state?.currentTask && !currentTask) {
     push(errors, '$.state.currentTask', `references missing task ${record.state.currentTask}`);
   }
+  if (version === 2) {
+    const inProgressTasks = [...tasksById.values()].filter((task) => task.status === 'In progress');
+    if (inProgressTasks.length > 1) {
+      push(errors, '$.tasks', `multiple In progress tasks exist: ${inProgressTasks.map((task) => task.id).join(', ')}`);
+    }
+    if (currentTask && currentTask.status !== 'In progress') {
+      push(errors, '$.state.currentTask', `current task ${currentTask.id} must be In progress`);
+    }
+    if (!record.state?.currentTask && inProgressTasks.length === 1) {
+      push(errors, '$.state.currentTask', `In progress task ${inProgressTasks[0].id} requires state.currentTask`);
+    }
+  }
+
   if (record.state?.latestOutput) {
     const output = snapshotsById.get(record.state.latestOutput);
     if (!output) push(errors, '$.state.latestOutput', `references missing snapshot ${record.state.latestOutput}`);
     else if (output.role !== 'Implementation output') push(errors, '$.state.latestOutput', 'must reference an Implementation output snapshot');
+    else if (version === 2) {
+      if (output.status !== 'Active') push(errors, '$.state.latestOutput', 'must reference an Active Implementation output snapshot');
+      const producingTask = output.task ? tasksById.get(output.task) : null;
+      if (producingTask && producingTask.output !== output.id) {
+        push(errors, '$.state.latestOutput', `snapshot ${output.id} is not the recorded output of ${producingTask.id}`);
+      }
+      if (producingTask && producingTask.status !== 'Complete') {
+        push(errors, '$.state.latestOutput', `snapshot ${output.id} must be produced by a Complete task`);
+      }
+    }
   }
   if (record.state?.latestValidationRuntime) {
     const runtime = snapshotsById.get(record.state.latestValidationRuntime);
     if (!runtime) push(errors, '$.state.latestValidationRuntime', `references missing snapshot ${record.state.latestValidationRuntime}`);
     else if (runtime.role !== 'Validation runtime') push(errors, '$.state.latestValidationRuntime', 'must reference a Validation runtime snapshot');
+    else if (version === 2) {
+      if (runtime.status !== 'Active') push(errors, '$.state.latestValidationRuntime', 'must reference an Active Validation runtime snapshot');
+      if (record.state.latestOutput && runtime.parent !== record.state.latestOutput) {
+        push(errors, '$.state.latestValidationRuntime', `must parent latest output ${record.state.latestOutput}`);
+      }
+    }
   }
 
   record.artifacts?.forEach((artifact, index) => {
@@ -308,7 +346,22 @@ function validateSharedReferences(errors, record, snapshotsById, artifactsById, 
   });
 
   record.tasks?.forEach((task, index) => {
-    if (!snapshotsById.has(task.baseline)) push(errors, `$.tasks[${index}].baseline`, `references missing snapshot ${task.baseline}`);
+    const baseline = snapshotsById.get(task.baseline);
+    if (!baseline) push(errors, `$.tasks[${index}].baseline`, `references missing snapshot ${task.baseline}`);
+    else if (version === 2) {
+      if (!EXECUTABLE_REPOSITORY_ROLES.includes(baseline.role)) {
+        push(errors, `$.tasks[${index}].baseline`, `snapshot ${task.baseline} role ${baseline.role} is not an executable repository baseline`);
+      }
+      if (baseline.pinStrength !== 'Immutable') {
+        push(errors, `$.tasks[${index}].baseline`, `snapshot ${task.baseline} must use Immutable pin strength`);
+      }
+      if (!baseline.commit) {
+        push(errors, `$.tasks[${index}].baseline`, `snapshot ${task.baseline} must record a commit SHA`);
+      }
+      if (task.status !== 'Complete' && baseline.status !== 'Active') {
+        push(errors, `$.tasks[${index}].baseline`, `incomplete task ${task.id} requires an Active repository baseline`);
+      }
+    }
     for (const prerequisite of task.prerequisites ?? []) {
       if (!tasksById.has(prerequisite)) push(errors, `$.tasks[${index}].prerequisites`, `references missing task ${prerequisite}`);
       if (prerequisite === task.id) push(errors, `$.tasks[${index}].prerequisites`, 'task cannot depend on itself');
@@ -335,9 +388,22 @@ function validateSharedReferences(errors, record, snapshotsById, artifactsById, 
   });
 
   record.snapshots?.forEach((snapshot, index) => {
-    if (snapshot.parent && !snapshotsById.has(snapshot.parent)) push(errors, `$.snapshots[${index}].parent`, `references missing snapshot ${snapshot.parent}`);
-    if (snapshot.task && !tasksById.has(snapshot.task)) push(errors, `$.snapshots[${index}].task`, `references missing task ${snapshot.task}`);
+    const parent = snapshot.parent ? snapshotsById.get(snapshot.parent) : null;
+    const task = snapshot.task ? tasksById.get(snapshot.task) : null;
+    if (snapshot.parent && !parent) push(errors, `$.snapshots[${index}].parent`, `references missing snapshot ${snapshot.parent}`);
+    if (snapshot.task && !task) push(errors, `$.snapshots[${index}].task`, `references missing task ${snapshot.task}`);
     if (snapshot.supersededBy && !snapshotsById.has(snapshot.supersededBy)) push(errors, `$.snapshots[${index}].supersededBy`, `references missing snapshot ${snapshot.supersededBy}`);
+    if (version === 2 && ['Task start', 'Implementation output'].includes(snapshot.role) && parent) {
+      if (!parent.id?.startsWith('SRC-REPO-') || !EXECUTABLE_REPOSITORY_ROLES.includes(parent.role)) {
+        push(errors, `$.snapshots[${index}].parent`, `snapshot ${snapshot.parent} is not an executable repository parent`);
+      }
+    }
+    if (version === 2 && snapshot.role === 'Task start' && task && task.baseline !== snapshot.id) {
+      push(errors, `$.snapshots[${index}].task`, `Task start snapshot ${snapshot.id} must equal task ${task.id} baseline`);
+    }
+    if (version === 2 && snapshot.role === 'Implementation output' && task && task.output !== snapshot.id) {
+      push(errors, `$.snapshots[${index}].task`, `Implementation output ${snapshot.id} must equal task ${task.id} output`);
+    }
   });
 
   for (const cycle of findCycles(new Set(tasksById.keys()), (id) => tasksById.get(id)?.prerequisites ?? [])) {
@@ -405,10 +471,10 @@ function validateV1(record, errors, warnings) {
   const snapshotsById = new Map();
   const artifactsById = new Map();
   const tasksById = new Map();
-  snapshots.forEach((item, index) => validateSnapshot(errors, item, `$.snapshots[${index}]`, registry, snapshotsById));
+  snapshots.forEach((item, index) => validateSnapshot(errors, item, `$.snapshots[${index}]`, registry, snapshotsById, 1));
   artifacts.forEach((item, index) => validateArtifact(errors, item, `$.artifacts[${index}]`, registry, artifactsById, 1));
   tasks.forEach((item, index) => validateTask(errors, item, `$.tasks[${index}]`, registry, tasksById, 1));
-  validateSharedReferences(errors, record, snapshotsById, artifactsById, tasksById);
+  validateSharedReferences(errors, record, snapshotsById, artifactsById, tasksById, { version: 1 });
   validateProfileRules(errors, record, artifactsById, { legacy: true });
   if (record.state?.status === 'Complete') {
     if (record.state.stage !== 11) push(errors, '$.state.stage', 'Complete workflow must be at Stage 11');
@@ -542,7 +608,7 @@ function validateV2(record, errors) {
   const verificationsById = new Map();
   const traceById = new Map();
   const gatesById = new Map();
-  (record.snapshots ?? []).forEach((item, index) => validateSnapshot(errors, item, `$.snapshots[${index}]`, registry, snapshotsById));
+  (record.snapshots ?? []).forEach((item, index) => validateSnapshot(errors, item, `$.snapshots[${index}]`, registry, snapshotsById, 2));
   (record.artifacts ?? []).forEach((item, index) => validateArtifact(errors, item, `$.artifacts[${index}]`, registry, artifactsById, 2));
   (record.tasks ?? []).forEach((item, index) => validateTask(errors, item, `$.tasks[${index}]`, registry, tasksById, 2));
 
@@ -676,6 +742,10 @@ function validateV2(record, errors) {
       const runtimeSnapshot = snapshotsById.get(item.runtime);
       if (!runtimeSnapshot) push(errors, `${path}.runtime`, `references missing snapshot ${item.runtime}`);
       else if (runtimeSnapshot.role !== 'Validation runtime') push(errors, `${path}.runtime`, 'must reference a Validation runtime snapshot');
+      else {
+        if (runtimeSnapshot.parent !== item.output) push(errors, `${path}.runtime`, `Validation runtime ${item.runtime} must parent reviewed output ${item.output}`);
+        if (item.status === 'Active' && runtimeSnapshot.status !== 'Active') push(errors, `${path}.runtime`, 'active final review must use an Active Validation runtime snapshot');
+      }
     }
   });
   if ((record.implementationReviews ?? []).filter((item) => item.status === 'Active').length > 1) push(errors, '$.implementationReviews', 'only one final-review result may be active');
@@ -687,7 +757,7 @@ function validateV2(record, errors) {
     }
   }
 
-  validateSharedReferences(errors, record, snapshotsById, artifactsById, tasksById);
+  validateSharedReferences(errors, record, snapshotsById, artifactsById, tasksById, { version: 2 });
   validateProfileRules(errors, record, artifactsById);
 
   for (const [id, item] of traceById) {
@@ -751,6 +821,7 @@ function validateV2(record, errors) {
     if (!finalGate || !['Passed', 'Passed with assumptions'].includes(finalGate.result)) push(errors, '$.gates', 'Final acceptance requires an active passing Stage 11 gate');
     if (activeReview) {
       if (activeReview.output !== record.state.latestOutput) push(errors, '$.implementationReviews', 'Active final-review output must equal the latest implementation output');
+      if (activeReview.runtime && activeReview.runtime !== record.state.latestValidationRuntime) push(errors, '$.implementationReviews', 'Active final-review runtime must equal the latest validation runtime');
       const outputVerification = [...record.verifications].reverse().find((item) => item.snapshot === activeReview.output);
       if (!outputVerification || !['Unchanged', 'Expected workflow output'].includes(outputVerification.result)) push(errors, '$.verifications', 'Final acceptance requires the reviewed output to be reverified');
       const reviewArtifact = artifactsById.get(activeReview.artifact);

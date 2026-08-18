@@ -9,7 +9,9 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 ### Added
 
 - Git working-tree policy tests covering strict task-start reproducibility, task-completion leftovers, workflow-managed narrative dirtiness, and mixed implementation/workflow commits.
-- Task-start checkpoint regression coverage for committed planning state, workflow-control commits between tasks, and rejection of unexpected committed implementation changes.
+- Task-start checkpoint regression coverage for committed planning state, workflow-control commits between tasks, rejection of unexpected committed implementation changes, and implementation changes that are later reverted before task start.
+- Canonical schema-v2 invariant regression coverage for exact Task-start shape, current-task reciprocity, executable repository baselines, reciprocal output lineage, and latest output/runtime pointers.
+- Replanning-transition regression coverage for Stage 10 rewind, stale-validation invalidation, task restart with historical checkpoint preservation, and profile-upgrade recovery.
 - Sequential task-lineage regression coverage proving that a completed task output becomes the next task's effective repository baseline and that unrecognized repository changes block task start without mutation.
 - Repository validation that requires the `package.json` version to have a dated changelog release entry and keeps the canonical agent-orchestration contract discoverable.
 - Exclusive workflow-record mutation locks plus optimistic record-version checks that reject concurrent or stale writers before any transactional file changes.
@@ -20,7 +22,11 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 ### Changed
 
 - `task start` now requires approved planning/task narratives to be committed while allowing canonical workflow-control files to remain dirty.
-- `task start` now resolves the effective repository anchor against actual `HEAD`: exact matches reuse the planned baseline or latest Implementation output; descendant `HEAD` values containing only workflow-managed committed changes become a new immutable Task start checkpoint; committed implementation-scope changes block the start for impact assessment.
+- `task start` now resolves the effective repository anchor against actual `HEAD`: exact matches reuse the planned baseline or latest Implementation output; descendant `HEAD` values are accepted only when every intervening commit touches workflow-managed paths, producing a new immutable Task start checkpoint when needed. Any implementation-scope path touched anywhere in the intervening history blocks task start for impact assessment, even if a later commit reverts it.
+- When a task is restarted after replanning, the replaced Task-start checkpoint is preserved as a Superseded Historical reference pointing to the new checkpoint; the new checkpoint uses the prior executable parent or latest Implementation output rather than parenting a historical snapshot.
+- Stage rewind and profile-upgrade start now reset a current implementation task to `Ready`, clear `currentTask`, and invalidate execution-time validation evidence so the task must be revalidated after replanning.
+- Schema-v2 semantic validation now requires exact immutable Task-start checkpoints with reciprocal task baselines, executable immutable task baselines, reciprocal Implementation-output ownership, a single reciprocal `currentTask`/`In progress` relationship, Active latest-output/runtime pointers, Complete output producers, and runtime-to-output lineage.
+- Schema-v1 migration derives `currentTask` from actual `In progress` task status and normalizes legacy unlineaged Task-start snapshots to Input baselines instead of fabricating missing parent/task lineage.
 - Task completion continues to reject dirty implementation-scope paths while permitting workflow-managed narrative/control state to remain dirty outside the implementation commit.
 - Recorded Implementation output commits reject workflow-managed files and parent the exact repository snapshot from which the task actually started.
 - Promoted `workflow/Agent-Orchestration.md` to the README `Start here` sequence and required repository-contract validation.
