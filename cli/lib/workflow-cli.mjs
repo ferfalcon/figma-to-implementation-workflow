@@ -3,7 +3,8 @@ import { runWorkflowCli } from './commands-v2.mjs';
 import { readStoredRecord } from './record-store.mjs';
 import { buildOrchestrationContext } from './orchestration-context.mjs';
 import { checkStage } from './stage-check.mjs';
-import { deriveNextAction, stageAdvanceFindings, taskStartFindings } from './workflow-actions.mjs';
+import { startTaskAtCurrentHead } from './task-lineage.mjs';
+import { deriveNextAction, stageAdvanceFindings } from './workflow-actions.mjs';
 import { workflowDiagnostics } from './workflow-diagnostics.mjs';
 import { fail, parseArgs, relativeDisplay, resolveRecordPath, write } from './utils.mjs';
 
@@ -118,11 +119,9 @@ export async function runCli(args, environment) {
 
   if (command === 'task' && positionals[1] === 'start' && positionals[2]) {
     try {
-      const { recordPath: path, record } = load(cwd, options);
-      const diagnostics = workflowDiagnostics(path, record);
-      const task = record.tasks.find((item) => item.id === positionals[2]);
-      const findings = [...diagnostics.findings, ...taskStartFindings(record, task)];
-      if (findings.length > 0) return fail(stderr, findings.join('\n'));
+      const start = startTaskAtCurrentHead(recordPath, positionals[2]);
+      write(stdout, `Started ${positionals[2]} from ${start.baseline} at HEAD ${start.commit}`);
+      return 0;
     } catch (error) {
       return fail(stderr, error instanceof Error ? error.message : String(error));
     }
