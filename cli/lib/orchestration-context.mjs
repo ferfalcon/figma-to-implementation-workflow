@@ -1,6 +1,6 @@
-import { relative } from 'node:path';
+import { dirname, relative, resolve } from 'node:path';
 import { STAGES } from './workflow-model.mjs';
-import { toolkitPinFromRecord } from './toolkit-source.mjs';
+import { toolkitBindingFromRecord, toolkitPromptSource } from './toolkit-binding.mjs';
 import { deriveNextAction, readyTask } from './workflow-actions.mjs';
 import { workflowDiagnostics } from './workflow-diagnostics.mjs';
 import { checkStage } from './stage-check.mjs';
@@ -80,31 +80,8 @@ export function stageTargets(record) {
   return [];
 }
 
-function toolkitSummary(record) {
-  const pin = toolkitPinFromRecord(record);
-  if (!pin) {
-    return {
-      pinned: false, repository: null, version: null, commit: null, snapshot: null, ambiguous: false,
-    };
-  }
-  return {
-    pinned: true,
-    repository: pin.repository,
-    version: pin.version,
-    commit: pin.commit,
-    snapshot: pin.snapshot,
-    ambiguous: pin.ambiguous,
-  };
-}
-
 function resourceLocation(toolkit, path) {
-  if (!path || !toolkit.pinned || toolkit.ambiguous) return null;
-  return {
-    repository: toolkit.repository,
-    version: toolkit.version,
-    commit: toolkit.commit,
-    path,
-  };
+  return toolkitPromptSource(toolkit, path);
 }
 
 function resourceDescriptor(toolkit, kind, path, extra = {}) {
@@ -116,7 +93,7 @@ function resourceDescriptor(toolkit, kind, path, extra = {}) {
   };
 }
 
-export function stageResources(record, toolkit = toolkitSummary(record)) {
+export function stageResources(record, toolkit = toolkitBindingFromRecord(record)) {
   const stage = record.state.stage;
   const prompt = STAGE_PROMPTS[stage] ?? null;
   const required = [];
@@ -185,6 +162,11 @@ function taskSummary(task) {
   };
 }
 
+function projectRootDisplay(recordPath, cwd) {
+  const projectRoot = resolve(dirname(recordPath), '..');
+  return relative(cwd, projectRoot).split('\\').join('/') || '.';
+}
+
 export function canEditImplementation(record, diagnostics, currentTask) {
   return (
     diagnostics.valid
@@ -208,7 +190,7 @@ export function buildOrchestrationContext(recordPath, record, { cwd }) {
   const nextReadyTask = readyTask(record) ?? null;
   const check = checkStage(recordPath, record);
   const implementationAllowed = canEditImplementation(record, diagnostics, currentTask);
-  const toolkit = toolkitSummary(record);
+  const toolkit = toolkitBindingFromRecord(record);
   const prompt = STAGE_PROMPTS[stage] ?? null;
   const resources = stageResources(record, toolkit);
 
@@ -225,6 +207,7 @@ export function buildOrchestrationContext(recordPath, record, { cwd }) {
       name: record.project.name,
       profile: record.project.profile,
       executionMode: record.project.executionMode,
+      root: projectRootDisplay(recordPath, cwd),
     },
     toolkit,
     workflow: diagnostics,
