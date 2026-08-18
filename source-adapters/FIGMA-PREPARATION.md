@@ -251,7 +251,7 @@ A suitable structure may include:
 
 Review font family, weight, size, line height, letter spacing, text case, intended use, hierarchy, responsive behavior, and consistency.
 
-Update text layers to use the intended styles and consolidate accidental duplicates when safe.
+Update text layers to use intended styles and consolidate accidental duplicates when safe.
 
 Avoid names based only on visual properties, such as `Inter 16 Medium`, `Text 24 Bold`, `Big Heading`, or `Desktop H2`.
 
