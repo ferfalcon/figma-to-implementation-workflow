@@ -8,8 +8,18 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 
 ### Added
 
+- Repository validation that requires the `package.json` version to have a dated changelog release entry and keeps the canonical agent-orchestration contract discoverable.
 - Exclusive workflow-record mutation locks plus optimistic record-version checks that reject concurrent or stale writers before any transactional file changes.
 - Dedicated concurrency regression coverage for stale prepared mutations, lock contention, byte-identical rejection, and lock cleanup after validation failures.
+
+### Changed
+
+- Promoted `workflow/Agent-Orchestration.md` to the README `Start here` sequence and required repository-contract validation.
+
+## [0.3.0] — 2026-08-18
+
+### Added
+
 - Focused Figma preparation authority test that requires the root launcher to delegate to the canonical adapter and rejects duplicated numbered procedure sections.
 - Deterministic agent-orchestration protocol with `design-workflow context --json` and `design-workflow stage check --json`.
 - Shared executable action-eligibility checks for stage advancement and task start.
