@@ -4,7 +4,10 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { deriveNextAction } from '../cli/lib/workflow-actions.mjs';
-import { canEditImplementation, stageTargets } from '../cli/lib/orchestration-context.mjs';
+import {
+  buildOrchestrationContext, buildToolkitDescriptor, buildToolkitResource,
+  canEditImplementation, requiredResourcePathsForStage, stageTargets,
+} from '../cli/lib/orchestration-context.mjs';
 import { checkStage } from '../cli/lib/stage-check.mjs';
 import { syncGeneratedState } from '../cli/lib/generated-state.mjs';
 
@@ -24,6 +27,23 @@ function baseRecord({ stage, mode = 'Gated', status = 'Ready' }) {
     profileTransitions: [], implementationReviews: [],
   };
 }
+
+const toolkit = buildToolkitDescriptor();
+assert(toolkit.repository === 'ferfalcon/figma-to-implementation-workflow', 'Toolkit repository must be explicit.');
+assert(typeof toolkit.version === 'string' && toolkit.version.length > 0, 'Toolkit version must be explicit.');
+assert(
+  ['environment', 'git-commit', 'package-version'].includes(toolkit.resolution),
+  'Toolkit resolution mode must explain how the toolkit identity was resolved.',
+);
+const specResources = requiredResourcePathsForStage(4);
+assert(
+  specResources.join(',') === 'workflow/Agent-Orchestration.md,guidelines/SPEC.md',
+  'Stage 4 must resolve the orchestration contract and SPEC guidance without repository discovery.',
+);
+const specPointer = buildToolkitResource('guidelines/SPEC.md', toolkit);
+assert(specPointer.repository === toolkit.repository, 'Resource pointers must carry the toolkit repository.');
+assert(specPointer.revision === toolkit.revision, 'Resource pointers must carry the resolved toolkit revision.');
+assert(specPointer.version === toolkit.version, 'Resource pointers must carry the toolkit version.');
 
 const stageNine = baseRecord({ stage: 9 });
 stageNine.gates.push({ stage: 9, status: 'Active', result: 'Passed' });
@@ -95,6 +115,25 @@ try {
     });
   }
   syncGeneratedState(recordPath, record);
+
+  const context = buildOrchestrationContext(recordPath, record, { cwd: directory });
+  assert(context.protocolVersion === 2, 'Agent context must use protocol version 2.');
+  assert(context.toolkit.repository === toolkit.repository, 'Agent context must identify the toolkit repository.');
+  assert(context.execution.prompt.path === 'prompts/06-architecture.md', 'Agent context must resolve the stage prompt as a resource pointer.');
+  assert(
+    context.execution.requiredResources.some((item) => item.path === 'workflow/Agent-Orchestration.md'),
+    'Agent context must return the orchestration contract explicitly.',
+  );
+  assert(
+    context.execution.requiredResources.some((item) => item.path === 'guidelines/ARCHITECTURE.md'),
+    'Agent context must return stage-specific guidance explicitly.',
+  );
+  for (const resource of [context.execution.prompt, ...context.execution.requiredResources]) {
+    assert(resource.repository === toolkit.repository, 'Every toolkit resource must identify its repository.');
+    assert(resource.version === toolkit.version, 'Every toolkit resource must identify its toolkit version.');
+    assert(resource.revision === context.toolkit.revision, 'Every toolkit resource must share the context toolkit revision.');
+  }
+
   const result = checkStage(recordPath, record);
   assert(result.decision.recommendedResult === 'Must upgrade', 'Express architecture-required Stage 6 must recommend Must upgrade.');
   assert(result.decision.recordable, 'Must-upgrade decision should be structurally recordable.');
