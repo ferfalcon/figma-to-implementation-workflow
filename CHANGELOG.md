@@ -8,23 +8,21 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 
 ### Added
 
-- Portable repository workspace binding that records a credential-free canonical remote or `project://` identity and resolves the machine-local checkout only at execution time, with compatibility for legacy absolute-path snapshots.
-- `design-workflow repository bind <snapshot-id> --path <checkout>` with machine-local bindings stored in Git-ignored `.workflow/local.json`.
-- Repository binding regression coverage for SSH/HTTPS normalization, credential stripping, project containment, local external checkout bindings, conflicting remotes, external repositories without portable identity, and legacy absolute-path healing.
-- Git working-tree and implementation-output policy checks that reject uncommitted implementation changes at task boundaries and keep workflow-control files out of implementation output commits.
-- Integrated task-start checkpoint regression coverage for approved planning commits, workflow-control commits between tasks, implementation outputs, and unexpected implementation-scope repository changes.
+- Git working-tree policy tests covering task-start dirtiness, task-completion leftovers, workflow-managed-file dirtiness, and mixed implementation/workflow commits.
 - Sequential task-lineage regression coverage proving that a completed task output becomes the next task's effective repository baseline and that unrecognized repository changes block task start without mutation.
 - Repository validation that requires the `package.json` version to have a dated changelog release entry and keeps the canonical agent-orchestration contract discoverable.
 - Exclusive workflow-record mutation locks plus optimistic record-version checks that reject concurrent or stale writers before any transactional file changes.
 - Dedicated concurrency regression coverage for stale prepared mutations, lock contention, byte-identical rejection, and lock cleanup after validation failures.
+- Portable repository snapshot bindings with `design-workflow repository bind <snapshot-id> --path <checkout>` and a Git-ignored `.workflow/local.json` runtime mapping.
+- Repository-portability regression tests covering canonical remote normalization, `project://` references, moved checkouts, local bindings, legacy absolute-path healing, identity mismatches, containment, and rejection of new non-portable snapshots.
 
 ### Changed
 
-- `task start` now records the exact repository state used for implementation: it reuses an exact latest Implementation output or planned baseline, creates a `Task start` checkpoint when `HEAD` contains only approved workflow planning/control commits since the recorded anchor, and rejects implementation-scope changes in that gap.
-- `task complete` now requires the supplied output commit to equal `HEAD`, descend from the task-start checkpoint, exclude workflow-control files, leave no uncommitted implementation-scope changes, and persist the portable repository identity on the Implementation output.
-- New canonical repository snapshots no longer fall back to external machine-specific absolute paths. External repositories without a portable remote identity must gain one before capture; legacy absolute-path records remain readable and can rebind by commit identity.
-- Repository snapshots now distinguish canonical repository identity from the machine-local checkout used to execute Git commands; `task start` and `task complete` may use an explicit `--repository` checkout or a persistent local `repository bind` mapping.
+- Task start and completion now reject dirty implementation-scope paths while allowing only workflow-managed state and active narrative artifacts to remain dirty.
+- Recorded Implementation output commits now reject workflow-managed files, keeping workflow bookkeeping and narrative updates distinct from task-deliverable commits.
+- `task start` now resolves the task's effective repository baseline against the actual `HEAD`: it reuses the latest recorded Implementation output when that output is `HEAD`, retains the planned baseline only when it is exactly `HEAD`, and rejects every other repository state as an unexpected change.
 - Promoted `workflow/Agent-Orchestration.md` to the README `Start here` sequence and required repository-contract validation.
+- Repository snapshots now persist repository identity instead of machine-specific checkout paths. CLI-managed mutations and Git working-tree checks resolve local workspaces at runtime and canonicalize repository references before serialization.
 
 ## [0.3.0] — 2026-08-18
 

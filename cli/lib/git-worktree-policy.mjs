@@ -25,26 +25,19 @@ function repositoryRelativePath(repository, path) {
   return value;
 }
 
-export function workflowControlPaths(recordPath, repository) {
-  const control = [
+export function workflowManagedPaths(recordPath, repository, record) {
+  const managed = [
     resolve(recordPath),
     ...GENERATED_STATE_FILES.map((file) => resolve(
       dirname(recordPath), GENERATED_STATE_DIRECTORY, file,
     )),
+    ...(record?.artifacts ?? [])
+      .filter((artifact) => artifact.status !== 'Superseded' && artifact.path)
+      .map((artifact) => (
+        isAbsolute(artifact.path) ? artifact.path : resolve(repository, artifact.path)
+      )),
   ];
-  return new Set(control.map((path) => repositoryRelativePath(repository, path)).filter(Boolean));
-}
-
-export function workflowManagedPaths(recordPath, repository, record) {
-  const managed = workflowControlPaths(recordPath, repository);
-  const projectRoot = resolve(dirname(recordPath), '..');
-  for (const artifact of record?.artifacts ?? []) {
-    if (artifact.status === 'Superseded' || !artifact.path) continue;
-    const absolute = isAbsolute(artifact.path) ? artifact.path : resolve(projectRoot, artifact.path);
-    const path = repositoryRelativePath(repository, absolute);
-    if (path) managed.add(path);
-  }
-  return managed;
+  return new Set(managed.map((path) => repositoryRelativePath(repository, path)).filter(Boolean));
 }
 
 function parsePorcelainPaths(output) {
@@ -80,82 +73,46 @@ function commitPaths(repository, commit) {
   return [...new Set(output.split('\0').filter(Boolean).map(normalizeRepositoryPath))];
 }
 
-function rangePaths(repository, fromCommit, toCommit) {
-  if (fromCommit === toCommit) return [];
-  const output = gitRaw(repository, ['diff', '--name-only', '-z', fromCommit, toCommit]);
-  if (output === null) return null;
-  return [...new Set(output.split('\0').filter(Boolean).map(normalizeRepositoryPath))];
+function taskRepository(recordPath, record, task) {
+  if (!task?.baseline) return { finding: 'Task does not have a repository baseline.' };
+  const baseline = record.snapshots.find((item) => item.id === task.baseline && item.id.startsWith('SRC-REPO-'));
+  if (!baseline?.reference) {
+    return { finding: `Task baseline ${task.baseline} does not reference a Git repository.` };
+  }
+  try {
+    const projectRoot = resolve(dirname(recordPath), '..');
+    return { repository: resolveRepositoryWorkspace(projectRoot, baseline) };
+  } catch {
+    return { finding: `Task baseline ${task.baseline} does not reference an accessible Git repository.` };
+  }
 }
 
-function repositorySnapshot(record, task) {
-  return record.snapshots.find((item) => item.id === task?.baseline && item.id.startsWith('SRC-REPO-')) ?? null;
-}
-
-export function taskRepositoryBinding(recordPath, record, task, options = {}) {
-  if (!task?.baseline) throw new Error('Task does not have a repository baseline.');
-  const baseline = repositorySnapshot(record, task);
-  if (!baseline) throw new Error(`Task baseline ${task.baseline} does not reference a repository snapshot.`);
-  return resolveRepositoryWorkspace(recordPath, baseline, options);
-}
-
-function dirtyScopeFindings(recordPath, record, repository, action, allowedPaths, allowedDescription) {
+function implementationDirtyFindings(recordPath, record, repository, action) {
   const dirty = dirtyPaths(repository);
   if (dirty === null) return [`Git working-tree state could not be inspected before ${action}.`];
-  const implementation = dirty.filter((path) => !allowedPaths.has(path));
+  const managed = workflowManagedPaths(recordPath, repository, record);
+  const implementation = dirty.filter((path) => !managed.has(path));
   if (implementation.length === 0) return [];
   return [
     `Git working tree has uncommitted implementation-scope changes before ${action}: ${implementation.join(', ')}. `
-      + allowedDescription,
+      + 'Only workflow-managed state and active narrative artifacts may remain dirty.',
   ];
 }
 
-export function taskStartGitFindings(recordPath, record, task, options = {}) {
-  try {
-    const binding = taskRepositoryBinding(recordPath, record, task, options);
-    return dirtyScopeFindings(
-      recordPath,
-      record,
-      binding.repository,
-      'task start',
-      workflowControlPaths(recordPath, binding.repository),
-      'Approved planning/task narratives must be committed before task start; only canonical workflow-control state may remain dirty.',
-    );
-  } catch (error) {
-    return [error instanceof Error ? error.message : String(error)];
-  }
+export function taskStartGitFindings(recordPath, record, task) {
+  const resolved = taskRepository(recordPath, record, task);
+  if (resolved.finding) return [resolved.finding];
+  return implementationDirtyFindings(recordPath, record, resolved.repository, 'task start');
 }
 
-export function taskStartCheckpointFindings(recordPath, record, repository, fromCommit, toCommit) {
-  const paths = rangePaths(repository, fromCommit, toCommit);
-  if (paths === null) return ['Could not inspect committed repository changes before task start.'];
-  const allowed = workflowManagedPaths(recordPath, repository, record);
-  const unexpected = paths.filter((path) => !allowed.has(path));
-  if (unexpected.length === 0) return [];
-  return [
-    `Repository changes since ${fromCommit} include implementation-scope paths before task start: ${unexpected.join(', ')}. `
-      + 'Review and record those upstream changes before starting the task.',
-  ];
-}
-
-export function taskCompletionGitFindings(recordPath, record, task, commit, options = {}) {
-  let binding;
-  try {
-    binding = taskRepositoryBinding(recordPath, record, task, options);
-  } catch (error) {
-    return [error instanceof Error ? error.message : String(error)];
-  }
-  const managed = workflowManagedPaths(recordPath, binding.repository, record);
-  const findings = dirtyScopeFindings(
-    recordPath,
-    record,
-    binding.repository,
-    'task completion',
-    managed,
-    'Only workflow-managed state and active narrative artifacts may remain dirty.',
-  );
+export function taskCompletionGitFindings(recordPath, record, task, commit) {
+  const resolved = taskRepository(recordPath, record, task);
+  if (resolved.finding) return [resolved.finding];
+  const findings = implementationDirtyFindings(recordPath, record, resolved.repository, 'task completion');
   if (!FULL_COMMIT.test(String(commit ?? ''))) return findings;
-  const paths = commitPaths(binding.repository, String(commit).toLowerCase());
+  const paths = commitPaths(resolved.repository, String(commit).toLowerCase());
   if (paths === null) return findings;
+  const managed = workflowManagedPaths(recordPath, resolved.repository, record);
   const mixed = paths.filter((path) => managed.has(path));
   if (mixed.length > 0) {
     findings.push(

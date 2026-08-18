@@ -147,17 +147,7 @@ function testExecutableLifecycle() {
   run(cwd, ['stage', 'review', '--result', 'Blocked', '--evidence', 'Return to gated execution']);
   run(cwd, ['mode', 'set', 'Gated']);
   run(cwd, ['stage', 'review', '--result', 'Passed', '--evidence', 'Task set is ready and traced', '--approved-by', 'Fixture owner']);
-
-  git(cwd, ['add', '.']);
-  git(cwd, ['commit', '-m', 'Record approved task plan']);
-
   run(cwd, ['stage', 'advance']);
-  writeFileSync(join(cwd, 'prestart-dirty.js'), 'export const dirty = true;\n', 'utf8');
-  before = capture(transactionPaths(cwd));
-  run(cwd, ['task', 'start', 'P01-T01'], 1);
-  assertByteIdentical(before, 'task start with dirty implementation scope was mutating');
-  rmSync(join(cwd, 'prestart-dirty.js'));
-
   run(cwd, ['task', 'start', 'P01-T01']);
   run(cwd, ['task', 'block', 'P01-T01', '--reason', 'Temporary fixture blocker']);
   current = record(cwd);
@@ -170,12 +160,6 @@ function testExecutableLifecycle() {
   git(cwd, ['add', 'implementation.txt']);
   git(cwd, ['commit', '-m', 'Implement fixture']);
   const implementationCommit = git(cwd, ['rev-parse', 'HEAD']);
-
-  writeFileSync(join(cwd, 'leftover-implementation.js'), 'export const leftover = true;\n', 'utf8');
-  before = capture(transactionPaths(cwd));
-  run(cwd, ['task', 'complete', 'P01-T01', '--commit', implementationCommit, '--check', 'Build=Build passed'], 1);
-  assertByteIdentical(before, 'task completion with dirty implementation scope was mutating');
-  rmSync(join(cwd, 'leftover-implementation.js'));
 
   before = capture(transactionPaths(cwd));
   run(cwd, ['task', 'complete', 'P01-T01', '--commit', baselineCommit, '--check', 'Build=Build passed'], 1);
@@ -194,10 +178,7 @@ function testExecutableLifecycle() {
   current = record(cwd);
   const check = current.tasks[0].validation[0];
   assert(check.status === 'Passed' && check.actual && check.executedAt && check.evidence.length > 0, 'completion did not record structured passed validation');
-  const taskStart = current.snapshots.find((item) => item.id === current.tasks[0].baseline);
-  assert(taskStart?.role === 'Task start', 'task start did not capture an exact repository checkpoint');
-  assert(taskStart.parent === 'SRC-REPO-001', 'task start checkpoint did not retain its prior repository parent');
-  assert(current.snapshots.find((item) => item.id === current.state.latestOutput)?.parent === current.tasks[0].baseline, 'completion output did not parent the actual task-start checkpoint');
+  assert(current.snapshots.find((item) => item.id === current.state.latestOutput)?.parent === 'SRC-REPO-001', 'completion did not retain output lineage');
   run(cwd, ['stage', 'review', '--result', 'Passed', '--evidence', 'All tasks completed with verified Git lineage', '--approved-by', 'Fixture owner']);
   run(cwd, ['stage', 'advance']);
   run(cwd, ['snapshot', 'verify', current.state.latestOutput, '--result', 'Expected workflow output', '--method', 'Git and runtime comparison', '--evidence', 'Final output reverified']);
@@ -316,7 +297,7 @@ function testProfileUpgrades() {
   assert(record(sequential).project.profile === 'Full', 'Standard to Full upgrade failed');
   const before = capture(transactionPaths(sequential));
   run(sequential, ['profile', 'upgrade', 'start', 'Lite', '--resume-stage', '0', '--reason', 'Unsupported downgrade'], 1);
-  assertByteIdentical(before, 'profile downgrade rejection was not mutating');
+  assertByteIdentical(before, 'profile downgrade rejection was mutating');
 
   const direct = project('direct-upgrade');
   run(direct, ['init', '--name', 'Direct upgrade fixture', '--profile', 'Express']);

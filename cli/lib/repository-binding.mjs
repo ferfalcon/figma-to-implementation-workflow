@@ -26,33 +26,23 @@ function gitSucceeds(repository, args) {
 }
 
 function slashPath(value) {
-  return String(value).split('\\').join('/');
-}
-
-function isWindowsAbsolutePath(value) {
-  return /^[A-Za-z]:[\\/]/.test(String(value ?? ''));
-}
-
-function absoluteFrom(base, value) {
-  if (isAbsolute(value) || isWindowsAbsolutePath(value)) return value;
-  return resolve(base, value);
-}
-
-function repositoryRoot(repository) {
-  const root = git(repository, ['rev-parse', '--show-toplevel']);
-  return root ? resolve(root) : null;
+  return value.split('\\').join('/');
 }
 
 function stripGitSuffix(value) {
-  return String(value).replace(/\.git$/i, '').replace(/^\/+|\/+$/g, '');
+  return value.replace(/\.git$/i, '').replace(/^\/+|\/+$/g, '');
 }
 
-function localBindingPath(projectRoot) {
-  return resolve(projectRoot, LOCAL_BINDING_FILE);
+function isWindowsAbsolutePath(value) {
+  return /^[A-Za-z]:[\\/]/.test(value);
 }
 
-function readLocalBindings(projectRoot) {
-  const path = localBindingPath(projectRoot);
+function localBindingPath(cwd) {
+  return resolve(cwd, LOCAL_BINDING_FILE);
+}
+
+function readLocalBindings(cwd) {
+  const path = localBindingPath(cwd);
   if (!existsSync(path)) return { repositories: {} };
   let parsed;
   try {
@@ -67,41 +57,12 @@ function readLocalBindings(projectRoot) {
   if (!repositories || typeof repositories !== 'object' || Array.isArray(repositories)) {
     throw new Error('Local repository binding file "repositories" must be an object.');
   }
-  for (const [reference, path] of Object.entries(repositories)) {
-    if (!reference.trim() || typeof path !== 'string' || !path.trim()) {
-      throw new Error('Local repository bindings must map non-empty references to non-empty paths.');
+  for (const [reference, pathValue] of Object.entries(repositories)) {
+    if (!reference.trim() || typeof pathValue !== 'string' || !pathValue.trim()) {
+      throw new Error('Local repository bindings must map non-empty snapshot references to non-empty paths.');
     }
   }
   return { repositories };
-}
-
-function ensureLocalBindingIgnored(projectRoot) {
-  const owner = repositoryRoot(projectRoot);
-  if (!owner) return;
-  const gitPath = git(projectRoot, ['rev-parse', '--git-path', 'info/exclude']);
-  if (!gitPath) return;
-  const excludePath = isAbsolute(gitPath) ? gitPath : resolve(projectRoot, gitPath);
-  const localRelative = slashPath(relative(owner, localBindingPath(projectRoot)));
-  if (!localRelative || localRelative === '..' || localRelative.startsWith('../')) return;
-  const pattern = `/${localRelative}`;
-  const existing = existsSync(excludePath) ? readFileSync(excludePath, 'utf8') : '';
-  const lines = existing.split(/\r?\n/).map((line) => line.trim());
-  if (lines.includes(pattern)) return;
-  mkdirSync(dirname(excludePath), { recursive: true });
-  const prefix = existing && !existing.endsWith('\n') ? `${existing}\n` : existing;
-  writeFileSync(excludePath, `${prefix}${pattern}\n`, 'utf8');
-}
-
-export function gitValue(repository, args) {
-  return git(repository, args);
-}
-
-export function gitCommandSucceeds(repository, args) {
-  return gitSucceeds(repository, args);
-}
-
-export function repositoryProjectRoot(recordPath) {
-  return resolve(dirname(recordPath), '..');
 }
 
 export function canonicalRemoteReference(value) {
@@ -111,111 +72,114 @@ export function canonicalRemoteReference(value) {
 
   if (!input.includes('://')) {
     const scpLike = /^(?:[^@/\s]+@)?([^:/\s]+):(.+)$/.exec(input);
-    if (!scpLike) return null;
-    const host = scpLike[1].toLowerCase();
-    const path = stripGitSuffix(scpLike[2]);
-    return host && path ? `https://${host}/${path}` : null;
+    if (scpLike) {
+      const host = scpLike[1].toLowerCase();
+      const path = stripGitSuffix(scpLike[2]);
+      if (host && path) return `https://${host}/${path}`;
+    }
+    return null;
   }
 
   try {
     const url = new URL(input);
     if (url.protocol === 'file:' || !url.host) return null;
     const path = stripGitSuffix(url.pathname);
-    return path ? `https://${url.host.toLowerCase()}/${path}` : null;
+    if (!path) return null;
+    return `https://${url.host.toLowerCase()}/${path}`;
   } catch {
     return null;
   }
 }
 
+function repositoryRoot(repository) {
+  const root = git(repository, ['rev-parse', '--show-toplevel']);
+  return root ? resolve(root) : null;
+}
+
 function repositoryRemoteReference(repository) {
   let remote = git(repository, ['config', '--get', 'remote.origin.url']);
   if (!remote) {
-    const name = git(repository, ['remote'])?.split(/\r?\n/).map((item) => item.trim()).find(Boolean);
-    if (name) remote = git(repository, ['remote', 'get-url', name]);
+    const firstRemote = git(repository, ['remote'])?.split(/\r?\n/).map((item) => item.trim()).find(Boolean);
+    if (firstRemote) remote = git(repository, ['remote', 'get-url', firstRemote]);
   }
   return canonicalRemoteReference(remote);
 }
 
-function projectReference(projectRoot, repository) {
-  const value = slashPath(relative(resolve(projectRoot), resolve(repository)));
-  if (value === '..' || value.startsWith('../') || isWindowsAbsolutePath(value)) return null;
-  return `project://${value || '.'}`;
+function projectReference(cwd, repository) {
+  const relativePath = slashPath(relative(resolve(cwd), resolve(repository)));
+  if (relativePath === '..' || relativePath.startsWith('../') || isWindowsAbsolutePath(relativePath)) return null;
+  return `project://${relativePath || '.'}`;
 }
 
-function projectReferencePath(projectRoot, reference) {
+function projectReferencePath(cwd, reference) {
   if (typeof reference !== 'string' || !reference.startsWith('project://')) return null;
-  const root = resolve(projectRoot);
+  const projectRoot = resolve(cwd);
   const value = reference.slice('project://'.length) || '.';
-  const path = resolve(root, value);
-  const relativePath = slashPath(relative(root, path));
+  const path = resolve(projectRoot, value);
+  const relativePath = slashPath(relative(projectRoot, path));
   if (relativePath === '..' || relativePath.startsWith('../') || isWindowsAbsolutePath(relativePath)) return null;
   return path;
 }
 
-export function isPortableRepositoryReference(projectRoot, reference) {
+export function isPortableRepositoryReference(cwd, reference) {
   if (typeof reference !== 'string' || !reference.trim()) return false;
-  if (reference.startsWith('project://')) return projectReferencePath(projectRoot, reference) !== null;
+  if (reference.startsWith('project://')) return projectReferencePath(cwd, reference) !== null;
   return canonicalRemoteReference(reference) !== null;
 }
 
-export function portableRepositoryReference(projectRoot, repository, fallbackReference = null) {
-  return repositoryRemoteReference(repository)
-    ?? projectReference(projectRoot, repository)
-    ?? (isPortableRepositoryReference(projectRoot, fallbackReference) ? fallbackReference : null);
-}
-
-export function canonicalRepositoryReference(projectRoot, repository) {
-  const root = repositoryRoot(repository);
-  if (!root) throw new Error(`Could not resolve a Git repository from ${repository}.`);
-  const reference = portableRepositoryReference(projectRoot, root);
-  if (!reference) {
-    throw new Error(
-      `Repository ${root} is outside the workflow project and has no portable remote identity. `
-      + 'Configure a Git remote before recording it as a repository snapshot.',
-    );
-  }
-  return reference;
-}
-
-export function captureRepositorySnapshot(projectRoot, repositoryInput, options = {}) {
-  const base = options.cwd ? resolve(options.cwd) : resolve(projectRoot);
-  const requested = absoluteFrom(base, repositoryInput);
-  const repository = repositoryRoot(requested);
-  if (!repository) throw new Error(`Could not resolve a Git repository from ${requested}.`);
-  const commit = git(repository, ['rev-parse', 'HEAD']);
-  if (!commit) throw new Error(`Could not resolve a Git commit from ${repository}.`);
-  return {
-    repository,
-    reference: canonicalRepositoryReference(projectRoot, repository),
-    commit,
-  };
-}
-
-export function sameRepositoryReference(left, right) {
-  if (!left || !right) return false;
-  const leftRemote = canonicalRemoteReference(left);
-  const rightRemote = canonicalRemoteReference(right);
-  if (leftRemote || rightRemote) return leftRemote !== null && leftRemote === rightRemote;
-  return String(left) === String(right);
-}
-
-function legacyReferencePath(projectRoot, reference) {
+function legacyReferencePath(cwd, reference) {
   if (typeof reference !== 'string' || !reference.trim()) return null;
   if (reference.startsWith('project://') || canonicalRemoteReference(reference)) return null;
-  return absoluteFrom(projectRoot, reference);
+  return isAbsolute(reference) || isWindowsAbsolutePath(reference)
+    ? reference
+    : resolve(cwd, reference);
 }
 
-function configuredBinding(projectRoot, reference) {
-  const value = readLocalBindings(projectRoot).repositories[reference];
+export function portableRepositoryReference(cwd, repository, fallbackReference = null) {
+  return repositoryRemoteReference(repository)
+    ?? projectReference(cwd, repository)
+    ?? (isPortableRepositoryReference(cwd, fallbackReference) ? fallbackReference : null);
+}
+
+export function captureRepositorySnapshot(cwd, repositoryInput) {
+  const requested = isAbsolute(repositoryInput) || isWindowsAbsolutePath(repositoryInput)
+    ? repositoryInput
+    : resolve(cwd, repositoryInput);
+  const repository = repositoryRoot(requested);
+  if (!repository) throw new Error(`Could not resolve a Git repository from ${requested}`);
+  const commit = git(repository, ['rev-parse', 'HEAD']);
+  if (!commit) throw new Error(`Could not resolve a Git commit from ${repository}`);
+  const reference = portableRepositoryReference(cwd, repository);
+  if (!reference) {
+    throw new Error(`Repository ${repository} is outside the workflow project and has no portable remote identity. Configure a Git remote before recording it as a snapshot.`);
+  }
+  return { repository, reference, commit };
+}
+
+function configuredBinding(cwd, reference) {
+  const value = readLocalBindings(cwd).repositories[reference];
   if (!value) return null;
-  return absoluteFrom(projectRoot, value);
+  return isAbsolute(value) || isWindowsAbsolutePath(value) ? value : resolve(cwd, value);
 }
 
-function uniqueRepositoryRoots(candidates) {
+function candidateRoots(cwd, snapshot, repositoryOverride) {
+  const candidates = [];
+  if (repositoryOverride) candidates.push(repositoryOverride);
+  const binding = configuredBinding(cwd, snapshot.reference);
+  if (binding) candidates.push(binding);
+  const projectPath = projectReferencePath(cwd, snapshot.reference);
+  if (projectPath) candidates.push(projectPath);
+  candidates.push(cwd);
+  const legacyPath = legacyReferencePath(cwd, snapshot.reference);
+  if (legacyPath) candidates.push(legacyPath);
+
   const roots = [];
   const seen = new Set();
-  for (const candidate of candidates.filter(Boolean)) {
-    const root = repositoryRoot(candidate);
+  for (const candidate of candidates) {
+    const path = isAbsolute(candidate) || isWindowsAbsolutePath(candidate)
+      ? candidate
+      : resolve(cwd, candidate);
+    const root = repositoryRoot(path);
     if (!root || seen.has(root)) continue;
     seen.add(root);
     roots.push(root);
@@ -223,77 +187,69 @@ function uniqueRepositoryRoots(candidates) {
   return roots;
 }
 
-function matchesSnapshotIdentity(projectRoot, snapshot, repository) {
-  const projectPath = projectReferencePath(projectRoot, snapshot.reference);
+function matchesPortableReference(cwd, snapshot, repository) {
   if (snapshot.reference?.startsWith('project://')) {
+    const projectPath = projectReferencePath(cwd, snapshot.reference);
     return Boolean(projectPath && repositoryRoot(projectPath) === repository);
   }
+
   const expectedRemote = canonicalRemoteReference(snapshot.reference);
   if (!expectedRemote) return true;
   const actualRemote = repositoryRemoteReference(repository);
   return actualRemote === null || actualRemote === expectedRemote;
 }
 
-export function resolveRepositoryWorkspace(recordPath, snapshot, options = {}) {
+export function resolveRepositoryWorkspace(cwd, snapshot, repositoryOverride = null) {
   if (!snapshot?.commit) throw new Error('Repository snapshot does not record a Git commit.');
-  const projectRoot = repositoryProjectRoot(recordPath);
-  const cwd = options.cwd ? resolve(options.cwd) : projectRoot;
-  const override = options.repository ? absoluteFrom(cwd, options.repository) : null;
-  const candidates = [
-    override,
-    configuredBinding(projectRoot, snapshot.reference),
-    projectReferencePath(projectRoot, snapshot.reference),
-    legacyReferencePath(projectRoot, snapshot.reference),
-    cwd,
-    projectRoot,
-  ];
-
-  for (const repository of uniqueRepositoryRoots(candidates)) {
-    if (!gitSucceeds(repository, ['cat-file', '-e', `${snapshot.commit}^{commit}`])) continue;
-    if (!matchesSnapshotIdentity(projectRoot, snapshot, repository)) continue;
-    return {
-      repository,
-      reference: portableRepositoryReference(projectRoot, repository, snapshot.reference) ?? snapshot.reference,
-      commit: snapshot.commit,
-    };
+  for (const root of candidateRoots(cwd, snapshot, repositoryOverride)) {
+    if (!gitSucceeds(root, ['cat-file', '-e', `${snapshot.commit}^{commit}`])) continue;
+    if (!matchesPortableReference(cwd, snapshot, root)) continue;
+    return root;
   }
-
-  const hint = options.repository
-    ? ` using --repository ${options.repository}`
-    : ' Bind an external checkout with "design-workflow repository bind <snapshot-id> --path <checkout>" or pass --repository <path>.';
-  throw new Error(`Could not bind repository snapshot ${snapshot.id} (${snapshot.reference}) to an accessible local Git checkout${hint}`);
+  const overrideHint = repositoryOverride ? '' : ' Bind a local checkout with "design-workflow repository bind".';
+  throw new Error(`Could not resolve a local checkout for repository snapshot ${snapshot.id ?? snapshot.reference}.${overrideHint}`);
 }
 
-export function bindRepositoryWorkspace(recordPath, snapshot, repositoryInput, options = {}) {
+export function bindRepositoryWorkspace(cwd, snapshot, repositoryInput) {
   if (!snapshot?.reference || !snapshot?.commit) {
     throw new Error('Repository binding requires a repository snapshot with a reference and commit.');
   }
-  const projectRoot = repositoryProjectRoot(recordPath);
-  const cwd = options.cwd ? resolve(options.cwd) : projectRoot;
-  const requested = absoluteFrom(cwd, repositoryInput);
+  const requested = isAbsolute(repositoryInput) || isWindowsAbsolutePath(repositoryInput)
+    ? repositoryInput
+    : resolve(cwd, repositoryInput);
   const repository = repositoryRoot(requested);
-  if (!repository) throw new Error(`Could not resolve a Git repository from ${requested}.`);
+  if (!repository) throw new Error(`Could not resolve a Git repository from ${requested}`);
   if (!gitSucceeds(repository, ['cat-file', '-e', `${snapshot.commit}^{commit}`])) {
     throw new Error(`Bound repository does not contain snapshot commit ${snapshot.commit}.`);
   }
-  if (!matchesSnapshotIdentity(projectRoot, snapshot, repository)) {
+  if (!matchesPortableReference(cwd, snapshot, repository)) {
     throw new Error(`Bound repository identity does not match snapshot reference ${snapshot.reference}.`);
   }
 
-  const path = localBindingPath(projectRoot);
-  const bindings = readLocalBindings(projectRoot);
-  const relativePath = slashPath(relative(projectRoot, repository));
-  bindings.repositories[snapshot.reference] = (
-    relativePath !== '..' && !relativePath.startsWith('../') && !isWindowsAbsolutePath(relativePath)
-      ? (relativePath || '.')
-      : repository
-  );
-  ensureLocalBindingIgnored(projectRoot);
+  const path = localBindingPath(cwd);
+  const bindings = readLocalBindings(cwd);
+  const storedPath = isAbsolute(repositoryInput) || isWindowsAbsolutePath(repositoryInput)
+    ? repositoryInput
+    : slashPath(relative(cwd, repository) || '.');
+  bindings.repositories[snapshot.reference] = storedPath;
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, `${JSON.stringify(bindings, null, 2)}\n`, 'utf8');
-  return {
-    path,
-    repository,
-    reference: portableRepositoryReference(projectRoot, repository, snapshot.reference) ?? snapshot.reference,
-  };
+  return { path, repository, reference: snapshot.reference };
+}
+
+export function verifyRepositoryCommit(cwd, snapshot, commit, repositoryOverride = null) {
+  const repository = resolveRepositoryWorkspace(cwd, snapshot, repositoryOverride);
+  if (!gitSucceeds(repository, ['cat-file', '-e', `${commit}^{commit}`])) {
+    throw new Error(`Commit ${commit} does not exist in the resolved Git repository.`);
+  }
+  const head = git(repository, ['rev-parse', 'HEAD']);
+  if (head !== commit) throw new Error(`Commit ${commit} is not HEAD (${head ?? 'unavailable'}).`);
+  if (!gitSucceeds(repository, ['merge-base', '--is-ancestor', snapshot.commit, commit]) && snapshot.commit !== commit) {
+    throw new Error(`Commit ${commit} does not descend from task baseline ${snapshot.commit}.`);
+  }
+  const reference = portableRepositoryReference(cwd, repository, snapshot.reference);
+  if (!reference) {
+    throw new Error(`Resolved repository ${repository} has no portable identity for the implementation-output snapshot.`);
+  }
+  return { repository, reference };
 }

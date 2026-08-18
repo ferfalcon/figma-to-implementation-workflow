@@ -1,13 +1,11 @@
 import { existsSync } from 'node:fs';
 import { runWorkflowCli } from './commands-v2.mjs';
-import { completeTaskAtCurrentHead } from './task-completion.mjs';
-import { startTaskAtCurrentHead } from './task-lineage.mjs';
-import { mutateRecord, readStoredRecord } from './record-store.mjs';
-import {
-  bindRepositoryWorkspace, captureRepositorySnapshot, repositoryProjectRoot,
-} from './repository-binding.mjs';
+import { taskCompletionGitFindings, taskStartGitFindings } from './git-worktree-policy.mjs';
+import { readStoredRecord } from './record-store.mjs';
+import { bindRepositoryWorkspace } from './repository-binding.mjs';
 import { buildOrchestrationContext } from './orchestration-context.mjs';
 import { checkStage } from './stage-check.mjs';
+import { startTaskAtCurrentHead } from './task-lineage.mjs';
 import { deriveNextAction, stageAdvanceFindings } from './workflow-actions.mjs';
 import { workflowDiagnostics } from './workflow-diagnostics.mjs';
 import {
@@ -38,30 +36,9 @@ function load(cwd, options) {
   return { recordPath, ...readStoredRecord(recordPath) };
 }
 
-function initUsesExecutableRepository(options) {
-  return typeof options.repository === 'string'
-    && String(options.control ?? 'cli-managed').toLowerCase() !== 'markdown-only';
-}
-
-function preflightInitializedRepository(cwd, recordPath, options) {
-  if (!initUsesExecutableRepository(options)) return null;
-  return captureRepositorySnapshot(repositoryProjectRoot(recordPath), options.repository, { cwd });
-}
-
-function applyInitializedRepositoryIdentity(cwd, options, captured) {
-  if (!captured) return;
-  const recordPath = resolveRecordPath(cwd, options.record);
-  if (!existsSync(recordPath)) return;
-  mutateRecord(recordPath, (record) => {
-    const snapshot = record.snapshots.find((item) => item.id === 'SRC-REPO-001');
-    if (!snapshot) throw new Error('Initialized workflow is missing SRC-REPO-001.');
-    if (snapshot.commit !== captured.commit) {
-      throw new Error(
-        `Repository HEAD changed during initialization: expected ${captured.commit}, recorded ${snapshot.commit}. Retry initialization against a stable checkout.`,
-      );
-    }
-    snapshot.reference = captured.reference;
-  });
+function stringOption(options, name) {
+  const value = options[name];
+  return typeof value === 'string' && value.trim() ? value.trim() : null;
 }
 
 export async function runCli(args, environment) {
@@ -73,16 +50,34 @@ export async function runCli(args, environment) {
 
   if (!command || command === 'help' || options.help) {
     const result = await runWorkflowCli(args, environment);
-    write(stdout, '\nTask phases and repository binding:');
+    write(stdout, '\nTask phases:');
     write(stdout, '  design-workflow task create [--phase <0-99|P00-P99> | --id <Pxx-Txx>] ...');
-    write(stdout, '  design-workflow task start|complete ... [--repository <local-checkout>]');
-    write(stdout, '  design-workflow repository bind <SRC-REPO-id> --path <local-checkout>');
-    write(stdout, '  Local repository bindings are machine-specific and stored in ignored .workflow/local.json.');
-    write(stdout, '  --phase and --id are mutually exclusive. Without either, numbering continues in the highest existing phase.');
+    write(stdout, '  --phase and --id are mutually exclusive. Without either, numbering continues in the highest existing phase and defaults to Phase 01.');
     write(stdout, '\nAgent orchestration:');
     write(stdout, '  design-workflow context [--json]');
     write(stdout, '  design-workflow stage check [--json]');
+    write(stdout, '\nLocal repository binding:');
+    write(stdout, '  design-workflow repository bind <snapshot-id> --path <checkout>');
     return result;
+  }
+
+  if (command === 'repository' && positionals[1] === 'bind') {
+    try {
+      const snapshotId = positionals[2];
+      const repositoryPath = stringOption(options, 'path');
+      if (!snapshotId || !repositoryPath) {
+        return fail(stderr, 'Usage: design-workflow repository bind <snapshot-id> --path <checkout>');
+      }
+      const { record } = readStoredRecord(recordPath);
+      const snapshot = record.snapshots.find((item) => item.id === snapshotId && item.id.startsWith('SRC-REPO-'));
+      if (!snapshot) return fail(stderr, `Repository snapshot ${snapshotId} does not exist.`);
+      const binding = bindRepositoryWorkspace(cwd, snapshot, repositoryPath);
+      write(stdout, `Bound ${snapshotId} (${snapshot.reference}) to ${relativeDisplay(cwd, binding.repository)}.`);
+      write(stdout, `Local binding: ${relativeDisplay(cwd, binding.path)}`);
+      return 0;
+    } catch (error) {
+      return fail(stderr, error instanceof Error ? error.message : String(error));
+    }
   }
 
   if (command === 'context') {
@@ -156,27 +151,13 @@ export async function runCli(args, environment) {
     }
   }
 
-  if (command === 'repository' && positionals[1] === 'bind' && positionals[2]) {
-    try {
-      if (typeof options.path !== 'string' || !options.path.trim()) throw new Error('--path <local-checkout> is required.');
-      const { record } = readStoredRecord(recordPath);
-      const snapshot = record.snapshots.find((item) => item.id === positionals[2] && item.id.startsWith('SRC-REPO-'));
-      if (!snapshot) throw new Error(`Repository snapshot ${positionals[2]} not found.`);
-      const binding = bindRepositoryWorkspace(recordPath, snapshot, options.path, { cwd });
-      write(stdout, `Bound ${snapshot.id} to local checkout ${binding.repository}`);
-      write(stdout, `Local binding: ${relativeDisplay(cwd, binding.path)}`);
-      return 0;
-    } catch (error) {
-      return fail(stderr, error instanceof Error ? error.message : String(error));
-    }
-  }
-
   if (command === 'task' && positionals[1] === 'start' && positionals[2]) {
     try {
-      const start = startTaskAtCurrentHead(recordPath, positionals[2], {
-        cwd,
-        repository: options.repository,
-      });
+      const { recordPath: path, record } = load(cwd, options);
+      const task = record.tasks.find((item) => item.id === positionals[2]);
+      const findings = task ? taskStartGitFindings(path, record, task) : [];
+      if (findings.length > 0) return fail(stderr, findings.join('\n'));
+      const start = startTaskAtCurrentHead(path, positionals[2]);
       write(stdout, `Started ${positionals[2]} from ${start.baseline} at HEAD ${start.commit}`);
       return 0;
     } catch (error) {
@@ -186,9 +167,14 @@ export async function runCli(args, environment) {
 
   if (command === 'task' && positionals[1] === 'complete' && positionals[2]) {
     try {
-      const completed = completeTaskAtCurrentHead(recordPath, positionals[2], options, { cwd });
-      write(stdout, `Completed ${positionals[2]}; output ${completed.outputId} at HEAD ${completed.commit}`);
-      return 0;
+      const { recordPath: path, record } = load(cwd, options);
+      const diagnostics = workflowDiagnostics(path, record);
+      const task = record.tasks.find((item) => item.id === positionals[2]);
+      const findings = [
+        ...diagnostics.findings,
+        ...(task ? taskCompletionGitFindings(path, record, task, options.commit) : []),
+      ];
+      if (findings.length > 0) return fail(stderr, findings.join('\n'));
     } catch (error) {
       return fail(stderr, error instanceof Error ? error.message : String(error));
     }
@@ -198,28 +184,11 @@ export async function runCli(args, environment) {
   if (command === 'task' && positionals[1] === 'create' && options.phase !== undefined) {
     try {
       const { record } = load(cwd, options);
-      workflowArgs = normalizeTaskCreateArgs(args, record.tasks ?? [], parsed);
+      workflowArgs = normalizeTaskCreateArgs(args, record.tasks, parsed);
     } catch (error) {
       return fail(stderr, error instanceof Error ? error.message : String(error));
     }
   }
 
-  let initializedRepository = null;
-  if (command === 'init') {
-    try {
-      initializedRepository = preflightInitializedRepository(cwd, recordPath, options);
-    } catch (error) {
-      return fail(stderr, error instanceof Error ? error.message : String(error));
-    }
-  }
-
-  const result = await runWorkflowCli(workflowArgs, environment);
-  if (result === 0 && command === 'init') {
-    try {
-      applyInitializedRepositoryIdentity(cwd, options, initializedRepository);
-    } catch (error) {
-      return fail(stderr, `Workflow initialized but repository identity finalization failed: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  }
-  return result;
+  return runWorkflowCli(workflowArgs, environment);
 }

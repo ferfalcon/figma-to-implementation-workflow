@@ -132,23 +132,21 @@ See [`../source-adapters/EXISTING-WEBSITE.md`](../source-adapters/EXISTING-WEBSI
 
 ### Repositories
 
-Record repository identity, commit SHA, role, branch for context, relevant package or directory, lockfile or submodule state, uncommitted patch when applicable, and access limitations.
+Record repository URL, commit SHA, role, branch for context, relevant package or directory, lockfile or submodule state, uncommitted patch when applicable, and access limitations.
 
 Use the commit SHA as the pin. A branch name alone is mutable and insufficient.
 
-For CLI-managed repository snapshots, separate **canonical repository identity** from the machine-local checkout used to run Git commands:
+The canonical repository snapshot must describe repository **identity**, not one machine's checkout location. Never intentionally persist paths such as `/Users/name/project`, `C:\work\project`, or a temporary CI workspace as the repository reference.
 
-- prefer a credential-free canonical remote identity when the repository has a usable remote;
-- otherwise use `project://.` or `project://<relative-path>` when the repository is contained inside the workflow project;
-- do not create a new canonical repository snapshot that persists an external machine-specific absolute path;
-- an external repository with no portable remote identity must gain a remote before it can be captured as a new workflow snapshot;
-- resolve the active local checkout at execution time from the project checkout, explicit `--repository <path>`, or a machine-local binding;
-- store persistent machine-local bindings only in Git-ignored `.workflow/local.json` with `design-workflow repository bind <snapshot-id> --path <checkout>`;
-- legacy snapshots containing an old absolute path remain readable and may rebind by pinned commit identity; newly created task-start/output snapshots use the portable identity discovered from the current checkout.
+For CLI-managed records:
 
-Canonical remote normalization removes transport credentials and normalizes common SSH/HTTPS forms to one repository identity. A local binding never changes snapshot identity or commit lineage and must not be committed as project workflow state.
+- prefer a credential-free canonical remote identity such as `https://github.com/owner/repository` when the checkout has a usable Git remote;
+- when the repository is inside the workflow project but has no remote, use the portable `project://.` or `project://relative/path` form;
+- keep the local checkout path outside the canonical record;
+- use `.workflow/local.json` only as a local, Git-ignored binding when the canonical repository and workflow project live in different directories;
+- preserve older absolute-path records for compatibility, but rewrite them to a portable identity on a later successful mutation when the same repository can be resolved safely.
 
-Do not rewrite a snapshot merely because the same repository was cloned to a different machine or directory. The repository identity and pinned commit are canonical; the local workspace is an execution binding.
+Repository binding and repository identity are deliberately separate. The canonical reference answers **which repository?**; the local binding answers **where is its checkout on this machine?**. A local binding must never change snapshot identity or bypass the recorded commit pin.
 
 Repository snapshot roles typically progress as:
 
@@ -158,11 +156,9 @@ Input baseline → Task start → Implementation output → Next task start
 
 A single commit may serve as both one task's Implementation output and the next task's Task start. Reference the same snapshot ID rather than duplicating it.
 
-When approved planning or workflow-control commits exist after the recorded repository anchor but before implementation begins, `task start` records the actual clean `HEAD` as a new immutable **Task start** snapshot and parents it to the prior baseline or latest Implementation output. This preserves the real execution chain rather than pretending implementation started from an older commit.
+For CLI-managed task execution, repository cleanliness has a narrow exception for workflow-managed files: the canonical record, generated projections, and active narrative artifacts registered in the record may remain dirty. Every staged, unstaged, or untracked path outside that set blocks task start or task completion.
 
-A task-start checkpoint is allowed only when the commits between the recorded anchor and `HEAD` affect workflow-owned planning/control paths. Committed implementation-scope changes in that gap are unexpected repository changes and block task start until assessed.
-
-Before task start, approved planning artifacts must therefore be committed. Canonical workflow-control files may be dirty because the CLI updates them while recording state, but uncommitted implementation-scope files block execution.
+The commit pinned as an Implementation output must not modify workflow-managed files. Stage and commit implementation deliverables separately. When another task follows, leave workflow-managed changes dirty so `HEAD` remains the prior Implementation output used by the next task. Commit workflow/documentation state separately after the sequential task chain, or only when lineage is explicitly repinned. See [`State-Ownership.md`](State-Ownership.md).
 
 Express permits one task and therefore normally has one Task start and one Implementation output.
 
@@ -201,20 +197,18 @@ Approved implementation naturally changes the repository and runtime.
 
 When a task completes successfully:
 
-1. require the implementation output commit to equal repository `HEAD`;
-2. require that commit to descend from the task-start snapshot;
-3. require no uncommitted implementation-scope changes to remain;
-4. keep canonical workflow-control files out of the implementation output commit;
-5. create a new `SRC-REPO-*` record with role Implementation output;
-6. record the output commit SHA;
-7. connect it to the task-start snapshot and task ID;
-8. use it as the next task's Task start when applicable;
-9. update the active baseline owner, task record, and control state;
+1. confirm no implementation-scope path remains dirty;
+2. confirm the recorded output commit does not modify workflow-managed files;
+3. create a new `SRC-REPO-*` record with role Implementation output;
+4. record the output commit SHA;
+5. connect it to the task-start snapshot and task ID;
+6. use it as the next task's Task start when applicable;
+7. update the active baseline owner, task record, and control state;
+8. when another task follows, preserve the output commit as `HEAD` and leave workflow-managed changes uncommitted;
+9. commit workflow/documentation state separately when doing so will not invalidate the next task's recorded start state;
 10. do not roll the workflow back merely because the approved task changed the repository.
 
-Workflow-control state may be committed separately before the next task. If that produces a new `HEAD`, the next `task start` records a Task start checkpoint parented to the latest Implementation output, preserving both implementation and workflow-control history without mixing their commit responsibilities.
-
-For Express, the lineage and validation state are recorded inside `WORKPACK.md`. A second independent next task requires an upgrade.
+For Express, the same lineage semantics apply even though the narrative evidence is consolidated in `WORKPACK.md`. A second independent next task requires an upgrade.
 
 When the output is deployed for validation:
 
@@ -271,10 +265,8 @@ Before final acceptance, verify:
 - every referenced snapshot ID exists in the active baseline owner;
 - no artifact or workpack section silently depends on newer input content;
 - the original repository input baseline is identified;
-- repository snapshot identity is portable and machine-local checkout bindings remain outside canonical workflow state;
-- each implemented task identifies the exact repository snapshot from which it actually started;
-- the implementation commit is a pinned `SRC-REPO-*` Implementation output parented to that task-start snapshot;
-- implementation-output commits exclude workflow-control files and leave no uncommitted implementation-scope changes;
+- the implementation commit is a pinned `SRC-REPO-*` Implementation output;
+- the pinned Implementation output excludes workflow-managed files;
 - the validation runtime is a pinned `SRC-RUN-*` snapshot tied to that output when applicable;
 - unexpected input changes received impact assessment;
 - expected task outputs have complete lineage;

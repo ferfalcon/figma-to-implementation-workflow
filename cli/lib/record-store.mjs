@@ -4,6 +4,9 @@ import {
 } from 'node:fs';
 import { dirname, isAbsolute, resolve } from 'node:path';
 import { renderGeneratedState } from './generated-state.mjs';
+import {
+  isPortableRepositoryReference, portableRepositoryReference, resolveRepositoryWorkspace,
+} from './repository-binding.mjs';
 import { inspectWorkflowRecord, validateWorkflowRecord } from '../../scripts/lib/validate-workflow-record.mjs';
 
 const recordVersions = new WeakMap();
@@ -48,9 +51,64 @@ function isStrictRepair(before, after) {
   return after.every((finding) => beforeSet.has(finding));
 }
 
+function projectRootForRecord(recordPath) {
+  return resolve(dirname(recordPath), '..');
+}
+
+function repositorySnapshots(record) {
+  return record.schemaVersion === 2
+    ? record.snapshots.filter((snapshot) => snapshot.id?.startsWith('SRC-REPO-') && snapshot.commit)
+    : [];
+}
+
+function isBindingConfigurationError(error) {
+  return error instanceof Error && error.message.startsWith('Local repository binding file');
+}
+
+function hydrateRepositoryReferences(recordPath, record) {
+  const projectRoot = projectRootForRecord(recordPath);
+  for (const snapshot of repositorySnapshots(record)) {
+    try {
+      snapshot.reference = resolveRepositoryWorkspace(projectRoot, snapshot);
+    } catch (error) {
+      if (isBindingConfigurationError(error)) throw error;
+    }
+  }
+  return record;
+}
+
+function canonicalizeRepositoryReferences(recordPath, candidate, currentRecord = null) {
+  const projectRoot = projectRootForRecord(recordPath);
+  const currentSnapshots = new Map((currentRecord?.snapshots ?? []).map((snapshot) => [snapshot.id, snapshot]));
+  for (const snapshot of repositorySnapshots(candidate)) {
+    let repository = null;
+    try {
+      repository = resolveRepositoryWorkspace(projectRoot, snapshot);
+      const previousReference = currentSnapshots.get(snapshot.id)?.reference;
+      const parentReference = snapshot.parent ? currentSnapshots.get(snapshot.parent)?.reference : null;
+      const reference = portableRepositoryReference(
+        projectRoot,
+        repository,
+        previousReference ?? parentReference ?? snapshot.reference,
+      );
+      if (reference) snapshot.reference = reference;
+    } catch (error) {
+      if (isBindingConfigurationError(error)) throw error;
+    }
+
+    if (!currentSnapshots.has(snapshot.id) && !isPortableRepositoryReference(projectRoot, snapshot.reference)) {
+      throw new Error(`Repository snapshot ${snapshot.id} has no portable identity. Configure a Git remote or keep the repository inside the workflow project before recording the snapshot.`);
+    }
+    if (!currentSnapshots.has(snapshot.id) && snapshot.reference.startsWith('project://') && !repository) {
+      throw new Error(`Repository snapshot ${snapshot.id} uses project-relative identity ${snapshot.reference}, but that path does not resolve to a Git repository containing pinned commit ${snapshot.commit}.`);
+    }
+  }
+  return candidate;
+}
+
 function verifyArtifactFiles(recordPath, record, fileSet) {
   if (record.schemaVersion !== 2) return [];
-  const projectRoot = resolve(dirname(recordPath), '..');
+  const projectRoot = projectRootForRecord(recordPath);
   const findings = [];
   for (const artifact of record.artifacts) {
     if (artifact.status === 'Superseded') continue;
@@ -160,7 +218,7 @@ export function prepareRecordMutation(recordPath, options = {}) {
   return {
     ...stored,
     findings: validateWorkflowRecord(stored.record),
-    candidate: structuredClone(stored.record),
+    candidate: hydrateRepositoryReferences(recordPath, structuredClone(stored.record)),
   };
 }
 
@@ -197,6 +255,8 @@ export function commitRecordCandidate({
     if (requireClean && beforeFindings.length > 0 && !repair) {
       throw new Error(`Current workflow record is invalid:\n${beforeFindings.map((item) => `- ${item}`).join('\n')}`);
     }
+
+    canonicalizeRepositoryReferences(recordAbsolute, candidate, current);
 
     const narrativeChanges = normalizeFileChanges(fileChanges);
     for (const [path, change] of narrativeChanges) {
