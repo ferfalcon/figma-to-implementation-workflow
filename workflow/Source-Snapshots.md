@@ -156,16 +156,18 @@ Input baseline → Task start → Implementation output → Next task start
 
 A task's executable repository baseline must be an Immutable repository snapshot with a commit SHA and role Input baseline, Task start, or Implementation output. Incomplete tasks must not execute from Superseded, Invalid, or Unverified repository state.
 
-A schema-v2 **Task start** snapshot is an exact checkpoint, not a loose label. It must be an Immutable `SRC-REPO-*` snapshot with a commit SHA, a repository-snapshot parent, and the task ID. The task must point back to that snapshot as its baseline. An **Implementation output** likewise points to its producing task, and the task points back to that output.
+A schema-v2 **Task start** snapshot is an exact checkpoint, not a loose label. It must be an Immutable `SRC-REPO-*` snapshot with a commit SHA, an executable repository-snapshot parent, and the task ID. The task must point back to the current Task-start snapshot as its baseline. An **Implementation output** likewise points to its producing task, and the task points back to that output.
 
 A single commit may serve as both one task's Implementation output and the next task's Task start. Reference the same snapshot ID rather than duplicating it.
 
 Before task start, approved planning and task narratives must be committed so the implementation instructions are reproducible. The canonical record and generated projections may remain dirty because the CLI updates those control files while recording workflow state. Any other staged, unstaged, or untracked path blocks task start.
 
-At task start, compare repository `HEAD` with the effective repository anchor: the latest active Implementation output when it belongs to the same repository and is an ancestor of `HEAD`, otherwise the task's planned repository baseline.
+At task start, compare repository `HEAD` with the effective repository comparison anchor: the latest active Implementation output when it belongs to the same repository and is an ancestor of `HEAD`, otherwise the task's planned repository baseline.
 
 - when `HEAD` equals that anchor, reuse the existing repository snapshot;
-- when `HEAD` descends from the anchor, inspect **every intervening commit** from the anchor through `HEAD`; only when every touched path is workflow-managed planning/control state may the CLI create a new immutable **Task start** snapshot at the actual `HEAD` and parent it to the anchor;
+- when `HEAD` descends from the anchor, inspect **every intervening commit** from the comparison anchor through `HEAD`; only when every touched path is workflow-managed planning/control state may the CLI create a new immutable **Task start** snapshot at the actual `HEAD`;
+- normally the new Task start parents the comparison anchor;
+- when replanning restarts the same task from a previous Task-start checkpoint, compare history from that previous start commit, preserve the previous start as a Superseded Historical reference that points to the replacement, and parent the replacement to the previous start's executable parent or the latest applicable Implementation output;
 - when any intervening commit touches an implementation-scope path, block task start and require impact assessment instead of silently rebasing the task—even if a later commit reverts that implementation change and the endpoint tree appears clean.
 
 The history-level rule is intentional. Task-start lineage records not only the final tree difference but whether implementation-scope work occurred between the approved repository anchor and the exact task start.
@@ -176,9 +178,11 @@ This permits legitimate committed workflow bookkeeping between tasks without los
 Input baseline → Task start → Implementation output → Task start → Implementation output
 ```
 
+A rewind or profile upgrade discovered during Stage 10 invalidates the current execution attempt: the task returns to `Ready`, `state.currentTask` is cleared, and execution-time validation evidence is reset to `Not executed`. Replanning does not silently reuse prior Passed evidence. A later restart establishes or reuses an exact repository checkpoint under the rules above.
+
 Task completion has a different cleanliness boundary. Workflow-managed narrative/control files may remain dirty, but implementation-scope files may not. The commit pinned as an Implementation output must not modify workflow-managed files; stage and commit implementation deliverables separately.
 
-Express permits one task and therefore normally has one Task start and one Implementation output.
+Express permits one task and therefore normally has one current Task start and one Implementation output; superseded restart checkpoints may remain visible as Historical references.
 
 ### Runtime deployments
 
@@ -227,7 +231,7 @@ When a task completes successfully:
 6. update the active baseline owner, task record, and control state;
 7. use that output as the next task's repository anchor when applicable;
 8. if workflow-managed changes are committed before the next task, capture their resulting `HEAD` as a new Task start checkpoint rather than pretending the next task began from the older output;
-9. reject the next task start if **any commit** between the prior repository anchor and that task start touched implementation scope, including changes that were later reverted;
+9. reject the next task start if **any commit** between the prior repository comparison anchor and that task start touched implementation scope, including changes that were later reverted;
 10. do not roll the workflow back merely because the approved task changed the repository.
 
 For Express, the same lineage semantics apply even though the narrative evidence is consolidated in `WORKPACK.md`. A second independent next task requires an upgrade.
@@ -288,7 +292,8 @@ Before final acceptance, verify:
 - no artifact or workpack section silently depends on newer input content;
 - the original repository input baseline is identified;
 - every implemented task identifies the repository snapshot from which it actually started;
-- each Task start checkpoint is immutable, committed, parented to its prior repository anchor, and attributed reciprocally to its task;
+- each current Task start checkpoint is immutable, committed, parented to an executable repository anchor, and attributed reciprocally to its task;
+- superseded task-start attempts remain visible as Historical references rather than being repointed or deleted;
 - the implementation commit is a pinned `SRC-REPO-*` Implementation output parented to that Task start snapshot;
 - every Implementation output and producing task reference each other consistently;
 - the latest output pointer references an Active output produced by a Complete task;
