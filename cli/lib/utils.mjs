@@ -62,12 +62,38 @@ export function nextId(items, prefix, field = 'id') {
   return `${prefix}${String(highest + 1).padStart(3, '0')}`;
 }
 
-export function nextTaskId(tasks) {
-  const highest = tasks.reduce((max, task) => {
-    const match = /^P01-T(\d{2})$/.exec(task.id ?? '');
-    return match ? Math.max(max, Number(match[1])) : max;
-  }, 0);
-  return `P01-T${String(highest + 1).padStart(2, '0')}`;
+export function parseTaskId(value) {
+  if (typeof value !== 'string') return null;
+  const match = /^P(\d{2})-T(\d{2})$/.exec(value.trim());
+  if (!match) return null;
+  return {
+    id: `P${match[1]}-T${match[2]}`,
+    phase: Number(match[1]),
+    task: Number(match[2]),
+    phaseLabel: match[1],
+    taskLabel: match[2],
+  };
+}
+
+export function normalizeTaskPhase(value) {
+  const text = typeof value === 'string' || typeof value === 'number' ? String(value).trim() : '';
+  const match = /^P?(\d{1,2})$/i.exec(text);
+  if (!match) throw new Error('--phase must be a phase number from 0 to 99, optionally prefixed with P.');
+  return Number(match[1]);
+}
+
+export function nextTaskId(tasks, phaseValue = null) {
+  const parsed = tasks.map((task) => parseTaskId(task?.id)).filter(Boolean);
+  const phase = phaseValue === null || phaseValue === undefined
+    ? (parsed.length > 0 ? Math.max(...parsed.map((task) => task.phase)) : 1)
+    : normalizeTaskPhase(phaseValue);
+  const highest = parsed.reduce((max, task) => (
+    task.phase === phase ? Math.max(max, task.task) : max
+  ), 0);
+  if (highest >= 99) {
+    throw new Error(`Phase ${String(phase).padStart(2, '0')} already contains Task 99; choose another phase or an explicit task ID.`);
+  }
+  return `P${String(phase).padStart(2, '0')}-T${String(highest + 1).padStart(2, '0')}`;
 }
 
 export function artifactType(value) {
