@@ -150,6 +150,7 @@ try {
   }
   syncGeneratedState(recordPath, record);
   const context = buildOrchestrationContext(recordPath, record, { cwd: directory });
+  assert(context.protocolVersion === 2, 'Initialized context must advertise protocol version 2.');
   assert(
     context.execution.resources.required.some((resource) => resource.path === 'prompts/06-architecture.md'),
     'Context payload must expose the stage-local required-resource manifest.',

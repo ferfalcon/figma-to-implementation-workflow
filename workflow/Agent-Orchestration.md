@@ -18,6 +18,8 @@ design-workflow context --json
 
 Treat the returned `protocolVersion` independently from the workflow record `schemaVersion`.
 
+Initialized CLI-managed context payloads that expose the minimal resource manifest use protocol v2. Uninitialized/missing-record context remains a separate bootstrap path and does not imply the initialized protocol contract.
+
 The context reports:
 
 - project profile and execution mode;
