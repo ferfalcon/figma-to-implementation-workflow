@@ -1,5 +1,6 @@
 import { relative } from 'node:path';
 import { STAGES } from './workflow-model.mjs';
+import { toolkitPinFromRecord } from './toolkit-source.mjs';
 import { deriveNextAction, readyTask } from './workflow-actions.mjs';
 import { workflowDiagnostics } from './workflow-diagnostics.mjs';
 import { checkStage } from './stage-check.mjs';
@@ -76,6 +77,33 @@ function taskSummary(task) {
   };
 }
 
+function toolkitSummary(record) {
+  const pin = toolkitPinFromRecord(record);
+  if (!pin) {
+    return {
+      pinned: false, repository: null, version: null, commit: null, snapshot: null, ambiguous: false,
+    };
+  }
+  return {
+    pinned: true,
+    repository: pin.repository,
+    version: pin.version,
+    commit: pin.commit,
+    snapshot: pin.snapshot,
+    ambiguous: pin.ambiguous,
+  };
+}
+
+function promptSource(toolkit, path) {
+  if (!path || !toolkit.pinned || toolkit.ambiguous) return null;
+  return {
+    repository: toolkit.repository,
+    version: toolkit.version,
+    commit: toolkit.commit,
+    path,
+  };
+}
+
 export function canEditImplementation(record, diagnostics, currentTask) {
   return (
     diagnostics.valid
@@ -99,6 +127,8 @@ export function buildOrchestrationContext(recordPath, record, { cwd }) {
   const nextReadyTask = readyTask(record) ?? null;
   const check = checkStage(recordPath, record);
   const implementationAllowed = canEditImplementation(record, diagnostics, currentTask);
+  const toolkit = toolkitSummary(record);
+  const prompt = STAGE_PROMPTS[stage] ?? null;
 
   return {
     protocolVersion: 1,
@@ -114,6 +144,7 @@ export function buildOrchestrationContext(recordPath, record, { cwd }) {
       profile: record.project.profile,
       executionMode: record.project.executionMode,
     },
+    toolkit,
     workflow: diagnostics,
     stage: {
       number: stage,
@@ -123,7 +154,8 @@ export function buildOrchestrationContext(recordPath, record, { cwd }) {
     },
     execution: {
       kind: executionKind(record, diagnostics),
-      prompt: STAGE_PROMPTS[stage] ?? null,
+      prompt,
+      promptSource: promptSource(toolkit, prompt),
       primaryArtifactTypes: targets,
       artifacts: targetArtifacts.map((artifact) => ({
         id: artifact.id,
