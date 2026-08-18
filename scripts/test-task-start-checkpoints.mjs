@@ -42,6 +42,7 @@ try {
   const task1 = { id: 'P01-T01', baseline: 'SRC-REPO-001' };
   const task2 = { id: 'P01-T02', baseline: 'SRC-REPO-001' };
   const task3 = { id: 'P01-T03', baseline: 'SRC-REPO-001' };
+  const task4 = { id: 'P01-T04', baseline: 'SRC-REPO-001' };
   const record = {
     state: { latestOutput: null },
     snapshots: [{
@@ -55,7 +56,7 @@ try {
     artifacts: [{
       id: 'ART-PLAN', type: 'PLAN', path: 'PLAN.md', status: 'Approved', baseline: ['SRC-REPO-001'],
     }],
-    tasks: [task1, task2, task3],
+    tasks: [task1, task2, task3, task4],
   };
 
   writeFileSync(join(cwd, 'PLAN.md'), '# Approved plan\n', 'utf8');
@@ -97,16 +98,32 @@ try {
   assert(secondStartSnapshot?.commit === controlCommit, 'Second task start did not pin the workflow-control HEAD.');
   assert(secondStartSnapshot?.parent === 'SRC-REPO-003', 'Second task start does not descend from the prior implementation output.');
 
-  writeFileSync(join(cwd, 'unexpected.js'), 'export const unexpected = true;\n', 'utf8');
-  git(cwd, ['add', 'unexpected.js']);
-  git(cwd, ['commit', '-m', 'Unexpected implementation change']);
+  writeFileSync(join(cwd, 'transient.js'), 'export const transient = true;\n', 'utf8');
+  git(cwd, ['add', 'transient.js']);
+  git(cwd, ['commit', '-m', 'Add transient implementation change']);
+  const transientCommit = git(cwd, ['rev-parse', 'HEAD']);
+  git(cwd, ['revert', '--no-edit', transientCommit]);
+  writeFileSync(recordPath, '{"control":"updated-again"}\n', 'utf8');
+  git(cwd, ['add', '.workflow/workflow-record.json']);
+  git(cwd, ['commit', '-m', 'Record additional workflow state']);
+
   expectThrow(
     () => resolveTaskStartBaseline(recordPath, record, task3),
     'implementation-scope paths before task start',
   );
-  assert(task3.baseline === 'SRC-REPO-001', 'Rejected task start mutated the task baseline.');
+  assert(task3.baseline === 'SRC-REPO-001', 'Reverted-history rejection mutated the task baseline.');
 
-  console.log('Task-start planning, control-checkpoint, and unexpected-change tests passed.');
+  git(cwd, ['reset', '--hard', controlCommit]);
+  writeFileSync(join(cwd, 'unexpected.js'), 'export const unexpected = true;\n', 'utf8');
+  git(cwd, ['add', 'unexpected.js']);
+  git(cwd, ['commit', '-m', 'Unexpected implementation change']);
+  expectThrow(
+    () => resolveTaskStartBaseline(recordPath, record, task4),
+    'implementation-scope paths before task start',
+  );
+  assert(task4.baseline === 'SRC-REPO-001', 'Rejected task start mutated the task baseline.');
+
+  console.log('Task-start planning, control-checkpoint, full-history, and unexpected-change tests passed.');
 } finally {
   rmSync(cwd, { recursive: true, force: true });
 }
