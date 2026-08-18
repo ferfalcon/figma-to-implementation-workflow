@@ -138,11 +138,15 @@ Use the commit SHA as the pin. A branch name alone is mutable and insufficient.
 
 For CLI-managed repository snapshots, separate **canonical repository identity** from the machine-local checkout used to run Git commands:
 
-- prefer the canonical remote URL when the repository has a usable `origin`;
-- otherwise prefer a path relative to the project root when the checkout is inside the project;
-- use an absolute local path only when no portable identity is available;
-- resolve the active local checkout at execution time from the project checkout or explicit `--repository <path>`;
-- legacy snapshots containing an old absolute path may rebind to the current checkout when the pinned commit proves repository compatibility.
+- prefer a credential-free canonical remote identity when the repository has a usable remote;
+- otherwise use `project://.` or `project://<relative-path>` when the repository is contained inside the workflow project;
+- do not create a new canonical repository snapshot that persists an external machine-specific absolute path;
+- an external repository with no portable remote identity must gain a remote before it can be captured as a new workflow snapshot;
+- resolve the active local checkout at execution time from the project checkout, explicit `--repository <path>`, or a machine-local binding;
+- store persistent machine-local bindings only in Git-ignored `.workflow/local.json` with `design-workflow repository bind <snapshot-id> --path <checkout>`;
+- legacy snapshots containing an old absolute path remain readable and may rebind by pinned commit identity; newly created task-start/output snapshots use the portable identity discovered from the current checkout.
+
+Canonical remote normalization removes transport credentials and normalizes common SSH/HTTPS forms to one repository identity. A local binding never changes snapshot identity or commit lineage and must not be committed as project workflow state.
 
 Do not rewrite a snapshot merely because the same repository was cloned to a different machine or directory. The repository identity and pinned commit are canonical; the local workspace is an execution binding.
 
@@ -267,6 +271,7 @@ Before final acceptance, verify:
 - every referenced snapshot ID exists in the active baseline owner;
 - no artifact or workpack section silently depends on newer input content;
 - the original repository input baseline is identified;
+- repository snapshot identity is portable and machine-local checkout bindings remain outside canonical workflow state;
 - each implemented task identifies the exact repository snapshot from which it actually started;
 - the implementation commit is a pinned `SRC-REPO-*` Implementation output parented to that task-start snapshot;
 - implementation-output commits exclude workflow-control files and leave no uncommitted implementation-scope changes;
