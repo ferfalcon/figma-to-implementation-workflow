@@ -82,7 +82,9 @@ function commitPaths(repository, commit) {
 
 function rangePaths(repository, fromCommit, toCommit) {
   if (fromCommit === toCommit) return [];
-  const output = gitRaw(repository, ['diff', '--name-only', '-z', fromCommit, toCommit]);
+  const output = gitRaw(repository, [
+    'log', '-m', '--format=', '--name-only', '-z', '--no-renames', `${fromCommit}..${toCommit}`,
+  ]);
   if (output === null) return null;
   return [...new Set(output.split('\0').filter(Boolean).map(normalizeRepositoryPath))];
 }
@@ -124,12 +126,12 @@ export function taskStartGitFindings(recordPath, record, task) {
 
 export function taskStartCheckpointFindings(recordPath, record, repository, fromCommit, toCommit) {
   const paths = rangePaths(repository, fromCommit, toCommit);
-  if (paths === null) return ['Could not inspect committed repository changes before task start.'];
+  if (paths === null) return ['Could not inspect committed repository history before task start.'];
   const managed = workflowManagedPaths(recordPath, repository, record);
   const unexpected = paths.filter((path) => !managed.has(path));
   if (unexpected.length === 0) return [];
   return [
-    `Repository changes since ${fromCommit} include implementation-scope paths before task start: ${unexpected.join(', ')}. `
+    `Repository history since ${fromCommit} includes implementation-scope paths before task start: ${unexpected.join(', ')}. `
       + 'Review and record those upstream changes before starting the task.',
   ];
 }
