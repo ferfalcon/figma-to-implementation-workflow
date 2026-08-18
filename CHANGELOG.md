@@ -8,6 +8,19 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 
 ### Added
 
+- Repository validation that requires the `package.json` version to have a dated changelog release entry and keeps the canonical agent-orchestration contract discoverable.
+- Portable repository snapshot bindings with `design-workflow repository bind <snapshot-id> --path <checkout>` and a Git-ignored `.workflow/local.json` runtime mapping.
+- Repository-portability regression tests covering canonical remote normalization, `project://` references, moved checkouts, local bindings, legacy absolute-path healing, and rejection of new non-portable snapshots.
+
+### Changed
+
+- Promoted `workflow/Agent-Orchestration.md` to the README `Start here` sequence and required repository-contract validation.
+- Repository snapshots now persist repository identity instead of machine-specific checkout paths. CLI-managed mutations resolve local workspaces at runtime and canonicalize repository references before serialization.
+
+## [0.3.0] — 2026-08-18
+
+### Added
+
 - Focused Figma preparation authority test that requires the root launcher to delegate to the canonical adapter and rejects duplicated numbered procedure sections.
 - Deterministic agent-orchestration protocol with `design-workflow context --json` and `design-workflow stage check --json`.
 - Shared executable action-eligibility checks for stage advancement and task start.
