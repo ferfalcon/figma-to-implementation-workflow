@@ -4,35 +4,43 @@ This document defines how an AI design-engineering agent operates the executable
 
 ## Boundary
 
-The agent owns reasoning, source inspection, artifact prose, implementation decisions within approved scope, and evidence collection. The CLI owns executable state, stage/task legality, canonical registries, generated views, trace definitions, validation state, implementation lineage, and the recorded workflow-toolkit source pin.
+The agent owns reasoning, source inspection, artifact prose, implementation decisions within approved scope, and evidence collection. The CLI owns executable state, stage/task legality, canonical registries, generated views, trace definitions, validation state, implementation lineage, the recorded workflow-toolkit source pin, and selection of workflow resources for the current turn.
 
 Never infer executable state from narrative Markdown when `.workflow/workflow-record.json` exists. Never manually edit generated views.
 
-## Handshake
+## Agent packet handshake
 
 Begin every CLI-managed workflow turn with:
+
+```bash
+design-workflow agent-context --json
+```
+
+`design-workflow context --agent --json` is an equivalent alias. The packet uses `protocolVersion: 2`; treat that independently from the workflow record `schemaVersion`.
+
+The packet is the preferred agent bootstrap because it returns resolved operational state plus the workflow resources required for the current turn. It reports:
+
+- project profile and execution mode;
+- the pinned workflow-toolkit repository, package version, commit, and source snapshot when available;
+- current stage, execution kind, and policy;
+- active source snapshots and latest verification;
+- current target artifact types and registered artifact paths;
+- the full current task plus Ready-task summaries;
+- architecture/profile-transition state;
+- workflow health and generated-view freshness;
+- stage preflight and whether code edits are permitted;
+- the next permitted action;
+- the resolved stage prompt, stage-specific guidance, and any template required for a missing target artifact.
+
+The lower-level compatibility handshake remains available:
 
 ```bash
 design-workflow context --json
 ```
 
-Treat the returned `protocolVersion` independently from the workflow record `schemaVersion`.
+That protocol-v1 command exposes resolved state and resource paths but does not build the protocol-v2 turn packet. Prefer it for diagnostics and existing integrations.
 
-The context reports:
-
-- project profile and execution mode;
-- the pinned workflow-toolkit repository, package version, commit, and source snapshot when available;
-- current stage and stage-local prompt, including a fully resolved `execution.promptSource` when the toolkit is pinned;
-- active source snapshots and latest verification;
-- current target artifact types and registered artifact paths;
-- current and Ready tasks;
-- architecture/profile-transition state;
-- workflow health and generated-view freshness;
-- stage preflight;
-- whether code edits are permitted;
-- the next permitted action.
-
-If no record exists, initialize first. If the record is schema v1, migrate before mutation. If context reports `repair`, repair record/generated state before continuing. If a profile upgrade is in progress, reconcile and finish it before ordinary advancement.
+If no record exists, the packet embeds the intake prompt and instructs initialization. If the record is schema v1, migrate before mutation. If the packet reports `repair`, repair record/generated state before continuing. Migration and repair packets intentionally withhold ordinary stage resources.
 
 ### Toolkit source resolution
 
@@ -57,13 +65,30 @@ design-workflow toolkit pin \
 
 When `toolkit.pinned` is `true`, all workflow prompts, guidelines, templates, adapters, and normative workflow documents used for the turn must come from `toolkit.repository` at exactly `toolkit.commit`. Never fall back to `main` or another mutable ref. A package version is descriptive metadata; the commit is the immutable operational pin.
 
-If more than one toolkit snapshot is active, context reports an ambiguous pin and the workflow must be repaired before remote workflow resources are resolved. Replacing a valid existing pin is not an ordinary mutation; future toolkit upgrades must be explicit and preserve the old pin as history.
+The agent packet enforces this boundary. If the installed toolkit runtime matches the recorded repository and commit, selected resource content is returned with `resolution: embedded`. If it does not match, the packet does not embed potentially incorrect content; it returns `resolution: pinned-source-required` together with the exact `source.repository`, `source.commit`, and `source.path`. Fetch that exact source. If multiple toolkit pins are active, repair the ambiguity before ordinary workflow execution.
+
+Replacing a valid existing pin is not an ordinary mutation; toolkit upgrades must be explicit and preserve the old pin as history.
+
+## Zero-discovery execution rule
+
+For a valid CLI-managed workflow, do not recursively inspect this toolkit to rediscover the procedure. Do not walk `README.md`, `QUICKSTART.md`, `workflow/`, `prompts/`, `guidelines/`, or `templates/` after receiving a protocol-v2 packet.
+
+Consume:
+
+- `resources.stagePrompt` as the stage-local procedure;
+- `resources.guidance[*]` as stage-specific artifact guidance;
+- `resources.templates[*]` only when the CLI determines a target artifact is missing;
+- `resources.sourceAdapterPolicy` when deciding how to inspect the actual design source.
+
+For each resolved resource, use `content` when `resolution` is `embedded`. When `resolution` is `pinned-source-required`, load the exact returned `source` instead of discovering a path or mutable ref yourself.
+
+This keeps GitHub/package storage as the toolkit source of truth while making the CLI the resolver. The agent should reason about design and implementation, not about where workflow instructions live.
 
 ## Stage-local execution
 
-Load the prompt returned in `execution.prompt`. When `execution.promptSource` is present, use its repository, version, commit, and path as the authoritative remote lookup instead of reconstructing a GitHub location yourself. Perform only the responsibility of the current stage.
+Perform only the responsibility of the current stage described by the resolved stage prompt.
 
-Use the profile targets returned by `execution.primaryArtifactTypes`:
+Use `task.artifactTypes` and `task.artifacts` from the packet:
 
 - Express keeps all narrative reasoning in `WORKPACK.md`;
 - Lite uses `IMPLEMENTATION-BRIEF.md` for consolidated Stages 2–8 and separate source/audit/task/final-review artifacts;
@@ -107,7 +132,7 @@ Use only after task decomposition. At Stage 10 select one unblocked Ready task w
 
 ## Code-edit boundary
 
-Implementation code may be edited only when context reports:
+Implementation code may be edited only when the agent packet reports:
 
 ```text
 policy.codeEdits = allowed-with-current-task-scope
@@ -119,7 +144,7 @@ This requires Stage 10, a structurally clean schema-v2 workflow, and an executio
 
 Verify relevant active snapshots before stage closure and before task execution. Unexpected material upstream/concurrent changes block affected work and require a new snapshot or explicit impact assessment. Expected previous-task outputs advance repository lineage without replacing the original project input baseline.
 
-The toolkit pin is separate from the implementation-source lineage. Do not add the toolkit snapshot to artifact baselines or task baselines merely because it is recorded in `snapshots`; use it only to resolve the workflow rules/resources governing the project.
+The toolkit pin is separate from implementation-source lineage. Do not add the toolkit snapshot to artifact baselines or task baselines merely because it is recorded in `snapshots`; use it only to resolve the workflow rules/resources governing the project.
 
 ## Narrative ownership during implementation
 
