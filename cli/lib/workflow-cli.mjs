@@ -1,11 +1,12 @@
 import { existsSync } from 'node:fs';
 import { runWorkflowCli } from './commands-v2.mjs';
 import { taskCompletionGitFindings, taskStartGitFindings } from './git-worktree-policy.mjs';
-import { readStoredRecord } from './record-store.mjs';
+import { mutateRecord, readStoredRecord } from './record-store.mjs';
 import { bindRepositoryWorkspace } from './repository-binding.mjs';
 import { buildOrchestrationContext } from './orchestration-context.mjs';
 import { checkStage } from './stage-check.mjs';
 import { startTaskAtCurrentHead } from './task-lineage.mjs';
+import { addToolkitPin, runtimeToolkitPin, toolkitPinFromRecord } from './toolkit-source.mjs';
 import { deriveNextAction, stageAdvanceFindings } from './workflow-actions.mjs';
 import { workflowDiagnostics } from './workflow-diagnostics.mjs';
 import {
@@ -22,8 +23,10 @@ function contextWhenMissing(cwd, recordPath) {
     protocolVersion: 1,
     initialized: false,
     control: { mode: null, schemaVersion: null, readOnly: false, record: relativeDisplay(cwd, recordPath) },
+    toolkit: { pinned: false, repository: null, version: null, commit: null, snapshot: null, ambiguous: false },
     execution: {
-      kind: 'initialization', prompt: 'prompts/00-intake.md', primaryArtifactTypes: [], artifacts: [],
+      kind: 'initialization', prompt: 'prompts/00-intake.md', promptSource: null,
+      primaryArtifactTypes: [], artifacts: [],
       sourceAdapterPolicy: 'Select the matching source adapter after the actual design source is identified.',
     },
     policy: {
@@ -44,6 +47,19 @@ function stringOption(options, name) {
   return typeof value === 'string' && value.trim() ? value.trim() : null;
 }
 
+function toolkitOverrides(options, prefix = '') {
+  const key = (name) => prefix ? `${prefix}-${name}` : name;
+  return {
+    commit: stringOption(options, key('commit')),
+    repository: stringOption(options, key('repository')),
+    version: stringOption(options, key('version')),
+  };
+}
+
+function toolkitSummary(pin) {
+  return `${pin.repository}@${pin.version}#${pin.commit}`;
+}
+
 export async function runCli(args, environment) {
   const { cwd, stdout, stderr } = environment;
   const parsed = parseArgs(args);
@@ -59,6 +75,9 @@ export async function runCli(args, environment) {
     write(stdout, '\nAgent orchestration:');
     write(stdout, '  design-workflow context [--json]');
     write(stdout, '  design-workflow stage check [--json]');
+    write(stdout, '\nToolkit source:');
+    write(stdout, '  design-workflow toolkit show [--json]');
+    write(stdout, '  design-workflow toolkit pin --commit <40-character-sha> [--repository owner/name] [--version x.y.z]');
     write(stdout, '\nLocal repository binding:');
     write(stdout, '  design-workflow repository bind <snapshot-id> --path <checkout>');
     return result;
@@ -83,6 +102,43 @@ export async function runCli(args, environment) {
     }
   }
 
+  if (command === 'toolkit' && positionals[1] === 'show') {
+    try {
+      const { record } = readStoredRecord(recordPath);
+      const pin = toolkitPinFromRecord(record);
+      const value = pin
+        ? { pinned: true, ...pin }
+        : { pinned: false, repository: null, version: null, commit: null, snapshot: null, ambiguous: false };
+      if (options.json) json(stdout, value);
+      else if (pin) write(stdout, `Toolkit source: ${toolkitSummary(pin)} (${pin.snapshot})`);
+      else write(stdout, 'Toolkit source is not pinned.');
+      return pin?.ambiguous ? 1 : 0;
+    } catch (error) {
+      return fail(stderr, error instanceof Error ? error.message : String(error));
+    }
+  }
+
+  if (command === 'toolkit' && positionals[1] === 'pin') {
+    try {
+      const overrides = toolkitOverrides(options);
+      if (!overrides.commit) {
+        return fail(stderr, 'Usage: design-workflow toolkit pin --commit <40-character-sha> [--repository owner/name] [--version x.y.z]');
+      }
+      const pin = runtimeToolkitPin(overrides);
+      if (!pin) return fail(stderr, 'Could not resolve the workflow toolkit source. Supply --commit explicitly.');
+      let outcome;
+      mutateRecord(recordPath, (candidate) => {
+        outcome = addToolkitPin(candidate, pin);
+      });
+      write(stdout, outcome.changed
+        ? `Pinned toolkit source: ${toolkitSummary(outcome.pin)} (${outcome.pin.snapshot})`
+        : `Toolkit source already pinned: ${toolkitSummary(outcome.pin)} (${outcome.pin.snapshot})`);
+      return 0;
+    } catch (error) {
+      return fail(stderr, error instanceof Error ? error.message : String(error));
+    }
+  }
+
   if (command === 'context') {
     if (!existsSync(recordPath)) {
       const value = contextWhenMissing(cwd, recordPath);
@@ -96,9 +152,12 @@ export async function runCli(args, environment) {
       else {
         write(stdout, `${value.project.name}: Stage ${value.stage.number} — ${value.stage.name}`);
         write(stdout, `Execution: ${value.execution.kind}`);
+        write(stdout, value.toolkit.pinned
+          ? `Toolkit: ${value.toolkit.repository}@${value.toolkit.version}#${value.toolkit.commit}`
+          : 'Toolkit: unpinned');
         write(stdout, `Next action: ${value.nextAction}`);
       }
-      return value.workflow.valid ? 0 : 1;
+      return value.workflow.valid && !value.toolkit.ambiguous ? 0 : 1;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       if (options.json) {
@@ -188,6 +247,31 @@ export async function runCli(args, environment) {
       if (findings.length > 0) return fail(stderr, findings.join('\n'));
     } catch (error) {
       return fail(stderr, error instanceof Error ? error.message : String(error));
+    }
+  }
+
+  if (command === 'init') {
+    let pin;
+    try {
+      pin = runtimeToolkitPin(toolkitOverrides(options, 'toolkit'));
+    } catch (error) {
+      return fail(stderr, error instanceof Error ? error.message : String(error));
+    }
+    const result = await runWorkflowCli(args, environment);
+    if (result !== 0 || options.control === 'markdown-only') return result;
+    if (!pin) {
+      write(stdout, 'Toolkit source is unpinned. Run "design-workflow toolkit pin --commit <40-character-sha>" before relying on remote workflow resources.');
+      return result;
+    }
+    try {
+      let outcome;
+      mutateRecord(recordPath, (candidate) => {
+        outcome = addToolkitPin(candidate, pin);
+      });
+      write(stdout, `Toolkit source: ${toolkitSummary(outcome.pin)} (${outcome.pin.snapshot})`);
+      return result;
+    } catch (error) {
+      return fail(stderr, `Workflow initialized, but toolkit pinning failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
