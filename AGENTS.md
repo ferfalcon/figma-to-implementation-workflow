@@ -4,27 +4,6 @@
 
 This is a dependency-free Node.js CLI and documentation toolkit. Put normative rules in `workflow/`, source inspection guidance in `source-adapters/`, writing guidance in `guidelines/`, reusable documents in `templates/`, and stage instructions in `prompts/`. CLI code lives in `cli/` and `cli/lib/`; schemas, repository checks, fixtures, and non-normative samples live in `schemas/`, `scripts/`, `tests/fixtures/`, and `examples/` respectively.
 
-## WSL and Node Environment
-
-Develop inside WSL from the Linux checkout under `/home/fer/`; do not run Windows `node.exe` or `npm.cmd` against it. Confirm the session before working:
-
-```bash
-uname -a
-printf '%s\n' "$WSL_DISTRO_NAME"
-```
-
-The package requires Node.js 22 or newer. NVM is a shell function, so check it with `type nvm`, not only `which nvm`. If a non-interactive shell has not loaded NVM, run:
-
-```bash
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-nvm install 22
-nvm use 22
-node --version
-```
-
-If `/bin/bash` is unavailable or the WSL variables are empty, fix the WSL task/session instead of falling back to the Windows runtime.
-
 ## Build, Test, and Development Commands
 
 There is no compilation step or runtime dependency installation.
