@@ -53,6 +53,19 @@ function latestOutputAnchor(record, projectRoot, repository, head) {
   return latest;
 }
 
+function replacementParent(record, plannedBaseline, anchor, task) {
+  if (
+    plannedBaseline.role === 'Task start'
+    && plannedBaseline.task === task.id
+    && plannedBaseline.status === 'Active'
+    && anchor.id === plannedBaseline.id
+    && plannedBaseline.parent
+  ) {
+    return repositorySnapshot(record, plannedBaseline.parent) ?? anchor;
+  }
+  return anchor;
+}
+
 export function resolveTaskStartBaseline(recordPath, record, task) {
   const plannedBaseline = repositorySnapshot(record, task.baseline);
   if (!plannedBaseline?.commit) {
@@ -98,6 +111,7 @@ export function resolveTaskStartBaseline(recordPath, record, task) {
   if (checkpointFindings.length > 0) throw new Error(checkpointFindings.join('\n'));
 
   const startId = nextId(record.snapshots, 'SRC-REPO-');
+  const parent = replacementParent(record, plannedBaseline, anchor, task);
   record.snapshots.push({
     id: startId,
     role: 'Task start',
@@ -105,7 +119,7 @@ export function resolveTaskStartBaseline(recordPath, record, task) {
     status: 'Active',
     reference: repository,
     commit: head,
-    parent: anchor.id,
+    parent: parent.id,
     task: task.id,
   });
   if (
