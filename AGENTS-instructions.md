@@ -10,12 +10,22 @@ For CLI-managed projects, begin every workflow-related request with:
 design-workflow context --json
 ```
 
-Treat that context as canonical operational state. Do not determine the current stage, task, profile, output, or next action by parsing narrative or generated Markdown.
+Treat that context as canonical operational state. Do not determine the current stage, task, profile, output, toolkit revision, or next action by parsing narrative or generated Markdown.
+
+When `toolkit.pinned` is `true`, treat `toolkit.repository` + `toolkit.commit` as the exact workflow-toolkit source for the project. Prefer `execution.promptSource` over reconstructing a GitHub path yourself. Resolve any additional workflow prompts, guidelines, templates, adapters, or normative documents from that same pinned commit. Never silently fall back to `main`, another branch, a tag, or the latest package contents.
+
+If a CLI-managed project consumes workflow resources remotely and context reports `toolkit.pinned: false`, pin the intended toolkit revision before relying on mutable GitHub workflow content:
+
+```bash
+design-workflow toolkit pin --commit <40-character-sha>
+```
+
+Do not replace an existing pin implicitly. Toolkit upgrades are separate, explicit workflow changes and must preserve the previous source identity.
 
 Then:
 
 1. Respect `execution.kind`, current profile, stage, mode, blockers, and policy.
-2. Load only the returned stage prompt plus the relevant source adapter/guidelines/templates.
+2. Load only the returned stage prompt plus the relevant source adapter/guidelines/templates, all from the pinned toolkit commit when one exists.
 3. Inspect actual design/repository sources; never rely on summaries when precise sources are available.
 4. Perform only the current stage responsibility.
 5. Write narrative reasoning/evidence to the artifact(s) named by `execution.artifacts`/`primaryArtifactTypes`.
@@ -34,6 +44,8 @@ Use stable IDs from `workflow/Identifier-Conventions.md`. Keep Confirmed, Observ
 Use the source adapter that matches the actual source. `SRC-DS-*` does not by itself identify Figma, screenshots, PDF, an existing site, or mixed sources.
 
 Pin repository snapshots to commits. Treat mutable design URLs, branches, shared docs, and live sites honestly as Versioned/Time-bound/Unverified unless an immutable capture exists. Classify changes as Unchanged, Expected workflow output, Unexpected upstream or concurrent change, or Unavailable.
+
+The workflow toolkit itself is also a source. In CLI-managed remote-toolkit projects, record it as an immutable supporting-source pin and use its exact commit for all workflow-resource lookups.
 
 # Design and repository implementation
 
