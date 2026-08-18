@@ -23,7 +23,7 @@ export function buildWorkflowRecordSchemaV2() {
     $schema: 'https://json-schema.org/draft/2020-12/schema',
     $id: 'https://github.com/ferfalcon/figma-to-implementation-workflow/schemas/workflow-record.schema.json',
     title: 'Design-to-Implementation Workflow Record',
-    description: 'Canonical schema-v2 control record for workflow state, gates, source verification, artifacts, traceability, tasks, profile transitions, validation, and final review.',
+    description: 'Canonical schema-v2 control record for workflow state, toolkit identity, gates, source verification, artifacts, traceability, tasks, profile transitions, validation, and final review.',
     type: 'object',
     additionalProperties: false,
     required: [
@@ -40,6 +40,14 @@ export function buildWorkflowRecordSchemaV2() {
           name: nonEmptyString,
           profile: { enum: PROFILES },
           executionMode: { enum: MODES },
+        },
+      },
+      toolkit: {
+        type: 'object', additionalProperties: false,
+        required: ['repository', 'revision'],
+        properties: {
+          repository: nonEmptyString,
+          revision: nonEmptyString,
         },
       },
       state: {
@@ -276,4 +284,3 @@ export function buildWorkflowRecordSchemaV2() {
     },
   };
 }
-
