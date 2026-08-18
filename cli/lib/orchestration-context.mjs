@@ -1,8 +1,16 @@
-import { relative } from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import { dirname, relative, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { STAGES } from './workflow-model.mjs';
 import { deriveNextAction, readyTask } from './workflow-actions.mjs';
 import { workflowDiagnostics } from './workflow-diagnostics.mjs';
 import { checkStage } from './stage-check.mjs';
+
+const TOOLKIT_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
+const TOOLKIT_PACKAGE = JSON.parse(readFileSync(resolve(TOOLKIT_ROOT, 'package.json'), 'utf8'));
+
+export const TOOLKIT_REPOSITORY = 'ferfalcon/figma-to-implementation-workflow';
 
 export const STAGE_PROMPTS = [
   'prompts/00-intake.md',
@@ -18,6 +26,74 @@ export const STAGE_PROMPTS = [
   'prompts/10-implement-task.md',
   'prompts/11-implementation-review.md',
 ];
+
+const STAGE_REQUIRED_RESOURCES = {
+  0: [
+    'workflow/Workflow-Profiles.md',
+    'workflow/Source-Snapshots.md',
+    'workflow/Source-Authority.md',
+  ],
+  1: ['workflow/Source-Authority.md'],
+  2: ['guidelines/REQUIREMENTS.md'],
+  3: ['guidelines/DESIGN.md'],
+  4: ['guidelines/SPEC.md'],
+  5: [
+    'guidelines/REQUIREMENTS.md',
+    'guidelines/DESIGN.md',
+    'guidelines/SPEC.md',
+  ],
+  6: ['guidelines/ARCHITECTURE.md'],
+  7: ['guidelines/PLAN.md'],
+  8: ['guidelines/PLAN.md', 'workflow/Validation-Rules.md'],
+  9: ['workflow/Identifier-Conventions.md', 'workflow/Validation-Rules.md'],
+  10: ['workflow/Validation-Rules.md'],
+  11: ['workflow/Validation-Rules.md'],
+};
+
+function gitToolkitRevision() {
+  try {
+    const topLevel = execFileSync(
+      'git',
+      ['-C', TOOLKIT_ROOT, 'rev-parse', '--show-toplevel'],
+      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] },
+    ).trim();
+    if (resolve(topLevel) !== TOOLKIT_ROOT) return null;
+    return execFileSync(
+      'git',
+      ['-C', TOOLKIT_ROOT, 'rev-parse', 'HEAD'],
+      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] },
+    ).trim() || null;
+  } catch {
+    return null;
+  }
+}
+
+export function buildToolkitDescriptor() {
+  const environmentRevision = process.env.DESIGN_WORKFLOW_TOOLKIT_REVISION?.trim() || null;
+  const revision = environmentRevision ?? gitToolkitRevision();
+  return {
+    repository: TOOLKIT_REPOSITORY,
+    revision,
+    version: TOOLKIT_PACKAGE.version,
+    resolution: environmentRevision ? 'environment' : revision ? 'git-commit' : 'package-version',
+  };
+}
+
+export function buildToolkitResource(path, toolkit = buildToolkitDescriptor()) {
+  return {
+    path,
+    repository: toolkit.repository,
+    revision: toolkit.revision,
+    version: toolkit.version,
+  };
+}
+
+export function requiredResourcePathsForStage(stage) {
+  return [
+    'workflow/Agent-Orchestration.md',
+    ...(STAGE_REQUIRED_RESOURCES[stage] ?? []),
+  ];
+}
 
 export function stageTargets(record) {
   const profile = record.project.profile;
@@ -99,10 +175,12 @@ export function buildOrchestrationContext(recordPath, record, { cwd }) {
   const nextReadyTask = readyTask(record) ?? null;
   const check = checkStage(recordPath, record);
   const implementationAllowed = canEditImplementation(record, diagnostics, currentTask);
+  const toolkit = buildToolkitDescriptor();
 
   return {
-    protocolVersion: 1,
+    protocolVersion: 2,
     initialized: true,
+    toolkit,
     control: {
       mode: 'cli-managed',
       schemaVersion: record.schemaVersion,
@@ -123,7 +201,9 @@ export function buildOrchestrationContext(recordPath, record, { cwd }) {
     },
     execution: {
       kind: executionKind(record, diagnostics),
-      prompt: STAGE_PROMPTS[stage] ?? null,
+      prompt: STAGE_PROMPTS[stage] ? buildToolkitResource(STAGE_PROMPTS[stage], toolkit) : null,
+      requiredResources: requiredResourcePathsForStage(stage)
+        .map((path) => buildToolkitResource(path, toolkit)),
       primaryArtifactTypes: targets,
       artifacts: targetArtifacts.map((artifact) => ({
         id: artifact.id,
