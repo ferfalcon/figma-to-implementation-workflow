@@ -20,6 +20,37 @@ export const STAGE_PROMPTS = [
   'prompts/11-implementation-review.md',
 ];
 
+const STAGE_REQUIRED_RESOURCES = {
+  0: [
+    'workflow/Workflow-Profiles.md',
+    'workflow/Source-Snapshots.md',
+    'workflow/Source-Authority.md',
+  ],
+  1: ['workflow/Source-Authority.md'],
+  2: ['guidelines/REQUIREMENTS.md'],
+  3: ['guidelines/DESIGN.md'],
+  4: ['guidelines/SPEC.md'],
+  5: [
+    'guidelines/REQUIREMENTS.md',
+    'guidelines/DESIGN.md',
+    'guidelines/SPEC.md',
+  ],
+  6: ['guidelines/ARCHITECTURE.md'],
+  7: ['guidelines/PLAN.md'],
+  8: ['guidelines/PLAN.md', 'workflow/Validation-Rules.md'],
+  9: ['workflow/Validation-Rules.md'],
+  10: ['workflow/Validation-Rules.md'],
+  11: ['workflow/Validation-Rules.md'],
+};
+
+export function requiredResourcePathsForStage(stage) {
+  return [
+    'workflow/Agent-Orchestration.md',
+    'workflow/Identifier-Conventions.md',
+    ...(STAGE_REQUIRED_RESOURCES[stage] ?? []),
+  ].filter((path, index, paths) => paths.indexOf(path) === index);
+}
+
 export function stageTargets(record) {
   const profile = record.project.profile;
   const stage = record.state.stage;
@@ -104,6 +135,15 @@ function promptSource(toolkit, path) {
   };
 }
 
+function requiredResource(toolkit, path) {
+  return promptSource(toolkit, path) ?? {
+    repository: null,
+    version: null,
+    commit: null,
+    path,
+  };
+}
+
 export function canEditImplementation(record, diagnostics, currentTask) {
   return (
     diagnostics.valid
@@ -131,7 +171,7 @@ export function buildOrchestrationContext(recordPath, record, { cwd }) {
   const prompt = STAGE_PROMPTS[stage] ?? null;
 
   return {
-    protocolVersion: 1,
+    protocolVersion: 2,
     initialized: true,
     control: {
       mode: 'cli-managed',
@@ -156,6 +196,8 @@ export function buildOrchestrationContext(recordPath, record, { cwd }) {
       kind: executionKind(record, diagnostics),
       prompt,
       promptSource: promptSource(toolkit, prompt),
+      requiredResources: requiredResourcePathsForStage(stage)
+        .map((path) => requiredResource(toolkit, path)),
       primaryArtifactTypes: targets,
       artifacts: targetArtifacts.map((artifact) => ({
         id: artifact.id,

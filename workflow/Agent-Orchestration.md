@@ -18,11 +18,14 @@ design-workflow context --json
 
 Treat the returned `protocolVersion` independently from the workflow record `schemaVersion`.
 
+Initialized CLI-managed projects use protocol v2 so this context can act as the complete workflow bootstrap. The agent must not recursively inspect the toolkit repository to rediscover workflow structure before acting.
+
 The context reports:
 
 - project profile and execution mode;
 - the pinned workflow-toolkit repository, package version, commit, and source snapshot when available;
 - current stage and stage-local prompt, including a fully resolved `execution.promptSource` when the toolkit is pinned;
+- the exact stage-specific workflow/guideline resources required for the current turn in `execution.requiredResources`;
 - active source snapshots and latest verification;
 - current target artifact types and registered artifact paths;
 - current and Ready tasks;
@@ -59,9 +62,25 @@ When `toolkit.pinned` is `true`, all workflow prompts, guidelines, templates, ad
 
 If more than one toolkit snapshot is active, context reports an ambiguous pin and the workflow must be repaired before remote workflow resources are resolved. Replacing a valid existing pin is not an ordinary mutation; future toolkit upgrades must be explicit and preserve the old pin as history.
 
+## Resource loading
+
+For initialized CLI-managed projects, the CLI resolves the minimum workflow read set for the current turn.
+
+Load only:
+
+1. the stage prompt named by `execution.prompt` using `execution.promptSource` when present;
+2. the entries in `execution.requiredResources`;
+3. the source adapter that matches the actual source, after the source type has been established.
+
+Each `execution.requiredResources` entry always names the required toolkit path. When the toolkit is pinned and unambiguous, it also carries the same repository, version, and exact commit so a GitHub-based agent can fetch the resource without guessing its source.
+
+Do not browse `README.md`, `QUICKSTART.md`, `workflow/`, `prompts/`, `templates/`, or `guidelines/` merely to determine what the workflow expects. The CLI is the resolver. GitHub or the installed package is the storage layer.
+
+If the toolkit is unpinned and workflow resources must be consumed remotely, pin the intended toolkit commit before relying on mutable GitHub content. Do not invent a commit or silently substitute the latest repository state.
+
 ## Stage-local execution
 
-Load the prompt returned in `execution.prompt`. When `execution.promptSource` is present, use its repository, version, commit, and path as the authoritative remote lookup instead of reconstructing a GitHub location yourself. Perform only the responsibility of the current stage.
+Load the prompt returned in `execution.prompt`. When `execution.promptSource` is present, use its repository, version, commit, and path as the authoritative remote lookup instead of reconstructing a GitHub location yourself. Load the returned `execution.requiredResources` from that same pinned toolkit identity. Perform only the responsibility of the current stage.
 
 Use the profile targets returned by `execution.primaryArtifactTypes`:
 
