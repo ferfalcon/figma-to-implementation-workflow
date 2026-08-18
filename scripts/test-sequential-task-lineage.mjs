@@ -166,7 +166,7 @@ try {
   );
 
   writeFileSync(join(cwd, 'first.txt'), 'first task\n', 'utf8');
-  git(['add', '.']);
+  git(['add', 'first.txt']);
   git(['commit', '-m', 'Implement first task']);
   const firstCommit = git(['rev-parse', 'HEAD']);
   run(['task', 'complete', 'P01-T01', '--commit', firstCommit, '--check', 'Build=First build passed']);
@@ -190,7 +190,7 @@ try {
   );
 
   writeFileSync(join(cwd, 'second.txt'), 'second task\n', 'utf8');
-  git(['add', '.']);
+  git(['add', 'second.txt']);
   git(['commit', '-m', 'Implement second task']);
   const secondCommit = git(['rev-parse', 'HEAD']);
   run(['task', 'complete', 'P01-T02', '--commit', secondCommit, '--check', 'Build=Second build passed']);
