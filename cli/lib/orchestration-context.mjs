@@ -20,6 +20,42 @@ export const STAGE_PROMPTS = [
   'prompts/11-implementation-review.md',
 ];
 
+const GUIDELINES_BY_STAGE = new Map([
+  [2, ['guidelines/REQUIREMENTS.md']],
+  [3, ['guidelines/DESIGN.md']],
+  [4, ['guidelines/SPEC.md']],
+  [6, ['guidelines/ARCHITECTURE.md']],
+  [7, ['guidelines/PLAN.md']],
+  [8, ['guidelines/PLAN.md']],
+]);
+
+const TEMPLATE_BY_ARTIFACT_TYPE = new Map([
+  ['WORKPACK', 'templates/WORKPACK.template.md'],
+  ['SOURCE-BASELINE', 'templates/SOURCE-BASELINE.template.md'],
+  ['PROJECT-CONTEXT', 'templates/PROJECT-CONTEXT.template.md'],
+  ['WORKFLOW-STATE', 'templates/WORKFLOW-STATE.template.md'],
+  ['DESIGN-AUDIT', 'templates/DESIGN-AUDIT.template.md'],
+  ['IMPLEMENTATION-BRIEF', 'templates/IMPLEMENTATION-BRIEF.template.md'],
+  ['REQUIREMENTS', 'templates/REQUIREMENTS.template.md'],
+  ['DESIGN', 'templates/DESIGN.template.md'],
+  ['SPEC', 'templates/SPEC.template.md'],
+  ['DOCUMENT-REVIEW', 'templates/DOCUMENT-REVIEW.template.md'],
+  ['ARCHITECTURE', 'templates/ARCHITECTURE.template.md'],
+  ['PLAN', 'templates/PLAN.template.md'],
+  ['PLAN-REVIEW', 'templates/PLAN-REVIEW.template.md'],
+  ['TASKS-INDEX', 'templates/TASKS-INDEX.template.md'],
+  ['TASK', 'templates/TASK.template.md'],
+  ['IMPLEMENTATION-REVIEW', 'templates/IMPLEMENTATION-REVIEW.template.md'],
+]);
+
+const SOURCE_ADAPTER_CHOICES = [
+  { format: 'figma', path: 'source-adapters/FIGMA.md' },
+  { format: 'screenshots', path: 'source-adapters/SCREENSHOTS.md' },
+  { format: 'pdf', path: 'source-adapters/PDF.md' },
+  { format: 'existing-website', path: 'source-adapters/EXISTING-WEBSITE.md' },
+  { format: 'mixed-sources', path: 'source-adapters/MIXED-SOURCES.md' },
+];
+
 export function stageTargets(record) {
   const profile = record.project.profile;
   const stage = record.state.stage;
@@ -42,6 +78,78 @@ export function stageTargets(record) {
   if (stage === 10) return ['TASK'];
   if (stage === 11) return ['IMPLEMENTATION-REVIEW'];
   return [];
+}
+
+function toolkitSummary(record) {
+  const pin = toolkitPinFromRecord(record);
+  if (!pin) {
+    return {
+      pinned: false, repository: null, version: null, commit: null, snapshot: null, ambiguous: false,
+    };
+  }
+  return {
+    pinned: true,
+    repository: pin.repository,
+    version: pin.version,
+    commit: pin.commit,
+    snapshot: pin.snapshot,
+    ambiguous: pin.ambiguous,
+  };
+}
+
+function resourceLocation(toolkit, path) {
+  if (!path || !toolkit.pinned || toolkit.ambiguous) return null;
+  return {
+    repository: toolkit.repository,
+    version: toolkit.version,
+    commit: toolkit.commit,
+    path,
+  };
+}
+
+function resourceDescriptor(toolkit, kind, path, extra = {}) {
+  return {
+    kind,
+    path,
+    location: resourceLocation(toolkit, path),
+    ...extra,
+  };
+}
+
+export function stageResources(record, toolkit = toolkitSummary(record)) {
+  const stage = record.state.stage;
+  const prompt = STAGE_PROMPTS[stage] ?? null;
+  const required = [];
+  if (prompt) required.push(resourceDescriptor(toolkit, 'prompt', prompt));
+  for (const path of GUIDELINES_BY_STAGE.get(stage) ?? []) {
+    required.push(resourceDescriptor(toolkit, 'guideline', path));
+  }
+
+  const onDemand = [];
+  const seenTemplates = new Set();
+  for (const type of stageTargets(record)) {
+    const path = TEMPLATE_BY_ARTIFACT_TYPE.get(type);
+    if (path && !seenTemplates.has(path)) {
+      seenTemplates.add(path);
+      onDemand.push(resourceDescriptor(toolkit, 'template', path, {
+        when: 'creating-or-restructuring-target-artifact',
+      }));
+    }
+  }
+
+  return {
+    required,
+    onDemand,
+    conditional: [{
+      kind: 'source-adapter',
+      when: 'source-inspection-requires-format-specific-guidance',
+      rule: 'Select only the adapter matching the actual source; do not browse or load the other adapters.',
+      selectOneOf: SOURCE_ADAPTER_CHOICES.map((choice) => ({
+        ...choice,
+        location: resourceLocation(toolkit, choice.path),
+      })),
+    }],
+  };
 }
 
 function executionKind(record, diagnostics) {
@@ -77,33 +185,6 @@ function taskSummary(task) {
   };
 }
 
-function toolkitSummary(record) {
-  const pin = toolkitPinFromRecord(record);
-  if (!pin) {
-    return {
-      pinned: false, repository: null, version: null, commit: null, snapshot: null, ambiguous: false,
-    };
-  }
-  return {
-    pinned: true,
-    repository: pin.repository,
-    version: pin.version,
-    commit: pin.commit,
-    snapshot: pin.snapshot,
-    ambiguous: pin.ambiguous,
-  };
-}
-
-function promptSource(toolkit, path) {
-  if (!path || !toolkit.pinned || toolkit.ambiguous) return null;
-  return {
-    repository: toolkit.repository,
-    version: toolkit.version,
-    commit: toolkit.commit,
-    path,
-  };
-}
-
 export function canEditImplementation(record, diagnostics, currentTask) {
   return (
     diagnostics.valid
@@ -129,6 +210,7 @@ export function buildOrchestrationContext(recordPath, record, { cwd }) {
   const implementationAllowed = canEditImplementation(record, diagnostics, currentTask);
   const toolkit = toolkitSummary(record);
   const prompt = STAGE_PROMPTS[stage] ?? null;
+  const resources = stageResources(record, toolkit);
 
   return {
     protocolVersion: 1,
@@ -155,7 +237,8 @@ export function buildOrchestrationContext(recordPath, record, { cwd }) {
     execution: {
       kind: executionKind(record, diagnostics),
       prompt,
-      promptSource: promptSource(toolkit, prompt),
+      promptSource: resourceLocation(toolkit, prompt),
+      resources,
       primaryArtifactTypes: targets,
       artifacts: targetArtifacts.map((artifact) => ({
         id: artifact.id,
@@ -164,7 +247,7 @@ export function buildOrchestrationContext(recordPath, record, { cwd }) {
         status: artifact.status,
         baseline: artifact.baseline,
       })),
-      sourceAdapterPolicy: 'Select the matching source adapter from the actual source; source format is not canonical record state in schema v2.',
+      sourceAdapterPolicy: 'Select the matching source adapter from execution.resources.conditional using the actual source; source format is not canonical record state in schema v2.',
     },
     sources: {
       active: record.state.activeInputs.map((id) => {
@@ -187,6 +270,7 @@ export function buildOrchestrationContext(recordPath, record, { cwd }) {
       codeEdits: implementationAllowed ? 'allowed-with-current-task-scope' : 'forbidden',
       stageDecision: record.project.executionMode === 'Gated' ? 'human-approval-required' : 'agent-permitted-when-evidence-supports-it',
       generatedViews: 'read-only-projections',
+      workflowReads: 'context-resource-manifest-only',
     },
     nextAction: deriveNextAction(record),
   };

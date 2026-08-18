@@ -4,7 +4,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { deriveNextAction } from '../cli/lib/workflow-actions.mjs';
-import { canEditImplementation, stageTargets } from '../cli/lib/orchestration-context.mjs';
+import { buildOrchestrationContext, canEditImplementation, stageResources, stageTargets } from '../cli/lib/orchestration-context.mjs';
 import { checkStage } from '../cli/lib/stage-check.mjs';
 import { syncGeneratedState } from '../cli/lib/generated-state.mjs';
 
@@ -59,6 +59,60 @@ targetFixture.project.profile = 'Standard';
 targetFixture.state.stage = 3;
 assert(stageTargets(targetFixture).join(',') === 'DESIGN', 'Standard Stage 3 must target DESIGN.');
 
+const resourceFixture = baseRecord({ stage: 4, status: 'In progress' });
+resourceFixture.project.profile = 'Standard';
+const specResources = stageResources(resourceFixture);
+assert(
+  specResources.required.some((resource) => resource.path === 'prompts/04-specification.md'),
+  'Stage 4 resources must include the stage prompt.',
+);
+assert(
+  specResources.required.some((resource) => resource.path === 'guidelines/SPEC.md'),
+  'Stage 4 resources must include only its stage-specific writing guideline.',
+);
+assert(
+  specResources.onDemand.some((resource) => resource.path === 'templates/SPEC.template.md'),
+  'Stage 4 resources must expose the target template on demand.',
+);
+assert(
+  ![...specResources.required, ...specResources.onDemand].some((resource) => resource.path === 'README.md' || resource.path === 'QUICKSTART.md' || resource.path?.startsWith('workflow/')),
+  'Stage resources must not force broad workflow-document reads.',
+);
+assert(
+  specResources.conditional[0].selectOneOf.some((resource) => resource.path === 'source-adapters/FIGMA.md'),
+  'Conditional resources must expose adapter choices without requiring adapter discovery.',
+);
+
+const pinnedResourceFixture = structuredClone(resourceFixture);
+pinnedResourceFixture.snapshots.push({
+  id: 'SRC-DOC-001', role: 'Supporting source', pinStrength: 'Immutable', status: 'Active',
+  reference: 'toolkit+github://ferfalcon/figma-to-implementation-workflow@0.3.0',
+  commit: 'a'.repeat(40),
+});
+const pinnedResources = stageResources(pinnedResourceFixture);
+const pinnedPrompt = pinnedResources.required.find((resource) => resource.kind === 'prompt');
+assert(
+  pinnedPrompt?.location?.commit === 'a'.repeat(40)
+    && pinnedPrompt.location.path === 'prompts/04-specification.md',
+  'Pinned stage resources must resolve to the exact toolkit commit and path.',
+);
+assert(
+  pinnedResources.conditional[0].selectOneOf.every((resource) => resource.location?.commit === 'a'.repeat(40)),
+  'Conditional adapter choices must resolve against the same pinned toolkit commit.',
+);
+
+const liteResourceFixture = baseRecord({ stage: 7, status: 'In progress' });
+liteResourceFixture.project.profile = 'Lite';
+const liteResources = stageResources(liteResourceFixture);
+assert(
+  liteResources.required.some((resource) => resource.path === 'guidelines/PLAN.md'),
+  'Lite Stage 7 still needs plan guidance.',
+);
+assert(
+  liteResources.onDemand.length === 1 && liteResources.onDemand[0].path === 'templates/IMPLEMENTATION-BRIEF.template.md',
+  'Lite Stage 7 must return the consolidated brief template instead of unrelated plan templates.',
+);
+
 const directory = mkdtempSync(join(tmpdir(), 'design-workflow-orchestration-'));
 const recordPath = join(directory, '.workflow', 'workflow-record.json');
 try {
@@ -95,6 +149,15 @@ try {
     });
   }
   syncGeneratedState(recordPath, record);
+  const context = buildOrchestrationContext(recordPath, record, { cwd: directory });
+  assert(
+    context.execution.resources.required.some((resource) => resource.path === 'prompts/06-architecture.md'),
+    'Context payload must expose the stage-local required-resource manifest.',
+  );
+  assert(
+    context.policy.workflowReads === 'context-resource-manifest-only',
+    'Context payload must declare the minimal-read workflow policy.',
+  );
   const result = checkStage(recordPath, record);
   assert(result.decision.recommendedResult === 'Must upgrade', 'Express architecture-required Stage 6 must recommend Must upgrade.');
   assert(result.decision.recordable, 'Must-upgrade decision should be structurally recordable.');
@@ -103,4 +166,4 @@ try {
   rmSync(directory, { recursive: true, force: true });
 }
 
-console.log('Agent orchestration context, action eligibility, and stage preflight tests passed.');
+console.log('Agent orchestration context, minimal-read resources, action eligibility, and stage preflight tests passed.');

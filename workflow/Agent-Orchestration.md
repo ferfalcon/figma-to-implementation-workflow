@@ -23,6 +23,7 @@ The context reports:
 - project profile and execution mode;
 - the pinned workflow-toolkit repository, package version, commit, and source snapshot when available;
 - current stage and stage-local prompt, including a fully resolved `execution.promptSource` when the toolkit is pinned;
+- the minimal workflow-resource manifest for the current stage;
 - active source snapshots and latest verification;
 - current target artifact types and registered artifact paths;
 - current and Ready tasks;
@@ -59,9 +60,32 @@ When `toolkit.pinned` is `true`, all workflow prompts, guidelines, templates, ad
 
 If more than one toolkit snapshot is active, context reports an ambiguous pin and the workflow must be repaired before remote workflow resources are resolved. Replacing a valid existing pin is not an ordinary mutation; future toolkit upgrades must be explicit and preserve the old pin as history.
 
+## Minimal-read execution
+
+For an initialized, healthy CLI-managed project, the context resource manifest is the workflow-reading boundary for the turn.
+
+`execution.resources` has three groups:
+
+- `required` — load these resources before performing the current stage responsibility;
+- `onDemand` — load only when the resource's `when` condition applies, such as creating or restructuring the target artifact;
+- `conditional` — choose the matching resource from the returned choices based on observed source format or another stated condition; do not load every choice.
+
+When the toolkit pin is present and unambiguous, returned resources include `location` with the exact repository, version, commit, and path. Use that location instead of reconstructing a GitHub URL or falling back to a mutable ref.
+
+Do not recursively inspect the toolkit or read `README.md`, `QUICKSTART.md`, `cli/README.md`, broad `workflow/` documentation, unrelated prompts, unrelated guidelines, unrelated templates, or every source adapter to rediscover how the workflow works.
+
+Broader workflow reads are permitted only when one of these is true:
+
+- the workflow is not initialized yet;
+- context reports migration, repair, or profile-transition work that requires additional normative material;
+- a required resource explicitly directs the agent to another normative resource;
+- the user explicitly asks to inspect or modify the workflow toolkit itself.
+
+The goal is deterministic startup: permanent agent contract → `context --json` → current required resources → work.
+
 ## Stage-local execution
 
-Load the prompt returned in `execution.prompt`. When `execution.promptSource` is present, use its repository, version, commit, and path as the authoritative remote lookup instead of reconstructing a GitHub location yourself. Perform only the responsibility of the current stage.
+Load the prompt returned in `execution.prompt`; it is also listed in `execution.resources.required`. When `execution.promptSource` or a resource `location` is present, use its repository, version, commit, and path as the authoritative remote lookup instead of reconstructing a GitHub location yourself. Perform only the responsibility of the current stage.
 
 Use the profile targets returned by `execution.primaryArtifactTypes`:
 
@@ -72,7 +96,9 @@ Use the profile targets returned by `execution.primaryArtifactTypes`:
 
 The prompt determines what reasoning belongs in the target artifact. The workflow record remains the owner of mutable status, registry, validation-result, and lineage fields.
 
-Select the relevant source adapter from the actual source. Schema v2 does not canonically record whether `SRC-DS-*` represents Figma, screenshots, PDF, an existing website, or mixed sources, so do not guess a source adapter from an ID alone.
+Use stage-specific guidelines only when returned in `execution.resources.required`. Templates are references, not mandatory reads on every turn; load the returned template only when its `onDemand.when` condition applies.
+
+Select the relevant source adapter from the actual source using `execution.resources.conditional`. Schema v2 does not canonically record whether `SRC-DS-*` represents Figma, screenshots, PDF, an existing website, or mixed sources, so do not guess a source adapter from an ID alone and do not browse all adapters.
 
 ## Stage preflight
 
