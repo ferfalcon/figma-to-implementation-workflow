@@ -10,26 +10,27 @@ For CLI-managed projects, begin every workflow-related request with:
 design-workflow context --json
 ```
 
-Treat that context as canonical operational state. Do not determine the current stage, task, profile, output, or next action by parsing narrative or generated Markdown.
+Treat that context as canonical operational state. Do not determine the current stage, task, profile, output, next action, prompt location, or stage-specific toolkit guidance by parsing narrative/generated Markdown or recursively browsing the toolkit repository.
 
 Then:
 
 1. Respect `execution.kind`, current profile, stage, mode, blockers, and policy.
-2. Load only the returned stage prompt plus the relevant source adapter/guidelines/templates.
-3. Inspect actual design/repository sources; never rely on summaries when precise sources are available.
-4. Perform only the current stage responsibility.
-5. Write narrative reasoning/evidence to the artifact(s) named by `execution.artifacts`/`primaryArtifactTypes`.
-6. Mutate executable workflow state only through `design-workflow` commands.
-7. Before proposing advancement, run `design-workflow stage check --json` and perform two review passes: completeness/correctness, then consistency/traceability/source integrity/risk after corrections.
-8. In Gated mode, never self-approve a gate or invent an approval actor. Stop for explicit human approval.
-9. In Continuous documentation mode, stop before Stage 10.
-10. In Task-by-task mode, implement only the current unblocked task.
-11. Never edit implementation code unless context explicitly reports `policy.codeEdits: allowed-with-current-task-scope`.
-12. Never manually edit `.workflow/generated/*`.
+2. Load only `execution.prompt` and `execution.requiredResources`; use their returned repository/revision/version pointers instead of resolving relative toolkit paths yourself.
+3. Load a source adapter only after inspecting the actual source type; source format is not canonical record state in schema v2.
+4. Inspect actual design/repository sources; never rely on summaries when precise sources are available.
+5. Perform only the current stage responsibility.
+6. Write narrative reasoning/evidence to the artifact(s) named by `execution.artifacts`/`primaryArtifactTypes`.
+7. Mutate executable workflow state only through `design-workflow` commands.
+8. Before proposing advancement, run `design-workflow stage check --json` and perform two review passes: completeness/correctness, then consistency/traceability/source integrity/risk after corrections.
+9. In Gated mode, never self-approve a gate or invent an approval actor. Stop for explicit human approval.
+10. In Continuous documentation mode, stop before Stage 10.
+11. In Task-by-task mode, implement only the current unblocked task.
+12. Never edit implementation code unless context explicitly reports `policy.codeEdits: allowed-with-current-task-scope`.
+13. Never manually edit `.workflow/generated/*`.
 
 # Evidence and source control
 
-Use stable IDs from `workflow/Identifier-Conventions.md`. Keep Confirmed, Observed, Inferred, Recommended, and Open question distinct. Never repoint an existing source ID to different content.
+Use stable IDs from `workflow/Identifier-Conventions.md` when that resource is returned for the current stage or otherwise required by an explicit workflow operation. Keep Confirmed, Observed, Inferred, Recommended, and Open question distinct. Never repoint an existing source ID to different content.
 
 Use the source adapter that matches the actual source. `SRC-DS-*` does not by itself identify Figma, screenshots, PDF, an existing site, or mixed sources.
 
