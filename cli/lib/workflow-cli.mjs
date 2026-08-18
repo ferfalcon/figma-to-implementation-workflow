@@ -9,6 +9,9 @@ import { startTaskAtCurrentHead } from './task-lineage.mjs';
 import { deriveNextAction, stageAdvanceFindings } from './workflow-actions.mjs';
 import { workflowDiagnostics } from './workflow-diagnostics.mjs';
 import {
+  rewindStageForReplanning, startProfileUpgradeForReplanning,
+} from './workflow-transitions.mjs';
+import {
   fail, normalizeTaskCreateArgs, parseArgs, relativeDisplay, resolveRecordPath, write,
 } from './utils.mjs';
 
@@ -138,6 +141,14 @@ export async function runCli(args, environment) {
     } catch (error) {
       return fail(stderr, error instanceof Error ? error.message : String(error));
     }
+  }
+
+  if (command === 'stage' && positionals[1] === 'rewind') {
+    return rewindStageForReplanning(cwd, stdout, stderr, positionals, options);
+  }
+
+  if (command === 'profile' && positionals[1] === 'upgrade' && positionals[2] === 'start') {
+    return startProfileUpgradeForReplanning(cwd, stdout, stderr, positionals, options);
   }
 
   if (command === 'stage' && positionals[1] === 'advance') {
