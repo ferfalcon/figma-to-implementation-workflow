@@ -8,6 +8,9 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 
 ### Added
 
+- Portable repository workspace binding that records a canonical remote or project-relative repository identity when possible and resolves the local checkout at task execution time, with compatibility for legacy absolute-path snapshots.
+- Git working-tree and implementation-output policy checks that reject uncommitted implementation changes at task boundaries and keep workflow-control files out of implementation output commits.
+- Integrated task-start checkpoint regression coverage for approved planning commits, workflow-control commits between tasks, implementation outputs, and unexpected implementation-scope repository changes.
 - Sequential task-lineage regression coverage proving that a completed task output becomes the next task's effective repository baseline and that unrecognized repository changes block task start without mutation.
 - Repository validation that requires the `package.json` version to have a dated changelog release entry and keeps the canonical agent-orchestration contract discoverable.
 - Exclusive workflow-record mutation locks plus optimistic record-version checks that reject concurrent or stale writers before any transactional file changes.
@@ -15,7 +18,9 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 
 ### Changed
 
-- `task start` now resolves the task's effective repository baseline against the actual `HEAD`: it reuses the latest recorded Implementation output when that output is `HEAD`, retains the planned baseline only when it is exactly `HEAD`, and rejects every other repository state as an unexpected change.
+- `task start` now records the exact repository state used for implementation: it reuses an exact latest Implementation output or planned baseline, creates a `Task start` checkpoint when `HEAD` contains only approved workflow planning/control commits since the recorded anchor, and rejects implementation-scope changes in that gap.
+- `task complete` now requires the supplied output commit to equal `HEAD`, descend from the task-start checkpoint, exclude workflow-control files, and leave no uncommitted implementation-scope changes.
+- Repository snapshots now distinguish canonical repository identity from the machine-local checkout used to execute Git commands; `task start` and `task complete` may bind an explicit local checkout with `--repository`.
 - Promoted `workflow/Agent-Orchestration.md` to the README `Start here` sequence and required repository-contract validation.
 
 ## [0.3.0] — 2026-08-18
