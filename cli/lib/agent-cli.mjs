@@ -19,11 +19,7 @@ function printAgentContext(stdout, value) {
   }
   write(stdout, `${value.project.name}: Stage ${value.state.stage} — ${value.state.stageName}`);
   write(stdout, `Execution: ${value.state.executionKind}`);
-  write(stdout, `Resolved resources: ${[
-    value.resources.stagePrompt,
-    ...value.resources.guidance,
-    ...value.resources.templates,
-  ].filter(Boolean).length}`);
+  write(stdout, `Resolved resources: ${value.resources.required.length + value.resources.templates.length}`);
   write(stdout, `Next action: ${value.nextAction}`);
 }
 
@@ -63,8 +59,8 @@ export async function runCli(args, environment) {
         toolkit: null,
         workflow: { valid: false, findings: [message] },
         state: { executionKind: 'repair' },
-        policy: { codeEdits: 'forbidden' },
-        resources: { stagePrompt: null, guidance: [], templates: [] },
+        policy: { codeEdits: 'forbidden', workflowReads: 'repair-only' },
+        resources: { required: [], stagePrompt: null, guidance: [], templates: [], conditional: [] },
         nextAction: 'Repair the workflow record before continuing.',
       });
       return 1;

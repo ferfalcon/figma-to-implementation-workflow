@@ -4,7 +4,7 @@ This document defines how an AI design-engineering agent operates the executable
 
 ## Boundary
 
-The agent owns reasoning, source inspection, artifact prose, implementation decisions within approved scope, and evidence collection. The CLI owns executable state, stage/task legality, canonical registries, generated views, trace definitions, validation state, implementation lineage, the recorded workflow-toolkit source pin, and selection of workflow resources for the current turn.
+The agent owns reasoning, source inspection, artifact prose, implementation decisions within approved scope, and evidence collection. The CLI owns executable state, stage/task legality, canonical registries, generated views, trace definitions, validation state, implementation lineage, the recorded workflow-toolkit source pin, and the canonical workflow-resource manifest for the current turn.
 
 Never infer executable state from narrative Markdown when `.workflow/workflow-record.json` exists. Never manually edit generated views.
 
@@ -18,19 +18,9 @@ design-workflow agent-context --json
 
 `design-workflow context --agent --json` is an equivalent alias. The packet uses `protocolVersion: 2`; treat that independently from the workflow record `schemaVersion`.
 
-The packet is the preferred agent bootstrap because it returns resolved operational state plus the workflow resources required for the current turn. It reports:
+The packet is the preferred agent bootstrap. It wraps the protocol-v1 orchestration context and materializes its canonical `execution.resources` manifest; it does not introduce a second stage-to-resource resolver.
 
-- project profile and execution mode;
-- the pinned workflow-toolkit repository, package version, commit, and source snapshot when available;
-- current stage, execution kind, and policy;
-- active source snapshots and latest verification;
-- current target artifact types and registered artifact paths;
-- the full current task plus Ready-task summaries;
-- architecture/profile-transition state;
-- workflow health and generated-view freshness;
-- stage preflight and whether code edits are permitted;
-- the next permitted action;
-- the resolved stage prompt, stage-specific guidance, and any template required for a missing target artifact.
+The packet reports project/profile/mode, toolkit pin, current stage and execution kind, policy, active sources, target artifacts, the full current task, Ready-task summaries, stage preflight, the next action, required workflow resources, missing-artifact templates, and conditional source-adapter choices.
 
 The lower-level compatibility handshake remains available:
 
@@ -38,7 +28,7 @@ The lower-level compatibility handshake remains available:
 design-workflow context --json
 ```
 
-That protocol-v1 command exposes resolved state and resource paths but does not build the protocol-v2 turn packet. Prefer it for diagnostics and existing integrations.
+Use protocol v1 for diagnostics and existing integrations. Use protocol v2 for normal agent execution.
 
 If no record exists, the packet embeds the intake prompt and instructs initialization. If the record is schema v1, migrate before mutation. If the packet reports `repair`, repair record/generated state before continuing. Migration and repair packets intentionally withhold ordinary stage resources.
 
@@ -63,41 +53,42 @@ design-workflow toolkit pin \
   --commit <40-character-sha>
 ```
 
-When `toolkit.pinned` is `true`, all workflow prompts, guidelines, templates, adapters, and normative workflow documents used for the turn must come from `toolkit.repository` at exactly `toolkit.commit`. Never fall back to `main` or another mutable ref. A package version is descriptive metadata; the commit is the immutable operational pin.
+When `toolkit.pinned` is `true`, all workflow prompts, guidelines, templates, adapters, and normative workflow documents used for the turn must come from `toolkit.repository` at exactly `toolkit.commit`. Never fall back to `main` or another mutable ref.
 
-The agent packet enforces this boundary. If the installed toolkit runtime matches the recorded repository and commit, selected resource content is returned with `resolution: embedded`. If it does not match, the packet does not embed potentially incorrect content; it returns `resolution: pinned-source-required` together with the exact `source.repository`, `source.commit`, and `source.path`. Fetch that exact source. If multiple toolkit pins are active, repair the ambiguity before ordinary workflow execution.
+The packet enforces this boundary. If the installed toolkit runtime matches the recorded repository and commit, selected required resources and applicable templates return `resolution: embedded` with `content`. If it does not match, the packet returns `resolution: pinned-source-required` with the exact `source.repository`, `source.commit`, and `source.path` and does not embed potentially incorrect local content. Multiple active toolkit pins require repair before ordinary execution.
 
 Replacing a valid existing pin is not an ordinary mutation; toolkit upgrades must be explicit and preserve the old pin as history.
 
-## Zero-discovery execution rule
+## Minimal-read execution
 
-For a valid CLI-managed workflow, do not recursively inspect this toolkit to rediscover the procedure. Do not walk `README.md`, `QUICKSTART.md`, `workflow/`, `prompts/`, `guidelines/`, or `templates/` after receiving a protocol-v2 packet.
+For an initialized, healthy CLI-managed project, the packet is the workflow-reading boundary for the turn.
 
-Consume:
+- `resources.required` materializes the canonical required resources from `execution.resources.required`.
+- `resources.stagePrompt` and `resources.guidance` are convenience views over those required resources.
+- `resources.templates` contains only on-demand templates whose target artifact is not already registered; an existing task/artifact does not repeatedly carry its template.
+- `resources.conditional` preserves conditional choices such as source adapters without eagerly loading all alternatives.
+- `resources.manifest` preserves the underlying protocol-v1 resource manifest for traceability.
 
-- `resources.stagePrompt` as the stage-local procedure;
-- `resources.guidance[*]` as stage-specific artifact guidance;
-- `resources.templates[*]` only when the CLI determines a target artifact is missing;
-- `resources.sourceAdapterPolicy` when deciding how to inspect the actual design source.
+Use a resource's embedded `content` when `resolution` is `embedded`. When `resolution` is `pinned-source-required`, load the exact returned pinned `source`. Do not reconstruct GitHub paths or mutable refs.
 
-For each resolved resource, use `content` when `resolution` is `embedded`. When `resolution` is `pinned-source-required`, load the exact returned `source` instead of discovering a path or mutable ref yourself.
+Do not recursively inspect the toolkit or read `README.md`, `QUICKSTART.md`, `cli/README.md`, broad `workflow/` documentation, unrelated prompts, unrelated guidelines, unrelated templates, or every source adapter to rediscover how the workflow works.
 
-This keeps GitHub/package storage as the toolkit source of truth while making the CLI the resolver. The agent should reason about design and implementation, not about where workflow instructions live.
+Broader workflow reads are permitted only for initialization, migration/repair, an explicit reference from a required resource, toolkit development, or an explicit user request to inspect/modify the workflow toolkit.
+
+The goal is deterministic startup: permanent agent contract → `agent-context --json` → resolved current resources → work.
 
 ## Stage-local execution
 
-Perform only the responsibility of the current stage described by the resolved stage prompt.
+Perform only the responsibility of the current stage described by `resources.stagePrompt`. Use `task.artifactTypes` and `task.artifacts` as the current targets.
 
-Use `task.artifactTypes` and `task.artifacts` from the packet:
-
-- Express keeps all narrative reasoning in `WORKPACK.md`;
-- Lite uses `IMPLEMENTATION-BRIEF.md` for consolidated Stages 2–8 and separate source/audit/task/final-review artifacts;
-- Standard uses separate core artifacts and conditional architecture;
+- Express keeps all narrative reasoning in `WORKPACK.md`.
+- Lite uses `IMPLEMENTATION-BRIEF.md` for consolidated Stages 2–8 and separate source/audit/task/final-review artifacts.
+- Standard uses separate core artifacts and conditional architecture.
 - Full uses the complete separate artifact set including architecture.
 
 The prompt determines what reasoning belongs in the target artifact. The workflow record remains the owner of mutable status, registry, validation-result, and lineage fields.
 
-Select the relevant source adapter from the actual source. Schema v2 does not canonically record whether `SRC-DS-*` represents Figma, screenshots, PDF, an existing website, or mixed sources, so do not guess a source adapter from an ID alone.
+Use stage-specific guidelines only when returned in `resources.required`. Use templates only when returned in `resources.templates`. Select the relevant source adapter from `resources.conditional` based on the actual source; do not browse every adapter.
 
 ## Stage preflight
 
@@ -148,22 +139,9 @@ The toolkit pin is separate from implementation-source lineage. Do not add the t
 
 ## Narrative ownership during implementation
 
-Task/workpack Markdown owns:
+Task/workpack Markdown owns implementation discoveries, deviations and rationale, affected-file/behavior narrative, risks, and follow-up documentation changes.
 
-- implementation discoveries;
-- deviations and their rationale;
-- affected-file/behavior narrative;
-- risks and follow-up documentation changes.
-
-The workflow record owns:
-
-- current task status;
-- structured validation result/status/evidence fields;
-- output snapshot identity;
-- output commit SHA;
-- task/output parent lineage.
-
-Do not duplicate record-owned mutable values in CLI-managed narrative sections.
+The workflow record owns current task status, structured validation results/evidence, output snapshot identity, output commit SHA, and task/output parent lineage. Do not duplicate record-owned mutable values in CLI-managed narrative sections.
 
 ## Completion loop
 

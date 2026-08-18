@@ -1,34 +1,14 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { ARTIFACT_FILES } from './workflow-model.mjs';
 import { buildOrchestrationContext } from './orchestration-context.mjs';
 import { runtimeToolkitPin } from './toolkit-source.mjs';
 import { relativeDisplay } from './utils.mjs';
 
 export const AGENT_PROTOCOL_VERSION = 2;
 
-export const STAGE_GUIDANCE = {
-  2: 'guidelines/REQUIREMENTS.md',
-  3: 'guidelines/DESIGN.md',
-  4: 'guidelines/SPEC.md',
-  6: 'guidelines/ARCHITECTURE.md',
-  7: 'guidelines/PLAN.md',
-};
-
 const TOOLKIT_ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const NON_STAGE_EXECUTION_KINDS = new Set(['migration', 'repair']);
-
-function pinnedSource(context, path) {
-  const toolkit = context.toolkit;
-  if (!toolkit?.pinned || toolkit.ambiguous) return null;
-  return {
-    repository: toolkit.repository,
-    version: toolkit.version,
-    commit: toolkit.commit,
-    path,
-  };
-}
 
 function localToolkitMatches(context) {
   if (!context.toolkit?.pinned) return true;
@@ -41,41 +21,48 @@ function localToolkitMatches(context) {
   );
 }
 
-function resolvedResource(context, path, metadata = {}) {
-  const source = pinnedSource(context, path);
+function materializeResource(context, descriptor) {
   const embed = localToolkitMatches(context);
   return {
-    ...metadata,
-    path,
-    source,
-    resolution: embed ? 'embedded' : (context.toolkit?.ambiguous ? 'repair-toolkit-pin' : 'pinned-source-required'),
-    content: embed ? readFileSync(resolve(TOOLKIT_ROOT, path), 'utf8') : null,
+    ...descriptor,
+    source: descriptor.location ?? null,
+    resolution: embed
+      ? 'embedded'
+      : (context.toolkit?.ambiguous ? 'repair-toolkit-pin' : 'pinned-source-required'),
+    content: embed ? readFileSync(resolve(TOOLKIT_ROOT, descriptor.path), 'utf8') : null,
   };
+}
+
+function templateArtifactType(path) {
+  const name = path.split('/').at(-1) ?? '';
+  return name.endsWith('.template.md') ? name.slice(0, -'.template.md'.length) : null;
 }
 
 export function agentResourcesForContext(context) {
   if (NON_STAGE_EXECUTION_KINDS.has(context.execution.kind)) {
-    return { stagePrompt: null, guidance: [], templates: [] };
+    return { required: [], stagePrompt: null, guidance: [], templates: [], conditional: [], manifest: context.execution.resources ?? null };
   }
 
-  const guidancePath = STAGE_GUIDANCE[context.stage.number] ?? null;
+  const manifest = context.execution.resources ?? { required: [], onDemand: [], conditional: [] };
+  const required = (manifest.required ?? []).map((resource) => materializeResource(context, resource));
+  const stagePrompt = required.find((resource) => resource.kind === 'prompt') ?? null;
+  const guidance = required.filter((resource) => resource.kind === 'guideline');
   const registeredTypes = new Set(context.execution.artifacts.map((artifact) => artifact.type));
-  const templates = context.execution.primaryArtifactTypes
-    .filter((type) => !registeredTypes.has(type))
-    .map((type) => {
-      const templateName = ARTIFACT_FILES[type]?.[1] ?? null;
-      return templateName
-        ? resolvedResource(context, `templates/${templateName}`, { artifactType: type })
-        : null;
+  const templates = (manifest.onDemand ?? [])
+    .filter((resource) => resource.kind === 'template')
+    .filter((resource) => {
+      const type = templateArtifactType(resource.path);
+      return !type || !registeredTypes.has(type);
     })
-    .filter(Boolean);
+    .map((resource) => materializeResource(context, resource));
 
   return {
-    stagePrompt: context.execution.prompt
-      ? resolvedResource(context, context.execution.prompt)
-      : null,
-    guidance: guidancePath ? [resolvedResource(context, guidancePath)] : [],
+    required,
+    stagePrompt,
+    guidance,
     templates,
+    conditional: manifest.conditional ?? [],
+    manifest,
   };
 }
 
@@ -128,51 +115,31 @@ export function buildAgentContext(recordPath, record, { cwd }) {
 
 export function buildAgentContextWhenMissing(recordPath, { cwd }) {
   const nextAction = 'Initialize the workflow before auditing, planning, or implementation.';
+  const descriptor = { kind: 'prompt', path: 'prompts/00-intake.md', location: null };
   const initializationContext = { toolkit: { pinned: false, ambiguous: false } };
+  const stagePrompt = materializeResource(initializationContext, descriptor);
 
   return {
     protocolVersion: AGENT_PROTOCOL_VERSION,
     initialized: false,
-    control: {
-      mode: null,
-      schemaVersion: null,
-      readOnly: false,
-      record: relativeDisplay(cwd, recordPath),
-    },
+    control: { mode: null, schemaVersion: null, readOnly: false, record: relativeDisplay(cwd, recordPath) },
     project: null,
     toolkit: { pinned: false, repository: null, version: null, commit: null, snapshot: null, ambiguous: false },
     workflow: { valid: true, findings: [] },
     state: {
-      profile: null,
-      mode: null,
-      stage: null,
-      stageName: null,
-      stageStatus: 'Not initialized',
-      executionKind: 'initialization',
-      architectureDecision: null,
-      profileTransition: null,
+      profile: null, mode: null, stage: null, stageName: null, stageStatus: 'Not initialized',
+      executionKind: 'initialization', architectureDecision: null, profileTransition: null,
     },
     policy: {
-      workflowMutation: 'initialize-first',
-      implementation: 'forbidden',
-      codeEdits: 'forbidden',
-      stageDecision: 'not-applicable',
-      generatedViews: 'not-initialized',
+      workflowMutation: 'initialize-first', implementation: 'forbidden', codeEdits: 'forbidden',
+      stageDecision: 'not-applicable', generatedViews: 'not-initialized', workflowReads: 'initialization-only',
     },
-    task: {
-      instruction: nextAction,
-      artifactTypes: [],
-      artifacts: [],
-      current: null,
-      ready: [],
-      nextReady: null,
-    },
+    task: { instruction: nextAction, artifactTypes: [], artifacts: [], current: null, ready: [], nextReady: null },
     sources: { active: [], latestOutput: null, latestValidationRuntime: null },
     stageCheck: null,
     resources: {
-      stagePrompt: resolvedResource(initializationContext, 'prompts/00-intake.md'),
-      guidance: [],
-      templates: [],
+      required: [stagePrompt], stagePrompt, guidance: [], templates: [], conditional: [],
+      manifest: { required: [descriptor], onDemand: [], conditional: [] },
       sourceAdapterPolicy: 'Select the matching source adapter after the actual design source is identified.',
     },
     nextAction,

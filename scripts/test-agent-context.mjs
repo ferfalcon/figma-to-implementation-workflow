@@ -22,10 +22,17 @@ function fixtureContext() {
     execution: {
       kind: 'stage',
       prompt: 'prompts/04-specification.md',
-      promptSource: null,
       primaryArtifactTypes: ['SPEC'],
       artifacts: [{ id: 'ART-SPEC', type: 'SPEC', path: 'SPEC.md', status: 'Draft', baseline: ['SRC-DS-001'] }],
-      sourceAdapterPolicy: 'Select the matching source adapter from the actual source.',
+      resources: {
+        required: [
+          { kind: 'prompt', path: 'prompts/04-specification.md', location: null },
+          { kind: 'guideline', path: 'guidelines/SPEC.md', location: null },
+        ],
+        onDemand: [{ kind: 'template', path: 'templates/SPEC.template.md', location: null, when: 'creating-or-restructuring-target-artifact' }],
+        conditional: [{ kind: 'source-adapter', when: 'source-inspection-requires-format-specific-guidance', selectOneOf: [{ format: 'figma', path: 'source-adapters/FIGMA.md', location: null }] }],
+      },
+      sourceAdapterPolicy: 'Select only the adapter matching the actual source.',
     },
     sources: { active: [{ id: 'SRC-DS-001', role: 'Input baseline', status: 'Active' }], latestOutput: null, latestValidationRuntime: null },
     tasks: { current: { id: 'P01-T01', status: 'In progress' }, ready: [], nextReady: null },
@@ -33,7 +40,7 @@ function fixtureContext() {
     stageCheck: { stage: { number: 4 }, decision: { recordable: false } },
     policy: {
       workflowMutation: 'allowed', implementation: 'forbidden', codeEdits: 'forbidden',
-      stageDecision: 'human-approval-required', generatedViews: 'read-only-projections',
+      stageDecision: 'human-approval-required', generatedViews: 'read-only-projections', workflowReads: 'context-resource-manifest-only',
     },
     nextAction: 'Complete SPEC.md and run stage check.',
   };
@@ -41,52 +48,47 @@ function fixtureContext() {
 
 const context = fixtureContext();
 const resources = agentResourcesForContext(context);
-assert(resources.stagePrompt?.path === 'prompts/04-specification.md', 'Stage 4 must resolve the specification prompt.');
-assert(resources.stagePrompt.resolution === 'embedded', 'Unpinned runtime resources should be embedded.');
-assert(resources.stagePrompt.content.length > 100, 'Embedded stage prompt must contain source content.');
-assert(resources.guidance.length === 1 && resources.guidance[0].path === 'guidelines/SPEC.md', 'Stage 4 must select SPEC guidance.');
+assert(resources.required.length === 2, 'Agent packet must materialize the canonical required-resource manifest.');
+assert(resources.stagePrompt?.path === 'prompts/04-specification.md', 'Stage prompt must come from the context manifest.');
+assert(resources.stagePrompt.resolution === 'embedded' && resources.stagePrompt.content.length > 100, 'Matching runtime prompt must be embedded.');
+assert(resources.guidance.length === 1 && resources.guidance[0].path === 'guidelines/SPEC.md', 'Stage guidance must come from the context manifest.');
 assert(resources.templates.length === 0, 'Registered target artifacts must not redundantly embed templates.');
+assert(resources.conditional.length === 1, 'Conditional source-adapter choices must remain available without eager loading.');
 
 const missingArtifactContext = structuredClone(context);
 missingArtifactContext.execution.artifacts = [];
 const missingArtifactResources = agentResourcesForContext(missingArtifactContext);
-assert(missingArtifactResources.templates.length === 1, 'A missing target artifact must resolve its template.');
-assert(missingArtifactResources.templates[0].path === 'templates/SPEC.template.md', 'Missing SPEC artifact must select the SPEC template.');
+assert(missingArtifactResources.templates.length === 1, 'A missing target artifact must materialize its on-demand template.');
+assert(missingArtifactResources.templates[0].path === 'templates/SPEC.template.md', 'Missing SPEC artifact must select the manifest template.');
 
 const pinnedContext = structuredClone(context);
 pinnedContext.toolkit = {
-  pinned: true,
-  repository: 'ferfalcon/figma-to-implementation-workflow',
-  version: '0.3.0',
-  commit: 'f'.repeat(40),
-  snapshot: 'SRC-DOC-001',
-  ambiguous: false,
+  pinned: true, repository: 'ferfalcon/figma-to-implementation-workflow', version: '0.3.0',
+  commit: 'f'.repeat(40), snapshot: 'SRC-DOC-001', ambiguous: false,
 };
+for (const resource of [...pinnedContext.execution.resources.required, ...pinnedContext.execution.resources.onDemand]) {
+  resource.location = { repository: pinnedContext.toolkit.repository, version: pinnedContext.toolkit.version, commit: pinnedContext.toolkit.commit, path: resource.path };
+}
 const pinnedResources = agentResourcesForContext(pinnedContext);
 assert(pinnedResources.stagePrompt.content === null, 'A mismatched runtime must not embed unverified toolkit content.');
 assert(pinnedResources.stagePrompt.resolution === 'pinned-source-required', 'Pinned mismatch must require the exact pinned source.');
 assert(pinnedResources.stagePrompt.source.commit === 'f'.repeat(40), 'Pinned resource must expose the exact toolkit commit.');
-assert(pinnedResources.stagePrompt.source.path === 'prompts/04-specification.md', 'Pinned resource must expose the exact prompt path.');
 
 const repairContext = structuredClone(context);
 repairContext.execution.kind = 'repair';
 const repairResources = agentResourcesForContext(repairContext);
-assert(repairResources.stagePrompt === null && repairResources.guidance.length === 0 && repairResources.templates.length === 0, 'Repair execution must withhold ordinary stage resources.');
+assert(repairResources.required.length === 0 && repairResources.stagePrompt === null && repairResources.templates.length === 0, 'Repair execution must withhold ordinary stage resources.');
 
 const record = {
   state: { currentTask: 'P01-T01' },
-  tasks: [{
-    id: 'P01-T01', title: 'Implement card behavior', status: 'In progress', baseline: 'SRC-REPO-001',
-    prerequisites: [], references: ['PLAN-001'], output: null, validation: [], customField: 'preserved',
-  }],
+  tasks: [{ id: 'P01-T01', title: 'Implement card behavior', status: 'In progress', baseline: 'SRC-REPO-001', prerequisites: [], references: ['PLAN-001'], output: null, validation: [], customField: 'preserved' }],
 };
 const packet = composeAgentContext(context, record);
 assert(packet.protocolVersion === AGENT_PROTOCOL_VERSION, 'Agent packet must use protocol v2.');
 assert(packet.toolkit.pinned === false, 'Agent packet must preserve toolkit state.');
 assert(packet.state.stage === 4 && packet.state.stageName === context.stage.name, 'Agent packet must expose resolved stage state.');
-assert(packet.policy.codeEdits === 'forbidden', 'Agent packet must preserve executable policy.');
+assert(packet.policy.workflowReads === 'context-resource-manifest-only', 'Agent packet must preserve minimal-read policy.');
 assert(packet.task.current?.customField === 'preserved', 'Agent packet must preserve the full current task record.');
-assert(packet.resources.templates.length === 0, 'Agent packet must avoid redundant registered-artifact templates.');
 assert(packet.nextAction === context.nextAction, 'Agent packet must preserve the canonical next action.');
 
 const missing = buildAgentContextWhenMissing('/tmp/agent-packet/.workflow/workflow-record.json', { cwd: '/tmp/agent-packet' });
@@ -109,4 +111,4 @@ for (const args of [['agent-context', '--json'], ['context', '--agent', '--json'
   assert(cliPacket.protocolVersion === AGENT_PROTOCOL_VERSION && !cliPacket.initialized, `${args.join(' ')} must emit the protocol-v2 initialization packet.`);
 }
 
-console.log('Agent packet resource selection, toolkit-source integrity, protocol, and CLI routing tests passed.');
+console.log('Agent packet materialization, toolkit-source integrity, protocol, and CLI routing tests passed.');
