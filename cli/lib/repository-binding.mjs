@@ -121,6 +121,12 @@ function projectReferencePath(cwd, reference) {
   return path;
 }
 
+export function isPortableRepositoryReference(cwd, reference) {
+  if (typeof reference !== 'string' || !reference.trim()) return false;
+  if (reference.startsWith('project://')) return projectReferencePath(cwd, reference) !== null;
+  return canonicalRemoteReference(reference) !== null;
+}
+
 function legacyReferencePath(cwd, reference) {
   if (typeof reference !== 'string' || !reference.trim()) return null;
   if (reference.startsWith('project://') || canonicalRemoteReference(reference)) return null;
@@ -130,14 +136,14 @@ function legacyReferencePath(cwd, reference) {
 }
 
 function fallbackPortableReference(reference) {
-  if (typeof reference === 'string' && reference.startsWith('project://')) return reference;
+  if (typeof reference === 'string' && reference.startsWith('project://') && projectReferencePath('.', reference)) return reference;
   return canonicalRemoteReference(reference);
 }
 
 export function portableRepositoryReference(cwd, repository, fallbackReference = null) {
   return repositoryRemoteReference(repository)
     ?? projectReference(cwd, repository)
-    ?? fallbackPortableReference(fallbackReference);
+    ?? (isPortableRepositoryReference(cwd, fallbackReference) ? fallbackReference : null);
 }
 
 export function captureRepositorySnapshot(cwd, repositoryInput) {
