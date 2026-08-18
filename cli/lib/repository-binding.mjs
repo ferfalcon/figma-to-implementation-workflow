@@ -92,10 +92,15 @@ function legacyReferencePath(cwd, reference) {
     : resolve(cwd, reference);
 }
 
+function fallbackPortableReference(reference) {
+  if (typeof reference === 'string' && reference.startsWith('project://')) return reference;
+  return canonicalRemoteReference(reference);
+}
+
 function portableReference(cwd, repository, fallbackReference = null) {
   return repositoryRemoteReference(repository)
     ?? projectReference(cwd, repository)
-    ?? canonicalRemoteReference(fallbackReference);
+    ?? fallbackPortableReference(fallbackReference);
 }
 
 export function captureRepositorySnapshot(cwd, repositoryInput) {
@@ -138,7 +143,7 @@ function candidateRoots(cwd, snapshot, repositoryOverride) {
 
 function matchesPortableReference(cwd, snapshot, repository, explicit) {
   const projectPath = projectReferencePath(cwd, snapshot.reference);
-  if (projectPath) return repositoryRoot(projectPath) === repository;
+  if (projectPath) return explicit || repositoryRoot(projectPath) === repository;
 
   const expectedRemote = canonicalRemoteReference(snapshot.reference);
   if (!expectedRemote) return true;
