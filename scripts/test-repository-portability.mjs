@@ -129,6 +129,7 @@ function testProjectReferenceCannotEscapeRoot() {
   mkdirSync(workflow, { recursive: true });
   mkdirSync(outside, { recursive: true });
   const commit = initializeRepository(outside);
+
   let rejected = false;
   try {
     resolveRepositoryWorkspace(workflow, {
@@ -138,6 +139,12 @@ function testProjectReferenceCannotEscapeRoot() {
     rejected = true;
   }
   assert(rejected, 'project:// reference escaped the workflow root');
+
+  run(workflow, ['init', '--name', 'Containment fixture', '--profile', 'Express']);
+  const result = run(workflow, [
+    'snapshot', 'add', '--kind', 'repo', '--reference', 'project://../outside', '--commit', commit,
+  ], 1);
+  assert(result.stderr.includes('portable identity'), 'Invalid project:// snapshot was not rejected at serialization');
 }
 
 function testRemoteIdentityAndLocalBinding() {
@@ -164,6 +171,20 @@ function testRemoteIdentityAndLocalBinding() {
     current.snapshots.find((item) => item.id === 'SRC-REPO-001').reference === snapshot.reference,
     'Mutation with a local binding wrote the machine path back into the canonical record',
   );
+}
+
+function testBindingRejectsConflictingRemoteIdentity() {
+  const workflow = temp('identity-workflow');
+  const source = temp('identity-source');
+  const conflicting = temp('identity-conflicting');
+  initializeRepository(source, 'git@github.com:Example/Portable.git');
+  git(temp('clone-parent'), ['clone', source, conflicting]);
+  git(conflicting, ['remote', 'set-url', 'origin', 'git@github.com:Other/Repository.git']);
+
+  run(workflow, ['init', '--name', 'Identity fixture', '--profile', 'Express', '--repository', source]);
+  const result = run(workflow, ['repository', 'bind', 'SRC-REPO-001', '--path', conflicting], 1);
+  assert(result.stderr.includes('identity does not match'), 'Binding with a conflicting remote identity was accepted');
+  assert(!existsSync(join(workflow, '.workflow', 'local.json')), 'Rejected identity binding still wrote local configuration');
 }
 
 function testLegacyAbsolutePathHealsAfterMove() {
@@ -197,6 +218,7 @@ try {
   testProjectSubdirectoryReference();
   testProjectReferenceCannotEscapeRoot();
   testRemoteIdentityAndLocalBinding();
+  testBindingRejectsConflictingRemoteIdentity();
   testLegacyAbsolutePathHealsAfterMove();
   testExternalRepositoryWithoutIdentityIsRejected();
   assert(readFileSync(join(root, '.gitignore'), 'utf8').includes('.workflow/local.json'), 'Local binding file is not ignored by Git');
