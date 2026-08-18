@@ -5,7 +5,9 @@ import { buildOrchestrationContext } from './orchestration-context.mjs';
 import { checkStage } from './stage-check.mjs';
 import { deriveNextAction, stageAdvanceFindings, taskStartFindings } from './workflow-actions.mjs';
 import { workflowDiagnostics } from './workflow-diagnostics.mjs';
-import { fail, parseArgs, relativeDisplay, resolveRecordPath, write } from './utils.mjs';
+import {
+  fail, nextTaskId, parseArgs, relativeDisplay, resolveRecordPath, write,
+} from './utils.mjs';
 
 function json(stdout, value) { write(stdout, JSON.stringify(value, null, 2)); }
 
@@ -31,14 +33,42 @@ function load(cwd, options) {
   return { recordPath, ...readStoredRecord(recordPath) };
 }
 
+function removeOption(args, name) {
+  const result = [];
+  for (let index = 0; index < args.length; index += 1) {
+    const token = args[index];
+    if (token === `--${name}`) {
+      const next = args[index + 1];
+      if (next !== undefined && !next.startsWith('--')) index += 1;
+      continue;
+    }
+    if (token.startsWith(`--${name}=`)) continue;
+    result.push(token);
+  }
+  return result;
+}
+
+export function normalizeTaskCreateArgs(args, record, parsed = parseArgs(args)) {
+  const { positionals, options } = parsed;
+  if (positionals[0] !== 'task' || positionals[1] !== 'create' || options.phase === undefined) return [...args];
+  if (Array.isArray(options.phase)) throw new Error('--phase may be specified only once.');
+  if (options.id !== undefined) throw new Error('--phase cannot be combined with --id; choose one task-ID strategy.');
+  const id = nextTaskId(record.tasks ?? [], options.phase);
+  return [...removeOption(args, 'phase'), '--id', id];
+}
+
 export async function runCli(args, environment) {
   const { cwd, stdout, stderr } = environment;
-  const { positionals, options } = parseArgs(args);
+  const parsed = parseArgs(args);
+  const { positionals, options } = parsed;
   const command = positionals[0];
   const recordPath = resolveRecordPath(cwd, options.record);
 
   if (!command || command === 'help' || options.help) {
     const result = await runWorkflowCli(args, environment);
+    write(stdout, '\nTask phases:');
+    write(stdout, '  design-workflow task create [--phase <0-99|P00-P99>] [--id <Pxx-Txx>] ...');
+    write(stdout, '  Without --phase or --id, task numbering continues in the highest existing phase and defaults to Phase 01.');
     write(stdout, '\nAgent orchestration:');
     write(stdout, '  design-workflow context [--json]');
     write(stdout, '  design-workflow stage check [--json]');
@@ -128,5 +158,15 @@ export async function runCli(args, environment) {
     }
   }
 
-  return runWorkflowCli(args, environment);
+  let workflowArgs = args;
+  if (command === 'task' && positionals[1] === 'create' && options.phase !== undefined) {
+    try {
+      const { record } = load(cwd, options);
+      workflowArgs = normalizeTaskCreateArgs(args, record, parsed);
+    } catch (error) {
+      return fail(stderr, error instanceof Error ? error.message : String(error));
+    }
+  }
+
+  return runWorkflowCli(workflowArgs, environment);
 }
