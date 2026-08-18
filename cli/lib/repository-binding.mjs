@@ -135,11 +135,6 @@ function legacyReferencePath(cwd, reference) {
     : resolve(cwd, reference);
 }
 
-function fallbackPortableReference(reference) {
-  if (typeof reference === 'string' && reference.startsWith('project://') && projectReferencePath('.', reference)) return reference;
-  return canonicalRemoteReference(reference);
-}
-
 export function portableRepositoryReference(cwd, repository, fallbackReference = null) {
   return repositoryRemoteReference(repository)
     ?? projectReference(cwd, repository)
