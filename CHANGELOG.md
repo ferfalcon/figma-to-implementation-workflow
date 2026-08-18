@@ -8,6 +8,7 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 
 ### Added
 
+- Git working-tree policy tests covering task-start dirtiness, task-completion leftovers, workflow-managed-file dirtiness, and mixed implementation/workflow commits.
 - Sequential task-lineage regression coverage proving that a completed task output becomes the next task's effective repository baseline and that unrecognized repository changes block task start without mutation.
 - Repository validation that requires the `package.json` version to have a dated changelog release entry and keeps the canonical agent-orchestration contract discoverable.
 - Exclusive workflow-record mutation locks plus optimistic record-version checks that reject concurrent or stale writers before any transactional file changes.
@@ -15,6 +16,8 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 
 ### Changed
 
+- Task start and completion now reject dirty implementation-scope paths while allowing only workflow-managed state and active narrative artifacts to remain dirty.
+- Recorded Implementation output commits now reject workflow-managed files, keeping workflow bookkeeping and narrative updates distinct from task-deliverable commits.
 - `task start` now resolves the task's effective repository baseline against the actual `HEAD`: it reuses the latest recorded Implementation output when that output is `HEAD`, retains the planned baseline only when it is exactly `HEAD`, and rejects every other repository state as an unexpected change.
 - Promoted `workflow/Agent-Orchestration.md` to the README `Start here` sequence and required repository-contract validation.
 

@@ -144,6 +144,10 @@ Input baseline → Task start → Implementation output → Next task start
 
 A single commit may serve as both one task's Implementation output and the next task's Task start. Reference the same snapshot ID rather than duplicating it.
 
+For CLI-managed task execution, repository cleanliness has a narrow exception for workflow-managed files: the canonical record, generated projections, and active narrative artifacts registered in the record may remain dirty. Every staged, unstaged, or untracked path outside that set blocks task start or task completion.
+
+The commit pinned as an Implementation output must not modify workflow-managed files. Stage and commit implementation deliverables separately. When another task follows, leave workflow-managed changes dirty so `HEAD` remains the prior Implementation output used by the next task. Commit workflow/documentation state separately after the sequential task chain, or only when lineage is explicitly repinned. See [`State-Ownership.md`](State-Ownership.md).
+
 Express permits one task and therefore normally has one Task start and one Implementation output.
 
 ### Runtime deployments
@@ -181,14 +185,18 @@ Approved implementation naturally changes the repository and runtime.
 
 When a task completes successfully:
 
-1. create a new `SRC-REPO-*` record with role Implementation output;
-2. record the output commit SHA;
-3. connect it to the task-start snapshot and task ID;
-4. use it as the next task's Task start when applicable;
-5. update the active baseline owner, task record, and control state;
-6. do not roll the workflow back merely because the approved task changed the repository.
+1. confirm no implementation-scope path remains dirty;
+2. confirm the recorded output commit does not modify workflow-managed files;
+3. create a new `SRC-REPO-*` record with role Implementation output;
+4. record the output commit SHA;
+5. connect it to the task-start snapshot and task ID;
+6. use it as the next task's Task start when applicable;
+7. update the active baseline owner, task record, and control state;
+8. when another task follows, preserve the output commit as `HEAD` and leave workflow-managed changes uncommitted;
+9. commit workflow/documentation state separately when doing so will not invalidate the next task's recorded start state;
+10. do not roll the workflow back merely because the approved task changed the repository.
 
-For Express, steps 1–5 are recorded inside `WORKPACK.md`. A second independent next task requires an upgrade.
+For Express, the same lineage semantics apply even though the narrative evidence is consolidated in `WORKPACK.md`. A second independent next task requires an upgrade.
 
 When the output is deployed for validation:
 
@@ -246,6 +254,7 @@ Before final acceptance, verify:
 - no artifact or workpack section silently depends on newer input content;
 - the original repository input baseline is identified;
 - the implementation commit is a pinned `SRC-REPO-*` Implementation output;
+- the pinned Implementation output excludes workflow-managed files;
 - the validation runtime is a pinned `SRC-RUN-*` snapshot tied to that output when applicable;
 - unexpected input changes received impact assessment;
 - expected task outputs have complete lineage;
