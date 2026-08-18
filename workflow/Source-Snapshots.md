@@ -136,6 +136,18 @@ Record repository URL, commit SHA, role, branch for context, relevant package or
 
 Use the commit SHA as the pin. A branch name alone is mutable and insufficient.
 
+The canonical repository snapshot must describe repository **identity**, not one machine's checkout location. Never intentionally persist paths such as `/Users/name/project`, `C:\work\project`, or a temporary CI workspace as the repository reference.
+
+For CLI-managed records:
+
+- prefer a credential-free canonical remote identity such as `https://github.com/owner/repository` when the checkout has a usable Git remote;
+- when the repository is inside the workflow project but has no remote, use the portable `project://.` or `project://relative/path` form;
+- keep the local checkout path outside the canonical record;
+- use `.workflow/local.json` only as a local, Git-ignored binding when the canonical repository and workflow project live in different directories;
+- preserve older absolute-path records for compatibility, but rewrite them to a portable identity on a later successful mutation when the same repository can be resolved safely.
+
+Repository binding and repository identity are deliberately separate. The canonical reference answers **which repository?**; the local binding answers **where is its checkout on this machine?**. A local binding must never change snapshot identity or bypass the recorded commit pin.
+
 Repository snapshot roles typically progress as:
 
 ```text

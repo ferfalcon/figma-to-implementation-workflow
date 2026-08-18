@@ -101,7 +101,7 @@ Architecture-required Express and Lite work must upgrade. Full, and architecture
 
 ```bash
 design-workflow snapshot add --kind design --reference "Pinned Figma version" --activate
-design-workflow snapshot add --kind repo --reference . --commit <40-character-sha> --activate
+design-workflow snapshot add --kind repo --reference "https://github.com/owner/repository" --commit <40-character-sha> --activate
 
 design-workflow snapshot verify SRC-DS-001 \
   --result Unchanged \
@@ -114,6 +114,22 @@ design-workflow snapshot supersede SRC-DS-001 \
 ```
 
 Verification events are append-only. `Unexpected upstream or concurrent change` and `Unavailable` block active-input progression. Snapshot supersession never rewrites artifact baselines automatically.
+
+### Repository identity and local bindings
+
+`init --repository <path>` uses the local checkout only to discover Git identity and the pinned commit. The canonical workflow record does **not** keep that machine-specific path.
+
+When possible, repository snapshots store a credential-free canonical remote identity such as `https://github.com/owner/repository`. A repository inside the workflow project with no usable remote falls back to `project://.` or `project://relative/path`.
+
+If the workflow project and repository checkout live in different directories on a machine, bind the canonical snapshot to that checkout locally:
+
+```bash
+design-workflow repository bind SRC-REPO-001 --path ../implementation-repository
+```
+
+The command writes `.workflow/local.json`. That file is Git-ignored and is never part of snapshot identity. A binding is accepted only when the checkout contains the snapshot's pinned commit and does not present a conflicting remote identity.
+
+Legacy schema-v2 records that already contain absolute repository paths remain readable. When a later successful mutation can resolve the same repository safely, the persisted reference is healed to a canonical remote or `project://` identity. New repository snapshots are rejected rather than persisting a new machine-specific path when no portable identity can be derived.
 
 ## Artifact lifecycle
 
@@ -196,7 +212,7 @@ design-workflow task complete P01-T01 \
   --check "Build=Production build completed successfully"
 ```
 
-Completion verifies that the commit exists in the task baseline’s repository, equals `HEAD`, and descends from the recorded baseline commit. Only then does it create the Implementation-output snapshot. Task-by-task execution cannot begin before Stage 9, and Continuous-documentation mode cannot enter Stage 10.
+Task start resolves the effective baseline against the actual local `HEAD`, including the latest approved Implementation output when appropriate. Completion resolves the task baseline's local checkout from its portable identity, project-relative location, or local binding, then verifies that the commit exists in that repository, equals `HEAD`, and descends from the recorded baseline commit. Only then does it create the Implementation-output snapshot, again using a portable repository identity. Task-by-task execution cannot begin before Stage 9, and Continuous-documentation mode cannot enter Stage 10.
 
 ## Profile upgrades
 
@@ -245,6 +261,7 @@ Results are `accepted`, `accepted-with-deviations`, and `requires-corrections`. 
 
 - The current record must be clean before advancement, task execution, or acceptance.
 - A candidate record, all generated views, and new artifact files are rendered and validated before any target is replaced.
+- Repository snapshot identities are canonicalized before record serialization; local checkout bindings remain outside the committed workflow state.
 - Writes use sibling temporary files and rollback on an I/O failure.
 - Rejected mutations leave the record, generated views, and narrative files byte-identical.
 - Existing unregistered narrative files are never overwritten.

@@ -142,6 +142,7 @@ npm run test:figma-preparation
 npm run test:records
 npm run test:state
 npm run test:render
+npm run test:repository
 npm run test:package
 npm run test:cli
 ```
@@ -166,6 +167,8 @@ Pin strength:
 - `Versioned` — named or numbered revision;
 - `Time-bound` — inspected at a known time but still mutable;
 - `Unverified` — identity or revision could not be confirmed.
+
+Repository snapshots keep portable repository identity and commit pins in canonical state; machine-specific checkout paths belong only to local runtime bindings.
 
 Approved task commits are expected Implementation outputs. Unexpected upstream design, documentation, asset, runtime, or concurrent repository changes require new snapshot IDs and impact assessment.
 

@@ -1,6 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { dirname, isAbsolute, relative, resolve } from 'node:path';
 import { GENERATED_STATE_DIRECTORY, GENERATED_STATE_FILES } from './generated-state.mjs';
+import { resolveRepositoryWorkspace } from './repository-binding.mjs';
 
 const FULL_COMMIT = /^[0-9a-f]{40}$/i;
 
@@ -72,17 +73,18 @@ function commitPaths(repository, commit) {
   return [...new Set(output.split('\0').filter(Boolean).map(normalizeRepositoryPath))];
 }
 
-function taskRepository(record, task) {
+function taskRepository(recordPath, record, task) {
   if (!task?.baseline) return { finding: 'Task does not have a repository baseline.' };
   const baseline = record.snapshots.find((item) => item.id === task.baseline && item.id.startsWith('SRC-REPO-'));
   if (!baseline?.reference) {
     return { finding: `Task baseline ${task.baseline} does not reference a Git repository.` };
   }
-  const repository = baseline.reference;
-  if (gitRaw(repository, ['rev-parse', '--is-inside-work-tree'])?.trim() !== 'true') {
+  try {
+    const projectRoot = resolve(dirname(recordPath), '..');
+    return { repository: resolveRepositoryWorkspace(projectRoot, baseline) };
+  } catch {
     return { finding: `Task baseline ${task.baseline} does not reference an accessible Git repository.` };
   }
-  return { repository };
 }
 
 function implementationDirtyFindings(recordPath, record, repository, action) {
@@ -98,13 +100,13 @@ function implementationDirtyFindings(recordPath, record, repository, action) {
 }
 
 export function taskStartGitFindings(recordPath, record, task) {
-  const resolved = taskRepository(record, task);
+  const resolved = taskRepository(recordPath, record, task);
   if (resolved.finding) return [resolved.finding];
   return implementationDirtyFindings(recordPath, record, resolved.repository, 'task start');
 }
 
 export function taskCompletionGitFindings(recordPath, record, task, commit) {
-  const resolved = taskRepository(record, task);
+  const resolved = taskRepository(recordPath, record, task);
   if (resolved.finding) return [resolved.finding];
   const findings = implementationDirtyFindings(recordPath, record, resolved.repository, 'task completion');
   if (!FULL_COMMIT.test(String(commit ?? ''))) return findings;

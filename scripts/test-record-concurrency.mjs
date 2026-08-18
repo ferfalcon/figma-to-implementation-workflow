@@ -47,6 +47,10 @@ try {
     join(root, 'tests', 'fixtures', 'workflow-record.migration.v2.json'),
     'utf8',
   ));
+  // The migration golden fixture intentionally preserves a legacy relative repository
+  // reference and fake SHA. This concurrency test creates a fresh canonical record, so
+  // adapt only its in-memory copy to the current portable repository-reference contract.
+  initial.snapshots.find((snapshot) => snapshot.id === 'SRC-REPO-001').reference = 'https://github.com/example/concurrency-fixture';
   const workpackPath = join(cwd, 'WORKPACK.md');
   const initialized = commitRecordCandidate({
     recordPath,

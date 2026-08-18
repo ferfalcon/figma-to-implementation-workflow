@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs';
 import { runWorkflowCli } from './commands-v2.mjs';
 import { taskCompletionGitFindings, taskStartGitFindings } from './git-worktree-policy.mjs';
 import { readStoredRecord } from './record-store.mjs';
+import { bindRepositoryWorkspace } from './repository-binding.mjs';
 import { buildOrchestrationContext } from './orchestration-context.mjs';
 import { checkStage } from './stage-check.mjs';
 import { startTaskAtCurrentHead } from './task-lineage.mjs';
@@ -35,6 +36,11 @@ function load(cwd, options) {
   return { recordPath, ...readStoredRecord(recordPath) };
 }
 
+function stringOption(options, name) {
+  const value = options[name];
+  return typeof value === 'string' && value.trim() ? value.trim() : null;
+}
+
 export async function runCli(args, environment) {
   const { cwd, stdout, stderr } = environment;
   const parsed = parseArgs(args);
@@ -50,7 +56,28 @@ export async function runCli(args, environment) {
     write(stdout, '\nAgent orchestration:');
     write(stdout, '  design-workflow context [--json]');
     write(stdout, '  design-workflow stage check [--json]');
+    write(stdout, '\nLocal repository binding:');
+    write(stdout, '  design-workflow repository bind <snapshot-id> --path <checkout>');
     return result;
+  }
+
+  if (command === 'repository' && positionals[1] === 'bind') {
+    try {
+      const snapshotId = positionals[2];
+      const repositoryPath = stringOption(options, 'path');
+      if (!snapshotId || !repositoryPath) {
+        return fail(stderr, 'Usage: design-workflow repository bind <snapshot-id> --path <checkout>');
+      }
+      const { record } = readStoredRecord(recordPath);
+      const snapshot = record.snapshots.find((item) => item.id === snapshotId && item.id.startsWith('SRC-REPO-'));
+      if (!snapshot) return fail(stderr, `Repository snapshot ${snapshotId} does not exist.`);
+      const binding = bindRepositoryWorkspace(cwd, snapshot, repositoryPath);
+      write(stdout, `Bound ${snapshotId} (${snapshot.reference}) to ${relativeDisplay(cwd, binding.repository)}.`);
+      write(stdout, `Local binding: ${relativeDisplay(cwd, binding.path)}`);
+      return 0;
+    } catch (error) {
+      return fail(stderr, error instanceof Error ? error.message : String(error));
+    }
   }
 
   if (command === 'context') {
