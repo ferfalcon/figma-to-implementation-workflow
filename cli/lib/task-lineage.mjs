@@ -1,7 +1,11 @@
 import { execFileSync } from 'node:child_process';
+import { dirname, resolve } from 'node:path';
 import { commitRecordCandidate, prepareRecordMutation } from './record-store.mjs';
+import { taskStartCheckpointFindings, taskStartGitFindings } from './git-worktree-policy.mjs';
+import { resolveRepositoryWorkspace } from './repository-binding.mjs';
 import { taskStartFindings } from './workflow-actions.mjs';
 import { workflowDiagnostics } from './workflow-diagnostics.mjs';
+import { nextId } from './utils.mjs';
 
 function git(repository, args) {
   try {
@@ -31,73 +35,105 @@ function invalidateCurrentGate(record) {
   if (invalidated) record.state.status = 'In progress';
 }
 
-export function resolveTaskStartBaseline(record, task) {
+function latestOutputAnchor(record, projectRoot, repository, head) {
+  const latest = record.state.latestOutput
+    ? repositorySnapshot(record, record.state.latestOutput)
+    : null;
+  if (!latest || latest.role !== 'Implementation output' || latest.status === 'Superseded' || !latest.commit) return null;
+
+  let latestRepository;
+  try {
+    latestRepository = resolveRepositoryWorkspace(projectRoot, latest);
+  } catch {
+    return null;
+  }
+  if (latestRepository !== repository) return null;
+  if (git(repository, ['cat-file', '-e', `${latest.commit}^{commit}`]) === null) return null;
+  if (latest.commit !== head && git(repository, ['merge-base', '--is-ancestor', latest.commit, head]) === null) return null;
+  return latest;
+}
+
+export function resolveTaskStartBaseline(recordPath, record, task) {
   const plannedBaseline = repositorySnapshot(record, task.baseline);
   if (!plannedBaseline?.commit) {
     throw new Error(`Task baseline ${task.baseline} does not record a Git commit.`);
   }
 
-  const repository = plannedBaseline.reference;
-  if (!repository || git(repository, ['rev-parse', '--is-inside-work-tree']) !== 'true') {
+  const projectRoot = resolve(dirname(recordPath), '..');
+  let repository;
+  try {
+    repository = resolveRepositoryWorkspace(projectRoot, plannedBaseline);
+  } catch {
     throw new Error(`Task baseline ${task.baseline} does not reference an accessible Git repository.`);
   }
 
   const head = git(repository, ['rev-parse', 'HEAD']);
   if (!head) throw new Error(`Could not resolve HEAD for task ${task.id}.`);
 
-  const latestOutput = record.state.latestOutput
-    ? repositorySnapshot(record, record.state.latestOutput)
-    : null;
-  const latestOutputMatchesHead = Boolean(
-    latestOutput
-    && latestOutput.role === 'Implementation output'
-    && latestOutput.status !== 'Superseded'
-    && latestOutput.reference === repository
-    && latestOutput.commit === head,
-  );
+  const latestOutput = latestOutputAnchor(record, projectRoot, repository, head);
+  const anchor = latestOutput ?? plannedBaseline;
+  if (anchor.commit !== head && git(repository, ['merge-base', '--is-ancestor', anchor.commit, head]) === null) {
+    throw new Error(
+      `Repository HEAD ${head} does not descend from ${anchor.id} (${anchor.commit}). `
+      + `Record and assess the unexpected repository change before starting ${task.id}.`,
+    );
+  }
 
-  if (latestOutputMatchesHead) {
+  if (head === anchor.commit) {
     const previousBaseline = task.baseline;
-    task.baseline = latestOutput.id;
+    task.baseline = anchor.id;
     return {
       repository,
       commit: head,
-      baseline: latestOutput.id,
+      baseline: anchor.id,
       previousBaseline,
-      source: 'latest-output',
+      source: anchor.role === 'Implementation output' ? 'latest-output' : 'planned-baseline',
+      createdSnapshot: false,
     };
   }
 
-  if (plannedBaseline.commit === head) {
-    return {
-      repository,
-      commit: head,
-      baseline: plannedBaseline.id,
-      previousBaseline: plannedBaseline.id,
-      source: 'planned-baseline',
-    };
-  }
-
-  const latestDescription = latestOutput?.commit
-    ? `${latestOutput.id} (${latestOutput.commit})`
-    : 'none';
-  throw new Error(
-    `Repository HEAD ${head} does not match planned task baseline ${plannedBaseline.id} (${plannedBaseline.commit}) `
-    + `or the latest approved implementation output (${latestDescription}). `
-    + `Record and assess the unexpected repository change before starting ${task.id}.`,
+  const checkpointFindings = taskStartCheckpointFindings(
+    recordPath, record, repository, anchor.commit, head,
   );
+  if (checkpointFindings.length > 0) throw new Error(checkpointFindings.join('\n'));
+
+  const startId = nextId(record.snapshots, 'SRC-REPO-');
+  record.snapshots.push({
+    id: startId,
+    role: 'Task start',
+    pinStrength: 'Immutable',
+    status: 'Active',
+    reference: repository,
+    commit: head,
+    parent: anchor.id,
+    task: task.id,
+  });
+  const previousBaseline = task.baseline;
+  task.baseline = startId;
+  return {
+    repository,
+    commit: head,
+    baseline: startId,
+    previousBaseline,
+    source: 'task-start-checkpoint',
+    createdSnapshot: true,
+  };
 }
 
 export function startTaskAtCurrentHead(recordPath, taskId) {
   const prepared = prepareRecordMutation(recordPath);
   const diagnostics = workflowDiagnostics(recordPath, prepared.record);
   const currentTask = prepared.record.tasks.find((task) => task.id === taskId);
-  const findings = [...diagnostics.findings, ...taskStartFindings(prepared.record, currentTask)];
+  const findings = [
+    ...diagnostics.findings,
+    ...taskStartFindings(prepared.record, currentTask),
+    ...(currentTask ? taskStartGitFindings(recordPath, prepared.record, currentTask) : []),
+  ];
   if (findings.length > 0) throw new Error(findings.join('\n'));
 
   const record = prepared.candidate;
   const task = record.tasks.find((candidate) => candidate.id === taskId);
-  const start = resolveTaskStartBaseline(record, task);
+  const start = resolveTaskStartBaseline(recordPath, record, task);
 
   task.status = 'In progress';
   record.state.currentTask = taskId;

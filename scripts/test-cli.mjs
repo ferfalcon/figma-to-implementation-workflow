@@ -147,8 +147,19 @@ function testExecutableLifecycle() {
   run(cwd, ['stage', 'review', '--result', 'Blocked', '--evidence', 'Return to gated execution']);
   run(cwd, ['mode', 'set', 'Gated']);
   run(cwd, ['stage', 'review', '--result', 'Passed', '--evidence', 'Task set is ready and traced', '--approved-by', 'Fixture owner']);
+
+  git(cwd, ['add', '.']);
+  git(cwd, ['commit', '-m', 'Record approved task plan']);
+  const planningCommit = git(cwd, ['rev-parse', 'HEAD']);
+
   run(cwd, ['stage', 'advance']);
   run(cwd, ['task', 'start', 'P01-T01']);
+  current = record(cwd);
+  const taskStart = current.snapshots.find((item) => item.id === current.tasks[0].baseline);
+  assert(taskStart?.role === 'Task start', 'task start did not capture an exact repository checkpoint');
+  assert(taskStart.commit === planningCommit, 'task start checkpoint did not pin the approved planning HEAD');
+  assert(taskStart.parent === 'SRC-REPO-001', 'task start checkpoint did not retain the original repository baseline');
+
   run(cwd, ['task', 'block', 'P01-T01', '--reason', 'Temporary fixture blocker']);
   current = record(cwd);
   assert(current.tasks[0].blocker.previousStatus === 'In progress', 'task blocker did not preserve previous status');
@@ -178,7 +189,7 @@ function testExecutableLifecycle() {
   current = record(cwd);
   const check = current.tasks[0].validation[0];
   assert(check.status === 'Passed' && check.actual && check.executedAt && check.evidence.length > 0, 'completion did not record structured passed validation');
-  assert(current.snapshots.find((item) => item.id === current.state.latestOutput)?.parent === 'SRC-REPO-001', 'completion did not retain output lineage');
+  assert(current.snapshots.find((item) => item.id === current.state.latestOutput)?.parent === current.tasks[0].baseline, 'completion output did not parent the exact task-start checkpoint');
   run(cwd, ['stage', 'review', '--result', 'Passed', '--evidence', 'All tasks completed with verified Git lineage', '--approved-by', 'Fixture owner']);
   run(cwd, ['stage', 'advance']);
   run(cwd, ['snapshot', 'verify', current.state.latestOutput, '--result', 'Expected workflow output', '--method', 'Git and runtime comparison', '--evidence', 'Final output reverified']);

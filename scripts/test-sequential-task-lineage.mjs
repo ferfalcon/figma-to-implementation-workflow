@@ -157,13 +157,16 @@ try {
   }
   run(['sync']);
   run(['validate']);
+  git(['add', '.']);
+  git(['commit', '-m', 'Record approved planning state']);
+  const planningCommit = git(['rev-parse', 'HEAD']);
 
   run(['task', 'start', 'P01-T01']);
   let current = workflowRecord();
-  assert(
-    current.tasks[0].baseline === 'SRC-REPO-001',
-    'First task should retain the planned immutable baseline when it exactly matches HEAD.',
-  );
+  const firstStart = current.snapshots.find((snapshot) => snapshot.id === current.tasks[0].baseline);
+  assert(firstStart?.role === 'Task start', 'First task did not capture an exact task-start snapshot.');
+  assert(firstStart.commit === planningCommit, 'First task-start snapshot did not pin the actual planning HEAD.');
+  assert(firstStart.parent === 'SRC-REPO-001', 'First task-start snapshot did not retain the input-baseline parent.');
 
   writeFileSync(join(cwd, 'first.txt'), 'first task\n', 'utf8');
   git(['add', 'first.txt']);
@@ -174,8 +177,8 @@ try {
   const firstOutput = current.tasks[0].output;
   assert(firstOutput, 'First task did not record an output snapshot.');
   assert(
-    current.snapshots.find((snapshot) => snapshot.id === firstOutput)?.parent === 'SRC-REPO-001',
-    'First output should descend from the first task start baseline.',
+    current.snapshots.find((snapshot) => snapshot.id === firstOutput)?.parent === current.tasks[0].baseline,
+    'First output does not descend from the exact first task-start checkpoint.',
   );
 
   run(['task', 'start', 'P01-T02']);
@@ -208,16 +211,16 @@ try {
   const beforeRejectedStart = readFileSync(join(cwd, '.workflow', 'workflow-record.json'));
   const rejected = run(['task', 'start', 'P01-T03'], 1);
   assert(
-    rejected.stderr.includes('does not match planned task baseline')
-      && rejected.stderr.includes('latest approved implementation output'),
-    'Unexpected HEAD rejection did not explain the lineage mismatch.',
+    rejected.stderr.includes('implementation-scope paths before task start')
+      && rejected.stderr.includes('concurrent.txt'),
+    'Unexpected committed implementation change was not explained by the task-start checkpoint policy.',
   );
   assert(
     Buffer.compare(beforeRejectedStart, readFileSync(join(cwd, '.workflow', 'workflow-record.json'))) === 0,
     'Rejected concurrent-change task start mutated the workflow record.',
   );
 
-  console.log('Sequential task lineage and unexpected-HEAD rejection tests passed.');
+  console.log('Sequential task lineage, exact task-start checkpoints, and unexpected-change rejection tests passed.');
 } finally {
   rmSync(cwd, { recursive: true, force: true });
 }

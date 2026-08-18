@@ -156,9 +156,21 @@ Input baseline → Task start → Implementation output → Next task start
 
 A single commit may serve as both one task's Implementation output and the next task's Task start. Reference the same snapshot ID rather than duplicating it.
 
-For CLI-managed task execution, repository cleanliness has a narrow exception for workflow-managed files: the canonical record, generated projections, and active narrative artifacts registered in the record may remain dirty. Every staged, unstaged, or untracked path outside that set blocks task start or task completion.
+Before task start, approved planning and task narratives must be committed so the implementation instructions are reproducible. The canonical record and generated projections may remain dirty because the CLI updates those control files while recording workflow state. Any other staged, unstaged, or untracked path blocks task start.
 
-The commit pinned as an Implementation output must not modify workflow-managed files. Stage and commit implementation deliverables separately. When another task follows, leave workflow-managed changes dirty so `HEAD` remains the prior Implementation output used by the next task. Commit workflow/documentation state separately after the sequential task chain, or only when lineage is explicitly repinned. See [`State-Ownership.md`](State-Ownership.md).
+At task start, compare repository `HEAD` with the effective repository anchor: the latest active Implementation output when it belongs to the same repository and is an ancestor of `HEAD`, otherwise the task's planned repository baseline.
+
+- when `HEAD` equals that anchor, reuse the existing repository snapshot;
+- when `HEAD` descends from the anchor and the intervening commits modify only workflow-managed planning/control paths, create a new immutable **Task start** snapshot at the actual `HEAD` and parent it to the anchor;
+- when the intervening commits include implementation-scope paths, block task start and require impact assessment instead of silently rebasing the task.
+
+This permits legitimate committed workflow bookkeeping between tasks without losing exact lineage. For example:
+
+```text
+Input baseline → Task start → Implementation output → Task start → Implementation output
+```
+
+Task completion has a different cleanliness boundary. Workflow-managed narrative/control files may remain dirty, but implementation-scope files may not. The commit pinned as an Implementation output must not modify workflow-managed files; stage and commit implementation deliverables separately.
 
 Express permits one task and therefore normally has one Task start and one Implementation output.
 
@@ -201,11 +213,11 @@ When a task completes successfully:
 2. confirm the recorded output commit does not modify workflow-managed files;
 3. create a new `SRC-REPO-*` record with role Implementation output;
 4. record the output commit SHA;
-5. connect it to the task-start snapshot and task ID;
-6. use it as the next task's Task start when applicable;
-7. update the active baseline owner, task record, and control state;
-8. when another task follows, preserve the output commit as `HEAD` and leave workflow-managed changes uncommitted;
-9. commit workflow/documentation state separately when doing so will not invalidate the next task's recorded start state;
+5. connect it to the exact Task start snapshot and task ID;
+6. update the active baseline owner, task record, and control state;
+7. use that output as the next task's repository anchor when applicable;
+8. if workflow-managed changes are committed before the next task, capture their resulting `HEAD` as a new Task start checkpoint rather than pretending the next task began from the older output;
+9. reject committed implementation-scope changes between the prior repository anchor and the next task start until they receive explicit impact assessment;
 10. do not roll the workflow back merely because the approved task changed the repository.
 
 For Express, the same lineage semantics apply even though the narrative evidence is consolidated in `WORKPACK.md`. A second independent next task requires an upgrade.
@@ -265,7 +277,8 @@ Before final acceptance, verify:
 - every referenced snapshot ID exists in the active baseline owner;
 - no artifact or workpack section silently depends on newer input content;
 - the original repository input baseline is identified;
-- the implementation commit is a pinned `SRC-REPO-*` Implementation output;
+- every implemented task identifies the repository snapshot from which it actually started;
+- the implementation commit is a pinned `SRC-REPO-*` Implementation output parented to that Task start snapshot;
 - the pinned Implementation output excludes workflow-managed files;
 - the validation runtime is a pinned `SRC-RUN-*` snapshot tied to that output when applicable;
 - unexpected input changes received impact assessment;
