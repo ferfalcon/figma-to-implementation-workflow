@@ -8,12 +8,16 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 
 ### Added
 
+- Sequential task-lineage regression coverage proving that a completed task output becomes the next task's effective repository baseline and that unrecognized repository changes block task start without mutation.
 - Repository validation that requires the `package.json` version to have a dated changelog release entry and keeps the canonical agent-orchestration contract discoverable.
+- Exclusive workflow-record mutation locks plus optimistic record-version checks that reject concurrent or stale writers before any transactional file changes.
+- Dedicated concurrency regression coverage for stale prepared mutations, lock contention, byte-identical rejection, and lock cleanup after validation failures.
 - Portable repository snapshot bindings with `design-workflow repository bind <snapshot-id> --path <checkout>` and a Git-ignored `.workflow/local.json` runtime mapping.
-- Repository-portability regression tests covering canonical remote normalization, `project://` references, moved checkouts, local bindings, legacy absolute-path healing, and rejection of new non-portable snapshots.
+- Repository-portability regression tests covering canonical remote normalization, `project://` references, moved checkouts, local bindings, legacy absolute-path healing, identity mismatches, containment, and rejection of new non-portable snapshots.
 
 ### Changed
 
+- `task start` now resolves the task's effective repository baseline against the actual `HEAD`: it reuses the latest recorded Implementation output when that output is `HEAD`, retains the planned baseline only when it is exactly `HEAD`, and rejects every other repository state as an unexpected change.
 - Promoted `workflow/Agent-Orchestration.md` to the README `Start here` sequence and required repository-contract validation.
 - Repository snapshots now persist repository identity instead of machine-specific checkout paths. CLI-managed mutations resolve local workspaces at runtime and canonicalize repository references before serialization.
 
