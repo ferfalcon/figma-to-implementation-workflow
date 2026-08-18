@@ -108,6 +108,14 @@ export function resolveTaskStartBaseline(recordPath, record, task) {
     parent: anchor.id,
     task: task.id,
   });
+  if (
+    plannedBaseline.role === 'Task start'
+    && plannedBaseline.task === task.id
+    && plannedBaseline.status === 'Active'
+  ) {
+    plannedBaseline.status = 'Superseded';
+    plannedBaseline.supersededBy = startId;
+  }
   const previousBaseline = task.baseline;
   task.baseline = startId;
   return {
