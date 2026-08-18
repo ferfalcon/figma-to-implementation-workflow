@@ -1,5 +1,7 @@
 # Figma File Preparation and Normalization
 
+This file is the single normative procedure for Figma file preparation and normalization. [`../AGENTS-PROMPT-Figma-file-preparation.md`](../AGENTS-PROMPT-Figma-file-preparation.md) is only a thin execution launcher and must delegate here rather than restating these steps.
+
 Use this phase before the formal Figma developer-handoff audit. For source capture and audit rules, also use [`FIGMA.md`](FIGMA.md).
 
 Its purpose is to make the selected Figma page, section, frame, or node structurally understandable and safe to inspect without disguising unresolved design, responsive, accessibility, content, or implementation problems.
@@ -249,7 +251,7 @@ A suitable structure may include:
 
 Review font family, weight, size, line height, letter spacing, text case, intended use, hierarchy, responsive behavior, and consistency.
 
-Update text layers to use intended styles and consolidate accidental duplicates when safe.
+Update text layers to use the intended styles and consolidate accidental duplicates when safe.
 
 Avoid names based only on visual properties, such as `Inter 16 Medium`, `Text 24 Bold`, `Big Heading`, or `Desktop H2`.
 
