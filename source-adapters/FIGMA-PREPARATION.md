@@ -1,5 +1,7 @@
 # Figma File Preparation and Normalization
 
+This file is the single normative procedure for Figma file preparation and normalization. [`../AGENTS-PROMPT-Figma-file-preparation.md`](../AGENTS-PROMPT-Figma-file-preparation.md) is only a thin execution launcher and must delegate here rather than restating these steps.
+
 Use this phase before the formal Figma developer-handoff audit. For source capture and audit rules, also use [`FIGMA.md`](FIGMA.md).
 
 Its purpose is to make the selected Figma page, section, frame, or node structurally understandable and safe to inspect without disguising unresolved design, responsive, accessibility, content, or implementation problems.
