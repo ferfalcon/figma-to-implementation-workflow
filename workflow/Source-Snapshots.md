@@ -154,6 +154,10 @@ Repository snapshot roles typically progress as:
 Input baseline → Task start → Implementation output → Next task start
 ```
 
+A task's executable repository baseline must be an Immutable repository snapshot with a commit SHA and role Input baseline, Task start, or Implementation output. Incomplete tasks must not execute from Superseded, Invalid, or Unverified repository state.
+
+A schema-v2 **Task start** snapshot is an exact checkpoint, not a loose label. It must be an Immutable `SRC-REPO-*` snapshot with a commit SHA, a repository-snapshot parent, and the task ID. The task must point back to that snapshot as its baseline. An **Implementation output** likewise points to its producing task, and the task points back to that output.
+
 A single commit may serve as both one task's Implementation output and the next task's Task start. Reference the same snapshot ID rather than duplicating it.
 
 Before task start, approved planning and task narratives must be committed so the implementation instructions are reproducible. The canonical record and generated projections may remain dirty because the CLI updates those control files while recording workflow state. Any other staged, unstaged, or untracked path blocks task start.
@@ -161,8 +165,10 @@ Before task start, approved planning and task narratives must be committed so th
 At task start, compare repository `HEAD` with the effective repository anchor: the latest active Implementation output when it belongs to the same repository and is an ancestor of `HEAD`, otherwise the task's planned repository baseline.
 
 - when `HEAD` equals that anchor, reuse the existing repository snapshot;
-- when `HEAD` descends from the anchor and the intervening commits modify only workflow-managed planning/control paths, create a new immutable **Task start** snapshot at the actual `HEAD` and parent it to the anchor;
-- when the intervening commits include implementation-scope paths, block task start and require impact assessment instead of silently rebasing the task.
+- when `HEAD` descends from the anchor, inspect **every intervening commit** from the anchor through `HEAD`; only when every touched path is workflow-managed planning/control state may the CLI create a new immutable **Task start** snapshot at the actual `HEAD` and parent it to the anchor;
+- when any intervening commit touches an implementation-scope path, block task start and require impact assessment instead of silently rebasing the task—even if a later commit reverts that implementation change and the endpoint tree appears clean.
+
+The history-level rule is intentional. Task-start lineage records not only the final tree difference but whether implementation-scope work occurred between the approved repository anchor and the exact task start.
 
 This permits legitimate committed workflow bookkeeping between tasks without losing exact lineage. For example:
 
@@ -177,6 +183,8 @@ Express permits one task and therefore normally has one Task start and one Imple
 ### Runtime deployments
 
 Record environment and URL, deployment or release ID, associated repository snapshot, timestamp, configuration or feature-flag state, test data, authentication state, captured evidence, and environment differences.
+
+When a Validation runtime is used for final review, parent it to the exact Implementation output being reviewed. The active `latestValidationRuntime` pointer must reference that Active runtime rather than a superseded or unrelated environment.
 
 ### Documentation
 
@@ -201,6 +209,8 @@ Lite, Standard, and Full use `WORKFLOW-STATE.md` to distinguish:
 - latest approved implementation-output snapshot;
 - current validation-runtime snapshot.
 
+In CLI-managed schema v2, `state.currentTask` and task status are reciprocal: no task may be `In progress` without being the current task, the current task must be `In progress`, and more than one `In progress` task is invalid.
+
 An artifact remains valid against the snapshots in its metadata after the active baseline changes. It becomes stale only when a newer upstream input affects its scope or conclusions.
 
 ## Expected workflow outputs
@@ -217,7 +227,7 @@ When a task completes successfully:
 6. update the active baseline owner, task record, and control state;
 7. use that output as the next task's repository anchor when applicable;
 8. if workflow-managed changes are committed before the next task, capture their resulting `HEAD` as a new Task start checkpoint rather than pretending the next task began from the older output;
-9. reject committed implementation-scope changes between the prior repository anchor and the next task start until they receive explicit impact assessment;
+9. reject the next task start if **any commit** between the prior repository anchor and that task start touched implementation scope, including changes that were later reverted;
 10. do not roll the workflow back merely because the approved task changed the repository.
 
 For Express, the same lineage semantics apply even though the narrative evidence is consolidated in `WORKPACK.md`. A second independent next task requires an upgrade.
@@ -225,7 +235,7 @@ For Express, the same lineage semantics apply even though the narrative evidence
 When the output is deployed for validation:
 
 1. create a `SRC-RUN-*` record with role Validation runtime;
-2. connect it to the implementation repository snapshot;
+2. connect it to the implementation repository snapshot through the runtime parent;
 3. record environment differences and capture conditions.
 
 Expected outputs require lineage and validation, not an upstream rebaseline impact assessment.
@@ -278,7 +288,10 @@ Before final acceptance, verify:
 - no artifact or workpack section silently depends on newer input content;
 - the original repository input baseline is identified;
 - every implemented task identifies the repository snapshot from which it actually started;
+- each Task start checkpoint is immutable, committed, parented to its prior repository anchor, and attributed reciprocally to its task;
 - the implementation commit is a pinned `SRC-REPO-*` Implementation output parented to that Task start snapshot;
+- every Implementation output and producing task reference each other consistently;
+- the latest output pointer references an Active output produced by a Complete task;
 - the pinned Implementation output excludes workflow-managed files;
 - the validation runtime is a pinned `SRC-RUN-*` snapshot tied to that output when applicable;
 - unexpected input changes received impact assessment;
