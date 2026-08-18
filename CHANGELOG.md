@@ -8,6 +8,7 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 
 ### Added
 
+- Focused Figma preparation authority test that requires the root launcher to delegate to the canonical adapter and rejects duplicated numbered procedure sections.
 - Deterministic agent-orchestration protocol with `design-workflow context --json` and `design-workflow stage check --json`.
 - Shared executable action-eligibility checks for stage advancement and task start.
 - `workflow/Agent-Orchestration.md` as the canonical AI-agent runtime contract.
@@ -44,6 +45,7 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 
 ### Changed
 
+- `source-adapters/FIGMA-PREPARATION.md` is now explicitly the single normative Figma preparation procedure, while `AGENTS-PROMPT-Figma-file-preparation.md` is a thin execution launcher that supplies scope and task boundaries without restating the procedure.
 - Generated next-action guidance now requires Stage 9 advancement before a Ready task can start and explicitly stops Continuous-documentation mode before Stage 10.
 - Express workpack rendering now preserves implementation discoveries/deviations as narrative while keeping structured validation and output lineage record-owned.
 - Agent instructions now consume canonical orchestration context instead of reinterpreting workflow state from Markdown.
