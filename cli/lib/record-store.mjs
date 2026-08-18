@@ -54,6 +54,10 @@ function isBindingConfigurationError(error) {
   return error instanceof Error && error.message.startsWith('Local repository binding file');
 }
 
+function isPortabilityError(error) {
+  return error instanceof Error && error.message.startsWith('Repository snapshot ') && error.message.includes('portable identity');
+}
+
 function hydrateRepositoryReferences(recordPath, record) {
   const projectRoot = projectRootForRecord(recordPath);
   for (const snapshot of repositorySnapshots(record)) {
@@ -79,9 +83,13 @@ function canonicalizeRepositoryReferences(recordPath, candidate, currentRecord =
         repository,
         previousReference ?? parentReference ?? snapshot.reference,
       );
-      if (reference) snapshot.reference = reference;
+      if (reference) {
+        snapshot.reference = reference;
+      } else if (!currentSnapshots.has(snapshot.id)) {
+        throw new Error(`Repository snapshot ${snapshot.id} has no portable identity. Configure a Git remote or keep the repository inside the workflow project before recording the snapshot.`);
+      }
     } catch (error) {
-      if (isBindingConfigurationError(error)) throw error;
+      if (isBindingConfigurationError(error) || isPortabilityError(error)) throw error;
     }
   }
   return candidate;
