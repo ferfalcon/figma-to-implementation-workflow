@@ -62,7 +62,7 @@ export function resolveTaskStartBaseline(recordPath, record, task, options = {})
     task.baseline = anchor.id;
     return {
       repository,
-      reference: anchor.reference,
+      reference: binding.reference,
       commit: head,
       baseline: anchor.id,
       previousBaseline,
@@ -82,7 +82,7 @@ export function resolveTaskStartBaseline(recordPath, record, task, options = {})
     role: 'Task start',
     pinStrength: 'Immutable',
     status: 'Active',
-    reference: anchor.reference,
+    reference: binding.reference,
     commit: head,
     parent: anchor.id,
     task: task.id,
@@ -91,7 +91,7 @@ export function resolveTaskStartBaseline(recordPath, record, task, options = {})
   task.baseline = startId;
   return {
     repository,
-    reference: anchor.reference,
+    reference: binding.reference,
     commit: head,
     baseline: startId,
     previousBaseline,
