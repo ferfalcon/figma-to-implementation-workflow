@@ -113,8 +113,12 @@ function projectReference(cwd, repository) {
 
 function projectReferencePath(cwd, reference) {
   if (typeof reference !== 'string' || !reference.startsWith('project://')) return null;
+  const projectRoot = resolve(cwd);
   const value = reference.slice('project://'.length) || '.';
-  return resolve(cwd, value);
+  const path = resolve(projectRoot, value);
+  const relativePath = slashPath(relative(projectRoot, path));
+  if (relativePath === '..' || relativePath.startsWith('../')) return null;
+  return path;
 }
 
 function legacyReferencePath(cwd, reference) {
