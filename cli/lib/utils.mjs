@@ -96,6 +96,30 @@ export function nextTaskId(tasks, phaseValue = null) {
   return `P${String(phase).padStart(2, '0')}-T${String(highest + 1).padStart(2, '0')}`;
 }
 
+function removeOption(args, name) {
+  const result = [];
+  for (let index = 0; index < args.length; index += 1) {
+    const token = args[index];
+    if (token === `--${name}`) {
+      const next = args[index + 1];
+      if (next !== undefined && !next.startsWith('--')) index += 1;
+      continue;
+    }
+    if (token.startsWith(`--${name}=`)) continue;
+    result.push(token);
+  }
+  return result;
+}
+
+export function normalizeTaskCreateArgs(args, tasks, parsed = parseArgs(args)) {
+  const { positionals, options } = parsed;
+  if (positionals[0] !== 'task' || positionals[1] !== 'create' || options.phase === undefined) return [...args];
+  if (Array.isArray(options.phase)) throw new Error('--phase may be specified only once.');
+  if (options.id !== undefined) throw new Error('--phase cannot be combined with --id; choose one task-ID strategy.');
+  const id = nextTaskId(tasks ?? [], options.phase);
+  return [...removeOption(args, 'phase'), '--id', id];
+}
+
 export function artifactType(value) {
   if (typeof value !== 'string') return null;
   const normalized = value.trim().toLowerCase().replaceAll('_', '-');
