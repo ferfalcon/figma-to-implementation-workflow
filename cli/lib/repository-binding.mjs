@@ -75,6 +75,23 @@ function readLocalBindings(projectRoot) {
   return { repositories };
 }
 
+function ensureLocalBindingIgnored(projectRoot) {
+  const owner = repositoryRoot(projectRoot);
+  if (!owner) return;
+  const gitPath = git(projectRoot, ['rev-parse', '--git-path', 'info/exclude']);
+  if (!gitPath) return;
+  const excludePath = isAbsolute(gitPath) ? gitPath : resolve(projectRoot, gitPath);
+  const localRelative = slashPath(relative(owner, localBindingPath(projectRoot)));
+  if (!localRelative || localRelative === '..' || localRelative.startsWith('../')) return;
+  const pattern = `/${localRelative}`;
+  const existing = existsSync(excludePath) ? readFileSync(excludePath, 'utf8') : '';
+  const lines = existing.split(/\r?\n/).map((line) => line.trim());
+  if (lines.includes(pattern)) return;
+  mkdirSync(dirname(excludePath), { recursive: true });
+  const prefix = existing && !existing.endsWith('\n') ? `${existing}\n` : existing;
+  writeFileSync(excludePath, `${prefix}${pattern}\n`, 'utf8');
+}
+
 export function gitValue(repository, args) {
   return git(repository, args);
 }
@@ -271,6 +288,7 @@ export function bindRepositoryWorkspace(recordPath, snapshot, repositoryInput, o
       ? (relativePath || '.')
       : repository
   );
+  ensureLocalBindingIgnored(projectRoot);
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, `${JSON.stringify(bindings, null, 2)}\n`, 'utf8');
   return {
