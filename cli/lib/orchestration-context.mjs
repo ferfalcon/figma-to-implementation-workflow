@@ -213,7 +213,7 @@ export function buildOrchestrationContext(recordPath, record, { cwd }) {
   const resources = stageResources(record, toolkit);
 
   return {
-    protocolVersion: 1,
+    protocolVersion: 2,
     initialized: true,
     control: {
       mode: 'cli-managed',
