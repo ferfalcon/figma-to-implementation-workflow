@@ -67,8 +67,8 @@ export async function runCli(args, environment) {
   if (!command || command === 'help' || options.help) {
     const result = await runWorkflowCli(args, environment);
     write(stdout, '\nTask phases:');
-    write(stdout, '  design-workflow task create [--phase <0-99|P00-P99>] [--id <Pxx-Txx>] ...');
-    write(stdout, '  Without --phase or --id, task numbering continues in the highest existing phase and defaults to Phase 01.');
+    write(stdout, '  design-workflow task create [--phase <0-99|P00-P99> | --id <Pxx-Txx>] ...');
+    write(stdout, '  --phase and --id are mutually exclusive. Without either, numbering continues in the highest existing phase and defaults to Phase 01.');
     write(stdout, '\nAgent orchestration:');
     write(stdout, '  design-workflow context [--json]');
     write(stdout, '  design-workflow stage check [--json]');
