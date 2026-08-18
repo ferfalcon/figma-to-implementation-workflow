@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { runCli } from './lib/workflow-cli.mjs';
+import { runCli } from './lib/agent-cli.mjs';
 
 try {
   process.exitCode = await runCli(process.argv.slice(2), {
