@@ -4,7 +4,7 @@ import { completeTaskAtCurrentHead } from './task-completion.mjs';
 import { startTaskAtCurrentHead } from './task-lineage.mjs';
 import { mutateRecord, readStoredRecord } from './record-store.mjs';
 import {
-  bindRepositoryWorkspace, captureRepositorySnapshot,
+  bindRepositoryWorkspace, captureRepositorySnapshot, repositoryProjectRoot,
 } from './repository-binding.mjs';
 import { buildOrchestrationContext } from './orchestration-context.mjs';
 import { checkStage } from './stage-check.mjs';
@@ -43,9 +43,9 @@ function initUsesExecutableRepository(options) {
     && String(options.control ?? 'cli-managed').toLowerCase() !== 'markdown-only';
 }
 
-function preflightInitializedRepository(cwd, options) {
+function preflightInitializedRepository(cwd, recordPath, options) {
   if (!initUsesExecutableRepository(options)) return null;
-  return captureRepositorySnapshot(cwd, options.repository, { cwd });
+  return captureRepositorySnapshot(repositoryProjectRoot(recordPath), options.repository, { cwd });
 }
 
 function applyInitializedRepositoryIdentity(cwd, options, captured) {
@@ -207,7 +207,7 @@ export async function runCli(args, environment) {
   let initializedRepository = null;
   if (command === 'init') {
     try {
-      initializedRepository = preflightInitializedRepository(cwd, options);
+      initializedRepository = preflightInitializedRepository(cwd, recordPath, options);
     } catch (error) {
       return fail(stderr, error instanceof Error ? error.message : String(error));
     }
