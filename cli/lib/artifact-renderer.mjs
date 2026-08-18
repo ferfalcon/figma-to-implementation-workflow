@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ARTIFACT_FILES } from './workflow-model.mjs';
+import { parseTaskId } from './utils.mjs';
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 const ARTIFACT_START = '<!-- artifact:start -->';
@@ -151,8 +152,15 @@ function substitute(text, context) {
   for (const [token, value] of Object.entries(values)) {
     if (value !== undefined) rendered = rendered.replaceAll(token, String(value));
   }
-  if (context.taskId) rendered = rendered.replaceAll('P01-T01', context.taskId);
-  if (context.taskTitle) rendered = rendered.replace('# Phase 01 — Task 01: Task title', `# Phase 01 — Task ${context.taskId?.slice(-2) ?? '01'}: ${context.taskTitle}`);
+  const task = context.taskId ? parseTaskId(context.taskId) : null;
+  if (context.taskId && !task) throw new Error(`Invalid task ID: ${context.taskId}. Expected Pxx-Txx.`);
+  if (task) rendered = rendered.replaceAll('P01-T01', task.id);
+  if (task || context.taskTitle) {
+    const phaseLabel = task?.phaseLabel ?? '01';
+    const taskLabel = task?.taskLabel ?? '01';
+    const title = context.taskTitle ?? 'Task title';
+    rendered = rendered.replace('# Phase 01 — Task 01: Task title', `# Phase ${phaseLabel} — Task ${taskLabel}: ${title}`);
+  }
   rendered = rendered.replaceAll('YYYY-MM-DD', context.date);
   const unresolved = rendered.match(/{{[^}\n]+}}|YYYY-MM-DD|<UNRESOLVED:[^>]+>/g);
   if (unresolved) throw new Error(`Artifact contains unresolved placeholders: ${[...new Set(unresolved)].join(', ')}`);
@@ -196,8 +204,9 @@ export function artifactDestination(cwd, type, options = {}) {
   if (!mapping) throw new Error(`Unknown artifact type: ${type}`);
   let filename = mapping[0];
   if (type === 'TASK' && options.taskId) {
-    const number = options.taskId.split('-T')[1];
-    filename = `Phase-01--Task-${number}.md`;
+    const task = parseTaskId(options.taskId);
+    if (!task) throw new Error(`Invalid task ID: ${options.taskId}. Expected Pxx-Txx.`);
+    filename = `Phase-${task.phaseLabel}--Task-${task.taskLabel}.md`;
   }
   return options.path
     ? (isAbsolute(options.path) ? options.path : resolve(cwd, options.path))
