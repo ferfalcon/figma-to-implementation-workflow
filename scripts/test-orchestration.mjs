@@ -84,21 +84,21 @@ assert(
 );
 
 const pinnedResourceFixture = structuredClone(resourceFixture);
-pinnedResourceFixture.snapshots.push({
-  id: 'SRC-DOC-001', role: 'Supporting source', pinStrength: 'Immutable', status: 'Active',
-  reference: 'toolkit+github://ferfalcon/figma-to-implementation-workflow@0.3.0',
-  commit: 'a'.repeat(40),
-});
+pinnedResourceFixture.toolkit = {
+  repository: 'ferfalcon/figma-to-implementation-workflow',
+  revision: 'a'.repeat(40),
+};
 const pinnedResources = stageResources(pinnedResourceFixture);
 const pinnedPrompt = pinnedResources.required.find((resource) => resource.kind === 'prompt');
 assert(
-  pinnedPrompt?.location?.commit === 'a'.repeat(40)
+  pinnedPrompt?.location?.scope === 'toolkit'
+    && pinnedPrompt.location.revision === 'a'.repeat(40)
     && pinnedPrompt.location.path === 'prompts/04-specification.md',
-  'Pinned stage resources must resolve to the exact toolkit commit and path.',
+  'Pinned stage resources must resolve to the exact toolkit revision and path.',
 );
 assert(
-  pinnedResources.conditional[0].selectOneOf.every((resource) => resource.location?.commit === 'a'.repeat(40)),
-  'Conditional adapter choices must resolve against the same pinned toolkit commit.',
+  pinnedResources.conditional[0].selectOneOf.every((resource) => resource.location?.revision === 'a'.repeat(40)),
+  'Conditional adapter choices must resolve against the same pinned toolkit revision.',
 );
 
 const liteResourceFixture = baseRecord({ stage: 7, status: 'In progress' });
@@ -120,6 +120,10 @@ try {
   const record = {
     schemaVersion: 2,
     project: { name: 'Express architecture fixture', profile: 'Express', executionMode: 'Gated' },
+    toolkit: {
+      repository: 'ferfalcon/figma-to-implementation-workflow',
+      revision: 'a'.repeat(40),
+    },
     state: {
       stage: 6, status: 'Blocked', activeInputs: ['SRC-REPO-001'], currentTask: null,
       latestOutput: null, latestValidationRuntime: null,
@@ -151,9 +155,14 @@ try {
   syncGeneratedState(recordPath, record);
   const context = buildOrchestrationContext(recordPath, record, { cwd: directory });
   assert(context.protocolVersion === 2, 'Initialized context must advertise protocol version 2.');
+  assert(context.project.root === '.', 'Initialized context must resolve the implementation project root separately.');
   assert(
     context.execution.resources.required.some((resource) => resource.path === 'prompts/06-architecture.md'),
     'Context payload must expose the stage-local required-resource manifest.',
+  );
+  assert(
+    context.execution.resources.required.every((resource) => resource.location?.revision === 'a'.repeat(40)),
+    'Required resources must resolve against the canonical toolkit revision.',
   );
   assert(
     context.policy.workflowReads === 'context-resource-manifest-only',
@@ -167,4 +176,4 @@ try {
   rmSync(directory, { recursive: true, force: true });
 }
 
-console.log('Agent orchestration context, minimal-read resources, action eligibility, and stage preflight tests passed.');
+console.log('Agent orchestration context, minimal-read resources, toolkit resolution, action eligibility, and stage preflight tests passed.');

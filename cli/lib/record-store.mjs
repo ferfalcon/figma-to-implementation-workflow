@@ -7,6 +7,7 @@ import { renderGeneratedState } from './generated-state.mjs';
 import {
   isPortableRepositoryReference, portableRepositoryReference, resolveRepositoryWorkspace,
 } from './repository-binding.mjs';
+import { initializationToolkitPin } from './toolkit-binding.mjs';
 import { inspectWorkflowRecord, validateWorkflowRecord } from '../../scripts/lib/validate-workflow-record.mjs';
 
 const recordVersions = new WeakMap();
@@ -250,6 +251,10 @@ export function commitRecordCandidate({
 
     const current = stored?.record ?? null;
     if (current && current.schemaVersion === 1 && candidate.schemaVersion === 1) requireMutableRecord(current);
+    if (!current && allowCreate && candidate.schemaVersion === 2 && !candidate.toolkit) {
+      const pin = initializationToolkitPin();
+      if (pin) candidate.toolkit = pin;
+    }
 
     const beforeFindings = current ? validateWorkflowRecord(current) : [];
     if (requireClean && beforeFindings.length > 0 && !repair) {

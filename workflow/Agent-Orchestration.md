@@ -4,7 +4,7 @@ This document defines how an AI design-engineering agent operates the executable
 
 ## Boundary
 
-The agent owns reasoning, source inspection, artifact prose, implementation decisions within approved scope, and evidence collection. The CLI owns executable state, stage/task legality, canonical registries, generated views, trace definitions, validation state, implementation lineage, the recorded workflow-toolkit source pin, and the canonical workflow-resource manifest for the current turn.
+The agent owns reasoning, source inspection, artifact prose, implementation decisions within approved scope, and evidence collection. The CLI owns executable state, stage/task legality, canonical registries, generated views, trace definitions, validation state, implementation lineage, the recorded workflow-toolkit dependency binding, and the canonical workflow-resource manifest for the current turn.
 
 Never infer executable state from narrative Markdown when `.workflow/workflow-record.json` exists. Never manually edit generated views.
 
@@ -20,7 +20,7 @@ design-workflow agent-context --json
 
 The packet is the preferred agent bootstrap. It wraps the initialized protocol-v2 orchestration context and materializes its canonical `execution.resources` manifest; it does not introduce a second stage-to-resource resolver. The underlying context protocol is exposed as `contextProtocolVersion`.
 
-The packet reports project/profile/mode, toolkit pin, current stage and execution kind, policy, active sources, target artifacts, the full current task, Ready-task summaries, stage preflight, the next action, required workflow resources, missing-artifact templates, and conditional source-adapter choices.
+The packet reports the implementation project workspace/profile/mode, toolkit dependency, current stage and execution kind, policy, active sources, target artifacts, the full current task, Ready-task summaries, stage preflight, the next action, required workflow resources, missing-artifact templates, and conditional source-adapter choices.
 
 The lower-level compatibility handshake remains available:
 
@@ -32,13 +32,22 @@ Initialized CLI-managed context payloads that expose the minimal resource manife
 
 If no record exists, the agent packet embeds the intake prompt and instructs initialization. If the record is schema v1, migrate before mutation. If the packet reports `repair`, repair record/generated state before continuing. Migration and repair packets intentionally withhold ordinary stage resources.
 
-### Toolkit source resolution
+### Toolkit dependency resolution
 
-The workflow toolkit is itself an execution dependency. For projects that consume workflow resources from GitHub or another remote package source, pin the toolkit to an exact commit rather than treating `main`, a branch, or a package version alone as operational identity.
+The workflow toolkit is an execution dependency, not part of the implementation project's source lineage. For projects that consume workflow resources from GitHub or another remote package source, pin the toolkit to an exact immutable revision rather than treating `main`, a branch, or a package version alone as operational identity.
 
-A CLI-managed pin is recorded as an immutable `Supporting source` snapshot with a `toolkit+github://` reference and an exact 40-character commit SHA. It is intentionally not added to `state.activeInputs`: it governs workflow execution, not the product/design implementation baseline.
+A canonical CLI-managed binding lives at top-level `toolkit` in `.workflow/workflow-record.json`:
 
-Inspect the current pin with:
+```json
+{
+  "toolkit": {
+    "repository": "ferfalcon/figma-to-implementation-workflow",
+    "revision": "<40-character-git-sha>"
+  }
+}
+```
+
+Inspect the current binding with:
 
 ```bash
 design-workflow toolkit show --json
@@ -49,15 +58,24 @@ Pin an existing unpinned workflow with:
 ```bash
 design-workflow toolkit pin \
   --repository ferfalcon/figma-to-implementation-workflow \
-  --version 0.3.0 \
-  --commit <40-character-sha>
+  --revision <40-character-sha>
 ```
 
-When `toolkit.pinned` is `true`, all workflow prompts, guidelines, templates, adapters, and normative workflow documents used for the turn must come from `toolkit.repository` at exactly `toolkit.commit`. Never fall back to `main` or another mutable ref. A package version is descriptive metadata; the commit is the immutable operational pin.
+`--commit` remains accepted as a compatibility alias for `--revision`.
 
-The packet enforces this boundary. If the installed toolkit runtime matches the recorded repository and commit, selected required resources and applicable templates return `resolution: embedded` with `content`. If it does not match, the packet returns `resolution: pinned-source-required` with the exact `source.repository`, `source.commit`, and `source.path` and does not embed potentially incorrect local content. Multiple active toolkit pins require repair before ordinary execution.
+When `toolkit.pinned` is `true`, all workflow prompts, guidelines, templates, adapters, and normative workflow documents used for the turn must come from `toolkit.repository` at exactly `toolkit.revision`. Never fall back to `main` or another mutable ref.
 
-Replacing a valid existing pin is not an ordinary mutation; toolkit upgrades must be explicit and preserve the old pin as history.
+The packet enforces this boundary. If the installed toolkit runtime matches the recorded repository and revision, selected required resources and applicable templates return `resolution: embedded` with `content`. If it does not match, the packet returns `resolution: pinned-source-required` with the exact `source.repository`, `source.revision`, and `source.path` and does not embed potentially incorrect local content.
+
+Records created by the short-lived snapshot model remain readable. When `toolkit.legacy` is `true`, or resources report `resolution: migrate-toolkit-binding`, run:
+
+```bash
+design-workflow toolkit migrate
+```
+
+Migration moves the toolkit identity into the dedicated top-level binding and removes the unreferenced legacy `toolkit+github://` snapshot from project lineage. Multiple legacy pins or referenced legacy toolkit snapshots require repair rather than silent migration.
+
+Replacing a valid existing binding is not an ordinary mutation; toolkit upgrades must be explicit and preserve previous dependency identity.
 
 ## Minimal-read execution
 
@@ -135,7 +153,7 @@ This requires Stage 10, a structurally clean schema-v2 workflow, and an executio
 
 Verify relevant active snapshots before stage closure and before task execution. Unexpected material upstream/concurrent changes block affected work and require a new snapshot or explicit impact assessment. Expected previous-task outputs advance repository lineage without replacing the original project input baseline.
 
-The toolkit pin is separate from implementation-source lineage. Do not add the toolkit snapshot to artifact baselines or task baselines merely because it is recorded in `snapshots`; use it only to resolve the workflow rules/resources governing the project.
+The toolkit dependency is separate from implementation-source lineage. Do not add toolkit identity to artifact or task baselines. `SRC-*` remains reserved for design, document, runtime, and implementation-project source history.
 
 ## Narrative ownership during implementation
 

@@ -125,6 +125,12 @@ function validateProject(errors, project) {
   expectEnum(errors, '$.project.executionMode', project.executionMode, MODES);
 }
 
+function validateToolkit(errors, toolkit) {
+  if (!checkShape(errors, '$.toolkit', toolkit, ['repository', 'revision'])) return;
+  expectString(errors, '$.toolkit.repository', toolkit.repository);
+  expectString(errors, '$.toolkit.revision', toolkit.revision);
+}
+
 function validateSnapshot(errors, snapshot, path, registry, snapshotsById, version = 2) {
   const required = ['id', 'role', 'pinStrength', 'status', 'reference'];
   const allowed = [...required, 'commit', 'parent', 'task', 'supersededBy'];
@@ -583,9 +589,10 @@ function validateStageExit(errors, record, stage, gate, maps) {
 
 function validateV2(record, errors) {
   const rootRequired = ['schemaVersion', 'project', 'state', 'snapshots', 'verifications', 'artifacts', 'traceItems', 'gates', 'tasks', 'profileTransitions', 'implementationReviews'];
-  checkShape(errors, '$', record, rootRequired, [...rootRequired, 'legacyBoundary']);
+  checkShape(errors, '$', record, rootRequired, [...rootRequired, 'toolkit', 'legacyBoundary']);
   if (record.schemaVersion !== SCHEMA_VERSION) push(errors, '$.schemaVersion', `expected schema version ${SCHEMA_VERSION}`);
   validateProject(errors, record.project);
+  if (record.toolkit !== undefined) validateToolkit(errors, record.toolkit);
   if (checkShape(errors, '$.state', record.state, ['stage', 'status', 'activeInputs', 'currentTask', 'latestOutput', 'latestValidationRuntime', 'architectureDecision'])) {
     if (!Number.isInteger(record.state.stage) || record.state.stage < 0 || record.state.stage > 11) push(errors, '$.state.stage', 'must be an integer from 0 through 11');
     expectEnum(errors, '$.state.status', record.state.status, WORKFLOW_STATUSES);

@@ -19,10 +19,10 @@ function fixtureContext() {
       mode: 'cli-managed', schemaVersion: 2, readOnly: false,
       record: '.workflow/workflow-record.json',
     },
-    project: { name: 'Agent packet fixture', profile: 'Standard', executionMode: 'Gated' },
+    project: { name: 'Agent packet fixture', profile: 'Standard', executionMode: 'Gated', root: '.' },
     toolkit: {
-      pinned: false, repository: null, version: null,
-      commit: null, snapshot: null, ambiguous: false,
+      pinned: false, repository: null, revision: null,
+      legacy: false, snapshot: null, ambiguous: false,
     },
     workflow: { valid: true, findings: [] },
     stage: {
@@ -102,9 +102,9 @@ const pinnedContext = structuredClone(context);
 pinnedContext.toolkit = {
   pinned: true,
   repository: 'ferfalcon/figma-to-implementation-workflow',
-  version: '0.3.0',
-  commit: 'f'.repeat(40),
-  snapshot: 'SRC-DOC-001',
+  revision: 'f'.repeat(40),
+  legacy: false,
+  snapshot: null,
   ambiguous: false,
 };
 for (const resource of [
@@ -112,9 +112,9 @@ for (const resource of [
   ...pinnedContext.execution.resources.onDemand,
 ]) {
   resource.location = {
+    scope: 'toolkit',
     repository: pinnedContext.toolkit.repository,
-    version: pinnedContext.toolkit.version,
-    commit: pinnedContext.toolkit.commit,
+    revision: pinnedContext.toolkit.revision,
     path: resource.path,
   };
 }
@@ -122,11 +122,20 @@ const pinnedResources = agentResourcesForContext(pinnedContext);
 assert(pinnedResources.stagePrompt.content === null, 'A mismatched runtime must not embed unverified toolkit content.');
 assert(
   pinnedResources.stagePrompt.resolution === 'pinned-source-required',
-  'Pinned mismatch must require the exact pinned source.',
+  'Pinned mismatch must require the exact pinned dependency.',
 );
 assert(
-  pinnedResources.stagePrompt.source.commit === 'f'.repeat(40),
-  'Pinned resource must expose the exact toolkit commit.',
+  pinnedResources.stagePrompt.source.revision === 'f'.repeat(40),
+  'Pinned resource must expose the exact toolkit revision.',
+);
+
+const legacyContext = structuredClone(pinnedContext);
+legacyContext.toolkit.legacy = true;
+legacyContext.toolkit.snapshot = 'SRC-DOC-001';
+const legacyResources = agentResourcesForContext(legacyContext);
+assert(
+  legacyResources.stagePrompt.resolution === 'migrate-toolkit-binding',
+  'Legacy toolkit snapshot state must require migration before embedded execution.',
 );
 
 const repairContext = structuredClone(context);
@@ -151,6 +160,7 @@ const packet = composeAgentContext(context, record);
 assert(packet.protocolVersion === AGENT_PROTOCOL_VERSION, 'Agent packet must use protocol v3.');
 assert(packet.contextProtocolVersion === 2, 'Agent packet must expose the underlying context protocol v2.');
 assert(packet.toolkit.pinned === false, 'Agent packet must preserve toolkit state.');
+assert(packet.project.root === '.', 'Agent packet must preserve the resolved implementation project root.');
 assert(
   packet.state.stage === 4 && packet.state.stageName === context.stage.name,
   'Agent packet must expose resolved stage state.',
@@ -172,6 +182,7 @@ assert(
 );
 assert(missing.resources.stagePrompt?.path === 'prompts/00-intake.md', 'Initialization packet must embed the intake prompt.');
 assert(missing.policy.codeEdits === 'forbidden', 'Initialization packet must forbid implementation edits.');
+assert(missing.toolkit.revision === null, 'Initialization packet must use the dedicated toolkit revision shape.');
 
 function captureStream() {
   let value = '';
@@ -196,4 +207,4 @@ for (const args of [['agent-context', '--json'], ['context', '--agent', '--json'
   );
 }
 
-console.log('Agent packet materialization, toolkit-source integrity, protocol, and CLI routing tests passed.');
+console.log('Agent packet materialization, toolkit-binding integrity, protocol, and CLI routing tests passed.');

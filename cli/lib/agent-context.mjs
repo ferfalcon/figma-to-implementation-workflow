@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildOrchestrationContext } from './orchestration-context.mjs';
-import { runtimeToolkitPin } from './toolkit-source.mjs';
+import { runtimeToolkitPin } from './toolkit-binding.mjs';
 import { relativeDisplay } from './utils.mjs';
 
 export const AGENT_PROTOCOL_VERSION = 3;
@@ -12,13 +12,20 @@ const NON_STAGE_EXECUTION_KINDS = new Set(['migration', 'repair']);
 
 function localToolkitMatches(context) {
   if (!context.toolkit?.pinned) return true;
-  if (context.toolkit.ambiguous) return false;
+  if (context.toolkit.ambiguous || context.toolkit.invalid || context.toolkit.legacy) return false;
   const runtime = runtimeToolkitPin();
   return Boolean(
     runtime
     && runtime.repository === context.toolkit.repository
-    && runtime.commit === context.toolkit.commit,
+    && runtime.revision === context.toolkit.revision,
   );
+}
+
+function resourceResolution(context, embed) {
+  if (embed) return 'embedded';
+  if (context.toolkit?.ambiguous || context.toolkit?.invalid) return 'repair-toolkit-binding';
+  if (context.toolkit?.legacy) return 'migrate-toolkit-binding';
+  return 'pinned-source-required';
 }
 
 function materializeResource(context, descriptor) {
@@ -26,9 +33,7 @@ function materializeResource(context, descriptor) {
   return {
     ...descriptor,
     source: descriptor.location ?? null,
-    resolution: embed
-      ? 'embedded'
-      : (context.toolkit?.ambiguous ? 'repair-toolkit-pin' : 'pinned-source-required'),
+    resolution: resourceResolution(context, embed),
     content: embed ? readFileSync(resolve(TOOLKIT_ROOT, descriptor.path), 'utf8') : null,
   };
 }
@@ -124,7 +129,12 @@ export function buildAgentContext(recordPath, record, { cwd }) {
 export function buildAgentContextWhenMissing(recordPath, { cwd }) {
   const nextAction = 'Initialize the workflow before auditing, planning, or implementation.';
   const descriptor = { kind: 'prompt', path: 'prompts/00-intake.md', location: null };
-  const initializationContext = { toolkit: { pinned: false, ambiguous: false } };
+  const initializationContext = {
+    toolkit: {
+      pinned: false, repository: null, revision: null,
+      legacy: false, snapshot: null, ambiguous: false,
+    },
+  };
   const stagePrompt = materializeResource(initializationContext, descriptor);
 
   return {
@@ -138,14 +148,7 @@ export function buildAgentContextWhenMissing(recordPath, { cwd }) {
       record: relativeDisplay(cwd, recordPath),
     },
     project: null,
-    toolkit: {
-      pinned: false,
-      repository: null,
-      version: null,
-      commit: null,
-      snapshot: null,
-      ambiguous: false,
-    },
+    toolkit: initializationContext.toolkit,
     workflow: { valid: true, findings: [] },
     state: {
       profile: null,

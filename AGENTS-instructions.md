@@ -14,15 +14,15 @@ design-workflow agent-context --json
 
 `design-workflow context --json` remains the lower-level initialized protocol-v2 state and resource-manifest handshake for diagnostics and existing integrations. The agent packet exposes that lower-layer version as `contextProtocolVersion` and materializes its canonical `execution.resources` manifest; it does not maintain a second stage-to-resource mapping.
 
-When `toolkit.pinned` is `true`, treat `toolkit.repository` + `toolkit.commit` as the exact workflow-toolkit source for the project. Packet resources use `resolution: embedded` only when the installed toolkit matches that pin. If a resource reports `resolution: pinned-source-required`, load the exact returned `source.repository` + `source.commit` + `source.path`. Never silently fall back to `main`, another branch, a tag, or different package contents.
+When `toolkit.pinned` is `true`, treat `toolkit.repository` + `toolkit.revision` as the exact workflow-toolkit dependency for the project. Packet resources use `resolution: embedded` only when the installed toolkit matches that binding. If a resource reports `resolution: pinned-source-required`, load the exact returned `source.repository` + `source.revision` + `source.path`. Never silently fall back to `main`, another branch, a tag, or different package contents.
 
-If a CLI-managed project consumes workflow resources remotely and the packet reports `toolkit.pinned: false`, pin the intended toolkit revision before relying on mutable GitHub workflow content:
+If a CLI-managed project consumes workflow resources remotely and the packet reports `toolkit.pinned: false`, pin the intended immutable toolkit revision before relying on mutable GitHub workflow content:
 
 ```bash
-design-workflow toolkit pin --commit <40-character-sha>
+design-workflow toolkit pin --revision <40-character-sha>
 ```
 
-Do not replace an existing pin implicitly. Toolkit upgrades are separate, explicit workflow changes and must preserve the previous source identity.
+If the packet reports `toolkit.legacy: true` or a resource reports `resolution: migrate-toolkit-binding`, run `design-workflow toolkit migrate` before ordinary remote-toolkit execution. Do not replace an existing binding implicitly. Toolkit upgrades are separate, explicit workflow changes and must preserve the previous dependency identity.
 
 ## Minimal-read policy
 
@@ -31,7 +31,7 @@ For an initialized CLI-managed project, do not recursively inspect or browse the
 After the permanent agent contract is available:
 
 1. Run `design-workflow agent-context --json`.
-2. If remote workflow resources are in use and `toolkit.pinned` is `false`, pin the intended toolkit revision before loading them.
+2. If remote workflow resources are in use and `toolkit.pinned` is `false`, pin the intended toolkit revision before loading them. If `toolkit.legacy` is `true`, migrate it first.
 3. Consume `resources.required`; use embedded `content` when present, otherwise load the exact returned pinned `source`.
 4. Use `resources.templates` only when returned for a missing target artifact.
 5. For format-specific source guidance, choose only the matching entry from `resources.conditional`; do not browse or load the other source adapters.
@@ -64,7 +64,7 @@ Use the source adapter that matches the actual source. `SRC-DS-*` does not by it
 
 Pin repository snapshots to commits. Treat mutable design URLs, branches, shared docs, and live sites honestly as Versioned/Time-bound/Unverified unless an immutable capture exists. Classify changes as Unchanged, Expected workflow output, Unexpected upstream or concurrent change, or Unavailable.
 
-The workflow toolkit itself is also a source. In CLI-managed remote-toolkit projects, record it as an immutable supporting-source pin and use its exact commit for all workflow-resource lookups.
+The workflow toolkit is not a project source snapshot. In CLI-managed remote-toolkit projects, keep its exact repository/revision in the dedicated top-level `toolkit` dependency and keep `SRC-*` snapshots reserved for design, document, runtime, and implementation-project lineage.
 
 # Design and repository implementation
 
@@ -76,7 +76,7 @@ Implementation must integrate semantics, keyboard/focus behavior, accessible nam
 
 # Ownership
 
-In CLI-managed mode, `.workflow/workflow-record.json` owns mutable profile/mode/stage/status, snapshots and verification events, artifact lifecycle metadata, gates/approval actors, task state/dependencies/structured validation, trace definitions, output snapshots, Git lineage, and the toolkit source pin. Generated views are read-only projections.
+In CLI-managed mode, `.workflow/workflow-record.json` owns mutable profile/mode/stage/status, toolkit dependency identity, snapshots and verification events, artifact lifecycle metadata, gates/approval actors, task state/dependencies/structured validation, trace definitions, output snapshots, and Git lineage. Generated views are read-only projections.
 
 Narrative artifacts own detailed source evidence/limitations, product/design/spec/architecture/planning rationale, blockers/assumptions, implementation discoveries/deviations, risks, and final-review reasoning. Do not maintain conflicting copies of record-owned mutable state.
 

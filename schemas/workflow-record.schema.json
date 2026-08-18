@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/ferfalcon/figma-to-implementation-workflow/schemas/workflow-record.schema.json",
   "title": "Design-to-Implementation Workflow Record",
-  "description": "Canonical schema-v2 control record for workflow state, gates, source verification, artifacts, traceability, tasks, profile transitions, validation, and final review.",
+  "description": "Canonical schema-v2 control record for workflow state, toolkit identity, gates, source verification, artifacts, traceability, tasks, profile transitions, validation, and final review.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -49,6 +49,24 @@
             "Continuous documentation",
             "Task-by-task"
           ]
+        }
+      }
+    },
+    "toolkit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repository",
+        "revision"
+      ],
+      "properties": {
+        "repository": {
+          "type": "string",
+          "minLength": 1
+        },
+        "revision": {
+          "type": "string",
+          "minLength": 1
         }
       }
     },
