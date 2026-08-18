@@ -6,7 +6,9 @@ import { checkStage } from './stage-check.mjs';
 import { startTaskAtCurrentHead } from './task-lineage.mjs';
 import { deriveNextAction, stageAdvanceFindings } from './workflow-actions.mjs';
 import { workflowDiagnostics } from './workflow-diagnostics.mjs';
-import { fail, parseArgs, relativeDisplay, resolveRecordPath, write } from './utils.mjs';
+import {
+  fail, normalizeTaskCreateArgs, parseArgs, relativeDisplay, resolveRecordPath, write,
+} from './utils.mjs';
 
 function json(stdout, value) { write(stdout, JSON.stringify(value, null, 2)); }
 
@@ -34,12 +36,16 @@ function load(cwd, options) {
 
 export async function runCli(args, environment) {
   const { cwd, stdout, stderr } = environment;
-  const { positionals, options } = parseArgs(args);
+  const parsed = parseArgs(args);
+  const { positionals, options } = parsed;
   const command = positionals[0];
   const recordPath = resolveRecordPath(cwd, options.record);
 
   if (!command || command === 'help' || options.help) {
     const result = await runWorkflowCli(args, environment);
+    write(stdout, '\nTask phases:');
+    write(stdout, '  design-workflow task create [--phase <0-99|P00-P99> | --id <Pxx-Txx>] ...');
+    write(stdout, '  --phase and --id are mutually exclusive. Without either, numbering continues in the highest existing phase and defaults to Phase 01.');
     write(stdout, '\nAgent orchestration:');
     write(stdout, '  design-workflow context [--json]');
     write(stdout, '  design-workflow stage check [--json]');
@@ -127,5 +133,15 @@ export async function runCli(args, environment) {
     }
   }
 
-  return runWorkflowCli(args, environment);
+  let workflowArgs = args;
+  if (command === 'task' && positionals[1] === 'create' && options.phase !== undefined) {
+    try {
+      const { record } = load(cwd, options);
+      workflowArgs = normalizeTaskCreateArgs(args, record.tasks, parsed);
+    } catch (error) {
+      return fail(stderr, error instanceof Error ? error.message : String(error));
+    }
+  }
+
+  return runWorkflowCli(workflowArgs, environment);
 }
