@@ -5,7 +5,8 @@ import {
   existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   bindRepositoryWorkspace,
   canonicalRemoteReference,
@@ -15,6 +16,9 @@ import {
   resolveRepositoryWorkspace,
   sameRepositoryReference,
 } from '../cli/lib/repository-binding.mjs';
+
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const cli = join(root, 'cli', 'design-workflow.mjs');
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -34,6 +38,21 @@ function git(cwd, args) {
   const result = spawnSync('git', args, { cwd, encoding: 'utf8' });
   if (result.status !== 0) throw new Error(`Git command failed: git ${args.join(' ')}\n${result.stderr}`);
   return result.stdout.trim();
+}
+
+function runCli(cwd, args, expectedStatus = 0) {
+  const result = spawnSync(process.execPath, [cli, ...args], {
+    cwd, encoding: 'utf8', env: { ...process.env, TMPDIR: '/tmp' },
+  });
+  if (result.status !== expectedStatus) {
+    throw new Error([
+      `Command failed: design-workflow ${args.join(' ')}`,
+      `Expected ${expectedStatus}, received ${result.status}`,
+      result.stdout,
+      result.stderr,
+    ].filter(Boolean).join('\n'));
+  }
+  return result;
 }
 
 function initializeRepository(path, content = 'baseline\n') {
@@ -135,7 +154,37 @@ try {
     'Legacy absolute-path snapshot did not heal to the current portable repository identity at runtime.',
   );
 
-  console.log('Portable repository identity, local binding, containment, and legacy compatibility tests passed.');
+  runCli(project, ['init', '--name', 'Portable CLI fixture', '--profile', 'Express', '--repository', '.']);
+  const initialized = JSON.parse(readFileSync(recordPath, 'utf8'));
+  const initializedRepository = initialized.snapshots.find((snapshot) => snapshot.id === 'SRC-REPO-001');
+  assert(
+    initializedRepository?.reference === remoteCapture.reference,
+    'Public CLI initialization did not persist the canonical portable repository identity.',
+  );
+  assert(
+    !initializedRepository.reference.includes(workspace),
+    'Public CLI initialization persisted a machine-specific checkout path.',
+  );
+  runCli(project, ['repository', 'bind', 'SRC-REPO-001', '--path', external]);
+  assert(existsSync(localBindingFile), 'Public repository bind command did not create the local binding file.');
+
+  const externalWorkflow = join(workspace, 'external-workflow');
+  mkdirSync(externalWorkflow, { recursive: true });
+  const rejected = runCli(
+    externalWorkflow,
+    ['init', '--name', 'Rejected external fixture', '--profile', 'Express', '--repository', outsideNoRemote],
+    1,
+  );
+  assert(
+    rejected.stderr.includes('outside the workflow project and has no portable remote identity'),
+    'CLI did not explain why an external no-remote repository is non-portable.',
+  );
+  assert(
+    !existsSync(join(externalWorkflow, '.workflow', 'workflow-record.json')),
+    'Rejected non-portable initialization created partial workflow state.',
+  );
+
+  console.log('Portable repository identity, local binding, public CLI, containment, and legacy compatibility tests passed.');
 } finally {
   rmSync(workspace, { recursive: true, force: true });
 }
