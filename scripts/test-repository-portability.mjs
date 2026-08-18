@@ -141,10 +141,15 @@ function testProjectReferenceCannotEscapeRoot() {
   assert(rejected, 'project:// reference escaped the workflow root');
 
   run(workflow, ['init', '--name', 'Containment fixture', '--profile', 'Express']);
-  const result = run(workflow, [
+  const escapeResult = run(workflow, [
     'snapshot', 'add', '--kind', 'repo', '--reference', 'project://../outside', '--commit', commit,
   ], 1);
-  assert(result.stderr.includes('portable identity'), 'Invalid project:// snapshot was not rejected at serialization');
+  assert(escapeResult.stderr.includes('portable identity'), 'Invalid project:// snapshot was not rejected at serialization');
+
+  const missingResult = run(workflow, [
+    'snapshot', 'add', '--kind', 'repo', '--reference', 'project://missing', '--commit', commit,
+  ], 1);
+  assert(missingResult.stderr.includes('does not resolve'), 'Missing project-relative repository was accepted as a new snapshot');
 }
 
 function testRemoteIdentityAndLocalBinding() {
