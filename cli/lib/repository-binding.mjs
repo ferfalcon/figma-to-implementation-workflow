@@ -107,7 +107,7 @@ function repositoryRemoteReference(repository) {
 
 function projectReference(cwd, repository) {
   const relativePath = slashPath(relative(resolve(cwd), resolve(repository)));
-  if (relativePath === '..' || relativePath.startsWith('../')) return null;
+  if (relativePath === '..' || relativePath.startsWith('../') || isWindowsAbsolutePath(relativePath)) return null;
   return `project://${relativePath || '.'}`;
 }
 
@@ -117,7 +117,7 @@ function projectReferencePath(cwd, reference) {
   const value = reference.slice('project://'.length) || '.';
   const path = resolve(projectRoot, value);
   const relativePath = slashPath(relative(projectRoot, path));
-  if (relativePath === '..' || relativePath.startsWith('../')) return null;
+  if (relativePath === '..' || relativePath.startsWith('../') || isWindowsAbsolutePath(relativePath)) return null;
   return path;
 }
 
