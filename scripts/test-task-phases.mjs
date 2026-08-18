@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 
 import { artifactDestination, renderArtifactTemplate } from '../cli/lib/artifact-renderer.mjs';
-import { normalizeTaskCreateArgs } from '../cli/lib/workflow-cli.mjs';
-import { nextTaskId, normalizeTaskPhase, parseTaskId } from '../cli/lib/utils.mjs';
+import {
+  nextTaskId, normalizeTaskCreateArgs, normalizeTaskPhase, parseTaskId,
+} from '../cli/lib/utils.mjs';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -67,7 +68,7 @@ assertThrows(
 
 const normalizedArgs = normalizeTaskCreateArgs(
   ['task', 'create', '--phase', '3', '--title', 'Phase 3 task'],
-  { tasks },
+  tasks,
 );
 assert(!normalizedArgs.includes('--phase'), 'Task create forwarding retained --phase');
 const idIndex = normalizedArgs.indexOf('--id');
@@ -75,18 +76,18 @@ assert(idIndex >= 0 && normalizedArgs[idIndex + 1] === 'P03-T01', 'Task create d
 
 const inlinePhaseArgs = normalizeTaskCreateArgs(
   ['task', 'create', '--phase=P02', '--title', 'Another phase 2 task'],
-  { tasks },
+  tasks,
 );
 const inlineIdIndex = inlinePhaseArgs.indexOf('--id');
 assert(inlineIdIndex >= 0 && inlinePhaseArgs[inlineIdIndex + 1] === 'P02-T02', 'Inline --phase syntax did not normalize correctly');
 
 assertThrows(
-  () => normalizeTaskCreateArgs(['task', 'create', '--phase', '2', '--id', 'P02-T09'], { tasks }),
+  () => normalizeTaskCreateArgs(['task', 'create', '--phase', '2', '--id', 'P02-T09'], tasks),
   'cannot be combined with --id',
   'Conflicting phase and explicit task ID were accepted',
 );
 assertThrows(
-  () => normalizeTaskCreateArgs(['task', 'create', '--phase', '2', '--phase', '3'], { tasks }),
+  () => normalizeTaskCreateArgs(['task', 'create', '--phase', '2', '--phase', '3'], tasks),
   'may be specified only once',
   'Repeated phase option was accepted',
 );
