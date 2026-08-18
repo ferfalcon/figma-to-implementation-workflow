@@ -28,13 +28,14 @@
     "workflow"
   ],
   "scripts": {
-    "validate": "node scripts/generate-workflow-schema.mjs --check && node scripts/validate-workflow.mjs && node scripts/test-figma-preparation-authority.mjs && node scripts/test-workflow-record.mjs && node scripts/test-stage-gates.mjs && node scripts/test-generated-state.mjs && node scripts/test-record-concurrency.mjs && node scripts/test-artifact-renderer.mjs && node scripts/test-orchestration.mjs && node scripts/test-repository-portability.mjs && node scripts/test-cli.mjs && node scripts/test-sequential-task-lineage.mjs && node scripts/test-package-manifest.mjs",
+    "validate": "node scripts/generate-workflow-schema.mjs --check && node scripts/validate-workflow.mjs && node scripts/test-figma-preparation-authority.mjs && node scripts/test-workflow-record.mjs && node scripts/test-stage-gates.mjs && node scripts/test-generated-state.mjs && node scripts/test-record-concurrency.mjs && node scripts/test-artifact-renderer.mjs && node scripts/test-task-phases.mjs && node scripts/test-orchestration.mjs && node scripts/test-repository-portability.mjs && node scripts/test-cli.mjs && node scripts/test-sequential-task-lineage.mjs && node scripts/test-package-manifest.mjs",
     "test:figma-preparation": "node scripts/test-figma-preparation-authority.mjs",
     "test:records": "node scripts/test-workflow-record.mjs",
     "test:gates": "node scripts/test-stage-gates.mjs",
     "test:state": "node scripts/test-generated-state.mjs",
     "test:concurrency": "node scripts/test-record-concurrency.mjs",
     "test:render": "node scripts/test-artifact-renderer.mjs",
+    "test:task-phases": "node scripts/test-task-phases.mjs",
     "test:orchestration": "node scripts/test-orchestration.mjs",
     "test:repository": "node scripts/test-repository-portability.mjs",
     "test:cli": "node scripts/test-cli.mjs",
