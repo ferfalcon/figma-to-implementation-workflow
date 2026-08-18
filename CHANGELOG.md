@@ -8,7 +8,9 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 
 ### Added
 
-- Portable repository workspace binding that records a canonical remote or project-relative repository identity when possible and resolves the local checkout at task execution time, with compatibility for legacy absolute-path snapshots.
+- Portable repository workspace binding that records a credential-free canonical remote or `project://` identity and resolves the machine-local checkout only at execution time, with compatibility for legacy absolute-path snapshots.
+- `design-workflow repository bind <snapshot-id> --path <checkout>` with machine-local bindings stored in Git-ignored `.workflow/local.json`.
+- Repository binding regression coverage for SSH/HTTPS normalization, credential stripping, project containment, local external checkout bindings, conflicting remotes, external repositories without portable identity, and legacy absolute-path healing.
 - Git working-tree and implementation-output policy checks that reject uncommitted implementation changes at task boundaries and keep workflow-control files out of implementation output commits.
 - Integrated task-start checkpoint regression coverage for approved planning commits, workflow-control commits between tasks, implementation outputs, and unexpected implementation-scope repository changes.
 - Sequential task-lineage regression coverage proving that a completed task output becomes the next task's effective repository baseline and that unrecognized repository changes block task start without mutation.
@@ -19,8 +21,9 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 ### Changed
 
 - `task start` now records the exact repository state used for implementation: it reuses an exact latest Implementation output or planned baseline, creates a `Task start` checkpoint when `HEAD` contains only approved workflow planning/control commits since the recorded anchor, and rejects implementation-scope changes in that gap.
-- `task complete` now requires the supplied output commit to equal `HEAD`, descend from the task-start checkpoint, exclude workflow-control files, and leave no uncommitted implementation-scope changes.
-- Repository snapshots now distinguish canonical repository identity from the machine-local checkout used to execute Git commands; `task start` and `task complete` may bind an explicit local checkout with `--repository`.
+- `task complete` now requires the supplied output commit to equal `HEAD`, descend from the task-start checkpoint, exclude workflow-control files, leave no uncommitted implementation-scope changes, and persist the portable repository identity on the Implementation output.
+- New canonical repository snapshots no longer fall back to external machine-specific absolute paths. External repositories without a portable remote identity must gain one before capture; legacy absolute-path records remain readable and can rebind by commit identity.
+- Repository snapshots now distinguish canonical repository identity from the machine-local checkout used to execute Git commands; `task start` and `task complete` may use an explicit `--repository` checkout or a persistent local `repository bind` mapping.
 - Promoted `workflow/Agent-Orchestration.md` to the README `Start here` sequence and required repository-contract validation.
 
 ## [0.3.0] — 2026-08-18
