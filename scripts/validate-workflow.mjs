@@ -22,6 +22,7 @@ const requiredPaths = [
   'workflow/Source-Authority.md',
   'workflow/Source-Snapshots.md',
   'workflow/State-Ownership.md',
+  'workflow/Agent-Orchestration.md',
   'workflow/Identifier-Conventions.md',
   'workflow/Validation-Rules.md',
   'source-adapters/FIGMA.md',
@@ -177,6 +178,22 @@ function isExternalOrVirtual(target) {
   );
 }
 
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function levelTwoSection(markdown, heading) {
+  const marker = `## ${heading}`;
+  const headingIndex = markdown.indexOf(marker);
+  if (headingIndex === -1) return null;
+
+  const contentStart = markdown.indexOf('\n', headingIndex);
+  if (contentStart === -1) return '';
+
+  const nextHeading = markdown.indexOf('\n## ', contentStart + 1);
+  return markdown.slice(contentStart + 1, nextHeading === -1 ? markdown.length : nextHeading);
+}
+
 for (const repositoryPath of [...requiredPaths, ...promptPaths]) {
   if (!existsSync(join(root, repositoryPath))) {
     errors.push(`Missing required path: ${repositoryPath}`);
@@ -186,6 +203,37 @@ for (const repositoryPath of [...requiredPaths, ...promptPaths]) {
 for (const repositoryPath of legacyRootPaths) {
   if (existsSync(join(root, repositoryPath))) {
     errors.push(`Legacy path still exists: ${repositoryPath}`);
+  }
+}
+
+const packagePath = join(root, 'package.json');
+const changelogPath = join(root, 'CHANGELOG.md');
+if (existsSync(packagePath) && existsSync(changelogPath)) {
+  try {
+    const packageMetadata = JSON.parse(readFileSync(packagePath, 'utf8'));
+    const version = packageMetadata.version;
+    if (typeof version !== 'string' || version.length === 0) {
+      errors.push('package.json: expected a non-empty version string');
+    } else {
+      const changelog = readFileSync(changelogPath, 'utf8');
+      const releaseHeading = new RegExp(`^## \\[${escapeRegExp(version)}\\] — \\d{4}-\\d{2}-\\d{2}\\s*$`, 'm');
+      if (!releaseHeading.test(changelog)) {
+        errors.push(`CHANGELOG.md: package version ${version} requires a dated release heading`);
+      }
+    }
+  } catch (error) {
+    errors.push(`package.json: invalid JSON: ${error.message}`);
+  }
+}
+
+const readmePath = join(root, 'README.md');
+if (existsSync(readmePath)) {
+  const readme = readFileSync(readmePath, 'utf8');
+  const startHere = levelTwoSection(readme, 'Start here');
+  if (startHere === null) {
+    errors.push('README.md: missing Start here section');
+  } else if (!startHere.includes('](workflow/Agent-Orchestration.md)')) {
+    errors.push('README.md: Start here must link workflow/Agent-Orchestration.md');
   }
 }
 
