@@ -111,7 +111,7 @@ export function completeTaskAtCurrentHead(recordPath, taskId, options = {}, envi
     role: 'Implementation output',
     pinStrength: 'Immutable',
     status: 'Active',
-    reference: binding.baseline.reference,
+    reference: binding.reference,
     commit,
     parent: task.baseline,
     task: taskId,
