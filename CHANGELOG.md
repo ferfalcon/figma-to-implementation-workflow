@@ -9,6 +9,8 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 ### Added
 
 - Repository validation that requires the `package.json` version to have a dated changelog release entry and keeps the canonical agent-orchestration contract discoverable.
+- Exclusive workflow-record mutation locks plus optimistic record-version checks that reject concurrent or stale writers before any transactional file changes.
+- Dedicated concurrency regression coverage for stale prepared mutations, lock contention, byte-identical rejection, and lock cleanup after validation failures.
 
 ### Changed
 
