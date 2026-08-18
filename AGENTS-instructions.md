@@ -10,9 +10,9 @@ For CLI-managed projects, begin every workflow-related request with:
 design-workflow agent-context --json
 ```
 
-`design-workflow context --agent --json` is an equivalent alias. Treat the protocol-v2 packet as canonical operational state. Do not determine the current stage, task, profile, output, toolkit revision, policy, or next action by parsing narrative/generated Markdown or recursively browsing the workflow toolkit.
+`design-workflow context --agent --json` is an equivalent alias. The materialized agent packet uses protocol v3. Treat it as canonical operational state for the turn. Do not determine the current stage, task, profile, output, toolkit revision, policy, or next action by parsing narrative/generated Markdown or recursively browsing the workflow toolkit.
 
-`design-workflow context --json` remains the lower-level protocol-v1 state/resource-manifest handshake for compatibility and diagnostics. The agent packet materializes that canonical manifest; it does not maintain a second stage-to-resource mapping.
+`design-workflow context --json` remains the lower-level initialized protocol-v2 state and resource-manifest handshake for diagnostics and existing integrations. The agent packet exposes that lower-layer version as `contextProtocolVersion` and materializes its canonical `execution.resources` manifest; it does not maintain a second stage-to-resource mapping.
 
 When `toolkit.pinned` is `true`, treat `toolkit.repository` + `toolkit.commit` as the exact workflow-toolkit source for the project. Packet resources use `resolution: embedded` only when the installed toolkit matches that pin. If a resource reports `resolution: pinned-source-required`, load the exact returned `source.repository` + `source.commit` + `source.path`. Never silently fall back to `main`, another branch, a tag, or different package contents.
 

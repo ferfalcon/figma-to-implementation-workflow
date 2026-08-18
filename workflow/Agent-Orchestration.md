@@ -16,9 +16,9 @@ Begin every CLI-managed workflow turn with:
 design-workflow agent-context --json
 ```
 
-`design-workflow context --agent --json` is an equivalent alias. The packet uses `protocolVersion: 2`; treat that independently from the workflow record `schemaVersion`.
+`design-workflow context --agent --json` is an equivalent alias. The materialized agent packet uses `protocolVersion: 3`; treat that independently from the workflow record `schemaVersion`.
 
-The packet is the preferred agent bootstrap. It wraps the protocol-v1 orchestration context and materializes its canonical `execution.resources` manifest; it does not introduce a second stage-to-resource resolver.
+The packet is the preferred agent bootstrap. It wraps the initialized protocol-v2 orchestration context and materializes its canonical `execution.resources` manifest; it does not introduce a second stage-to-resource resolver. The underlying context protocol is exposed as `contextProtocolVersion`.
 
 The packet reports project/profile/mode, toolkit pin, current stage and execution kind, policy, active sources, target artifacts, the full current task, Ready-task summaries, stage preflight, the next action, required workflow resources, missing-artifact templates, and conditional source-adapter choices.
 
@@ -28,9 +28,9 @@ The lower-level compatibility handshake remains available:
 design-workflow context --json
 ```
 
-Use protocol v1 for diagnostics and existing integrations. Use protocol v2 for normal agent execution.
+Initialized CLI-managed context payloads that expose the minimal resource manifest use protocol v2. Uninitialized/missing-record context remains a separate bootstrap path. Use context protocol v2 for diagnostics and existing integrations; use agent-packet protocol v3 for normal agent execution.
 
-If no record exists, the packet embeds the intake prompt and instructs initialization. If the record is schema v1, migrate before mutation. If the packet reports `repair`, repair record/generated state before continuing. Migration and repair packets intentionally withhold ordinary stage resources.
+If no record exists, the agent packet embeds the intake prompt and instructs initialization. If the record is schema v1, migrate before mutation. If the packet reports `repair`, repair record/generated state before continuing. Migration and repair packets intentionally withhold ordinary stage resources.
 
 ### Toolkit source resolution
 
@@ -53,7 +53,7 @@ design-workflow toolkit pin \
   --commit <40-character-sha>
 ```
 
-When `toolkit.pinned` is `true`, all workflow prompts, guidelines, templates, adapters, and normative workflow documents used for the turn must come from `toolkit.repository` at exactly `toolkit.commit`. Never fall back to `main` or another mutable ref.
+When `toolkit.pinned` is `true`, all workflow prompts, guidelines, templates, adapters, and normative workflow documents used for the turn must come from `toolkit.repository` at exactly `toolkit.commit`. Never fall back to `main` or another mutable ref. A package version is descriptive metadata; the commit is the immutable operational pin.
 
 The packet enforces this boundary. If the installed toolkit runtime matches the recorded repository and commit, selected required resources and applicable templates return `resolution: embedded` with `content`. If it does not match, the packet returns `resolution: pinned-source-required` with the exact `source.repository`, `source.commit`, and `source.path` and does not embed potentially incorrect local content. Multiple active toolkit pins require repair before ordinary execution.
 
@@ -63,11 +63,11 @@ Replacing a valid existing pin is not an ordinary mutation; toolkit upgrades mus
 
 For an initialized, healthy CLI-managed project, the packet is the workflow-reading boundary for the turn.
 
-- `resources.required` materializes the canonical required resources from `execution.resources.required`.
+- `resources.required` materializes the canonical required resources from context `execution.resources.required`.
 - `resources.stagePrompt` and `resources.guidance` are convenience views over those required resources.
 - `resources.templates` contains only on-demand templates whose target artifact is not already registered; an existing task/artifact does not repeatedly carry its template.
 - `resources.conditional` preserves conditional choices such as source adapters without eagerly loading all alternatives.
-- `resources.manifest` preserves the underlying protocol-v1 resource manifest for traceability.
+- `resources.manifest` preserves the underlying protocol-v2 resource manifest for traceability.
 
 Use a resource's embedded `content` when `resolution` is `embedded`. When `resolution` is `pinned-source-required`, load the exact returned pinned `source`. Do not reconstruct GitHub paths or mutable refs.
 
@@ -139,9 +139,22 @@ The toolkit pin is separate from implementation-source lineage. Do not add the t
 
 ## Narrative ownership during implementation
 
-Task/workpack Markdown owns implementation discoveries, deviations and rationale, affected-file/behavior narrative, risks, and follow-up documentation changes.
+Task/workpack Markdown owns:
 
-The workflow record owns current task status, structured validation results/evidence, output snapshot identity, output commit SHA, and task/output parent lineage. Do not duplicate record-owned mutable values in CLI-managed narrative sections.
+- implementation discoveries;
+- deviations and their rationale;
+- affected-file/behavior narrative;
+- risks and follow-up documentation changes.
+
+The workflow record owns:
+
+- current task status;
+- structured validation result/status/evidence fields;
+- output snapshot identity;
+- output commit SHA;
+- task/output parent lineage.
+
+Do not duplicate record-owned mutable values in CLI-managed narrative sections.
 
 ## Completion loop
 

@@ -5,7 +5,7 @@ import { buildOrchestrationContext } from './orchestration-context.mjs';
 import { runtimeToolkitPin } from './toolkit-source.mjs';
 import { relativeDisplay } from './utils.mjs';
 
-export const AGENT_PROTOCOL_VERSION = 2;
+export const AGENT_PROTOCOL_VERSION = 3;
 
 const TOOLKIT_ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const NON_STAGE_EXECUTION_KINDS = new Set(['migration', 'repair']);
@@ -40,7 +40,14 @@ function templateArtifactType(path) {
 
 export function agentResourcesForContext(context) {
   if (NON_STAGE_EXECUTION_KINDS.has(context.execution.kind)) {
-    return { required: [], stagePrompt: null, guidance: [], templates: [], conditional: [], manifest: context.execution.resources ?? null };
+    return {
+      required: [],
+      stagePrompt: null,
+      guidance: [],
+      templates: [],
+      conditional: [],
+      manifest: context.execution.resources ?? null,
+    };
   }
 
   const manifest = context.execution.resources ?? { required: [], onDemand: [], conditional: [] };
@@ -74,6 +81,7 @@ function fullCurrentTask(record) {
 export function composeAgentContext(context, record) {
   return {
     protocolVersion: AGENT_PROTOCOL_VERSION,
+    contextProtocolVersion: context.protocolVersion,
     initialized: true,
     control: context.control,
     project: context.project,
@@ -121,24 +129,58 @@ export function buildAgentContextWhenMissing(recordPath, { cwd }) {
 
   return {
     protocolVersion: AGENT_PROTOCOL_VERSION,
+    contextProtocolVersion: null,
     initialized: false,
-    control: { mode: null, schemaVersion: null, readOnly: false, record: relativeDisplay(cwd, recordPath) },
+    control: {
+      mode: null,
+      schemaVersion: null,
+      readOnly: false,
+      record: relativeDisplay(cwd, recordPath),
+    },
     project: null,
-    toolkit: { pinned: false, repository: null, version: null, commit: null, snapshot: null, ambiguous: false },
+    toolkit: {
+      pinned: false,
+      repository: null,
+      version: null,
+      commit: null,
+      snapshot: null,
+      ambiguous: false,
+    },
     workflow: { valid: true, findings: [] },
     state: {
-      profile: null, mode: null, stage: null, stageName: null, stageStatus: 'Not initialized',
-      executionKind: 'initialization', architectureDecision: null, profileTransition: null,
+      profile: null,
+      mode: null,
+      stage: null,
+      stageName: null,
+      stageStatus: 'Not initialized',
+      executionKind: 'initialization',
+      architectureDecision: null,
+      profileTransition: null,
     },
     policy: {
-      workflowMutation: 'initialize-first', implementation: 'forbidden', codeEdits: 'forbidden',
-      stageDecision: 'not-applicable', generatedViews: 'not-initialized', workflowReads: 'initialization-only',
+      workflowMutation: 'initialize-first',
+      implementation: 'forbidden',
+      codeEdits: 'forbidden',
+      stageDecision: 'not-applicable',
+      generatedViews: 'not-initialized',
+      workflowReads: 'initialization-only',
     },
-    task: { instruction: nextAction, artifactTypes: [], artifacts: [], current: null, ready: [], nextReady: null },
+    task: {
+      instruction: nextAction,
+      artifactTypes: [],
+      artifacts: [],
+      current: null,
+      ready: [],
+      nextReady: null,
+    },
     sources: { active: [], latestOutput: null, latestValidationRuntime: null },
     stageCheck: null,
     resources: {
-      required: [stagePrompt], stagePrompt, guidance: [], templates: [], conditional: [],
+      required: [stagePrompt],
+      stagePrompt,
+      guidance: [],
+      templates: [],
+      conditional: [],
       manifest: { required: [descriptor], onDemand: [], conditional: [] },
       sourceAdapterPolicy: 'Select the matching source adapter after the actual design source is identified.',
     },

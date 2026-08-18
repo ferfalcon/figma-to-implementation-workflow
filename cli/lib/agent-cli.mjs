@@ -1,6 +1,10 @@
 import { existsSync } from 'node:fs';
 import { runCli as runWorkflowCli } from './workflow-cli.mjs';
-import { buildAgentContext, buildAgentContextWhenMissing } from './agent-context.mjs';
+import {
+  AGENT_PROTOCOL_VERSION,
+  buildAgentContext,
+  buildAgentContextWhenMissing,
+} from './agent-context.mjs';
 import { readStoredRecord } from './record-store.mjs';
 import { fail, parseArgs, resolveRecordPath, write } from './utils.mjs';
 
@@ -54,13 +58,20 @@ export async function runCli(args, environment) {
     const message = error instanceof Error ? error.message : String(error);
     if (options.json) {
       json(stdout, {
-        protocolVersion: 2,
+        protocolVersion: AGENT_PROTOCOL_VERSION,
+        contextProtocolVersion: null,
         initialized: true,
         toolkit: null,
         workflow: { valid: false, findings: [message] },
         state: { executionKind: 'repair' },
         policy: { codeEdits: 'forbidden', workflowReads: 'repair-only' },
-        resources: { required: [], stagePrompt: null, guidance: [], templates: [], conditional: [] },
+        resources: {
+          required: [],
+          stagePrompt: null,
+          guidance: [],
+          templates: [],
+          conditional: [],
+        },
         nextAction: 'Repair the workflow record before continuing.',
       });
       return 1;
