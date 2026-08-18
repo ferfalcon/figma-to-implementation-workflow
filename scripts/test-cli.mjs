@@ -157,7 +157,7 @@ function testExecutableLifecycle() {
   assert(current.tasks[0].status === 'In progress' && current.state.currentTask === 'P01-T01', 'unblock did not restore the prior in-progress state');
 
   writeFileSync(join(cwd, 'implementation.txt'), 'implemented\n', 'utf8');
-  git(cwd, ['add', '.']);
+  git(cwd, ['add', 'implementation.txt']);
   git(cwd, ['commit', '-m', 'Implement fixture']);
   const implementationCommit = git(cwd, ['rev-parse', 'HEAD']);
 
