@@ -1,5 +1,6 @@
 import { existsSync } from 'node:fs';
 import { runWorkflowCli } from './commands-v2.mjs';
+import { taskCompletionGitFindings, taskStartGitFindings } from './git-worktree-policy.mjs';
 import { readStoredRecord } from './record-store.mjs';
 import { bindRepositoryWorkspace } from './repository-binding.mjs';
 import { buildOrchestrationContext } from './orchestration-context.mjs';
@@ -152,9 +153,28 @@ export async function runCli(args, environment) {
 
   if (command === 'task' && positionals[1] === 'start' && positionals[2]) {
     try {
-      const start = startTaskAtCurrentHead(recordPath, positionals[2]);
+      const { recordPath: path, record } = load(cwd, options);
+      const task = record.tasks.find((item) => item.id === positionals[2]);
+      const findings = task ? taskStartGitFindings(path, record, task) : [];
+      if (findings.length > 0) return fail(stderr, findings.join('\n'));
+      const start = startTaskAtCurrentHead(path, positionals[2]);
       write(stdout, `Started ${positionals[2]} from ${start.baseline} at HEAD ${start.commit}`);
       return 0;
+    } catch (error) {
+      return fail(stderr, error instanceof Error ? error.message : String(error));
+    }
+  }
+
+  if (command === 'task' && positionals[1] === 'complete' && positionals[2]) {
+    try {
+      const { recordPath: path, record } = load(cwd, options);
+      const diagnostics = workflowDiagnostics(path, record);
+      const task = record.tasks.find((item) => item.id === positionals[2]);
+      const findings = [
+        ...diagnostics.findings,
+        ...(task ? taskCompletionGitFindings(path, record, task, options.commit) : []),
+      ];
+      if (findings.length > 0) return fail(stderr, findings.join('\n'));
     } catch (error) {
       return fail(stderr, error instanceof Error ? error.message : String(error));
     }
