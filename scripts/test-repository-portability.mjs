@@ -2,7 +2,7 @@
 
 import { spawnSync } from 'node:child_process';
 import {
-  cpSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync,
+  cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
@@ -114,7 +114,7 @@ function testProjectRelativeSnapshotSurvivesMove() {
 function testProjectSubdirectoryReference() {
   const workflow = temp('subdirectory');
   const repository = join(workflow, 'implementation');
-  cpSync(temp('empty-source'), repository, { recursive: true });
+  mkdirSync(repository, { recursive: true });
   initializeRepository(repository);
   run(workflow, ['init', '--name', 'Subdirectory fixture', '--profile', 'Express', '--repository', 'implementation']);
   const snapshot = record(workflow).snapshots.find((item) => item.id === 'SRC-REPO-001');
