@@ -4,9 +4,40 @@ This document defines how an AI design-engineering agent operates the executable
 
 ## Boundary
 
-The agent owns reasoning, source inspection, artifact prose, implementation decisions within approved scope, and evidence collection. The CLI owns executable state, stage/task legality, canonical registries, generated views, trace definitions, validation state, implementation lineage, and the recorded workflow-toolkit source pin.
+The agent owns reasoning, source inspection, artifact prose, implementation decisions within approved scope, and evidence collection. The CLI owns executable state, stage/task legality, canonical registries, generated views, trace definitions, validation state, implementation lineage, project-workspace resolution, and workflow-toolkit dependency resolution.
 
 Never infer executable state from narrative Markdown when `.workflow/workflow-record.json` exists. Never manually edit generated views.
+
+## Project and toolkit resolution
+
+Treat the implementation project and workflow toolkit as separate namespaces.
+
+The implementation project contains product source, narrative artifacts, and `.workflow/workflow-record.json`. Its workspace root is derived from the record location and reported as `project.root` in orchestration context. An absolute machine-specific project path is not persisted in the canonical record.
+
+The workflow toolkit contains `prompts/`, `guidelines/`, `templates/`, `workflow/`, the CLI, and supporting workflow code. Schema-v2 records may persist a dedicated top-level toolkit dependency:
+
+```json
+{
+  "toolkit": {
+    "repository": "ferfalcon/figma-to-implementation-workflow",
+    "revision": "<40-character-git-sha>"
+  }
+}
+```
+
+`repository` identifies the toolkit repository. `revision` is the immutable Git commit that governs workflow-resource resolution for the project.
+
+Do not register the toolkit as a `SRC-*` project snapshot. `SRC-*` snapshots describe design/document/runtime inputs and implementation-project lineage; `toolkit` describes the workflow implementation that interprets that lineage.
+
+New CLI-managed records pin the detected or explicitly supplied toolkit dependency in the same transaction that creates the workflow record. Existing schema-v2 records without `toolkit` remain valid for backward compatibility.
+
+A short-lived earlier model stored toolkit identity in a `toolkit+github://` Supporting-source snapshot. The CLI recognizes that representation for compatibility. Convert it with:
+
+```bash
+design-workflow toolkit migrate
+```
+
+Migration preserves the repository and immutable commit while removing the toolkit snapshot from project source lineage when it is safe to do so.
 
 ## Handshake
 
@@ -22,8 +53,8 @@ Initialized CLI-managed context payloads that expose the minimal resource manife
 
 The context reports:
 
-- project profile and execution mode;
-- the pinned workflow-toolkit repository, package version, commit, and source snapshot when available;
+- project profile, execution mode, and resolved implementation workspace root;
+- pinned workflow-toolkit repository and immutable revision when available;
 - current stage and stage-local prompt, including a fully resolved `execution.promptSource` when the toolkit is pinned;
 - the minimal workflow-resource manifest for the current stage;
 - active source snapshots and latest verification;
@@ -35,15 +66,11 @@ The context reports:
 - whether code edits are permitted;
 - the next permitted action.
 
-If no record exists, initialize first. If the record is schema v1, migrate before mutation. If context reports `repair`, repair record/generated state before continuing. If a profile upgrade is in progress, reconcile and finish it before ordinary advancement.
+If no record exists, initialize first. If the record is schema v1, migrate before mutation. If context reports `repair`, repair record/generated state before continuing. If a profile upgrade is in progress, reconcile and finish it before ordinary advancement. If `toolkit.legacy` is true, migrate the toolkit binding before relying on remote toolkit resources.
 
-### Toolkit source resolution
+### Toolkit dependency resolution
 
-The workflow toolkit is itself an execution dependency. For projects that consume workflow resources from GitHub or another remote package source, pin the toolkit to an exact commit rather than treating `main`, a branch, or a package version alone as operational identity.
-
-A CLI-managed pin is recorded as an immutable `Supporting source` snapshot with a `toolkit+github://` reference and an exact 40-character commit SHA. It is intentionally not added to `state.activeInputs`: it governs workflow execution, not the product/design implementation baseline.
-
-Inspect the current pin with:
+Inspect the current dependency with:
 
 ```bash
 design-workflow toolkit show --json
@@ -54,13 +81,14 @@ Pin an existing unpinned workflow with:
 ```bash
 design-workflow toolkit pin \
   --repository ferfalcon/figma-to-implementation-workflow \
-  --version 0.3.0 \
-  --commit <40-character-sha>
+  --revision <40-character-sha>
 ```
 
-When `toolkit.pinned` is `true`, all workflow prompts, guidelines, templates, adapters, and normative workflow documents used for the turn must come from `toolkit.repository` at exactly `toolkit.commit`. Never fall back to `main` or another mutable ref. A package version is descriptive metadata; the commit is the immutable operational pin.
+`--commit` remains accepted as a compatibility alias for `--revision`.
 
-If more than one toolkit snapshot is active, context reports an ambiguous pin and the workflow must be repaired before remote workflow resources are resolved. Replacing a valid existing pin is not an ordinary mutation; future toolkit upgrades must be explicit and preserve the old pin as history.
+When `toolkit.pinned` is `true`, all workflow prompts, guidelines, templates, adapters, and normative workflow documents used for the turn must come from `toolkit.repository` at exactly `toolkit.revision`. Never fall back to `main`, another mutable ref, or whatever toolkit files happen to be newest.
+
+Replacing a valid existing toolkit dependency is not an ordinary pin mutation. Toolkit upgrades must be explicit and preserve previous dependency identity rather than silently repointing the project.
 
 ## Minimal-read execution
 
@@ -72,7 +100,7 @@ For an initialized, healthy CLI-managed project, the context resource manifest i
 - `onDemand` — load only when the resource's `when` condition applies, such as creating or restructuring the target artifact;
 - `conditional` — choose the matching resource from the returned choices based on observed source format or another stated condition; do not load every choice.
 
-When the toolkit pin is present and unambiguous, returned resources include `location` with the exact repository, version, commit, and path. Use that location instead of reconstructing a GitHub URL or falling back to a mutable ref.
+When the toolkit dependency is present and unambiguous, returned resources include `location` with the exact `scope`, repository, revision, and path. Use that location instead of reconstructing a GitHub URL or falling back to a mutable ref.
 
 Do not recursively inspect the toolkit or read `README.md`, `QUICKSTART.md`, `cli/README.md`, broad `workflow/` documentation, unrelated prompts, unrelated guidelines, unrelated templates, or every source adapter to rediscover how the workflow works.
 
@@ -87,7 +115,7 @@ The goal is deterministic startup: permanent agent contract → `context --json`
 
 ## Stage-local execution
 
-Load the prompt returned in `execution.prompt`; it is also listed in `execution.resources.required`. When `execution.promptSource` or a resource `location` is present, use its repository, version, commit, and path as the authoritative remote lookup instead of reconstructing a GitHub location yourself. Perform only the responsibility of the current stage.
+Load the prompt returned in `execution.prompt`; it is also listed in `execution.resources.required`. The relative `execution.prompt` field remains for compatibility. When `execution.promptSource` or a resource `location` is present, use its toolkit scope, repository, revision, and path as the authoritative remote lookup instead of assuming the path belongs to the implementation project or reconstructing a GitHub location yourself. Perform only the responsibility of the current stage.
 
 Use the profile targets returned by `execution.primaryArtifactTypes`:
 
@@ -147,7 +175,7 @@ This requires Stage 10, a structurally clean schema-v2 workflow, and an executio
 
 Verify relevant active snapshots before stage closure and before task execution. Unexpected material upstream/concurrent changes block affected work and require a new snapshot or explicit impact assessment. Expected previous-task outputs advance repository lineage without replacing the original project input baseline.
 
-The toolkit pin is separate from the implementation-source lineage. Do not add the toolkit snapshot to artifact baselines or task baselines merely because it is recorded in `snapshots`; use it only to resolve the workflow rules/resources governing the project.
+The toolkit dependency is separate from implementation-source lineage. Do not add it to artifact baselines, task baselines, or `state.activeInputs` merely because it governs workflow execution.
 
 ## Narrative ownership during implementation
 
