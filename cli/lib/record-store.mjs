@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import {
   existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync,
 } from 'node:fs';
@@ -5,8 +6,18 @@ import { dirname, isAbsolute, resolve } from 'node:path';
 import { renderGeneratedState } from './generated-state.mjs';
 import { inspectWorkflowRecord, validateWorkflowRecord } from '../../scripts/lib/validate-workflow-record.mjs';
 
+const recordVersions = new WeakMap();
+
 function recordText(record) {
   return `${JSON.stringify(record, null, 2)}\n`;
+}
+
+function digestBytes(content) {
+  return createHash('sha256').update(content).digest('hex');
+}
+
+function expectedRecordDigest(record) {
+  return recordVersions.get(record) ?? digestBytes(recordText(record));
 }
 
 function tempPath(path, label, sequence) {
@@ -49,6 +60,23 @@ function verifyArtifactFiles(recordPath, record, fileSet) {
     }
   }
   return findings;
+}
+
+function acquireRecordLock(recordPath) {
+  const lockPath = `${recordPath}.lock`;
+  mkdirSync(dirname(lockPath), { recursive: true });
+  try {
+    writeFileSync(lockPath, `${JSON.stringify({
+      pid: process.pid,
+      acquiredAt: new Date().toISOString(),
+    })}\n`, { flag: 'wx' });
+  } catch (error) {
+    if (error?.code === 'EEXIST') {
+      throw new Error(`Workflow record is locked by another workflow mutation at ${lockPath}. If no design-workflow process is running, remove the stale lock and retry.`);
+    }
+    throw error;
+  }
+  return () => rmSync(lockPath, { force: true });
 }
 
 function rollback(committed, originals) {
@@ -109,7 +137,9 @@ export function readStoredRecord(recordPath) {
   }
   const bytes = readFileSync(recordPath, 'utf8');
   try {
-    return { record: JSON.parse(bytes), bytes };
+    const record = JSON.parse(bytes);
+    recordVersions.set(record, digestBytes(bytes));
+    return { record, bytes };
   } catch (error) {
     throw new Error(`Workflow record is not valid JSON: ${error.message}`);
   }
@@ -144,45 +174,63 @@ export function commitRecordCandidate({
   allowCreate = false,
 }) {
   const recordAbsolute = resolve(recordPath);
-  const current = currentRecord ?? (existsSync(recordAbsolute) ? readStoredRecord(recordAbsolute).record : null);
-  if (!current && !allowCreate) throw new Error(`Workflow record not found at ${recordAbsolute}.`);
-  if (current && current.schemaVersion === 1 && candidate.schemaVersion === 1) requireMutableRecord(current);
-
-  const beforeFindings = current ? validateWorkflowRecord(current) : [];
-  if (requireClean && beforeFindings.length > 0 && !repair) {
-    throw new Error(`Current workflow record is invalid:\n${beforeFindings.map((item) => `- ${item}`).join('\n')}`);
-  }
-
-  const narrativeChanges = normalizeFileChanges(fileChanges);
-  for (const [path, change] of narrativeChanges) {
-    if (existsSync(path) && !change.overwrite) {
-      throw new Error(`Refusing to overwrite existing stage destination ${path}. Use "artifact adopt" instead.`);
+  const expectedDigest = currentRecord ? expectedRecordDigest(currentRecord) : null;
+  const releaseLock = acquireRecordLock(recordAbsolute);
+  try {
+    const stored = existsSync(recordAbsolute) ? readStoredRecord(recordAbsolute) : null;
+    if (!stored && currentRecord) {
+      throw new Error('Workflow record changed since this mutation was prepared: the record was removed. Retry the command against the latest workflow state.');
     }
-  }
-
-  const candidateFindings = [
-    ...validateWorkflowRecord(candidate),
-    ...verifyArtifactFiles(recordAbsolute, candidate, narrativeChanges),
-  ];
-  if (candidateFindings.length > 0) {
-    if (!(repair && isStrictRepair(beforeFindings, candidateFindings))) {
-      throw new Error(`Candidate workflow record is invalid:\n${candidateFindings.map((item) => `- ${item}`).join('\n')}`);
+    if (!stored && !allowCreate) throw new Error(`Workflow record not found at ${recordAbsolute}.`);
+    if (stored && allowCreate && !currentRecord) throw new Error(`Workflow record already exists at ${recordAbsolute}.`);
+    if (stored && !currentRecord) {
+      throw new Error('Existing workflow mutations require the current record returned by prepareRecordMutation() or readStoredRecord().');
     }
-  }
+    if (stored && expectedDigest !== digestBytes(stored.bytes)) {
+      throw new Error('Workflow record changed since this mutation was prepared. Retry the command against the latest workflow state.');
+    }
 
-  const rendered = renderGeneratedState(recordAbsolute, candidate);
-  const completeSet = new Map();
-  completeSet.set(recordAbsolute, { content: asBuffer(recordText(candidate)), overwrite: true });
-  for (const [path, content] of rendered) {
-    completeSet.set(resolve(path), { content: asBuffer(content), overwrite: true });
+    const current = stored?.record ?? null;
+    if (current && current.schemaVersion === 1 && candidate.schemaVersion === 1) requireMutableRecord(current);
+
+    const beforeFindings = current ? validateWorkflowRecord(current) : [];
+    if (requireClean && beforeFindings.length > 0 && !repair) {
+      throw new Error(`Current workflow record is invalid:\n${beforeFindings.map((item) => `- ${item}`).join('\n')}`);
+    }
+
+    const narrativeChanges = normalizeFileChanges(fileChanges);
+    for (const [path, change] of narrativeChanges) {
+      if (existsSync(path) && !change.overwrite) {
+        throw new Error(`Refusing to overwrite existing stage destination ${path}. Use "artifact adopt" instead.`);
+      }
+    }
+
+    const candidateFindings = [
+      ...validateWorkflowRecord(candidate),
+      ...verifyArtifactFiles(recordAbsolute, candidate, narrativeChanges),
+    ];
+    if (candidateFindings.length > 0) {
+      if (!(repair && isStrictRepair(beforeFindings, candidateFindings))) {
+        throw new Error(`Candidate workflow record is invalid:\n${candidateFindings.map((item) => `- ${item}`).join('\n')}`);
+      }
+    }
+
+    const rendered = renderGeneratedState(recordAbsolute, candidate);
+    const completeSet = new Map();
+    completeSet.set(recordAbsolute, { content: asBuffer(recordText(candidate)), overwrite: true });
+    for (const [path, content] of rendered) {
+      completeSet.set(resolve(path), { content: asBuffer(content), overwrite: true });
+    }
+    for (const [path, change] of narrativeChanges) completeSet.set(path, change);
+    writeFileSet(completeSet);
+    return {
+      record: candidate,
+      files: [...completeSet.keys()],
+      findings: candidateFindings,
+    };
+  } finally {
+    releaseLock();
   }
-  for (const [path, change] of narrativeChanges) completeSet.set(path, change);
-  writeFileSet(completeSet);
-  return {
-    record: candidate,
-    files: [...completeSet.keys()],
-    findings: candidateFindings,
-  };
 }
 
 export function mutateRecord(recordPath, mutator, options = {}) {
