@@ -163,45 +163,46 @@ function configuredBinding(cwd, reference) {
 
 function candidateRoots(cwd, snapshot, repositoryOverride) {
   const candidates = [];
-  if (repositoryOverride) candidates.push({ path: repositoryOverride, explicit: true });
+  if (repositoryOverride) candidates.push(repositoryOverride);
   const binding = configuredBinding(cwd, snapshot.reference);
-  if (binding) candidates.push({ path: binding, explicit: true });
+  if (binding) candidates.push(binding);
   const projectPath = projectReferencePath(cwd, snapshot.reference);
-  if (projectPath) candidates.push({ path: projectPath, explicit: false });
-  candidates.push({ path: cwd, explicit: false });
+  if (projectPath) candidates.push(projectPath);
+  candidates.push(cwd);
   const legacyPath = legacyReferencePath(cwd, snapshot.reference);
-  if (legacyPath) candidates.push({ path: legacyPath, explicit: false });
+  if (legacyPath) candidates.push(legacyPath);
 
   const roots = [];
   const seen = new Set();
   for (const candidate of candidates) {
-    const path = isAbsolute(candidate.path) || isWindowsAbsolutePath(candidate.path)
-      ? candidate.path
-      : resolve(cwd, candidate.path);
+    const path = isAbsolute(candidate) || isWindowsAbsolutePath(candidate)
+      ? candidate
+      : resolve(cwd, candidate);
     const root = repositoryRoot(path);
     if (!root || seen.has(root)) continue;
     seen.add(root);
-    roots.push({ root, explicit: candidate.explicit });
+    roots.push(root);
   }
   return roots;
 }
 
-function matchesPortableReference(cwd, snapshot, repository, explicit) {
-  const projectPath = projectReferencePath(cwd, snapshot.reference);
-  if (projectPath) return explicit || repositoryRoot(projectPath) === repository;
+function matchesPortableReference(cwd, snapshot, repository) {
+  if (snapshot.reference?.startsWith('project://')) {
+    const projectPath = projectReferencePath(cwd, snapshot.reference);
+    return Boolean(projectPath && repositoryRoot(projectPath) === repository);
+  }
 
   const expectedRemote = canonicalRemoteReference(snapshot.reference);
   if (!expectedRemote) return true;
   const actualRemote = repositoryRemoteReference(repository);
-  if (actualRemote === expectedRemote) return true;
-  return explicit;
+  return actualRemote === null || actualRemote === expectedRemote;
 }
 
 export function resolveRepositoryWorkspace(cwd, snapshot, repositoryOverride = null) {
   if (!snapshot?.commit) throw new Error('Repository snapshot does not record a Git commit.');
-  for (const { root, explicit } of candidateRoots(cwd, snapshot, repositoryOverride)) {
+  for (const root of candidateRoots(cwd, snapshot, repositoryOverride)) {
     if (!gitSucceeds(root, ['cat-file', '-e', `${snapshot.commit}^{commit}`])) continue;
-    if (!matchesPortableReference(cwd, snapshot, root, explicit)) continue;
+    if (!matchesPortableReference(cwd, snapshot, root)) continue;
     return root;
   }
   const overrideHint = repositoryOverride ? '' : ' Bind a local checkout with "design-workflow repository bind".';
@@ -219,6 +220,9 @@ export function bindRepositoryWorkspace(cwd, snapshot, repositoryInput) {
   if (!repository) throw new Error(`Could not resolve a Git repository from ${requested}`);
   if (!gitSucceeds(repository, ['cat-file', '-e', `${snapshot.commit}^{commit}`])) {
     throw new Error(`Bound repository does not contain snapshot commit ${snapshot.commit}.`);
+  }
+  if (!matchesPortableReference(cwd, snapshot, repository)) {
+    throw new Error(`Bound repository identity does not match snapshot reference ${snapshot.reference}.`);
   }
 
   const path = localBindingPath(cwd);
