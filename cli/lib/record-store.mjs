@@ -81,8 +81,9 @@ function canonicalizeRepositoryReferences(recordPath, candidate, currentRecord =
   const projectRoot = projectRootForRecord(recordPath);
   const currentSnapshots = new Map((currentRecord?.snapshots ?? []).map((snapshot) => [snapshot.id, snapshot]));
   for (const snapshot of repositorySnapshots(candidate)) {
+    let repository = null;
     try {
-      const repository = resolveRepositoryWorkspace(projectRoot, snapshot);
+      repository = resolveRepositoryWorkspace(projectRoot, snapshot);
       const previousReference = currentSnapshots.get(snapshot.id)?.reference;
       const parentReference = snapshot.parent ? currentSnapshots.get(snapshot.parent)?.reference : null;
       const reference = portableRepositoryReference(
@@ -97,6 +98,9 @@ function canonicalizeRepositoryReferences(recordPath, candidate, currentRecord =
 
     if (!currentSnapshots.has(snapshot.id) && !isPortableRepositoryReference(projectRoot, snapshot.reference)) {
       throw new Error(`Repository snapshot ${snapshot.id} has no portable identity. Configure a Git remote or keep the repository inside the workflow project before recording the snapshot.`);
+    }
+    if (!currentSnapshots.has(snapshot.id) && snapshot.reference.startsWith('project://') && !repository) {
+      throw new Error(`Repository snapshot ${snapshot.id} uses project-relative identity ${snapshot.reference}, but that path does not resolve to a Git repository containing pinned commit ${snapshot.commit}.`);
     }
   }
   return candidate;
