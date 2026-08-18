@@ -18,10 +18,14 @@ design-workflow context --json
 
 Treat the returned `protocolVersion` independently from the workflow record `schemaVersion`.
 
+Protocol v2 makes this context the complete workflow bootstrap. The agent must not recursively inspect the toolkit repository to rediscover workflow structure before acting.
+
 The context reports:
 
+- toolkit repository, toolkit version, and toolkit revision when an exact revision can be resolved;
 - project profile and execution mode;
-- current stage and stage-local prompt;
+- current stage and the fully qualified stage-prompt resource;
+- the exact stage-specific workflow/guideline resources required for the current turn;
 - active source snapshots and latest verification;
 - current target artifact types and registered artifact paths;
 - current and Ready tasks;
@@ -31,11 +35,27 @@ The context reports:
 - whether code edits are permitted;
 - the next permitted action.
 
+`toolkit.revision` is an exact Git commit when the toolkit itself is running from its Git checkout, or when `DESIGN_WORKFLOW_TOOLKIT_REVISION` explicitly supplies the revision. Packaged installs that cannot prove an exact Git revision report `revision: null` and `resolution: "package-version"` rather than accidentally reporting the consumer repository commit.
+
+Every resource pointer in `execution.prompt` and `execution.requiredResources` repeats the toolkit repository, revision, and version so an agent operating through GitHub does not need to guess which repository or revision owns a relative path.
+
 If no record exists, initialize first. If the record is schema v1, migrate before mutation. If context reports `repair`, repair record/generated state before continuing. If a profile upgrade is in progress, reconcile and finish it before ordinary advancement.
+
+## Resource loading
+
+For initialized CLI-managed projects, load only:
+
+1. `execution.prompt`;
+2. the entries in `execution.requiredResources`;
+3. the source adapter that matches the actual source, after the source type has been established.
+
+Do not browse `README.md`, `QUICKSTART.md`, `workflow/`, `prompts/`, `templates/`, or `guidelines/` merely to determine what the workflow expects. The CLI is the resolver. GitHub or the installed package is the storage layer.
+
+If a returned resource has an exact `revision`, use that revision. If `revision` is null, use the returned package `version` as the compatibility identity and do not invent a commit.
 
 ## Stage-local execution
 
-Load the prompt returned in `execution.prompt`. Perform only the responsibility of the current stage.
+Load the resource returned in `execution.prompt`. Perform only the responsibility of the current stage.
 
 Use the profile targets returned by `execution.primaryArtifactTypes`:
 
