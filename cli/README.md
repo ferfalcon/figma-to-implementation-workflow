@@ -32,7 +32,7 @@ design-workflow init \
   --repository .
 ```
 
-Initialization creates a schema-v2 record and only the Stage 0 artifacts for the selected profile. Later artifacts are scaffolded atomically when a passing gate is advanced. When the repository has an `origin`, initialization records that canonical remote identity instead of permanently coupling the snapshot to the local checkout path.
+Initialization creates a schema-v2 record and only the Stage 0 artifacts for the selected profile. Later artifacts are scaffolded atomically when a passing gate is advanced. Repository initialization records a credential-free canonical remote identity when available; a repository contained inside the workflow project otherwise uses `project://.` or `project://<relative-path>`. A new external repository without a portable remote identity is rejected instead of persisting a machine-specific absolute path.
 
 Markdown-only mode creates Stage 0 narrative artifacts without a record, generated views, lifecycle enforcement, or Markdown parsing:
 
@@ -101,7 +101,7 @@ Architecture-required Express and Lite work must upgrade. Full, and architecture
 
 ```bash
 design-workflow snapshot add --kind design --reference "Pinned Figma version" --activate
-design-workflow snapshot add --kind repo --reference . --commit <40-character-sha> --activate
+design-workflow snapshot add --kind repo --reference "https://github.com/org/repo" --commit <40-character-sha> --activate
 
 design-workflow snapshot verify SRC-DS-001 \
   --result Unchanged \
@@ -114,6 +114,14 @@ design-workflow snapshot supersede SRC-DS-001 \
 ```
 
 Verification events are append-only. `Unexpected upstream or concurrent change` and `Unavailable` block active-input progression. Snapshot supersession never rewrites artifact baselines automatically.
+
+Canonical repository identity is separate from the checkout path on a particular machine. When an external checkout cannot be inferred from the workflow project, bind it locally without changing the canonical record:
+
+```bash
+design-workflow repository bind SRC-REPO-001 --path ../local-checkout
+```
+
+Bindings are stored in Git-ignored `.workflow/local.json`. They are subordinate to the snapshot reference and pinned commit; a conflicting repository identity or missing commit is rejected. Legacy records that contain old absolute repository paths remain readable and can rebind by commit identity, while newly created task-start/output snapshots use the portable identity discovered from the current checkout.
 
 ## Artifact lifecycle
 
@@ -173,7 +181,7 @@ design-workflow task create --id P03-T05 --title "Create an explicitly numbered 
 
 CLI-managed task artifacts derive their filename and heading from the same ID, so `P02-T03` renders as `Phase-02--Task-03.md` with a `Phase 02 — Task 03` heading.
 
-Before `task start`, commit approved planning artifacts and remove uncommitted implementation-scope changes. The CLI resolves the local Git checkout from the canonical repository snapshot and current project checkout; when needed, pass an explicit checkout:
+Before `task start`, commit approved planning artifacts and remove uncommitted implementation-scope changes. The CLI resolves the local Git checkout from the canonical repository snapshot, current project checkout, or `.workflow/local.json`; for one-off execution, an explicit checkout still works:
 
 ```bash
 design-workflow task start P01-T01 --repository ../local-project-checkout
@@ -204,7 +212,7 @@ design-workflow task complete P01-T01 \
   --check "Build=Production build completed successfully"
 ```
 
-Completion verifies that the commit exists in the bound repository, equals `HEAD`, and descends from the task-start commit. It also requires no uncommitted implementation-scope changes and rejects an implementation output commit that contains canonical workflow-control files. Only then does it create the Implementation-output snapshot parented to the exact task-start checkpoint. Use `--repository <path>` on completion when the local checkout cannot be inferred. Task-by-task execution cannot begin before Stage 9, and Continuous-documentation mode cannot enter Stage 10.
+Completion verifies that the commit exists in the bound repository, equals `HEAD`, and descends from the task-start commit. It also requires no uncommitted implementation-scope changes and rejects an implementation output commit that contains canonical workflow-control files. Only then does it create the Implementation-output snapshot parented to the exact task-start checkpoint and carrying the portable repository identity. Use `--repository <path>` on completion when the local checkout cannot be inferred or persist the machine-local binding with `repository bind`. Task-by-task execution cannot begin before Stage 9, and Continuous-documentation mode cannot enter Stage 10.
 
 Workflow-control state may be committed separately after completion. If that commit becomes the next task's `HEAD`, the next start records it as a Task start checkpoint parented to the previous Implementation output instead of mixing control state into the implementation output commit.
 
@@ -260,4 +268,5 @@ Results are `accepted`, `accepted-with-deviations`, and `requires-corrections`. 
 - Rejected mutations leave the record, generated views, and narrative files byte-identical.
 - Existing unregistered narrative files are never overwritten.
 - Task execution keeps implementation output commits separate from canonical workflow-control files.
+- Canonical repository snapshots never persist newly introduced external machine-specific checkout paths; machine-local bindings live only in ignored `.workflow/local.json`.
 - Use `--record path/to/workflow-record.json` to override the default record location.
