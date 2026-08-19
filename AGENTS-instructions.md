@@ -44,7 +44,8 @@ Ordinary initialized execution should remain minimal-read. Broader toolkit inspe
 
 ## Non-negotiable guardrails
 
-- Mutate executable workflow state only through `design-workflow` commands; never manually edit `.workflow/workflow-record.json` or `.workflow/generated/*`.
+- Mutate executable workflow state only through `design-workflow` commands. Never manually edit `.workflow/workflow-record.json`.
+- Never manually edit `.workflow/generated/*`.
 - Never edit implementation code unless the current CLI packet or generated GitHub projection explicitly allows code edits for the current task scope.
 - In Gated mode, never self-approve a gate or invent an approval actor; stop for explicit human approval.
 - In Continuous documentation mode, stop before Stage 10.
