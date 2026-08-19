@@ -127,12 +127,34 @@ function staleLocalLock(lockPath) {
   return !processIsRunning(lock.pid);
 }
 
-function writeRecordLock(lockPath) {
-  writeFileSync(lockPath, `${JSON.stringify({
+function lockMetadata() {
+  return `${JSON.stringify({
     pid: process.pid,
     hostname: hostname(),
     acquiredAt: new Date().toISOString(),
-  })}\n`, { flag: 'wx' });
+  })}\n`;
+}
+
+function writeRecordLock(lockPath) {
+  writeFileSync(lockPath, lockMetadata(), { flag: 'wx' });
+}
+
+function recoverStaleLock(lockPath) {
+  const recoveryPath = `${lockPath}.reap`;
+  try {
+    writeFileSync(recoveryPath, lockMetadata(), { flag: 'wx' });
+  } catch (error) {
+    if (error?.code === 'EEXIST') return false;
+    throw error;
+  }
+
+  try {
+    if (!existsSync(lockPath) || !staleLocalLock(lockPath)) return false;
+    rmSync(lockPath);
+    return true;
+  } finally {
+    rmSync(recoveryPath, { force: true });
+  }
 }
 
 function acquireRecordLock(recordPath) {
@@ -144,10 +166,7 @@ function acquireRecordLock(recordPath) {
       return () => rmSync(lockPath, { force: true });
     } catch (error) {
       if (error?.code !== 'EEXIST') throw error;
-      if (attempt === 0 && staleLocalLock(lockPath)) {
-        rmSync(lockPath, { force: true });
-        continue;
-      }
+      if (attempt === 0 && recoverStaleLock(lockPath)) continue;
       throw new Error(
         `Workflow record is locked by another workflow mutation at ${lockPath}. `
         + 'The lock is active or cannot be safely identified as stale; inspect it before removing it manually.',
