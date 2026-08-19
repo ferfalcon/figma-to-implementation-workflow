@@ -38,6 +38,8 @@ export const validationSteps = [
   { name: 'replanning transitions', script: 'scripts/test-replanning-transitions.mjs' },
   { name: 'CLI', script: 'scripts/test-cli.mjs' },
   { name: 'sequential task lineage', script: 'scripts/test-sequential-task-lineage.mjs' },
+  { name: 'GitHub remote command bridge', script: 'scripts/test-github-remote-command.mjs' },
+  { name: 'GitHub remote authorization', script: 'scripts/test-github-remote-authorization.mjs' },
   { name: 'package manifest', script: 'scripts/test-package-manifest.mjs' },
 ];
 
