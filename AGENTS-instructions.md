@@ -36,9 +36,11 @@ Then:
 4. If the packet reports initialization, migration, or repair, complete that maintenance path before ordinary stage work.
 5. Inspect the actual design/repository sources required by the current task and perform only the current stage or task responsibility.
 
-When `design-workflow` cannot execute locally but GitHub repository files are available, use `.workflow/generated/AGENT-CONTEXT.json` as the read-only routing bootstrap. Load workflow resources only from its exact pinned locations; it does not prove local/runtime integrity or stage preflight.
+When `design-workflow` cannot execute but GitHub files are available, use `.workflow/generated/AGENT-CONTEXT.json` as the read-only fallback bootstrap. Follow its persisted state, task routing, policy, next action, toolkit binding, and resource descriptors instead of reconstructing workflow state manually.
 
-If the implementation repository has the GitHub remote executor installed, follow [`workflow/GitHub-Remote-Execution.md`](workflow/GitHub-Remote-Execution.md) for required CLI preflight and transitions. The bridge executes the pinned canonical CLI; it never authorizes manual record/generated edits or replaces human approval. If the bridge is unavailable, report the specific execution blocker. A missing/stale projection may be repaired through remote `sync` when the bridge is installed; never reconstruct it manually.
+Before trusting that projection, compare `generated.recordGitBlobSha` with GitHub's `sha` metadata for `.workflow/workflow-record.json` at the same ref. A missing or mismatched identity means the projection is stale or unverifiable; do not parse the record to rebuild state. Require `design-workflow sync` in an executable environment.
+
+The GitHub projection does not embed toolkit resource bodies, local-runtime integrity checks, or stage preflight results. Load workflow resources only from the exact pinned locations it provides. Do not use it to emulate CLI-owned mutations: initialization, migration, repair, stage review/advance, task start/complete, snapshot verification, and final acceptance require CLI execution. If progress requires one and no CLI is executable, report that capability blocker.
 
 Ordinary initialized execution should remain minimal-read. Broader toolkit inspection is appropriate only for initialization, migration/repair, toolkit development, an explicit reference from a required resource, or an explicit user request to inspect or modify the workflow itself.
 

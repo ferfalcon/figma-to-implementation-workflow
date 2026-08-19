@@ -28,7 +28,7 @@ import {
   rewindStageForReplanning, startProfileUpgradeForReplanning,
 } from './workflow-transitions.mjs';
 import { projectRootForRecord } from './workspace.mjs';
-import { validateWorkflowRecord } from '../../scripts/lib/validate-workflow-record.mjs';
+import { validateWorkflowRecord } from './workflow-record-validation.mjs';
 
 function now() {
   return new Date().toISOString();

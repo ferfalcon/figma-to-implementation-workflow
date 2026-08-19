@@ -16,9 +16,9 @@ Begin every CLI-managed workflow turn with:
 design-workflow agent-context --json
 ```
 
-`design-workflow context --agent --json` is an equivalent alias. The materialized agent packet uses `protocolVersion: 3`; treat that independently from the workflow record `schemaVersion`.
+`design-workflow context --agent --json` is an equivalent alias. The materialized agent packet uses `protocolVersion: 4`; treat that independently from the workflow record `schemaVersion`.
 
-The packet is the preferred agent bootstrap. It wraps the initialized protocol-v2 orchestration context and materializes its canonical `execution.resources` manifest; it does not introduce a second stage-to-resource resolver. The underlying context protocol is exposed as `contextProtocolVersion`.
+The packet is the preferred agent bootstrap. It wraps the initialized protocol-v3 orchestration context and materializes its canonical `execution.resources` manifest; it does not introduce a second stage-to-resource resolver. The underlying context protocol is exposed as `contextProtocolVersion`.
 
 The packet reports the implementation project workspace/profile/mode, toolkit dependency, current stage and execution kind, policy, active sources, target artifacts, the full current task, Ready-task summaries, stage preflight, the next action, required workflow resources, missing-artifact templates, and conditional source-adapter choices.
 
@@ -28,21 +28,21 @@ The lower-level compatibility handshake remains available:
 design-workflow context --json
 ```
 
-Initialized CLI-managed context payloads that expose the minimal resource manifest use protocol v2. Uninitialized/missing-record context remains a separate bootstrap path. Use context protocol v2 for diagnostics and existing integrations; use agent-packet protocol v3 for normal agent execution.
+Initialized CLI-managed context payloads that expose the minimal resource manifest use protocol v3. Uninitialized/missing-record context remains a separate bootstrap path. Use context protocol v3 for diagnostics and existing integrations; use agent-packet protocol v4 for normal agent execution.
 
 If no record exists, the agent packet embeds the intake prompt and instructs initialization. If the record is schema v1, migrate before mutation. If the packet reports `repair`, repair record/generated state before continuing. Migration and repair packets intentionally withhold ordinary stage resources.
 
-### GitHub-only fallback and remote execution
+### GitHub-only read fallback
 
-When an agent can read the implementation repository through GitHub but cannot execute `design-workflow` locally, use:
+When an agent can read the implementation repository through GitHub but cannot execute `design-workflow`, use:
 
 ```text
 .workflow/generated/AGENT-CONTEXT.json
 ```
 
-as the portable read-only bootstrap for the current persisted workflow state.
+as the portable read-only bootstrap for the current persisted workflow state. Portable projection contract v2 is identified by `generated.projectionVersion: 2`.
 
-This projection is generated transactionally with the other `.workflow/generated/*` views. It is derived from the same stage-target, next-action, execution-kind, task-routing, and resource-selection logic used by the CLI orchestration context rather than maintaining a second stage-to-resource map.
+This projection is generated transactionally with the other `.workflow/generated/*` views. It is derived from the same stage-target, next-action, execution-kind, task-routing, stage-transition-policy, and resource-selection logic used by the CLI orchestration context rather than maintaining parallel policy or routing maps.
 
 The projection contains:
 
@@ -53,15 +53,24 @@ The projection contains:
 - current task, Ready-task summaries, and target artifacts;
 - active source records and latest persisted verification events;
 - read-side policy including whether implementation code edits are permitted for an already-started task;
+- separated stage decision authority, preflight capability, and transition execution capability in `policy.stageTransition`;
 - required, on-demand, and conditional workflow resource descriptors with exact pinned toolkit locations when available.
 
 The projection intentionally does **not** contain embedded toolkit file bodies, local workspace paths, local Git/worktree checks, subject-integrity results, runtime deployment checks, or `stage check` preflight results. `workflow.runtimeIntegrity: not-evaluated-in-portable-projection` is a deliberate limitation, not a successful validation result.
 
-A GitHub-only agent may use the projection to route reads and perform work already authorized by persisted state—for example, inspect the exact current resources or edit implementation code when `policy.codeEdits` is `allowed-with-current-task-scope`. It must never emulate CLI-owned state transitions by editing `.workflow/workflow-record.json` or generated files.
+`policy.stageTransition` keeps three different questions separate:
 
-When the implementation repository has the GitHub remote executor installed on its default branch, [`GitHub-Remote-Execution.md`](GitHub-Remote-Execution.md) is the canonical transport contract for CLI execution without a local shell. The bridge runs the exact pinned `design-workflow` CLI in GitHub Actions, supports required stage preflight plus the normal CLI-owned workflow transitions, verifies the expected branch HEAD, validates generated state, and commits only after the CLI succeeds. Remote execution therefore satisfies the CLI-execution requirement without transferring state ownership to GitHub Issues or to the agent.
+- `decisionAuthority` answers who may decide: `human-required`, `agent-permitted`, or `not-applicable`;
+- `preflight` reports whether stage preflight is required, which executor owns it, whether that executor is available in the current environment, and any capability/state blocker;
+- `execution` reports the executor for recording/advancing a stage transition, whether it is available in the current environment, and any capability/state blocker.
 
-If `AGENT-CONTEXT.json` is missing or stale, do not reconstruct it from generated Markdown, narrative artifacts, or manual record interpretation. Use local `design-workflow sync` when executable, or remote `sync` when the installed GitHub executor is available. If neither execution path exists, report that specific capability blocker rather than inventing workflow state.
+For example, a healthy non-Gated GitHub-only projection can legitimately report `decisionAuthority: agent-permitted` while both `preflight.availableHere` and `execution.availableHere` are `false` with `blocker: cli-unavailable-in-current-environment`. That means the agent may make the substantive decision when evidence supports it, but this environment cannot run the required preflight or record/advance the transition. In Gated mode, decision authority remains `human-required`. During initialization, migration, or repair, decision authority is `not-applicable` and the relevant blocker explains why.
+
+`availableHere` is capability information only. It is never a gate result and never proves that review or advancement is legal. Stage legality remains owned by executable workflow state and `design-workflow stage check`.
+
+A GitHub-only agent may use the projection to route reads and perform work already authorized by persisted state—for example, inspect the exact current resources or edit implementation code when `policy.codeEdits` is `allowed-with-current-task-scope`. It must not emulate CLI-owned state transitions by editing `.workflow/workflow-record.json` or generated files. Initialization, migration, repair, toolkit pin/migration, snapshot verification, artifact lifecycle, stage review/advance, task start/complete, structured validation recording, and final acceptance remain CLI mutations.
+
+If `AGENT-CONTEXT.json` is missing or stale, do not reconstruct it from generated Markdown, narrative artifacts, or manual record interpretation. Require `design-workflow sync` in an executable environment. If the projection's next action requires a CLI-owned mutation and no CLI is available, report that specific capability blocker rather than inventing workflow state.
 
 ### Toolkit dependency resolution
 
@@ -116,7 +125,7 @@ For an initialized, healthy CLI-managed project, the packet is the workflow-read
 - `resources.stagePrompt` and `resources.guidance` are convenience views over those required resources.
 - `resources.templates` contains only on-demand templates whose target artifact is not already registered; an existing task/artifact does not repeatedly carry its template.
 - `resources.conditional` preserves conditional choices such as source adapters without eagerly loading all alternatives.
-- `resources.manifest` preserves the underlying protocol-v2 resource manifest for traceability.
+- `resources.manifest` preserves the underlying protocol-v3 resource manifest for traceability.
 
 Use a resource's embedded `content` when `resolution` is `embedded`. When `resolution` is `pinned-source-required`, load the exact returned pinned `source`. Do not reconstruct GitHub paths or mutable refs.
 
@@ -126,7 +135,7 @@ Do not recursively inspect the toolkit or read `README.md`, `QUICKSTART.md`, `cl
 
 Broader workflow reads are permitted only for initialization, migration/repair, an explicit reference from a required resource, toolkit development, or an explicit user request to inspect/modify the workflow toolkit.
 
-The goal is deterministic startup: permanent agent contract → CLI `agent-context --json` when executable, otherwise generated `AGENT-CONTEXT.json` plus the installed remote executor when CLI execution is required → resolved current resources → work.
+The goal is deterministic startup: permanent agent contract → CLI `agent-context --json` when executable, otherwise generated `AGENT-CONTEXT.json` → resolved current resources → work.
 
 ## Stage-local execution
 
@@ -158,13 +167,15 @@ design-workflow stage check --json
 
 Do not treat preflight success as evidence that the narrative or design reasoning is substantively correct. The agent must perform the required two review passes first.
 
-A GitHub-only projection cannot substitute for this preflight. When local CLI execution is unavailable, use the installed remote executor to run `stage check --json` and inspect the reported CLI output. If neither local nor remote CLI execution is available, the transition remains blocked.
+Use `policy.stageTransition` to interpret the environment before acting. `decisionAuthority` says who may make the substantive stage decision; it does not say whether preflight or transition execution is available. `preflight.availableHere` and `execution.availableHere` report those capabilities separately. Even when `execution.availableHere` is `true`, the CLI's stage state and `stage check` still determine whether recording or advancing is legal.
+
+A GitHub-only projection cannot substitute for preflight. If `policy.stageTransition.preflight.required` is `true` and `preflight.availableHere` is `false`, a transition that needs a stage decision is blocked until the named executor becomes available. Never infer executable authority from `decisionAuthority: agent-permitted` alone.
 
 ## Execution modes
 
 ### Gated
 
-Complete the current stage and preflight it. Stop for explicit human approval before recording a passing gate or advancing. Never invent `--approved-by` or treat agent confidence as human approval. A remote command issue does not itself constitute human approval.
+Complete the current stage and preflight it. Stop for explicit human approval before recording a passing gate or advancing. Never invent `--approved-by` or treat agent confidence as human approval.
 
 ### Continuous documentation
 
@@ -182,7 +193,7 @@ Implementation code may be edited only when the current CLI packet or GitHub pro
 policy.codeEdits = allowed-with-current-task-scope
 ```
 
-This requires Stage 10, a structurally valid schema-v2 record, an execution mode that permits implementation, and an already-started current task. The GitHub projection does not start the task; when local CLI is unavailable, an installed remote executor may run `task start`. Outside Stage 10, source/repository inspection is allowed but implementation edits are not.
+This requires Stage 10, a structurally valid schema-v2 record, an execution mode that permits implementation, and an already-started current task. The GitHub projection does not start the task; if the task is only Ready and the CLI cannot execute `task start`, implementation remains blocked. Outside Stage 10, source/repository inspection is allowed but implementation edits are not.
 
 ## Source and lineage safety
 
@@ -211,6 +222,6 @@ Do not duplicate record-owned mutable values in CLI-managed narrative sections.
 
 ## Completion loop
 
-After every meaningful workflow mutation, the CLI updates generated views transactionally, including `AGENT-CONTEXT.json`. Before claiming readiness or completion, run the relevant preflight plus `design-workflow validate` or `design-workflow sync --check` as required. Local execution is preferred; the installed GitHub remote executor may run the bounded read-side checks when no local CLI exists.
+After every meaningful workflow mutation, the CLI updates generated views transactionally, including `AGENT-CONTEXT.json`. Before claiming readiness or completion, run the relevant preflight plus `design-workflow validate` or `design-workflow sync --check` as required.
 
 Final acceptance remains Stage 11 work against exact source snapshots, approved narrative artifacts, implementation-output snapshot/commit, and validation runtime when applicable.
