@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import {
   mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync,
@@ -69,13 +70,22 @@ function task(id, prerequisites = []) {
   };
 }
 
+function artifactContent(type) {
+  return `# ${type}\n`;
+}
+
 function artifact(type) {
+  const content = artifactContent(type);
   return {
     id: `ART-${type}`,
     type,
     path: `${type}.md`,
     status: 'Approved',
     baseline: ['SRC-REPO-001'],
+    approvedRevision: {
+      algorithm: 'sha256',
+      digest: createHash('sha256').update(content).digest('hex'),
+    },
   };
 }
 
@@ -96,6 +106,10 @@ try {
       name: 'Sequential lineage fixture',
       profile: 'Standard',
       executionMode: 'Gated',
+    },
+    toolkit: {
+      repository: 'ferfalcon/figma-to-implementation-workflow',
+      revision: 'a'.repeat(40),
     },
     state: {
       stage: 10,
@@ -153,7 +167,7 @@ try {
     'utf8',
   );
   for (const item of record.artifacts) {
-    writeFileSync(join(cwd, item.path), `# ${item.type}\n`, 'utf8');
+    writeFileSync(join(cwd, item.path), artifactContent(item.type), 'utf8');
   }
   run(['sync']);
   run(['validate']);
