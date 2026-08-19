@@ -38,6 +38,7 @@
     "test:figma-preparation": "node scripts/test-figma-preparation-authority.mjs",
     "test:agent-bootstrap": "node scripts/test-agent-bootstrap-authority.mjs",
     "test:entrypoints": "node scripts/test-entrypoint-authority.mjs",
+    "test:layering": "node scripts/test-cli-layering.mjs",
     "test:records": "node scripts/test-workflow-record.mjs",
     "test:invariants": "node scripts/test-canonical-invariants.mjs",
     "test:gates": "node scripts/test-stage-gates.mjs",
