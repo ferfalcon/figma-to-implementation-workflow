@@ -239,7 +239,7 @@ export function commitRecordCandidate({
     const current = stored?.record ?? null;
     const migratingLegacy = current?.schemaVersion === 1 && candidate.schemaVersion === 2;
     if (current && current.schemaVersion === 1 && candidate.schemaVersion === 1) requireMutableRecord(current);
-    if (!current && allowCreate && candidate.schemaVersion === 2 && !candidate.toolkit) {
+    if ((!current && allowCreate || migratingLegacy) && candidate.schemaVersion === 2 && !candidate.toolkit) {
       const pin = initializationToolkitPin();
       if (pin) candidate.toolkit = pin;
     }
@@ -258,8 +258,8 @@ export function commitRecordCandidate({
       }
     }
 
-    // Migration must not manufacture historical provenance from current bytes or HEAD.
-    // Legacy evidence is preserved as-is, then surfaced as explicit integrity repair work.
+    // Migration must not manufacture historical artifact or validation provenance from current bytes or HEAD.
+    // The currently executing toolkit may be pinned because it is a present dependency, not historical evidence.
     if (!migratingLegacy) {
       enrichIntegrityCandidate(recordAbsolute, current, candidate, narrativeChanges);
     }
