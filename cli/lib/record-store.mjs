@@ -237,6 +237,7 @@ export function commitRecordCandidate({
     }
 
     const current = stored?.record ?? null;
+    const migratingLegacy = current?.schemaVersion === 1 && candidate.schemaVersion === 2;
     if (current && current.schemaVersion === 1 && candidate.schemaVersion === 1) requireMutableRecord(current);
     if (!current && allowCreate && candidate.schemaVersion === 2 && !candidate.toolkit) {
       const pin = initializationToolkitPin();
@@ -257,22 +258,26 @@ export function commitRecordCandidate({
       }
     }
 
-    enrichIntegrityCandidate(recordAbsolute, current, candidate, narrativeChanges);
+    // Migration must not manufacture historical provenance from current bytes or HEAD.
+    // Legacy evidence is preserved as-is, then surfaced as explicit integrity repair work.
+    if (!migratingLegacy) {
+      enrichIntegrityCandidate(recordAbsolute, current, candidate, narrativeChanges);
+    }
 
-    const candidateFindings = [
-      ...validateWorkflowRecord(candidate),
-      ...subjectIntegrityFindings(recordAbsolute, candidate, {
-        fileChanges: narrativeChanges,
-        requireToolkit: !allowCreate,
-      }),
-    ];
+    const candidateRecordFindings = validateWorkflowRecord(candidate);
+    const candidateIntegrityFindings = subjectIntegrityFindings(recordAbsolute, candidate, {
+      fileChanges: narrativeChanges,
+      requireToolkit: !allowCreate,
+    });
+    const candidateFindings = [...candidateRecordFindings, ...candidateIntegrityFindings];
     const strictRepair = isStrictRepair(beforeFindings, candidateFindings);
     if (requireClean && beforeFindings.length > 0 && !repair && !strictRepair) {
       throw new Error(`Current workflow state is invalid:\n${beforeFindings.map((item) => `- ${item}`).join('\n')}`);
     }
     if (candidateFindings.length > 0) {
+      const allowedLegacyMigration = migratingLegacy && candidateRecordFindings.length === 0;
       const allowedRepair = strictRepair && (repair || requireClean);
-      if (!allowedRepair) {
+      if (!allowedLegacyMigration && !allowedRepair) {
         throw new Error(`Candidate workflow record is invalid:\n${candidateFindings.map((item) => `- ${item}`).join('\n')}`);
       }
     }
