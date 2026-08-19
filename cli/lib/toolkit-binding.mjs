@@ -90,12 +90,10 @@ export function observedRuntimeToolkitPin() {
 }
 
 export function runtimeToolkitPin(overrides = {}) {
-  const explicitRevision = overrides.revision ?? overrides.commit ?? process.env.DESIGN_WORKFLOW_TOOLKIT_COMMIT ?? null;
+  const explicitRevision = overrides.revision ?? overrides.commit ?? null;
   if (explicitRevision) {
     return normalizeToolkitBinding({
-      repository: overrides.repository
-        ?? process.env.DESIGN_WORKFLOW_TOOLKIT_REPOSITORY
-        ?? DEFAULT_TOOLKIT_REPOSITORY,
+      repository: overrides.repository ?? DEFAULT_TOOLKIT_REPOSITORY,
       revision: explicitRevision,
     });
   }
