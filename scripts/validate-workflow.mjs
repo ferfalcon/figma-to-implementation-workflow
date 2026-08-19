@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { dirname, extname, join, normalize, relative, resolve } from 'node:path';
+import { dirname, extname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { generatedStateFindings } from '../cli/lib/generated-state.mjs';
+import { isPathWithin } from './lib/path-safety.mjs';
 import { validateWorkflowRecord } from './lib/validate-workflow-record.mjs';
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
@@ -74,6 +75,10 @@ const requiredPaths = [
   'cli/lib/migrate-record.mjs',
   'cli/lib/commands-v2.mjs',
   'scripts/generate-workflow-schema.mjs',
+  'scripts/run-validation-suite.mjs',
+  'scripts/lib/path-safety.mjs',
+  'scripts/test-validation-runner.mjs',
+  'scripts/test-path-safety.mjs',
   'scripts/test-entrypoint-authority.mjs',
   'scripts/test-package-manifest.mjs',
   'scripts/test-artifact-renderer.mjs',
@@ -261,9 +266,9 @@ for (const markdownPath of markdownFiles) {
 
     if (isExternalOrVirtual(target)) continue;
 
-    const resolvedTarget = normalize(resolve(dirname(markdownPath), target));
+    const resolvedTarget = resolve(dirname(markdownPath), target);
 
-    if (!resolvedTarget.startsWith(root)) {
+    if (!isPathWithin(root, resolvedTarget)) {
       errors.push(`${repositoryPath}: link escapes repository: ${rawTarget}`);
       continue;
     }
