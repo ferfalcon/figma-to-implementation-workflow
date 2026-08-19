@@ -9,7 +9,7 @@ import {
 } from './repository-binding.mjs';
 import { enrichIntegrityCandidate, subjectIntegrityFindings } from './subject-integrity.mjs';
 import { initializationToolkitPin } from './toolkit-binding.mjs';
-import { inspectWorkflowRecord, validateWorkflowRecord } from '../../scripts/lib/validate-workflow-record.mjs';
+import { inspectWorkflowRecord, validateWorkflowRecord } from './canonical-validation.mjs';
 
 const recordVersions = new WeakMap();
 
