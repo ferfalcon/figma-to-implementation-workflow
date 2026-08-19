@@ -30,6 +30,8 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 ### Changed
 
 - Stage-transition policy now separates substantive decision authority from preflight availability and transition execution capability through `policy.stageTransition`; the CLI context, agent packet, and portable projection contracts advance to protocol v3, protocol v4, and projection v2 respectively.
+- Portable GitHub projections now expose a Git-verifiable workflow-record blob identity for freshness checks, advancing the projection contract to v3.
+- Portable implementation policy now separates persisted current-task authorization from runtime/source integrity and makes GitHub-only code edits conditional on authoritative source verification, advancing the projection contract to v4.
 - CLI agent context and GitHub-only agent projection now share extracted stage-target, execution-kind, implementation-permission, and workflow-resource routing helpers instead of maintaining parallel routing maps.
 - README now routes people by role and task instead of duplicating profile, source, ownership, execution-mode, integrated-quality, and review contracts already owned by `workflow/` documents.
 - The optional `AI-project-settings.md` ChatGPT Project host template is now discoverable from README and included in the published package without making it a workflow-state authority.
