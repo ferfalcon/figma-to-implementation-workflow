@@ -5,11 +5,12 @@ import { stageResources, stageTargets } from './orchestration-resources.mjs';
 import {
   currentTaskForRecord, executionKind, implementationAllowed, latestVerification, taskSummary,
 } from './orchestration-routing.mjs';
+import { stageTransitionPolicy } from './stage-transition-policy.mjs';
 import { toolkitBindingFromRecord } from './toolkit-binding.mjs';
 import { deriveNextAction, readyTask } from './workflow-actions.mjs';
 import { STAGES } from './workflow-model.mjs';
 
-export const AGENT_PROJECTION_VERSION = 2;
+export const AGENT_PROJECTION_VERSION = 3;
 export const AGENT_PROJECTION_FILE = 'AGENT-CONTEXT.json';
 
 function workflowRecordGitBlobSha(record) {
@@ -50,6 +51,10 @@ export function buildAgentProjection(recordPath, record, recordDigest) {
     currentTask,
   });
   const nextAction = deriveNextAction(record);
+  const stageTransition = stageTransitionPolicy(record, {
+    workflowValid: valid,
+    cliAvailable: false,
+  });
 
   return {
     generated: {
@@ -91,10 +96,7 @@ export function buildAgentProjection(recordPath, record, recordDigest) {
       workflowMutation: workflowMutationPolicy(record, valid),
       implementation: codeEditsAllowed ? 'allowed-with-current-task-scope' : 'forbidden',
       codeEdits: codeEditsAllowed ? 'allowed-with-current-task-scope' : 'forbidden',
-      stageDecision: record.project.executionMode === 'Gated'
-        ? 'human-approval-required'
-        : 'agent-permitted-when-evidence-supports-it',
-      stagePreflight: 'cli-required-before-stage-decision',
+      stageTransition,
       generatedViews: 'read-only-projections',
       workflowReads: 'generated-agent-context-resource-manifest-only',
       toolkitReads: toolkit.pinned && !toolkit.ambiguous && !toolkit.invalid && !toolkit.legacy
