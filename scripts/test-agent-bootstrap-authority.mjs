@@ -55,14 +55,15 @@ for (const [pattern, description] of forbiddenDetailPatterns) {
 }
 
 const requiredGuardrails = [
-  'never manually edit `.workflow/generated/*`',
-  'never self-approve a gate',
-  'Never claim a validation check passed unless it actually ran successfully with evidence.',
+  [/never manually edit `\.workflow\/generated\/\*`/i, 'generated views remain read-only'],
+  [/never self-approve a gate/i, 'human gates cannot be self-approved'],
+  [/continuous documentation mode[^\n]*stop before stage 10/i, 'Continuous documentation stops before Stage 10'],
+  [/validation check passed[^\n]*ran successfully[^\n]*evidence/i, 'validation success requires executed evidence'],
 ];
 
-for (const guardrail of requiredGuardrails) {
-  if (!bootstrap.toLowerCase().includes(guardrail.toLowerCase())) {
-    errors.push(`Agent bootstrap is missing safety-critical guardrail: ${guardrail}`);
+for (const [pattern, description] of requiredGuardrails) {
+  if (!pattern.test(bootstrap)) {
+    errors.push(`Agent bootstrap is missing safety-critical guardrail: ${description}.`);
   }
 }
 
