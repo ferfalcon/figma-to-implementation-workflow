@@ -157,6 +157,7 @@ function taskSummary(task) {
       kind: check.kind,
       required: check.required,
       status: check.status,
+      subject: check.subject ?? null,
       references: check.references,
     })),
   };
@@ -229,6 +230,7 @@ export function buildOrchestrationContext(recordPath, record, { cwd }) {
         path: artifact.path,
         status: artifact.status,
         baseline: artifact.baseline,
+        approvedRevision: artifact.approvedRevision ?? null,
       })),
       sourceAdapterPolicy: 'Select the matching source adapter from execution.resources.conditional using the actual source; source format is not canonical record state in schema v2.',
     },
