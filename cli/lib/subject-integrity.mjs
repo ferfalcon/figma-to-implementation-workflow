@@ -110,9 +110,10 @@ export function enrichIntegrityCandidate(recordPath, currentRecord, candidate, f
         delete check.subject;
         continue;
       }
-      if (!sameCheck(before, check) || !check.subject) {
+      if (!sameCheck(before, check)) {
         const subject = validationSubject(recordPath, candidate, task);
         if (subject) check.subject = subject;
+        if (!check.executedAt) check.executedAt = new Date().toISOString();
       }
     }
   }
@@ -163,13 +164,10 @@ function gateFindings(record) {
     const revisions = new Map((gate.artifactRevisions ?? []).map((entry) => [entry.artifact, entry.revision]));
     for (const artifactId of gate.artifacts ?? []) {
       const artifact = artifacts.get(artifactId);
+      if (artifact?.status !== 'Approved') continue;
       const recorded = revisions.get(artifactId);
-      if (!artifact?.approvedRevision) {
-        findings.push(`$.gates: active passing gate ${gate.id} references ${artifactId} without an approved artifact revision`);
-        continue;
-      }
-      if (!recorded || recorded.algorithm !== artifact.approvedRevision.algorithm || recorded.digest !== artifact.approvedRevision.digest) {
-        findings.push(`$.gates: active passing gate ${gate.id} does not pin the current approved revision of ${artifactId}`);
+      if (!recorded || recorded.algorithm !== artifact.approvedRevision?.algorithm || recorded.digest !== artifact.approvedRevision?.digest) {
+        findings.push(`$.gates: active passing gate ${gate.id} does not pin the approved revision of ${artifactId}`);
       }
     }
   }
@@ -183,6 +181,9 @@ function validationFindings(record) {
     const outputCommit = task.output ? snapshots.get(task.output)?.commit ?? null : null;
     for (const check of task.validation ?? []) {
       if (!EXECUTED_VALIDATION_STATUSES.has(check.status)) continue;
+      if (record.state.stage === 9) {
+        findings.push(`$.tasks: validation ${task.id}/${check.name} may be defined at Stage 9 but cannot be executed until Stage 10`);
+      }
       if (!check.subject?.commit || !/^[0-9a-f]{40}$/.test(check.subject.commit)) {
         findings.push(`$.tasks: executed validation ${task.id}/${check.name} is not bound to an exact implementation commit`);
         continue;
