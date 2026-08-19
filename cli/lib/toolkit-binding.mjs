@@ -1,4 +1,5 @@
 import { execFileSync } from 'node:child_process';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -9,6 +10,7 @@ const revisionPattern = /^[0-9a-f]{40}$/i;
 const repositoryPattern = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const moduleDirectory = dirname(fileURLToPath(import.meta.url));
 const toolkitRoot = resolve(moduleDirectory, '../..');
+const packagedProvenancePath = resolve(toolkitRoot, 'cli', 'toolkit-provenance.json');
 
 let stagedInitializationPin;
 
@@ -61,6 +63,21 @@ export function normalizeToolkitBinding(value) {
   };
 }
 
+function packagedToolkitPin() {
+  if (!existsSync(packagedProvenancePath)) return null;
+  let parsed;
+  try {
+    parsed = JSON.parse(readFileSync(packagedProvenancePath, 'utf8'));
+  } catch (error) {
+    throw new Error(`Packaged toolkit provenance at ${packagedProvenancePath} is invalid JSON: ${error.message}`);
+  }
+  try {
+    return normalizeToolkitBinding(parsed);
+  } catch (error) {
+    throw new Error(`Packaged toolkit provenance at ${packagedProvenancePath} is invalid: ${error.message}`);
+  }
+}
+
 export function runtimeToolkitPin(overrides = {}) {
   const explicitRevision = overrides.revision ?? overrides.commit ?? process.env.DESIGN_WORKFLOW_TOOLKIT_COMMIT ?? null;
   if (explicitRevision) {
@@ -71,7 +88,7 @@ export function runtimeToolkitPin(overrides = {}) {
       revision: explicitRevision,
     });
   }
-  if (!toolkitIsGitRoot()) return null;
+  if (!toolkitIsGitRoot()) return packagedToolkitPin();
   const detectedRevision = git(['rev-parse', 'HEAD']);
   if (!detectedRevision) return null;
   const detectedRepository = githubRepositoryFromRemote(git(['remote', 'get-url', 'origin']));
