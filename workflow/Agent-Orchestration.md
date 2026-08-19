@@ -32,9 +32,9 @@ Initialized CLI-managed context payloads that expose the minimal resource manife
 
 If no record exists, the agent packet embeds the intake prompt and instructs initialization. If the record is schema v1, migrate before mutation. If the packet reports `repair`, repair record/generated state before continuing. Migration and repair packets intentionally withhold ordinary stage resources.
 
-### GitHub-only read fallback
+### GitHub-only fallback and remote execution
 
-When an agent can read the implementation repository through GitHub but cannot execute `design-workflow`, use:
+When an agent can read the implementation repository through GitHub but cannot execute `design-workflow` locally, use:
 
 ```text
 .workflow/generated/AGENT-CONTEXT.json
@@ -57,9 +57,11 @@ The projection contains:
 
 The projection intentionally does **not** contain embedded toolkit file bodies, local workspace paths, local Git/worktree checks, subject-integrity results, runtime deployment checks, or `stage check` preflight results. `workflow.runtimeIntegrity: not-evaluated-in-portable-projection` is a deliberate limitation, not a successful validation result.
 
-A GitHub-only agent may use the projection to route reads and perform work already authorized by persisted state—for example, inspect the exact current resources or edit implementation code when `policy.codeEdits` is `allowed-with-current-task-scope`. It must not emulate CLI-owned state transitions by editing `.workflow/workflow-record.json` or generated files. Initialization, migration, repair, toolkit pin/migration, snapshot verification, artifact lifecycle, stage review/advance, task start/complete, structured validation recording, and final acceptance remain CLI mutations.
+A GitHub-only agent may use the projection to route reads and perform work already authorized by persisted state—for example, inspect the exact current resources or edit implementation code when `policy.codeEdits` is `allowed-with-current-task-scope`. It must never emulate CLI-owned state transitions by editing `.workflow/workflow-record.json` or generated files.
 
-If `AGENT-CONTEXT.json` is missing or stale, do not reconstruct it from generated Markdown, narrative artifacts, or manual record interpretation. Require `design-workflow sync` in an executable environment. If the projection's next action requires a CLI-owned mutation and no CLI is available, report that specific capability blocker rather than inventing workflow state.
+When the implementation repository has the GitHub remote executor installed on its default branch, [`GitHub-Remote-Execution.md`](GitHub-Remote-Execution.md) is the canonical transport contract for CLI execution without a local shell. The bridge runs the exact pinned `design-workflow` CLI in GitHub Actions, supports required stage preflight plus the normal CLI-owned workflow transitions, verifies the expected branch HEAD, validates generated state, and commits only after the CLI succeeds. Remote execution therefore satisfies the CLI-execution requirement without transferring state ownership to GitHub Issues or to the agent.
+
+If `AGENT-CONTEXT.json` is missing or stale, do not reconstruct it from generated Markdown, narrative artifacts, or manual record interpretation. Use local `design-workflow sync` when executable, or remote `sync` when the installed GitHub executor is available. If neither execution path exists, report that specific capability blocker rather than inventing workflow state.
 
 ### Toolkit dependency resolution
 
@@ -124,7 +126,7 @@ Do not recursively inspect the toolkit or read `README.md`, `QUICKSTART.md`, `cl
 
 Broader workflow reads are permitted only for initialization, migration/repair, an explicit reference from a required resource, toolkit development, or an explicit user request to inspect/modify the workflow toolkit.
 
-The goal is deterministic startup: permanent agent contract → CLI `agent-context --json` when executable, otherwise generated `AGENT-CONTEXT.json` → resolved current resources → work.
+The goal is deterministic startup: permanent agent contract → CLI `agent-context --json` when executable, otherwise generated `AGENT-CONTEXT.json` plus the installed remote executor when CLI execution is required → resolved current resources → work.
 
 ## Stage-local execution
 
@@ -156,13 +158,13 @@ design-workflow stage check --json
 
 Do not treat preflight success as evidence that the narrative or design reasoning is substantively correct. The agent must perform the required two review passes first.
 
-A GitHub-only projection cannot substitute for this preflight. If a stage decision is the next required action and `design-workflow stage check --json` cannot execute, that transition is blocked until an executable environment is available.
+A GitHub-only projection cannot substitute for this preflight. When local CLI execution is unavailable, use the installed remote executor to run `stage check --json` and inspect the reported CLI output. If neither local nor remote CLI execution is available, the transition remains blocked.
 
 ## Execution modes
 
 ### Gated
 
-Complete the current stage and preflight it. Stop for explicit human approval before recording a passing gate or advancing. Never invent `--approved-by` or treat agent confidence as human approval.
+Complete the current stage and preflight it. Stop for explicit human approval before recording a passing gate or advancing. Never invent `--approved-by` or treat agent confidence as human approval. A remote command issue does not itself constitute human approval.
 
 ### Continuous documentation
 
@@ -180,7 +182,7 @@ Implementation code may be edited only when the current CLI packet or GitHub pro
 policy.codeEdits = allowed-with-current-task-scope
 ```
 
-This requires Stage 10, a structurally valid schema-v2 record, an execution mode that permits implementation, and an already-started current task. The GitHub projection does not start the task; if the task is only Ready and the CLI cannot execute `task start`, implementation remains blocked. Outside Stage 10, source/repository inspection is allowed but implementation edits are not.
+This requires Stage 10, a structurally valid schema-v2 record, an execution mode that permits implementation, and an already-started current task. The GitHub projection does not start the task; when local CLI is unavailable, an installed remote executor may run `task start`. Outside Stage 10, source/repository inspection is allowed but implementation edits are not.
 
 ## Source and lineage safety
 
@@ -209,6 +211,6 @@ Do not duplicate record-owned mutable values in CLI-managed narrative sections.
 
 ## Completion loop
 
-After every meaningful workflow mutation, the CLI updates generated views transactionally, including `AGENT-CONTEXT.json`. Before claiming readiness or completion, run the relevant preflight plus `design-workflow validate` or `design-workflow sync --check` as required.
+After every meaningful workflow mutation, the CLI updates generated views transactionally, including `AGENT-CONTEXT.json`. Before claiming readiness or completion, run the relevant preflight plus `design-workflow validate` or `design-workflow sync --check` as required. Local execution is preferred; the installed GitHub remote executor may run the bounded read-side checks when no local CLI exists.
 
 Final acceptance remains Stage 11 work against exact source snapshots, approved narrative artifacts, implementation-output snapshot/commit, and validation runtime when applicable.
