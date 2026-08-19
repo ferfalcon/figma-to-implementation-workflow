@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
-import { mkdtempSync, rmSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { deriveNextAction } from '../cli/lib/workflow-actions.mjs';
@@ -117,6 +118,12 @@ const directory = mkdtempSync(join(tmpdir(), 'design-workflow-orchestration-'));
 const recordPath = join(directory, '.workflow', 'workflow-record.json');
 try {
   const timestamp = '2026-08-12T12:00:00.000Z';
+  const workpackContent = '# Workflow fixture\n';
+  writeFileSync(join(directory, 'WORKPACK.md'), workpackContent, 'utf8');
+  const workpackRevision = {
+    algorithm: 'sha256',
+    digest: createHash('sha256').update(workpackContent).digest('hex'),
+  };
   const record = {
     schemaVersion: 2,
     project: { name: 'Express architecture fixture', profile: 'Express', executionMode: 'Gated' },
@@ -139,6 +146,7 @@ try {
     }],
     artifacts: [{
       id: 'ART-WORKPACK', type: 'WORKPACK', path: 'WORKPACK.md', status: 'Approved', baseline: ['SRC-REPO-001'],
+      approvedRevision: workpackRevision,
     }],
     traceItems: [],
     gates: [],
@@ -148,8 +156,9 @@ try {
     record.gates.push({
       id: `GATE-${String(stage + 1).padStart(3, '0')}`,
       stage, status: 'Active', result: 'Passed', baseline: ['SRC-REPO-001'],
-      verifications: ['VER-001'], artifacts: ['ART-WORKPACK'], evidence: `Stage ${stage} fixture`,
-      recordedAt: timestamp, approvedBy: 'Fixture owner',
+      verifications: ['VER-001'], artifacts: ['ART-WORKPACK'],
+      artifactRevisions: [{ artifact: 'ART-WORKPACK', revision: workpackRevision }],
+      evidence: `Stage ${stage} fixture`, recordedAt: timestamp, approvedBy: 'Fixture owner',
     });
   }
   syncGeneratedState(recordPath, record);
