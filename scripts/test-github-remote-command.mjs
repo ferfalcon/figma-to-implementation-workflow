@@ -83,7 +83,14 @@ function makeExecutionFixture() {
     + `if (args[0] === 'validate' || (args[0] === 'sync' && args[1] === '--check')) process.exit(0);\n`
     + `process.exit(2);\n`);
 
-  return { temp, bare, work, fakeCli, expectedHead };
+  const failingReadOnlyCli = join(temp, 'failing-readonly-cli.mjs');
+  writeFileSync(failingReadOnlyCli, `const args = process.argv.slice(2);\n`
+    + `if (args[0] === 'validate' || (args[0] === 'sync' && args[1] === '--check')) process.exit(1);\n`
+    + `process.exit(2);\n`);
+
+  return {
+    temp, bare, work, fakeCli, failingReadOnlyCli, expectedHead,
+  };
 }
 
 const parsed = parseCommandIssue(event());
@@ -182,6 +189,47 @@ try {
   assert.equal(readResult.commandExitCode, 1);
   assert.equal(readResult.changed, false);
   assert.match(readResult.output, /Needs evidence/);
+  assert.equal(git(fixture.work, 'status', '--porcelain'), '');
+
+  const validateResult = executeRequest({
+    request: { ...baseRequest, args: ['validate'], command: 'validate' },
+    project: fixture.work,
+    cliPath: fixture.fakeCli,
+    toolkitRepository,
+    toolkitRevision,
+  });
+  assert.equal(validateResult.status, 'succeeded');
+  assert.equal(validateResult.commandExitCode, 0);
+  assert.equal(validateResult.changed, false);
+
+  const syncCheckResult = executeRequest({
+    request: { ...baseRequest, args: ['sync', '--check'], command: 'sync --check' },
+    project: fixture.work,
+    cliPath: fixture.fakeCli,
+    toolkitRepository,
+    toolkitRevision,
+  });
+  assert.equal(syncCheckResult.status, 'succeeded');
+  assert.equal(syncCheckResult.commandExitCode, 0);
+  assert.equal(syncCheckResult.changed, false);
+  assert.equal(git(fixture.work, 'status', '--porcelain'), '');
+
+  assert.throws(() => executeRequest({
+    request: { ...baseRequest, args: ['validate'], command: 'validate' },
+    project: fixture.work,
+    cliPath: fixture.failingReadOnlyCli,
+    toolkitRepository,
+    toolkitRevision,
+  }), /design-workflow validate failed/);
+  assert.equal(git(fixture.work, 'status', '--porcelain'), '');
+
+  assert.throws(() => executeRequest({
+    request: { ...baseRequest, args: ['sync', '--check'], command: 'sync --check' },
+    project: fixture.work,
+    cliPath: fixture.failingReadOnlyCli,
+    toolkitRepository,
+    toolkitRevision,
+  }), /design-workflow sync --check failed/);
   assert.equal(git(fixture.work, 'status', '--porcelain'), '');
 
   const mutationResult = executeRequest({
