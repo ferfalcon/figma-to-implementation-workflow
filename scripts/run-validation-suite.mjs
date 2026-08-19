@@ -16,6 +16,7 @@ export const validationSteps = [
   { name: 'Figma preparation authority', script: 'scripts/test-figma-preparation-authority.mjs' },
   { name: 'agent bootstrap authority', script: 'scripts/test-agent-bootstrap-authority.mjs' },
   { name: 'entrypoint authority', script: 'scripts/test-entrypoint-authority.mjs' },
+  { name: 'CLI layering', script: 'scripts/test-cli-layering.mjs' },
   { name: 'workflow record', script: 'scripts/test-workflow-record.mjs' },
   { name: 'canonical invariants', script: 'scripts/test-canonical-invariants.mjs' },
   { name: 'stage gates', script: 'scripts/test-stage-gates.mjs' },
