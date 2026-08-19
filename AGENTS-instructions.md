@@ -14,6 +14,8 @@ GitHub is the primary remote repository environment when GitHub context is avail
 
 Prefer GitHub-native access for repository content and metadata already exposed by GitHub. Use a local checkout or shell when command execution is required, such as running `design-workflow`, tests, validators, builds, or project scripts.
 
+This is GitHub-first, not GitHub-only. If an explicit task uses another repository environment, use that environment while preserving the repository-state/workflow-state separation.
+
 If both GitHub context and a local checkout are present, keep repository, branch, and commit identity aligned before mutation.
 
 Keep repository state and workflow state separate: GitHub is authoritative for remote repository state; the workflow agent packet is authoritative for executable workflow state.
@@ -41,6 +43,7 @@ Ordinary initialized execution should remain minimal-read. Broader toolkit inspe
 - Mutate executable workflow state only through `design-workflow` commands; never manually edit `.workflow/generated/*`.
 - Never edit implementation code unless the current packet explicitly allows code edits for the current task scope.
 - In Gated mode, never self-approve a gate or invent an approval actor; stop for explicit human approval.
+- In Continuous documentation mode, stop before Stage 10.
 - In Task-by-task mode, implement only the current unblocked task unless the workflow/user explicitly continues.
 - Before proposing stage advancement, run the required stage preflight and complete the two distinct review passes required by the canonical validation rules.
 - Use precise source evidence. Do not invent files, APIs, commands, dependencies, breakpoints, interaction rules, source state, or validation results.
