@@ -78,6 +78,17 @@ function packagedToolkitPin() {
   }
 }
 
+export function observedRuntimeToolkitPin() {
+  if (!toolkitIsGitRoot()) return packagedToolkitPin();
+  const detectedRevision = git(['rev-parse', 'HEAD']);
+  if (!detectedRevision) return null;
+  const detectedRepository = githubRepositoryFromRemote(git(['remote', 'get-url', 'origin']));
+  return normalizeToolkitBinding({
+    repository: detectedRepository ?? DEFAULT_TOOLKIT_REPOSITORY,
+    revision: detectedRevision,
+  });
+}
+
 export function runtimeToolkitPin(overrides = {}) {
   const explicitRevision = overrides.revision ?? overrides.commit ?? process.env.DESIGN_WORKFLOW_TOOLKIT_COMMIT ?? null;
   if (explicitRevision) {
@@ -88,17 +99,7 @@ export function runtimeToolkitPin(overrides = {}) {
       revision: explicitRevision,
     });
   }
-  if (!toolkitIsGitRoot()) return packagedToolkitPin();
-  const detectedRevision = git(['rev-parse', 'HEAD']);
-  if (!detectedRevision) return null;
-  const detectedRepository = githubRepositoryFromRemote(git(['remote', 'get-url', 'origin']));
-  return normalizeToolkitBinding({
-    repository: overrides.repository
-      ?? process.env.DESIGN_WORKFLOW_TOOLKIT_REPOSITORY
-      ?? detectedRepository
-      ?? DEFAULT_TOOLKIT_REPOSITORY,
-    revision: detectedRevision,
-  });
+  return observedRuntimeToolkitPin();
 }
 
 export async function withInitializationToolkitPin(pin, callback) {
