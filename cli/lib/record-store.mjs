@@ -243,10 +243,10 @@ export function commitRecordCandidate({
       if (pin) candidate.toolkit = pin;
     }
 
-    const beforeFindings = current ? validateWorkflowRecord(current) : [];
-    if (requireClean && beforeFindings.length > 0 && !repair) {
-      throw new Error(`Current workflow record is invalid:\n${beforeFindings.map((item) => `- ${item}`).join('\n')}`);
-    }
+    const beforeFindings = current ? [
+      ...validateWorkflowRecord(current),
+      ...subjectIntegrityFindings(recordAbsolute, current),
+    ] : [];
 
     canonicalizeRepositoryReferences(recordAbsolute, candidate, current);
 
@@ -266,8 +266,13 @@ export function commitRecordCandidate({
         requireToolkit: !allowCreate,
       }),
     ];
+    const strictRepair = isStrictRepair(beforeFindings, candidateFindings);
+    if (requireClean && beforeFindings.length > 0 && !repair && !strictRepair) {
+      throw new Error(`Current workflow state is invalid:\n${beforeFindings.map((item) => `- ${item}`).join('\n')}`);
+    }
     if (candidateFindings.length > 0) {
-      if (!(repair && isStrictRepair(beforeFindings, candidateFindings))) {
+      const allowedRepair = strictRepair && (repair || requireClean);
+      if (!allowedRepair) {
         throw new Error(`Candidate workflow record is invalid:\n${candidateFindings.map((item) => `- ${item}`).join('\n')}`);
       }
     }
