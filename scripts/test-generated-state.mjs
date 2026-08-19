@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { createHash } from 'node:crypto';
 import {
   existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync,
 } from 'node:fs';
@@ -11,6 +12,12 @@ import {
   syncGeneratedState,
   workflowRecordDigest,
 } from '../cli/lib/generated-state.mjs';
+
+function gitBlobSha(record) {
+  const bytes = Buffer.from(`${JSON.stringify(record, null, 2)}\n`, 'utf8');
+  const header = Buffer.from(`blob ${bytes.length}\0`, 'utf8');
+  return createHash('sha1').update(header).update(bytes).digest('hex');
+}
 
 const project = mkdtempSync(join(tmpdir(), 'design-workflow-state-'));
 const recordPath = join(project, '.workflow', 'workflow-record.json');
@@ -61,11 +68,14 @@ try {
 
   const projectionPath = join(project, '.workflow', 'generated', 'AGENT-CONTEXT.json');
   const projection = JSON.parse(readFileSync(projectionPath, 'utf8'));
-  if (projection.generated.projectionVersion !== 1) {
-    throw new Error('Agent context projection must expose projection version 1');
+  if (projection.generated.projectionVersion !== 2) {
+    throw new Error('Agent context projection must expose projection version 2');
   }
   if (projection.generated.recordSha256 !== workflowRecordDigest(record)) {
     throw new Error('Agent context projection must identify the exact canonical record digest');
+  }
+  if (projection.generated.recordGitBlobSha !== gitBlobSha(record)) {
+    throw new Error('Agent context projection must expose the GitHub-verifiable workflow-record blob SHA');
   }
   if (projection.state.executionKind !== 'migration') {
     throw new Error('Schema-v1 agent projection must route to migration');
@@ -90,6 +100,9 @@ try {
   };
   if (workflowRecordDigest(record) !== workflowRecordDigest(reordered)) {
     throw new Error('Record digest changed when only object key order changed');
+  }
+  if (gitBlobSha(record) === gitBlobSha(reordered)) {
+    throw new Error('Git blob identity did not change when exact serialized record bytes changed');
   }
 
   const current = syncGeneratedState(recordPath, record, { check: true });
