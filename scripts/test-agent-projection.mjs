@@ -1,10 +1,17 @@
 #!/usr/bin/env node
 
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { buildAgentProjection } from '../cli/lib/agent-projection.mjs';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
+}
+
+function gitBlobSha(record) {
+  const bytes = Buffer.from(`${JSON.stringify(record, null, 2)}\n`, 'utf8');
+  const header = Buffer.from(`blob ${bytes.length}\0`, 'utf8');
+  return createHash('sha1').update(header).update(bytes).digest('hex');
 }
 
 const record = JSON.parse(readFileSync(
@@ -15,8 +22,13 @@ const digest = 'd'.repeat(64);
 const recordPath = '/tmp/portable-agent/.workflow/workflow-record.json';
 
 const projection = buildAgentProjection(recordPath, record, digest);
-assert(projection.generated.projectionVersion === 1, 'Portable projection must expose version 1.');
-assert(projection.generated.recordSha256 === digest, 'Portable projection must identify the exact record digest.');
+assert(projection.generated.projectionVersion === 2, 'Portable projection must expose version 2.');
+assert(projection.generated.recordSha256 === digest, 'Portable projection must identify the canonical record digest.');
+assert(
+  projection.generated.recordGitBlobSha === gitBlobSha(record),
+  'Portable projection must expose the Git blob SHA for the exact workflow-record serialization.',
+);
+assert(/^[0-9a-f]{40}$/.test(projection.generated.recordGitBlobSha), 'Record Git blob SHA must be a 40-character Git SHA.');
 assert(projection.workflow.recordValidAtGeneration, 'Schema-v2 fixture must be valid at projection time.');
 assert(projection.workflow.runtimeIntegrity === 'not-evaluated-in-portable-projection', 'Portable projection must not imply runtime integrity.');
 assert(projection.state.stage === 9 && projection.state.executionKind === 'task-decomposition', 'Stage 9 must route to task decomposition.');
@@ -29,6 +41,13 @@ assert(
   'Projection must reuse canonical Stage 9 prompt routing.',
 );
 assert(!JSON.stringify(projection.resources).includes('"content"'), 'Portable projection must not embed toolkit resource bodies.');
+
+const reordered = Object.fromEntries(Object.entries(record).reverse());
+const reorderedProjection = buildAgentProjection(recordPath, reordered, digest);
+assert(
+  reorderedProjection.generated.recordGitBlobSha !== projection.generated.recordGitBlobSha,
+  'Git blob identity must change when the exact serialized workflow-record bytes change.',
+);
 
 const pinned = structuredClone(record);
 pinned.toolkit = {
@@ -56,4 +75,4 @@ assert(!invalidProjection.workflow.recordValidAtGeneration, 'Invalid record must
 assert(invalidProjection.policy.workflowMutation === 'repair-required-via-cli', 'Invalid projection must route workflow mutation to CLI repair.');
 assert(invalidProjection.policy.codeEdits === 'forbidden', 'Invalid projection must forbid implementation edits.');
 
-console.log('Portable agent projection routing, pinning, mutation boundary, and integrity tests passed.');
+console.log('Portable agent projection routing, pinning, mutation boundary, freshness identity, and integrity tests passed.');
