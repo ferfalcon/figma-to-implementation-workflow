@@ -8,7 +8,7 @@ The workflow supports AI-assisted and human-led work with explicit source baseli
 
 Use the smallest entry point that matches what you are doing:
 
-- **Use the workflow in an implementation project:** start with [`QUICKSTART.md`](QUICKSTART.md), then use [`workflow/Design-Implementation-Workflow.md`](workflow/Design-Implementation-Workflow.md) as the normative process overview.
+- **Use the workflow in an implementation project:** start with [`QUICKSTART.md`](QUICKSTART.md) to choose a profile before initialization, then use [`workflow/Design-Implementation-Workflow.md`](workflow/Design-Implementation-Workflow.md) as the normative process overview.
 - **Run the workflow with an AI agent:** use [`AGENTS-instructions.md`](AGENTS-instructions.md) as the permanent consumer-agent bootstrap. It delegates executable behavior to the canonical orchestration contract and the current agent packet.
 - **Set up a ChatGPT Project around an implementation repository:** copy and adapt [`AI-project-settings.md`](AI-project-settings.md). It defines the ChatGPT host/tool posture and points the project back to the implementation repository and vendored workflow; it is not a workflow-state authority.
 - **Prepare a Figma file before the formal developer-handoff audit:** invoke [`AGENTS-PROMPT-Figma-file-preparation.md`](AGENTS-PROMPT-Figma-file-preparation.md), which delegates to the single canonical preparation procedure.
@@ -19,7 +19,13 @@ Do not read every reference document up front. The workflow and agent packet are
 
 ## Workflow overview
 
+### Choose a profile before initialization
+
+Profile selection is a complexity and risk decision, not a shortcut choice. Start with [`QUICKSTART.md`](QUICKSTART.md) for a compact routing decision and use [`workflow/Workflow-Profiles.md`](workflow/Workflow-Profiles.md) as the canonical owner of eligibility, artifact, and upgrade rules.
+
 ### Express path
+
+After Express eligibility is confirmed:
 
 ```text
 WORKPACK.md
