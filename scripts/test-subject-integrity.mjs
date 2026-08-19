@@ -95,6 +95,8 @@ try {
   appendFileSync(artifactPath, '\nchanged after approval\n', 'utf8');
   const stale = run(artifactProject, ['validate'], 1);
   assert(`${stale.stdout}\n${stale.stderr}`.includes('content no longer matches approvedRevision'), 'Validation must detect post-approval artifact edits.');
+  const staleStatus = run(artifactProject, ['status', '--json'], 1);
+  assert(staleStatus.stdout.includes('content no longer matches approvedRevision'), 'Status must report the same stale subject-integrity finding as validate.');
   run(artifactProject, ['artifact', 'reopen', 'workpack', '--evidence', 'Content changed']);
   current = record(artifactProject);
   assert(current.artifacts.find((item) => item.id === artifact.id)?.status === 'Draft', 'Reopen must repair a stale approval without silently re-approving it.');
