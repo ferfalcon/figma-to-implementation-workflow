@@ -2,7 +2,7 @@
 
 import { spawnSync } from 'node:child_process';
 import {
-  cpSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync,
+  cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
@@ -55,6 +55,8 @@ try {
         && relative !== 'cli/toolkit-provenance.json';
     },
   });
+  mkdirSync(packageDirectory, { recursive: true });
+  mkdirSync(consumer, { recursive: true });
 
   const pack = run('npm', ['pack', '--json', '--pack-destination', packageDirectory], packageSource, {
     env: {
