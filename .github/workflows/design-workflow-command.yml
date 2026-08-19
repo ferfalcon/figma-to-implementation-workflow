@@ -1,0 +1,90 @@
+name: Execute design-workflow remote command
+
+on:
+  workflow_call:
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: design-workflow-remote-${{ github.repository }}
+      cancel-in-progress: false
+    steps:
+      - name: Check out pinned workflow toolkit
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ job.workflow_repository }}
+          ref: ${{ job.workflow_sha }}
+          path: _design_workflow_toolkit
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate remote command request
+        id: prepare
+        continue-on-error: true
+        run: >-
+          node "$GITHUB_WORKSPACE/_design_workflow_toolkit/scripts/github-remote-command.mjs"
+          prepare
+          --event "$GITHUB_EVENT_PATH"
+          --request "$RUNNER_TEMP/design-workflow-request.json"
+          --result "$RUNNER_TEMP/design-workflow-result.json"
+          --github-output "$GITHUB_OUTPUT"
+
+      - name: Check out target project branch
+        id: checkout
+        if: steps.prepare.outcome == 'success'
+        continue-on-error: true
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.prepare.outputs.target-ref }}
+          path: _design_workflow_project
+          fetch-depth: 0
+
+      - name: Execute canonical design-workflow command
+        id: execute-command
+        if: steps.prepare.outcome == 'success' && steps.checkout.outcome == 'success'
+        continue-on-error: true
+        env:
+          TOOLKIT_REPOSITORY: ${{ job.workflow_repository }}
+          TOOLKIT_REVISION: ${{ job.workflow_sha }}
+        run: >-
+          node "$GITHUB_WORKSPACE/_design_workflow_toolkit/scripts/github-remote-command.mjs"
+          execute
+          --request "$RUNNER_TEMP/design-workflow-request.json"
+          --result "$RUNNER_TEMP/design-workflow-result.json"
+          --project "$GITHUB_WORKSPACE/_design_workflow_project"
+          --cli "$GITHUB_WORKSPACE/_design_workflow_toolkit/cli/design-workflow.mjs"
+          --toolkit-repository "$TOOLKIT_REPOSITORY"
+          --toolkit-revision "$TOOLKIT_REVISION"
+
+      - name: Report result on command issue
+        id: report
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: >-
+          node "$GITHUB_WORKSPACE/_design_workflow_toolkit/scripts/github-remote-command.mjs"
+          report
+          --event "$GITHUB_EVENT_PATH"
+          --result "$RUNNER_TEMP/design-workflow-result.json"
+          --prepare-outcome "${{ steps.prepare.outcome }}"
+          --checkout-outcome "${{ steps.checkout.outcome }}"
+          --execute-outcome "${{ steps.execute-command.outcome }}"
+
+      - name: Fail closed when execution did not succeed
+        if: >-
+          always() &&
+          (steps.prepare.outcome != 'success' ||
+           steps.checkout.outcome != 'success' ||
+           steps.execute-command.outcome != 'success' ||
+           steps.report.outcome != 'success')
+        run: exit 1
