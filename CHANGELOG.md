@@ -8,6 +8,10 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 
 ### Added
 
+- GitHub Issue command transport plus a pinned reusable Actions executor for connector-first preflight and canonical CLI-owned workflow mutations against exact expected heads and pinned toolkit revisions.
+- Remote-execution regression coverage for requester permissions, command allowlisting, stale heads, rollback, runtime resolution, read-only preflight, shell/path injection boundaries, filesystem containment, and non-force mutation.
+- Repository validation that rejects mutable external-action refs inside write-capable GitHub Actions workflows, protecting the privileged remote executor with immutable dependency pins.
+- Workflow-validation architecture regression coverage that keeps the public validator facade small, domain boundaries explicit, and validation-module dependencies acyclic.
 - Portable `.workflow/generated/AGENT-CONTEXT.json` routing projection for agents that can read implementation repositories through GitHub but cannot execute the workflow CLI.
 - Focused portable-agent projection regression coverage for record integrity, stage/task routing, exact pinned toolkit resources, read-only mutation boundaries, and invalid-record repair routing.
 - Entrypoint-authority regression coverage that keeps root human, agent, ChatGPT-host, contributor, and Figma launchers role-specific and prevents the README from becoming a second workflow handbook.
@@ -29,6 +33,11 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 
 ### Changed
 
+- GitHub remote read-only execution now accepts exit code `1` only for `stage check --json`; `validate` and `sync --check` require exit code `0` so failed checks cannot be reported as successful commands.
+- The write-capable remote executor now pins external GitHub Actions dependencies to full commit SHAs while retaining human-readable release versions in comments.
+- Workflow-record validation is decomposed into reusable primitives, domain validators, shared rules, and final cross-record invariants while preserving the public validation API and validation order.
+- CLI lifecycle implementation is split into domain command modules while `commands-v2.mjs` remains the compatibility export surface and high-level router.
+- Quickstart onboarding now requires selecting Express, Lite, Standard, or Full before initialization and treats Express as a worked example rather than the default general entry path.
 - Stage-transition policy now separates substantive decision authority from preflight availability and transition execution capability through `policy.stageTransition`; the CLI context, agent packet, and portable projection contracts advance to protocol v3, protocol v4, and projection v2 respectively.
 - Portable GitHub projections now expose a Git-verifiable workflow-record blob identity for freshness checks, advancing the projection contract to v3.
 - Portable implementation policy now separates persisted current-task authorization from runtime/source integrity and makes GitHub-only code edits conditional on authoritative source verification, advancing the projection contract to v4.
