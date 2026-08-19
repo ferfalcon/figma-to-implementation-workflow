@@ -60,9 +60,19 @@ jobs:
           path: _design_workflow_project
           fetch-depth: 0
 
+      - name: Verify command filesystem scope
+        id: verify-paths
+        if: steps.checkout.outcome == 'success'
+        continue-on-error: true
+        run: >-
+          node "$GITHUB_WORKSPACE/_design_workflow_bridge/scripts/verify-remote-command-paths.mjs"
+          --request "$RUNNER_TEMP/design-workflow-request.json"
+          --result "$RUNNER_TEMP/design-workflow-result.json"
+          --project "$GITHUB_WORKSPACE/_design_workflow_project"
+
       - name: Resolve pinned workflow runtime
         id: resolve-runtime
-        if: steps.checkout.outcome == 'success'
+        if: steps.verify-paths.outcome == 'success'
         continue-on-error: true
         env:
           BRIDGE_REPOSITORY: ${{ job.workflow_repository }}
@@ -123,6 +133,7 @@ jobs:
           (steps.prepare.outcome != 'success' ||
            steps.authorize.outcome != 'success' ||
            steps.checkout.outcome != 'success' ||
+           steps.verify-paths.outcome != 'success' ||
            steps.resolve-runtime.outcome != 'success' ||
            steps.runtime-checkout.outcome != 'success' ||
            steps.execute-command.outcome != 'success' ||
