@@ -6,10 +6,14 @@ import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const bootstrapPath = join(root, 'AGENTS-instructions.md');
+const repositoryContractPath = join(root, 'AGENTS.md');
 const orchestrationPath = join(root, 'workflow', 'Agent-Orchestration.md');
+const stateOwnershipPath = join(root, 'workflow', 'State-Ownership.md');
 
 const bootstrap = readFileSync(bootstrapPath, 'utf8');
+const repositoryContract = readFileSync(repositoryContractPath, 'utf8');
 const orchestration = readFileSync(orchestrationPath, 'utf8');
+const stateOwnership = readFileSync(stateOwnershipPath, 'utf8');
 const errors = [];
 
 if (!bootstrap.includes('[`workflow/Agent-Orchestration.md`](workflow/Agent-Orchestration.md)')) {
@@ -55,6 +59,7 @@ for (const [pattern, description] of forbiddenDetailPatterns) {
 }
 
 const requiredGuardrails = [
+  [/never manually edit `\.workflow\/workflow-record\.json`/i, 'canonical workflow record remains CLI-owned'],
   [/never manually edit `\.workflow\/generated\/\*`/i, 'generated views remain read-only'],
   [/never self-approve a gate/i, 'human gates cannot be self-approved'],
   [/continuous documentation mode[^\n]*stop before stage 10/i, 'Continuous documentation stops before Stage 10'],
@@ -65,6 +70,44 @@ for (const [pattern, description] of requiredGuardrails) {
   if (!pattern.test(bootstrap)) {
     errors.push(`Agent bootstrap is missing safety-critical guardrail: ${description}.`);
   }
+}
+
+const ownershipContracts = [
+  ['AGENTS-instructions.md', bootstrap],
+  ['AGENTS.md', repositoryContract],
+  ['workflow/State-Ownership.md', stateOwnership],
+];
+
+const manualRecordEditProhibitions = [
+  /never (manually edit|hand-edit)[^\n]*`\.workflow\/workflow-record\.json`/i,
+  /direct edits[^\n]*`\.workflow\/workflow-record\.json`[^\n]*unsupported/i,
+];
+
+for (const [path, content] of ownershipContracts) {
+  if (!manualRecordEditProhibitions.some((pattern) => pattern.test(content))) {
+    errors.push(`${path} must explicitly prohibit direct edits to .workflow/workflow-record.json.`);
+  }
+}
+
+const forbiddenManualMutationEndorsements = [
+  [/after direct record changes/i, 'post-hoc synchronization after direct record mutation'],
+  [/intentionally edited outside the CLI/i, 'intentional out-of-band canonical record mutation'],
+];
+
+for (const [path, content] of ownershipContracts) {
+  for (const [pattern, description] of forbiddenManualMutationEndorsements) {
+    if (pattern.test(content)) {
+      errors.push(`${path} must not endorse ${description}.`);
+    }
+  }
+}
+
+if (!/`design-workflow sync` is (a )?projection-recovery command, not a record-mutation path/i.test(repositoryContract)) {
+  errors.push('AGENTS.md must define design-workflow sync as projection recovery rather than record mutation.');
+}
+
+if (!/`design-workflow sync` is not a record-mutation path/i.test(stateOwnership)) {
+  errors.push('State-Ownership.md must define design-workflow sync as projection recovery rather than record mutation.');
 }
 
 if (errors.length > 0) {
