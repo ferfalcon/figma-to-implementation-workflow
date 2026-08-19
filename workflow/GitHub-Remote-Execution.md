@@ -18,7 +18,7 @@ Copy [`../templates/github/design-workflow-command.yml.template`](../templates/g
 .github/workflows/design-workflow-command.yml
 ```
 
-Replace `<TOOLKIT_REVISION>` with the exact 40-character commit SHA of the workflow toolkit revision the project will use. Do not replace it with `main`, another branch, or a floating tag.
+Replace `<REMOTE_EXECUTOR_REVISION>` with an exact 40-character commit SHA that contains the remote executor. Do not replace it with `main`, another branch, or a floating tag. This pins the transport itself. For an initialized project, the executor separately resolves and runs the workflow toolkit revision recorded in `.workflow/workflow-record.json`; for a new `init`, the executor revision is also the initial toolkit runtime/pin.
 
 The caller workflow must be present on the implementation repository's **default branch** before issue commands can run. GitHub's `issues` event resolves workflow definitions from the default branch, so installing the caller only on a feature branch is insufficient.
 
@@ -119,18 +119,19 @@ The bridge rejects arbitrary shell commands, unsupported/read-only CLI commands,
 For every accepted issue, the reusable workflow:
 
 1. verifies the issue was opened by an `OWNER`, `MEMBER`, or `COLLABORATOR`;
-2. checks out the workflow toolkit from `job.workflow_repository` at `job.workflow_sha`, so the executed helper and CLI are exactly the reusable workflow revision selected by the caller;
+2. checks out the remote bridge from `job.workflow_repository` at `job.workflow_sha`, so the parser/executor is exactly the reusable workflow revision selected by the caller;
 3. validates the command envelope before using `targetRef` in checkout;
 4. checks out the caller repository's requested branch with full Git history;
-5. requires the checked-out `HEAD` to equal `expectedHead` and the worktree to be clean;
-6. requires an initialized canonical toolkit binding to match the reusable workflow repository and revision before ordinary mutations;
-7. invokes the CLI with a process argument vector rather than shell interpolation;
-8. for mutations, runs `design-workflow validate` and `design-workflow sync --check` before committing;
-9. rolls back the local checkout when the command or post-mutation validation fails;
-10. creates one workflow-state/narrative commit only after the canonical CLI operation succeeds;
-11. rechecks the remote branch still equals `expectedHead` immediately before push;
-12. pushes normally to the target branch and never uses force or force-with-lease;
-13. posts the result on the command issue and closes it.
+5. resolves the runtime toolkit from the project record. Canonical or legacy pins may select an older exact revision, but the recorded toolkit repository must match the trusted bridge repository; uninitialized/unpinned projects bootstrap from the bridge revision;
+6. checks out that exact runtime toolkit revision separately and runs its canonical CLI, so installing a newer transport does not silently upgrade an existing workflow toolkit;
+7. requires the checked-out project `HEAD` to equal `expectedHead` and the worktree to be clean;
+8. invokes the CLI with a process argument vector rather than shell interpolation;
+9. for mutations, runs `design-workflow validate` and `design-workflow sync --check` before committing;
+10. rolls back the local checkout when the command or post-mutation validation fails;
+11. creates one workflow-state/narrative commit only after the canonical CLI operation succeeds;
+12. rechecks the remote branch still equals `expectedHead` immediately before push;
+13. pushes normally to the target branch and never uses force or force-with-lease;
+14. posts the result on the command issue and closes it.
 
 The reusable workflow serializes remote commands per caller repository. `expectedHead` plus the final non-force push still provide optimistic concurrency protection against branch changes that occur outside that queue.
 
@@ -166,7 +167,7 @@ Typical failures include:
 - stale `expectedHead`;
 - missing target branch;
 - dirty checkout;
-- toolkit binding mismatch;
+- untrusted/malformed toolkit binding or unavailable pinned toolkit revision;
 - canonical CLI rejection;
 - failed post-mutation validation or generated-state check;
 - protected-branch or repository-policy denial;
