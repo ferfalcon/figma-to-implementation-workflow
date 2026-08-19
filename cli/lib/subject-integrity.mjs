@@ -92,7 +92,7 @@ export function enrichIntegrityCandidate(recordPath, currentRecord, candidate, f
     }
   }
 
-  const previousGateIds = new Set((currentRecord?.gates ?? []).map((gate) => [gate.id, gate]));
+  const previousGateIds = new Set((currentRecord?.gates ?? []).map((gate) => gate.id));
   for (const gate of candidate.gates ?? []) {
     if (previousGateIds.has(gate.id)) continue;
     gate.artifactRevisions = gate.artifacts
