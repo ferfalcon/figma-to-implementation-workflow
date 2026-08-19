@@ -32,6 +32,35 @@ Initialized CLI-managed context payloads that expose the minimal resource manife
 
 If no record exists, the agent packet embeds the intake prompt and instructs initialization. If the record is schema v1, migrate before mutation. If the packet reports `repair`, repair record/generated state before continuing. Migration and repair packets intentionally withhold ordinary stage resources.
 
+### GitHub-only read fallback
+
+When an agent can read the implementation repository through GitHub but cannot execute `design-workflow`, use:
+
+```text
+.workflow/generated/AGENT-CONTEXT.json
+```
+
+as the portable read-only bootstrap for the current persisted workflow state.
+
+This projection is generated transactionally with the other `.workflow/generated/*` views. It is derived from the same stage-target, next-action, execution-kind, task-routing, and resource-selection logic used by the CLI orchestration context rather than maintaining a second stage-to-resource map.
+
+The projection contains:
+
+- the canonical workflow-record SHA-256 used to generate it;
+- project profile and execution mode;
+- toolkit repository/revision binding;
+- current stage, execution kind, architecture/profile-transition state, and next action;
+- current task, Ready-task summaries, and target artifacts;
+- active source records and latest persisted verification events;
+- read-side policy including whether implementation code edits are permitted for an already-started task;
+- required, on-demand, and conditional workflow resource descriptors with exact pinned toolkit locations when available.
+
+The projection intentionally does **not** contain embedded toolkit file bodies, local workspace paths, local Git/worktree checks, subject-integrity results, runtime deployment checks, or `stage check` preflight results. `workflow.runtimeIntegrity: not-evaluated-in-portable-projection` is a deliberate limitation, not a successful validation result.
+
+A GitHub-only agent may use the projection to route reads and perform work already authorized by persisted state—for example, inspect the exact current resources or edit implementation code when `policy.codeEdits` is `allowed-with-current-task-scope`. It must not emulate CLI-owned state transitions by editing `.workflow/workflow-record.json` or generated files. Initialization, migration, repair, toolkit pin/migration, snapshot verification, artifact lifecycle, stage review/advance, task start/complete, structured validation recording, and final acceptance remain CLI mutations.
+
+If `AGENT-CONTEXT.json` is missing or stale, do not reconstruct it from generated Markdown, narrative artifacts, or manual record interpretation. Require `design-workflow sync` in an executable environment. If the projection's next action requires a CLI-owned mutation and no CLI is available, report that specific capability blocker rather than inventing workflow state.
+
 ### Toolkit dependency resolution
 
 The workflow toolkit is an execution dependency, not part of the implementation project's source lineage. For projects that consume workflow resources from GitHub or another remote package source, pin the toolkit to an exact immutable revision rather than treating `main`, a branch, or a package version alone as operational identity.
@@ -89,15 +118,17 @@ For an initialized, healthy CLI-managed project, the packet is the workflow-read
 
 Use a resource's embedded `content` when `resolution` is `embedded`. When `resolution` is `pinned-source-required`, load the exact returned pinned `source`. Do not reconstruct GitHub paths or mutable refs.
 
+For the GitHub-only projection, use `resources.required` directly, consult `resources.onDemand` only when creating/restructuring a missing target artifact, and select only the matching entry from `resources.conditional`. The projection carries descriptors rather than embedded content; when `location` is present, load exactly that repository/revision/path.
+
 Do not recursively inspect the toolkit or read `README.md`, `QUICKSTART.md`, `cli/README.md`, broad `workflow/` documentation, unrelated prompts, unrelated guidelines, unrelated templates, or every source adapter to rediscover how the workflow works.
 
 Broader workflow reads are permitted only for initialization, migration/repair, an explicit reference from a required resource, toolkit development, or an explicit user request to inspect/modify the workflow toolkit.
 
-The goal is deterministic startup: permanent agent contract → `agent-context --json` → resolved current resources → work.
+The goal is deterministic startup: permanent agent contract → CLI `agent-context --json` when executable, otherwise generated `AGENT-CONTEXT.json` → resolved current resources → work.
 
 ## Stage-local execution
 
-Perform only the responsibility of the current stage described by `resources.stagePrompt`. Use `task.artifactTypes` and `task.artifacts` as the current targets.
+Perform only the responsibility of the current stage described by `resources.stagePrompt` in the CLI packet or by the current prompt descriptor in generated `resources.required`. Use `task.artifactTypes` and `task.artifacts` as the current targets.
 
 - Express keeps all narrative reasoning in `WORKPACK.md`.
 - Lite uses `IMPLEMENTATION-BRIEF.md` for consolidated Stages 2–8 and separate source/audit/task/final-review artifacts.
@@ -106,7 +137,7 @@ Perform only the responsibility of the current stage described by `resources.sta
 
 The prompt determines what reasoning belongs in the target artifact. The workflow record remains the owner of mutable status, registry, validation-result, and lineage fields.
 
-Use stage-specific guidelines only when returned in `resources.required`. Use templates only when returned in `resources.templates`. Select the relevant source adapter from `resources.conditional` based on the actual source; do not browse every adapter.
+Use stage-specific guidelines only when returned in the current resource manifest. Use templates only when the target artifact is missing or being intentionally restructured. Select the relevant source adapter from `resources.conditional` based on the actual source; do not browse every adapter.
 
 ## Stage preflight
 
@@ -125,6 +156,8 @@ design-workflow stage check --json
 
 Do not treat preflight success as evidence that the narrative or design reasoning is substantively correct. The agent must perform the required two review passes first.
 
+A GitHub-only projection cannot substitute for this preflight. If a stage decision is the next required action and `design-workflow stage check --json` cannot execute, that transition is blocked until an executable environment is available.
+
 ## Execution modes
 
 ### Gated
@@ -141,13 +174,13 @@ Use only after task decomposition. At Stage 10 select one unblocked Ready task w
 
 ## Code-edit boundary
 
-Implementation code may be edited only when the agent packet reports:
+Implementation code may be edited only when the current CLI packet or GitHub projection reports:
 
 ```text
 policy.codeEdits = allowed-with-current-task-scope
 ```
 
-This requires Stage 10, a structurally clean schema-v2 workflow, and an execution mode that permits implementation. Outside Stage 10, source/repository inspection is allowed but implementation edits are not.
+This requires Stage 10, a structurally valid schema-v2 record, an execution mode that permits implementation, and an already-started current task. The GitHub projection does not start the task; if the task is only Ready and the CLI cannot execute `task start`, implementation remains blocked. Outside Stage 10, source/repository inspection is allowed but implementation edits are not.
 
 ## Source and lineage safety
 
@@ -176,6 +209,6 @@ Do not duplicate record-owned mutable values in CLI-managed narrative sections.
 
 ## Completion loop
 
-After every meaningful workflow mutation, the CLI updates generated views transactionally. Before claiming readiness or completion, run the relevant preflight plus `design-workflow validate` or `design-workflow sync --check` as required.
+After every meaningful workflow mutation, the CLI updates generated views transactionally, including `AGENT-CONTEXT.json`. Before claiming readiness or completion, run the relevant preflight plus `design-workflow validate` or `design-workflow sync --check` as required.
 
 Final acceptance remains Stage 11 work against exact source snapshots, approved narrative artifacts, implementation-output snapshot/commit, and validation runtime when applicable.
