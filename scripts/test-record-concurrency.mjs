@@ -15,6 +15,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const cwd = mkdtempSync(join(tmpdir(), 'design-workflow-concurrency-'));
 const recordPath = join(cwd, '.workflow', 'workflow-record.json');
 const lockPath = `${recordPath}.lock`;
+const recoveryPath = `${lockPath}.reap`;
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -40,6 +41,14 @@ function assertByteIdentical(before, message) {
     assert(existsSync(path), `${message}: missing ${path}`);
     assert(Buffer.compare(bytes, readFileSync(path)) === 0, `${message}: changed ${path}`);
   }
+}
+
+function staleLockContent(pid) {
+  return `${JSON.stringify({
+    pid,
+    hostname: hostname(),
+    acquiredAt: '2026-08-18T00:00:00.000Z',
+  })}\n`;
 }
 
 try {
@@ -100,19 +109,33 @@ try {
 
   const exited = spawnSync(process.execPath, ['-e', 'process.exit(0)']);
   assert(Number.isInteger(exited.pid) && exited.pid > 0, 'Could not capture an exited fixture PID.');
+
+  const contendedRecovery = prepareRecordMutation(recordPath);
+  contendedRecovery.candidate.project.name = 'Writer must not steal recovery claim';
+  writeFileSync(lockPath, staleLockContent(exited.pid), { flag: 'wx' });
+  writeFileSync(recoveryPath, 'fixture recovery claim\n', { flag: 'wx' });
+  before = capture(transactionFiles);
+  expectThrow(() => commitRecordCandidate({
+    recordPath,
+    currentRecord: contendedRecovery.record,
+    candidate: contendedRecovery.candidate,
+  }), 'locked by another workflow mutation');
+  assertByteIdentical(before, 'Contended stale-lock recovery changed transactional files');
+  assert(existsSync(lockPath), 'Contended recovery incorrectly removed the existing lock.');
+  assert(readFileSync(recoveryPath, 'utf8') === 'fixture recovery claim\n', 'Contended recovery modified another recovery claim.');
+  rmSync(lockPath, { force: true });
+  rmSync(recoveryPath, { force: true });
+
   const staleWriter = prepareRecordMutation(recordPath);
   staleWriter.candidate.project.name = 'Writer recovered stale lock';
-  writeFileSync(lockPath, `${JSON.stringify({
-    pid: exited.pid,
-    hostname: hostname(),
-    acquiredAt: '2026-08-18T00:00:00.000Z',
-  })}\n`, { flag: 'wx' });
+  writeFileSync(lockPath, staleLockContent(exited.pid), { flag: 'wx' });
   commitRecordCandidate({
     recordPath,
     currentRecord: staleWriter.record,
     candidate: staleWriter.candidate,
   });
   assert(!existsSync(lockPath), 'Dead local process lock was not reaped after recovery.');
+  assert(!existsSync(recoveryPath), 'Successful stale-lock recovery leaked its recovery claim.');
 
   const invalidWriter = prepareRecordMutation(recordPath);
   invalidWriter.candidate.schemaVersion = 999;
@@ -126,7 +149,7 @@ try {
   const finalRecord = JSON.parse(readFileSync(recordPath, 'utf8'));
   assert(finalRecord.project.name === 'Writer recovered stale lock', 'Rejected mutations changed the committed workflow record.');
 
-  console.log('Workflow mutation concurrency and conservative stale-lock recovery tests passed.');
+  console.log('Workflow mutation concurrency and serialized stale-lock recovery tests passed.');
 } finally {
   rmSync(cwd, { recursive: true, force: true });
 }
