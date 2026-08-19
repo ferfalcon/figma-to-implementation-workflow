@@ -8,6 +8,8 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 
 ### Added
 
+- Portable `.workflow/generated/AGENT-CONTEXT.json` routing projection for agents that can read implementation repositories through GitHub but cannot execute the workflow CLI.
+- Focused portable-agent projection regression coverage for record integrity, stage/task routing, exact pinned toolkit resources, read-only mutation boundaries, and invalid-record repair routing.
 - Entrypoint-authority regression coverage that keeps root human, agent, ChatGPT-host, contributor, and Figma launchers role-specific and prevents the README from becoming a second workflow handbook.
 - Canonical workspace resolution for explicit `--record` paths, including project-root inference, outside-project invocation coverage, and local repository bindings that remain attached to the resolved workflow project.
 - Packed-install provenance regression coverage that installs the toolkit tarball inside an unrelated Git repository and verifies the executing toolkit never inherits consumer repository identity.
@@ -27,6 +29,7 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 
 ### Changed
 
+- CLI agent context and GitHub-only agent projection now share extracted stage-target, execution-kind, implementation-permission, and workflow-resource routing helpers instead of maintaining parallel routing maps.
 - README now routes people by role and task instead of duplicating profile, source, ownership, execution-mode, integrated-quality, and review contracts already owned by `workflow/` documents.
 - The optional `AI-project-settings.md` ChatGPT Project host template is now discoverable from README and included in the published package without making it a workflow-state authority.
 - The root Figma preparation launcher now delegates execution and reporting details directly to the canonical preparation procedure while preserving the preparation-only safety boundary.
