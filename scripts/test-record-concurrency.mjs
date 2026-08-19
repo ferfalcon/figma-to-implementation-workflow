@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 
+import { spawnSync } from 'node:child_process';
 import {
   existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync,
 } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { hostname, tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -97,6 +98,22 @@ try {
   assert(readFileSync(lockPath, 'utf8') === 'fixture lock\n', 'Failed lock acquisition modified the existing lock.');
   rmSync(lockPath, { force: true });
 
+  const exited = spawnSync(process.execPath, ['-e', 'process.exit(0)']);
+  assert(Number.isInteger(exited.pid) && exited.pid > 0, 'Could not capture an exited fixture PID.');
+  const staleWriter = prepareRecordMutation(recordPath);
+  staleWriter.candidate.project.name = 'Writer recovered stale lock';
+  writeFileSync(lockPath, `${JSON.stringify({
+    pid: exited.pid,
+    hostname: hostname(),
+    acquiredAt: '2026-08-18T00:00:00.000Z',
+  })}\n`, { flag: 'wx' });
+  commitRecordCandidate({
+    recordPath,
+    currentRecord: staleWriter.record,
+    candidate: staleWriter.candidate,
+  });
+  assert(!existsSync(lockPath), 'Dead local process lock was not reaped after recovery.');
+
   const invalidWriter = prepareRecordMutation(recordPath);
   invalidWriter.candidate.schemaVersion = 999;
   expectThrow(() => commitRecordCandidate({
@@ -107,9 +124,9 @@ try {
   assert(!existsSync(lockPath), 'Validation failure leaked the workflow mutation lock.');
 
   const finalRecord = JSON.parse(readFileSync(recordPath, 'utf8'));
-  assert(finalRecord.project.name === 'Writer B committed', 'Rejected mutations changed the committed workflow record.');
+  assert(finalRecord.project.name === 'Writer recovered stale lock', 'Rejected mutations changed the committed workflow record.');
 
-  console.log('Workflow mutation concurrency tests passed.');
+  console.log('Workflow mutation concurrency and conservative stale-lock recovery tests passed.');
 } finally {
   rmSync(cwd, { recursive: true, force: true });
 }
