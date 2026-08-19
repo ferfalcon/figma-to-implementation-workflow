@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { basename } from 'node:path';
 import { validateWorkflowRecord } from './canonical-validation.mjs';
 import { stageResources, stageTargets } from './orchestration-resources.mjs';
@@ -8,8 +9,14 @@ import { toolkitBindingFromRecord } from './toolkit-binding.mjs';
 import { deriveNextAction, readyTask } from './workflow-actions.mjs';
 import { STAGES } from './workflow-model.mjs';
 
-export const AGENT_PROJECTION_VERSION = 1;
+export const AGENT_PROJECTION_VERSION = 2;
 export const AGENT_PROJECTION_FILE = 'AGENT-CONTEXT.json';
+
+function workflowRecordGitBlobSha(record) {
+  const bytes = Buffer.from(`${JSON.stringify(record, null, 2)}\n`, 'utf8');
+  const header = Buffer.from(`blob ${bytes.length}\0`, 'utf8');
+  return createHash('sha1').update(header).update(bytes).digest('hex');
+}
 
 function targetArtifacts(record, targets) {
   return record.artifacts
@@ -50,6 +57,7 @@ export function buildAgentProjection(recordPath, record, recordDigest) {
       projectionVersion: AGENT_PROJECTION_VERSION,
       record: `../${basename(recordPath)}`,
       recordSha256: recordDigest,
+      recordGitBlobSha: workflowRecordGitBlobSha(record),
       purpose: 'Portable read-only routing context for agents that can read GitHub but cannot execute design-workflow.',
     },
     initialized: true,
