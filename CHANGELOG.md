@@ -144,5 +144,6 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 ### Added
 
 - Initial design-to-implementation workflow.
-- Requirements, design, specification, architecture, task, and implementation-review templates.
+- Requirements, design, specification, architecture, and planning guidelines.
+- Audit, review, architecture, task, and implementation-review templates.
 - Figma preparation and normalization guidance.
