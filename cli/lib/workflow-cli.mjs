@@ -1,23 +1,15 @@
 import { existsSync } from 'node:fs';
 import { runWorkflowCli } from './commands-v2.mjs';
-import { taskCompletionGitFindings, taskStartGitFindings } from './git-worktree-policy.mjs';
 import { mutateRecord, readStoredRecord } from './record-store.mjs';
 import { bindRepositoryWorkspace } from './repository-binding.mjs';
 import { buildOrchestrationContext } from './orchestration-context.mjs';
 import { checkStage } from './stage-check.mjs';
-import { startTaskAtCurrentHead } from './task-lineage.mjs';
 import {
   bindToolkit, migrateLegacyToolkitBinding, runtimeToolkitPin,
   toolkitBindingFromRecord, withInitializationToolkitPin,
 } from './toolkit-binding.mjs';
-import { deriveNextAction, stageAdvanceFindings } from './workflow-actions.mjs';
-import { STAGES } from './workflow-model.mjs';
-import { workflowDiagnostics } from './workflow-diagnostics.mjs';
 import {
-  rewindStageForReplanning, startProfileUpgradeForReplanning,
-} from './workflow-transitions.mjs';
-import {
-  fail, normalizeTaskCreateArgs, parseArgs, printFindings, relativeDisplay, write,
+  fail, normalizeTaskCreateArgs, parseArgs, relativeDisplay, write,
 } from './utils.mjs';
 import { normalizeRecordArgs, resolveWorkflowWorkspace } from './workspace.mjs';
 
@@ -44,10 +36,6 @@ function contextWhenMissing(cwd, recordPath) {
     },
     nextAction: 'Initialize the workflow before auditing, planning, or implementation.',
   };
-}
-
-function load(recordPath) {
-  return { recordPath, ...readStoredRecord(recordPath) };
 }
 
 function stringOption(options, name) {
@@ -216,120 +204,6 @@ export async function runCli(args, environment) {
     }
   }
 
-  if (command === 'status') {
-    try {
-      const { record } = load(recordPath);
-      const diagnostics = workflowDiagnostics(recordPath, record);
-      const value = {
-        record: relativeDisplay(projectRoot, recordPath),
-        project: record.project,
-        state: record.state,
-        schemaVersion: record.schemaVersion,
-        readOnly: record.schemaVersion === 1,
-        counts: {
-          snapshots: record.snapshots.length,
-          verifications: record.verifications?.length ?? 0,
-          artifacts: record.artifacts.length,
-          traceItems: record.traceItems?.length ?? 0,
-          gates: record.gates?.length ?? 0,
-          tasks: record.tasks.length,
-          completeTasks: record.tasks.filter((task) => task.status === 'Complete').length,
-        },
-        generatedViewsCurrent: diagnostics.generatedViewsCurrent,
-        subjectIntegrityCurrent: diagnostics.subjectIntegrityCurrent,
-        valid: diagnostics.valid,
-        findings: diagnostics.findings,
-      };
-      if (options.json) json(stdout, value);
-      else {
-        write(stdout, record.project.name);
-        write(stdout, `Schema: v${record.schemaVersion}${record.schemaVersion === 1 ? ' (read-only)' : ''}`);
-        write(stdout, `Profile: ${record.project.profile}`);
-        write(stdout, `Mode: ${record.project.executionMode}`);
-        write(stdout, `Stage: ${record.state.stage} — ${STAGES[record.state.stage]}`);
-        write(stdout, `Status: ${record.state.status}`);
-        write(stdout, `Next action: ${deriveNextAction(record)}`);
-        printFindings(stdout, diagnostics.findings);
-      }
-      return diagnostics.valid ? 0 : 1;
-    } catch (error) {
-      return fail(stderr, error instanceof Error ? error.message : String(error));
-    }
-  }
-
-  if (command === 'validate') {
-    try {
-      const { record } = load(recordPath);
-      const diagnostics = workflowDiagnostics(recordPath, record);
-      printFindings(stdout, diagnostics.findings);
-      return diagnostics.valid ? 0 : 1;
-    } catch (error) {
-      return fail(stderr, error instanceof Error ? error.message : String(error));
-    }
-  }
-
-  if (command === 'next') {
-    try {
-      const { record } = load(recordPath);
-      const diagnostics = workflowDiagnostics(recordPath, record);
-      if (diagnostics.findings.length > 0) {
-        return fail(stderr, `Resolve workflow findings before continuing:\n${diagnostics.findings.map((item) => `- ${item}`).join('\n')}`);
-      }
-      write(stdout, `Next action: ${deriveNextAction(record)}`);
-      return 0;
-    } catch (error) {
-      return fail(stderr, error instanceof Error ? error.message : String(error));
-    }
-  }
-
-  if (command === 'stage' && positionals[1] === 'rewind') {
-    return rewindStageForReplanning(projectRoot, stdout, stderr, positionals, { ...options, record: recordPath });
-  }
-
-  if (command === 'profile' && positionals[1] === 'upgrade' && positionals[2] === 'start') {
-    return startProfileUpgradeForReplanning(projectRoot, stdout, stderr, positionals, { ...options, record: recordPath });
-  }
-
-  if (command === 'stage' && positionals[1] === 'advance') {
-    try {
-      const { record } = load(recordPath);
-      const diagnostics = workflowDiagnostics(recordPath, record);
-      const findings = [...diagnostics.findings, ...stageAdvanceFindings(record)];
-      if (findings.length > 0) return fail(stderr, findings.join('\n'));
-    } catch (error) {
-      return fail(stderr, error instanceof Error ? error.message : String(error));
-    }
-  }
-
-  if (command === 'task' && positionals[1] === 'start' && positionals[2]) {
-    try {
-      const { record } = load(recordPath);
-      const task = record.tasks.find((item) => item.id === positionals[2]);
-      const findings = task ? taskStartGitFindings(recordPath, record, task) : [];
-      if (findings.length > 0) return fail(stderr, findings.join('\n'));
-      const start = startTaskAtCurrentHead(recordPath, positionals[2]);
-      write(stdout, `Started ${positionals[2]} from ${start.baseline} at HEAD ${start.commit}`);
-      return 0;
-    } catch (error) {
-      return fail(stderr, error instanceof Error ? error.message : String(error));
-    }
-  }
-
-  if (command === 'task' && positionals[1] === 'complete' && positionals[2]) {
-    try {
-      const { record } = load(recordPath);
-      const diagnostics = workflowDiagnostics(recordPath, record);
-      const task = record.tasks.find((item) => item.id === positionals[2]);
-      const findings = [
-        ...diagnostics.findings,
-        ...(task ? taskCompletionGitFindings(recordPath, record, task, options.commit) : []),
-      ];
-      if (findings.length > 0) return fail(stderr, findings.join('\n'));
-    } catch (error) {
-      return fail(stderr, error instanceof Error ? error.message : String(error));
-    }
-  }
-
   if (command === 'init') {
     let pin;
     try {
@@ -353,7 +227,7 @@ export async function runCli(args, environment) {
   let workflowArgs = workflowArgsBase;
   if (command === 'task' && positionals[1] === 'create' && options.phase !== undefined) {
     try {
-      const { record } = load(recordPath);
+      const { record } = readStoredRecord(recordPath);
       workflowArgs = normalizeTaskCreateArgs(workflowArgsBase, record.tasks, parseArgs(workflowArgsBase));
     } catch (error) {
       return fail(stderr, error instanceof Error ? error.message : String(error));
