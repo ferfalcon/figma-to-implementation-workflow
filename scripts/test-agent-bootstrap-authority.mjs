@@ -38,7 +38,7 @@ for (const heading of duplicatedHeadings) {
 const forbiddenDetailPatterns = [
   [/protocolVersion/i, 'protocol-version internals'],
   [/contextProtocolVersion/i, 'context protocol internals'],
-  [/protocol\s+v[23]/i, 'protocol-version prose'],
+  [/protocol\s+v\d+/i, 'protocol-version prose'],
   [/design-workflow\s+context\s+--json/i, 'lower-level diagnostic handshake'],
   [/design-workflow\s+toolkit\s+(show|pin|migrate)/i, 'toolkit-resolution procedure'],
   [/resolution:\s*(embedded|pinned-source-required|migrate-toolkit-binding)/i, 'resource-resolution implementation details'],
