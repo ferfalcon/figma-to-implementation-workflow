@@ -1,6 +1,6 @@
 import { generatedStateFindings } from './generated-state.mjs';
 import { subjectIntegrityFindings } from './subject-integrity.mjs';
-import { validateWorkflowRecord } from '../../scripts/lib/validate-workflow-record.mjs';
+import { validateWorkflowRecord } from './canonical-validation.mjs';
 
 export function workflowDiagnostics(recordPath, record) {
   const recordFindings = validateWorkflowRecord(record);
