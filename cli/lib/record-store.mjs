@@ -123,7 +123,7 @@ function staleLocalLock(lockPath) {
     return false;
   }
   if (!Number.isInteger(lock?.pid) || lock.pid <= 0) return false;
-  if (typeof lock.hostname === 'string' && lock.hostname && lock.hostname !== hostname()) return false;
+  if (lock.hostname !== hostname()) return false;
   return !processIsRunning(lock.pid);
 }
 
