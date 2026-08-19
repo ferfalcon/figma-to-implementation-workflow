@@ -13,4 +13,4 @@ jobs:
     permissions:
       contents: write
       issues: write
-    uses: ferfalcon/figma-to-implementation-workflow/.github/workflows/design-workflow-command.yml@<TOOLKIT_REVISION>
+    uses: ferfalcon/figma-to-implementation-workflow/.github/workflows/design-workflow-command.yml@<REMOTE_EXECUTOR_REVISION>
