@@ -41,6 +41,7 @@ export const validationSteps = [
   { name: 'GitHub remote command bridge', script: 'scripts/test-github-remote-command.mjs' },
   { name: 'GitHub remote authorization', script: 'scripts/test-github-remote-authorization.mjs' },
   { name: 'GitHub remote filesystem containment', script: 'scripts/test-github-remote-paths.mjs' },
+  { name: 'GitHub Actions pinning', script: 'scripts/test-github-actions-pinning.mjs' },
   { name: 'package manifest', script: 'scripts/test-package-manifest.mjs' },
 ];
 
