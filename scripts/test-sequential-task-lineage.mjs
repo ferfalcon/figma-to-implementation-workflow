@@ -8,6 +8,7 @@ import {
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { observedRuntimeToolkitPin } from '../cli/lib/toolkit-binding.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const cli = join(root, 'cli', 'design-workflow.mjs');
@@ -98,6 +99,8 @@ try {
   git(['add', 'seed.txt']);
   git(['commit', '-m', 'Create baseline']);
   const inputCommit = git(['rev-parse', 'HEAD']);
+  const toolkit = observedRuntimeToolkitPin();
+  assert(toolkit, 'Sequential-lineage fixture must resolve the executing toolkit identity.');
 
   mkdirSync(join(cwd, '.workflow'), { recursive: true });
   const record = {
@@ -108,8 +111,8 @@ try {
       executionMode: 'Gated',
     },
     toolkit: {
-      repository: 'ferfalcon/figma-to-implementation-workflow',
-      revision: 'a'.repeat(40),
+      repository: toolkit.repository,
+      revision: toolkit.revision,
     },
     state: {
       stage: 10,
