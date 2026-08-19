@@ -1,30 +1,46 @@
+const STAGE_PREFLIGHT_EXECUTOR = 'design-workflow stage check';
+const STAGE_TRANSITION_EXECUTOR = 'design-workflow stage review/advance';
+
 function stageTransitionBlocker(record, workflowValid) {
   if (record.schemaVersion === 1) return 'migration-required';
   if (!workflowValid) return 'repair-required';
   return null;
 }
 
-function decisionAuthority(record, workflowReady) {
-  if (!workflowReady) return 'not-applicable';
-  return record.project.executionMode === 'Gated' ? 'human-required' : 'agent-permitted';
+export function blockedStageTransitionPolicy(blocker) {
+  return {
+    decisionAuthority: 'not-applicable',
+    preflight: {
+      required: false,
+      executor: STAGE_PREFLIGHT_EXECUTOR,
+      availableHere: false,
+      blocker,
+    },
+    execution: {
+      executor: STAGE_TRANSITION_EXECUTOR,
+      availableHere: false,
+      blocker,
+    },
+  };
 }
 
 export function stageTransitionPolicy(record, { workflowValid, cliAvailable }) {
   const blocker = stageTransitionBlocker(record, workflowValid);
-  const workflowReady = blocker === null;
-  const capabilityBlocker = workflowReady && !cliAvailable ? 'cli-unavailable-in-current-environment' : blocker;
+  if (blocker) return blockedStageTransitionPolicy(blocker);
+
+  const capabilityBlocker = cliAvailable ? null : 'cli-unavailable-in-current-environment';
 
   return {
-    decisionAuthority: decisionAuthority(record, workflowReady),
+    decisionAuthority: record.project.executionMode === 'Gated' ? 'human-required' : 'agent-permitted',
     preflight: {
-      required: workflowReady,
-      executor: 'design-workflow stage check',
-      availableHere: workflowReady && cliAvailable,
+      required: true,
+      executor: STAGE_PREFLIGHT_EXECUTOR,
+      availableHere: cliAvailable,
       blocker: capabilityBlocker,
     },
     execution: {
-      executor: 'design-workflow stage review/advance',
-      availableHere: workflowReady && cliAvailable,
+      executor: STAGE_TRANSITION_EXECUTOR,
+      availableHere: cliAvailable,
       blocker: capabilityBlocker,
     },
   };
