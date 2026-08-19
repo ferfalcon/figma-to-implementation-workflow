@@ -10,7 +10,7 @@ import { toolkitBindingFromRecord } from './toolkit-binding.mjs';
 import { deriveNextAction, readyTask } from './workflow-actions.mjs';
 import { STAGES } from './workflow-model.mjs';
 
-export const AGENT_PROJECTION_VERSION = 3;
+export const AGENT_PROJECTION_VERSION = 4;
 export const AGENT_PROJECTION_FILE = 'AGENT-CONTEXT.json';
 
 function workflowRecordGitBlobSha(record) {
@@ -38,6 +38,15 @@ function workflowMutationPolicy(record, valid) {
   return 'cli-required';
 }
 
+function portableImplementationPolicy(authorized) {
+  return {
+    implementationAuthorization: authorized ? 'current-task-authorized' : 'forbidden',
+    implementationIntegrity: authorized ? 'runtime-verification-required-before-editing' : 'not-applicable',
+    implementation: authorized ? 'allowed-after-source-integrity-check' : 'forbidden',
+    codeEdits: authorized ? 'allowed-after-source-integrity-check' : 'forbidden',
+  };
+}
+
 export function buildAgentProjection(recordPath, record, recordDigest) {
   const recordFindings = validateWorkflowRecord(record);
   const valid = recordFindings.length === 0;
@@ -46,7 +55,7 @@ export function buildAgentProjection(recordPath, record, recordDigest) {
   const currentTask = currentTaskForRecord(record);
   const nextReadyTask = readyTask(record) ?? null;
   const resources = stageResources(record, toolkit);
-  const codeEditsAllowed = implementationAllowed(record, {
+  const codeEditsAuthorized = implementationAllowed(record, {
     workflowValid: valid,
     currentTask,
   });
@@ -94,8 +103,7 @@ export function buildAgentProjection(recordPath, record, recordDigest) {
     },
     policy: {
       workflowMutation: workflowMutationPolicy(record, valid),
-      implementation: codeEditsAllowed ? 'allowed-with-current-task-scope' : 'forbidden',
-      codeEdits: codeEditsAllowed ? 'allowed-with-current-task-scope' : 'forbidden',
+      ...portableImplementationPolicy(codeEditsAuthorized),
       stageTransition,
       generatedViews: 'read-only-projections',
       workflowReads: 'generated-agent-context-resource-manifest-only',
