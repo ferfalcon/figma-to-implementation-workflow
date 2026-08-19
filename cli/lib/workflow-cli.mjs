@@ -16,7 +16,7 @@ import {
   rewindStageForReplanning, startProfileUpgradeForReplanning,
 } from './workflow-transitions.mjs';
 import {
-  fail, normalizeTaskCreateArgs, parseArgs, relativeDisplay, resolveRecordPath, write,
+  fail, normalizeTaskCreateArgs, parseArgs, printFindings, relativeDisplay, resolveRecordPath, write,
 } from './utils.mjs';
 
 function json(stdout, value) { write(stdout, JSON.stringify(value, null, 2)); }
@@ -207,6 +207,17 @@ export async function runCli(args, environment) {
         for (const finding of value.decision.findings) write(stdout, `- ${finding}`);
       }
       return value.decision.recordable || value.advance.allowedNow ? 0 : 1;
+    } catch (error) {
+      return fail(stderr, error instanceof Error ? error.message : String(error));
+    }
+  }
+
+  if (command === 'validate') {
+    try {
+      const { recordPath: path, record } = load(cwd, options);
+      const diagnostics = workflowDiagnostics(path, record);
+      printFindings(stdout, diagnostics.findings);
+      return diagnostics.valid ? 0 : 1;
     } catch (error) {
       return fail(stderr, error instanceof Error ? error.message : String(error));
     }
