@@ -8,6 +8,7 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 
 ### Added
 
+- Entrypoint-authority regression coverage that keeps root human, agent, ChatGPT-host, contributor, and Figma launchers role-specific and prevents the README from becoming a second workflow handbook.
 - Canonical workspace resolution for explicit `--record` paths, including project-root inference, outside-project invocation coverage, and local repository bindings that remain attached to the resolved workflow project.
 - Packed-install provenance regression coverage that installs the toolkit tarball inside an unrelated Git repository and verifies the executing toolkit never inherits consumer repository identity.
 - Release-metadata validation that keeps `LICENSE`, `package.json`, `package-lock.json`, and README licensing consistent.
@@ -26,6 +27,9 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 
 ### Changed
 
+- README now routes people by role and task instead of duplicating profile, source, ownership, execution-mode, integrated-quality, and review contracts already owned by `workflow/` documents.
+- The optional `AI-project-settings.md` ChatGPT Project host template is now discoverable from README and included in the published package without making it a workflow-state authority.
+- The root Figma preparation launcher now delegates execution and reporting details directly to the canonical preparation procedure while preserving the preparation-only safety boundary.
 - Active profile-upgrade reconciliation now takes precedence over the generic Blocked-state message when deriving the canonical next action.
 - Core lifecycle commands now own canonical workflow diagnostics, task Git lineage, stage rewind, and profile-upgrade replanning directly; `workflow-cli.mjs` is limited to extension routing for toolkit, repository binding, orchestration context, stage preflight, initialization provenance, and task-ID convenience.
 - Explicit `--record` execution now resolves one canonical project workspace across artifact paths, subject integrity, repository lookup, task lineage, local bindings, and agent context instead of mixing record-relative and invocation-relative roots.
@@ -42,7 +46,7 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 - Schema-v1 migration derives `currentTask` from actual `In progress` task status and normalizes legacy unlineaged Task-start snapshots to Input baselines instead of fabricating missing parent/task lineage.
 - Task completion continues to reject dirty implementation-scope paths while permitting workflow-managed narrative/control state to remain dirty outside the implementation commit.
 - Recorded Implementation output commits reject workflow-managed files and parent the exact repository snapshot from which the task actually started.
-- Promoted `workflow/Agent-Orchestration.md` to the README `Start here` sequence and required repository-contract validation.
+- `workflow/Agent-Orchestration.md` remains discoverable through the README role-based entry points and reference map and is required by repository-contract validation.
 - Repository snapshots persist repository identity instead of machine-specific checkout paths. CLI-managed mutations and Git working-tree checks resolve local workspaces at runtime and canonicalize repository references before serialization.
 
 ## [0.3.0] — 2026-08-18
