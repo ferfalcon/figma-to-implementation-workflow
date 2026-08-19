@@ -72,10 +72,17 @@ try {
     '--toolkit-repository', 'ferfalcon/figma-to-implementation-workflow',
     '--toolkit-revision', toolkitRevision,
   ]);
+  let current = record(artifactProject);
+  for (const snapshotId of current.state.activeInputs) {
+    run(artifactProject, [
+      'snapshot', 'verify', snapshotId,
+      '--result', 'Unchanged', '--method', 'Integrity fixture', '--evidence', 'Fixture input verified',
+    ]);
+  }
   run(artifactProject, ['artifact', 'review', 'workpack', '--evidence', 'Reviewed']);
   run(artifactProject, ['artifact', 'approve', 'workpack', '--evidence', 'Approved', '--approved-by', 'test']);
 
-  let current = record(artifactProject);
+  current = record(artifactProject);
   const artifact = current.artifacts.find((item) => item.type === 'WORKPACK');
   const artifactPath = join(artifactProject, artifact.path);
   assert(artifact.approvedRevision?.algorithm === 'sha256', 'Artifact approval must record sha256 identity.');
