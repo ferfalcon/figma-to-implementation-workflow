@@ -151,25 +151,34 @@ design-workflow migrate
 
 ## Synchronization commands
 
-Normal mutations synchronize every projection automatically, including `AGENT-CONTEXT.json`. If a record was intentionally edited outside the CLI, treat it as untrusted until both commands pass:
+Normal mutations synchronize every projection automatically, including `AGENT-CONTEXT.json`.
+
+Direct edits to `.workflow/workflow-record.json` are unsupported in CLI-managed projects. `design-workflow sync` is not a record-mutation path and does not authorize, validate, or normalize manual canonical-state changes. It only reconciles generated projections with the current canonical record.
+
+Use synchronization as a recovery path when generated views are stale or missing after an interrupted write or another abnormal condition. Run the non-writing checks first:
+
+```bash
+design-workflow validate
+design-workflow sync --check
+```
+
+If the findings are limited to missing or stale projections, repair them and revalidate:
 
 ```bash
 design-workflow sync
 design-workflow validate
-```
-
-Check without writing:
-
-```bash
 design-workflow sync --check
 ```
 
-Commit the record and generated views together. A stale or missing view is a validation failure, never an alternative source of truth. A GitHub-only agent must not regenerate a stale projection by hand.
+If the canonical record itself has findings, use the supported CLI repair or migration path before synchronization; do not hand-edit the record. A stale or missing view is a validation failure, never an alternative source of truth. A GitHub-only agent must not regenerate a stale projection by hand.
+
+Commit the canonical record and generated views together whenever a supported CLI mutation changes them. Projection-only recovery may update generated views without changing the canonical record.
 
 ## Review checklist
 
 - [ ] The workflow uses exactly one control mode.
 - [ ] Every executable field has one canonical owner.
+- [ ] CLI-managed canonical state is mutated only through supported `design-workflow` commands.
 - [ ] The record is schema v2 before mutation.
 - [ ] Generated views, including `AGENT-CONTEXT.json`, match the current record digest.
 - [ ] No generated file contains manual decisions or rationale.
