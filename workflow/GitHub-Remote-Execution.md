@@ -6,9 +6,11 @@ This document defines the GitHub-native execution bridge for agents that can rea
 
 The canonical `design-workflow` CLI still owns executable workflow state and transition legality. GitHub Issues carry authenticated command requests, and GitHub Actions provides the temporary execution environment in which the pinned CLI runs against the requested project branch.
 
-The bridge must never edit `.workflow/workflow-record.json` or `.workflow/generated/*` directly. It must execute the same CLI commands used locally, then validate the resulting record and generated projections before any mutation is committed.
+The bridge must never edit `.workflow/workflow-record.json` or `.workflow/generated/*` directly. It executes the same CLI commands used locally, then validates the resulting record and generated projections before any mutation is committed.
 
 Use the local CLI when it is available. Use this bridge only when GitHub is the available execution environment.
+
+The portable `AGENT-CONTEXT.json` projection can report direct CLI capability as unavailable because it cannot discover optional repository-installed execution transports. An installed bridge does not rewrite that projection capability field; it provides an external transport for the same named canonical CLI executor. The agent must discover only the known caller workflow path described below and then continue to obey projection state, authority, and gate policy.
 
 ## One-time repository installation
 
@@ -20,14 +22,14 @@ Copy [`../templates/github/design-workflow-command.yml.template`](../templates/g
 
 Replace `<REMOTE_EXECUTOR_REVISION>` with an exact 40-character commit SHA that contains the remote executor. Do not replace it with `main`, another branch, or a floating tag. This pins the transport itself. For an initialized project, the executor separately resolves and runs the workflow toolkit revision recorded in `.workflow/workflow-record.json`; for a new `init`, the executor revision is also the initial toolkit runtime/pin.
 
-The caller workflow must be present on the implementation repository's **default branch** before issue commands can run. GitHub's `issues` event resolves workflow definitions from the default branch, so installing the caller only on a feature branch is insufficient.
+The caller workflow must be present on the implementation repository's **default branch** before issue commands can run. GitHub resolves the `issues` event from workflow files on the default branch, so installing the caller only on a feature branch is insufficient.
 
 The caller grants only the permissions required by the executor:
 
 - `contents: write` to commit canonical CLI output to the target branch;
 - `issues: write` to report the result and close the command issue.
 
-Repository/organization Actions policy must permit the pinned public reusable workflow. Protected target branches must also permit the workflow token to push, otherwise the command fails closed and no force push is attempted.
+Repository/organization Actions policy must permit the pinned public reusable workflow. Protected target branches must also permit the workflow token to push; otherwise the command fails closed and no force push is attempted.
 
 Install this caller before initializing the design workflow when possible. Adding the caller later is a real repository commit and may affect implementation lineage if it is introduced after planning baselines are already approved.
 
@@ -67,17 +69,18 @@ Each command issue is single-use. The executor posts a result and closes it. If 
 
 When local CLI execution is unavailable:
 
-1. Read `.workflow/generated/AGENT-CONTEXT.json` when it exists and is current enough to route the turn.
-2. Load only the pinned workflow resources it identifies.
-3. Perform the design/repository inspection and narrative work required by the current stage or task.
-4. If runtime preflight is required, submit a remote `stage check --json` request and use the reported CLI output before deciding the gate result.
-5. When a CLI-owned transition is permitted, read the current target branch HEAD from GitHub and submit a command issue using that SHA as `expectedHead`.
-6. Wait for the issue result before treating the transition as recorded. Re-read the branch and `.workflow/generated/AGENT-CONTEXT.json` after a successful mutating command.
-7. Continue only as allowed by the refreshed state and the workflow execution mode.
+1. Read `.workflow/generated/AGENT-CONTEXT.json` when it exists.
+2. Verify `generated.recordGitBlobSha` against GitHub's current `.workflow/workflow-record.json` blob `sha` at the same ref before trusting the projection.
+3. Load only the exact pinned workflow resources it identifies and perform the design/repository/narrative work required by the current stage or task.
+4. Verify `.github/workflows/design-workflow-command.yml` exists on the repository default branch before treating remote execution as available.
+5. If runtime preflight is required, submit a remote `stage check --json` request and use the reported CLI output before deciding the gate result.
+6. When a CLI-owned transition is permitted, read the current target branch HEAD from GitHub and submit a command issue using that SHA as `expectedHead`.
+7. Wait for the issue result before treating the transition as recorded. Re-read the branch and `.workflow/generated/AGENT-CONTEXT.json` after a successful mutating command.
+8. Continue only as allowed by the refreshed state and workflow execution mode.
 
-If `AGENT-CONTEXT.json` is missing or stale but the record exists, the remote `sync` command can regenerate it through the canonical CLI. If no workflow record exists, remote `init` is the bootstrap path.
+If `AGENT-CONTEXT.json` is missing or stale but the record exists, remote `sync` can regenerate it through the canonical CLI. If no workflow record exists, remote `init` is the bootstrap path.
 
-A remote command issue is an execution request, **not approval evidence**. In Gated mode it must not replace human approval. An agent may submit a command containing `--approved-by` only after the required explicit human approval already exists; the availability of GitHub write access or the ability to create an issue does not grant approval authority.
+A remote command issue is an execution request, **not approval evidence**. In Gated mode it must not replace human approval. An agent may submit a command containing `--approved-by` only after the required explicit human approval already exists; GitHub write access or the ability to create an issue does not grant approval authority.
 
 ## Supported remote commands
 
@@ -91,7 +94,7 @@ design-workflow validate
 design-workflow sync --check
 ```
 
-The bridge reports their bounded CLI output on the issue and never commits repository changes. A `stage check` exit code of `1` is still reported as an executed preflight so the agent can inspect the CLI findings; it is not converted into a passing decision.
+The bridge reports their bounded CLI output on the issue and never commits repository changes. A `stage check` exit code of `1` is still reported as an executed preflight so the agent can inspect the CLI findings; it is not converted into a passing stage decision.
 
 Supported mutations are the canonical workflow transitions and registries needed by the normal process:
 
@@ -118,11 +121,11 @@ The bridge rejects arbitrary shell commands, unsupported/read-only CLI commands,
 
 For every accepted issue, the reusable workflow:
 
-1. verifies the issue was opened by an `OWNER`, `MEMBER`, or `COLLABORATOR`;
-2. checks out the remote bridge from `job.workflow_repository` at `job.workflow_sha`, so the parser/executor is exactly the reusable workflow revision selected by the caller;
-3. validates the command envelope before using `targetRef` in checkout;
-4. checks out the caller repository's requested branch with full Git history;
-5. resolves the runtime toolkit from the project record. Canonical or legacy pins may select an older exact revision, but the recorded toolkit repository must match the trusted bridge repository; uninitialized/unpinned projects bootstrap from the bridge revision;
+1. validates the issue envelope and applies a coarse author-association screen before any target checkout;
+2. queries GitHub's calculated repository permission for the requester and requires effective `write` or `admin` access before the write-capable job proceeds;
+3. checks out the remote bridge from `job.workflow_repository` at `job.workflow_sha`, so the parser/executor is exactly the reusable-workflow revision selected by the caller;
+4. checks out the caller repository's requested branch with full Git history only after authorization;
+5. resolves the runtime toolkit from project state. Canonical or legacy pins may select an older exact revision, but the recorded toolkit repository must match the trusted bridge repository; uninitialized/unpinned projects bootstrap from the bridge revision;
 6. checks out that exact runtime toolkit revision separately and runs its canonical CLI, so installing a newer transport does not silently upgrade an existing workflow toolkit;
 7. requires the checked-out project `HEAD` to equal `expectedHead` and the worktree to be clean;
 8. invokes the CLI with a process argument vector rather than shell interpolation;
@@ -162,8 +165,8 @@ The bridge fails closed. A rejected or failed command does not push workflow sta
 
 Typical failures include:
 
-- unauthorized issue author;
 - malformed/unsupported command envelope;
+- requester without effective write/admin repository permission;
 - stale `expectedHead`;
 - missing target branch;
 - dirty checkout;
