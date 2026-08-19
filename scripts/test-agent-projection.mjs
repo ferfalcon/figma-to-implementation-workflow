@@ -3,6 +3,7 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { buildAgentProjection } from '../cli/lib/agent-projection.mjs';
+import { stageTransitionPolicy } from '../cli/lib/stage-transition-policy.mjs';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -22,7 +23,7 @@ const digest = 'd'.repeat(64);
 const recordPath = '/tmp/portable-agent/.workflow/workflow-record.json';
 
 const projection = buildAgentProjection(recordPath, record, digest);
-assert(projection.generated.projectionVersion === 2, 'Portable projection must expose version 2.');
+assert(projection.generated.projectionVersion === 3, 'Portable projection must expose version 3.');
 assert(projection.generated.recordSha256 === digest, 'Portable projection must identify the canonical record digest.');
 assert(
   projection.generated.recordGitBlobSha === gitBlobSha(record),
@@ -36,6 +37,23 @@ assert(projection.task.current === null, 'Ready Stage 9 task must not be reporte
 assert(projection.task.nextReady === 'P01-T01', 'Portable projection must expose the next Ready task.');
 assert(projection.policy.workflowMutation === 'cli-required', 'Healthy schema-v2 projection must keep workflow mutations CLI-owned.');
 assert(projection.policy.codeEdits === 'forbidden', 'Stage 9 projection must forbid implementation edits.');
+assert(!('stageDecision' in projection.policy), 'Portable projection must not expose the ambiguous legacy stageDecision field.');
+assert(!('stagePreflight' in projection.policy), 'Portable projection must not expose the ambiguous legacy stagePreflight field.');
+assert(
+  projection.policy.stageTransition.decisionAuthority === 'human-required',
+  'Gated portable projection must report human decision authority independently from execution capability.',
+);
+assert(
+  projection.policy.stageTransition.preflight.required
+    && !projection.policy.stageTransition.preflight.availableHere
+    && projection.policy.stageTransition.preflight.blocker === 'cli-unavailable-in-current-environment',
+  'Portable preflight must be required while explicitly unavailable without the CLI.',
+);
+assert(
+  !projection.policy.stageTransition.execution.availableHere
+    && projection.policy.stageTransition.execution.blocker === 'cli-unavailable-in-current-environment',
+  'Portable transition execution must report the CLI capability blocker independently from authority.',
+);
 assert(
   projection.resources.required.some((resource) => resource.path === 'prompts/09-task-decomposition.md'),
   'Projection must reuse canonical Stage 9 prompt routing.',
@@ -47,6 +65,18 @@ const reorderedProjection = buildAgentProjection(recordPath, reordered, digest);
 assert(
   reorderedProjection.generated.recordGitBlobSha !== projection.generated.recordGitBlobSha,
   'Git blob identity must change when the exact serialized workflow-record bytes change.',
+);
+
+const continuous = structuredClone(record);
+continuous.project.executionMode = 'Continuous documentation';
+const continuousProjection = buildAgentProjection(recordPath, continuous, digest);
+assert(
+  continuousProjection.policy.stageTransition.decisionAuthority === 'agent-permitted',
+  'Non-Gated portable projection must report agent decision authority without implying transition executability.',
+);
+assert(
+  !continuousProjection.policy.stageTransition.execution.availableHere,
+  'Agent decision authority must not imply that the portable environment can execute the transition.',
 );
 
 const pinned = structuredClone(record);
@@ -74,5 +104,22 @@ const invalidProjection = buildAgentProjection(recordPath, invalid, digest);
 assert(!invalidProjection.workflow.recordValidAtGeneration, 'Invalid record must be reported as invalid at generation.');
 assert(invalidProjection.policy.workflowMutation === 'repair-required-via-cli', 'Invalid projection must route workflow mutation to CLI repair.');
 assert(invalidProjection.policy.codeEdits === 'forbidden', 'Invalid projection must forbid implementation edits.');
+assert(
+  invalidProjection.policy.stageTransition.decisionAuthority === 'not-applicable'
+    && invalidProjection.policy.stageTransition.preflight.blocker === 'repair-required'
+    && invalidProjection.policy.stageTransition.execution.blocker === 'repair-required',
+  'Invalid records must block stage-transition authority, preflight, and execution behind repair.',
+);
 
-console.log('Portable agent projection routing, pinning, mutation boundary, freshness identity, and integrity tests passed.');
+const migrationPolicy = stageTransitionPolicy(
+  { schemaVersion: 1, project: { executionMode: 'Gated' } },
+  { workflowValid: false, cliAvailable: false },
+);
+assert(
+  migrationPolicy.decisionAuthority === 'not-applicable'
+    && migrationPolicy.preflight.blocker === 'migration-required'
+    && migrationPolicy.execution.blocker === 'migration-required',
+  'Schema-v1 records must block stage-transition authority and capability behind migration.',
+);
+
+console.log('Portable agent projection routing, pinning, transition-policy separation, mutation boundary, freshness identity, and integrity tests passed.');
