@@ -4,58 +4,23 @@ import { toolkitBindingFromRecord } from './toolkit-binding.mjs';
 import {
   resourceLocation, STAGE_PROMPTS, stageResources, stageTargets,
 } from './orchestration-resources.mjs';
+import {
+  currentTaskForRecord, executionKind, implementationAllowed, latestVerification, taskSummary,
+} from './orchestration-routing.mjs';
 import { deriveNextAction, readyTask } from './workflow-actions.mjs';
 import { workflowDiagnostics } from './workflow-diagnostics.mjs';
 import { STAGES } from './workflow-model.mjs';
 import { projectRootForRecord } from './workspace.mjs';
-
-function executionKind(record, diagnostics) {
-  if (record.schemaVersion === 1) return 'migration';
-  if (!diagnostics.valid) return 'repair';
-  if ((record.profileTransitions ?? []).some((item) => item.status === 'In progress')) return 'profile-upgrade';
-  if (record.state.status === 'Blocked') return 'blocker';
-  if (record.state.stage === 9) return 'task-decomposition';
-  if (record.state.stage === 10) return 'implementation-task';
-  if (record.state.stage === 11) return 'final-review';
-  return 'stage';
-}
-
-function latestVerification(record, snapshotId) {
-  return [...(record.verifications ?? [])].reverse().find((item) => item.snapshot === snapshotId) ?? null;
-}
-
-function taskSummary(task) {
-  return {
-    id: task.id,
-    status: task.status,
-    baseline: task.baseline,
-    prerequisites: task.prerequisites,
-    references: task.references,
-    output: task.output,
-    validation: (task.validation ?? []).map((check) => ({
-      name: check.name,
-      kind: check.kind,
-      required: check.required,
-      status: check.status,
-      subject: check.subject ?? null,
-      references: check.references,
-    })),
-  };
-}
 
 function projectRootDisplay(recordPath, cwd) {
   return relative(cwd, projectRootForRecord(recordPath)).split('\\').join('/') || '.';
 }
 
 export function canEditImplementation(record, diagnostics, currentTask) {
-  return (
-    diagnostics.valid
-    && record.schemaVersion === 2
-    && record.state.stage === 10
-    && record.project.executionMode !== 'Continuous documentation'
-    && currentTask?.status === 'In progress'
-    && record.state.currentTask === currentTask.id
-  );
+  return implementationAllowed(record, {
+    workflowValid: diagnostics.valid,
+    currentTask,
+  });
 }
 
 export { STAGE_PROMPTS, stageResources, stageTargets } from './orchestration-resources.mjs';
@@ -66,12 +31,10 @@ export function buildOrchestrationContext(recordPath, record, { cwd }) {
   const targets = stageTargets(record);
   const activeArtifacts = record.artifacts.filter((artifact) => artifact.status !== 'Superseded');
   const targetArtifacts = activeArtifacts.filter((artifact) => targets.includes(artifact.type));
-  const currentTask = record.state.currentTask
-    ? record.tasks.find((task) => task.id === record.state.currentTask) ?? null
-    : null;
+  const currentTask = currentTaskForRecord(record);
   const nextReadyTask = readyTask(record) ?? null;
   const check = checkStage(recordPath, record);
-  const implementationAllowed = canEditImplementation(record, diagnostics, currentTask);
+  const implementationIsAllowed = canEditImplementation(record, diagnostics, currentTask);
   const toolkit = toolkitBindingFromRecord(record);
   const prompt = STAGE_PROMPTS[stage] ?? null;
   const resources = stageResources(record, toolkit);
@@ -100,7 +63,7 @@ export function buildOrchestrationContext(recordPath, record, { cwd }) {
       architectureDecision: record.state.architectureDecision,
     },
     execution: {
-      kind: executionKind(record, diagnostics),
+      kind: executionKind(record, { workflowValid: diagnostics.valid }),
       prompt,
       promptSource: resourceLocation(toolkit, prompt),
       resources,
@@ -132,8 +95,8 @@ export function buildOrchestrationContext(recordPath, record, { cwd }) {
     stageCheck: check,
     policy: {
       workflowMutation: record.schemaVersion === 2 && diagnostics.valid ? 'allowed' : 'repair-or-migration-required',
-      implementation: implementationAllowed ? 'allowed-with-current-task-scope' : 'forbidden',
-      codeEdits: implementationAllowed ? 'allowed-with-current-task-scope' : 'forbidden',
+      implementation: implementationIsAllowed ? 'allowed-with-current-task-scope' : 'forbidden',
+      codeEdits: implementationIsAllowed ? 'allowed-with-current-task-scope' : 'forbidden',
       stageDecision: record.project.executionMode === 'Gated' ? 'human-approval-required' : 'agent-permitted-when-evidence-supports-it',
       generatedViews: 'read-only-projections',
       workflowReads: 'context-resource-manifest-only',
