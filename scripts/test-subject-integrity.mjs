@@ -155,7 +155,8 @@ try {
   assert(subjectIntegrityFindings(workflowRecordPath, stageNine).some((finding) => finding.includes('cannot be executed until Stage 10')), 'Stage 9 may define checks but must not record executed validation.');
 
   const consumer = project('packaged-toolkit');
-  initGitRepository(consumer);
+  const consumerCommit = initGitRepository(consumer);
+  const sourceToolkitCommit = git(root, ['rev-parse', 'HEAD']).toLowerCase();
   const pack = spawnSync('npm', ['pack', '--silent', '--pack-destination', consumer], { cwd: root, encoding: 'utf8' });
   assert(pack.status === 0, `npm pack failed: ${pack.stderr}`);
   const tarball = pack.stdout.trim().split(/\r?\n/).at(-1);
@@ -164,9 +165,11 @@ try {
   const packagedCli = join(consumer, 'node_modules', '@ferfalcon', 'design-workflow', 'cli', 'design-workflow.mjs');
   run(consumer, ['init', '--name', 'Packaged fixture', '--profile', 'Express'], 0, packagedCli);
   const packagedRecord = record(consumer);
-  assert(!packagedRecord.toolkit, 'Packaged toolkit must not inherit the consumer repository Git revision as toolkit provenance.');
-  const packagedContext = run(consumer, ['context', '--json'], 1, packagedCli);
-  assert(packagedContext.stdout.includes('toolkit dependency is not pinned'), 'Unpinned packaged toolkit must force repair context instead of claiming valid execution provenance.');
+  assert(packagedRecord.toolkit?.repository === 'ferfalcon/figma-to-implementation-workflow', 'Packaged toolkit must preserve its source repository identity.');
+  assert(packagedRecord.toolkit?.revision === sourceToolkitCommit, 'Packaged toolkit must preserve its exact build-time Git revision.');
+  assert(packagedRecord.toolkit.revision !== consumerCommit.toLowerCase(), 'Packaged toolkit must never inherit the consumer repository Git revision.');
+  const packagedContext = run(consumer, ['context', '--json'], 0, packagedCli);
+  assert(packagedContext.stdout.includes(sourceToolkitCommit), 'Packaged agent context must expose the embedded immutable toolkit revision.');
 
   console.log('Immutable subject identity and provenance regression tests passed.');
 } finally {
