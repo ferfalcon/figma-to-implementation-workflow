@@ -17,6 +17,7 @@ function stringArray(items, options = {}) {
 
 const nonEmptyString = { type: 'string', minLength: 1 };
 const timestamp = { type: 'string', format: 'date-time' };
+const toolkitRepository = { type: 'string', pattern: '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$' };
 
 export function buildWorkflowRecordSchemaV2() {
   return {
@@ -46,8 +47,8 @@ export function buildWorkflowRecordSchemaV2() {
         type: 'object', additionalProperties: false,
         required: ['repository', 'revision'],
         properties: {
-          repository: nonEmptyString,
-          revision: nonEmptyString,
+          repository: toolkitRepository,
+          revision: { type: 'string', pattern: ID_PATTERN_SOURCES.commit },
         },
       },
       state: {
@@ -122,6 +123,7 @@ export function buildWorkflowRecordSchemaV2() {
             statusChangedAt: timestamp,
             statusEvidence: nonEmptyString,
             statusBy: nonEmptyString,
+            approvedRevision: { $ref: '#/$defs/contentRevision' },
             supersededBy: { $ref: '#/$defs/artifactId' },
           },
         },
@@ -157,6 +159,17 @@ export function buildWorkflowRecordSchemaV2() {
             baseline: stringArray({ $ref: '#/$defs/snapshotId' }),
             verifications: stringArray({ $ref: '#/$defs/verificationId' }),
             artifacts: stringArray({ $ref: '#/$defs/artifactId' }),
+            artifactRevisions: {
+              type: 'array',
+              items: {
+                type: 'object', additionalProperties: false,
+                required: ['artifact', 'revision'],
+                properties: {
+                  artifact: { $ref: '#/$defs/artifactId' },
+                  revision: { $ref: '#/$defs/contentRevision' },
+                },
+              },
+            },
             evidence: nonEmptyString,
             recordedAt: timestamp,
             approvedBy: nonEmptyString,
@@ -205,6 +218,7 @@ export function buildWorkflowRecordSchemaV2() {
                   command: nonEmptyString,
                   environment: nonEmptyString,
                   executedAt: timestamp,
+                  subject: { $ref: '#/$defs/validationSubject' },
                   evidence: stringArray(nonEmptyString),
                   reason: nonEmptyString,
                   references: stringArray({ $ref: '#/$defs/domainId' }),
@@ -251,6 +265,7 @@ export function buildWorkflowRecordSchemaV2() {
             status: { enum: ['Active', 'Superseded'] },
             result: { enum: FINAL_RESULTS },
             artifact: { $ref: '#/$defs/artifactId' },
+            artifactRevision: { $ref: '#/$defs/contentRevision' },
             output: { $ref: '#/$defs/repositorySnapshotId' },
             runtime: { $ref: '#/$defs/runtimeSnapshotId' },
             evidence: nonEmptyString,
@@ -281,6 +296,22 @@ export function buildWorkflowRecordSchemaV2() {
       profileTransitionId: { type: 'string', pattern: ID_PATTERN_SOURCES.profileTransition },
       reviewId: { type: 'string', pattern: ID_PATTERN_SOURCES.review },
       domainId: { type: 'string', pattern: ID_PATTERN_SOURCES.domain },
+      contentRevision: {
+        type: 'object', additionalProperties: false,
+        required: ['algorithm', 'digest'],
+        properties: {
+          algorithm: { const: 'sha256' },
+          digest: { type: 'string', pattern: '^[0-9a-f]{64}$' },
+        },
+      },
+      validationSubject: {
+        type: 'object', additionalProperties: false,
+        required: ['commit'],
+        properties: {
+          commit: { type: 'string', pattern: ID_PATTERN_SOURCES.commit },
+          runtime: { $ref: '#/$defs/runtimeSnapshotId' },
+        },
+      },
     },
   };
 }
