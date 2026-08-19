@@ -14,6 +14,7 @@ import {
   validateCommandArgs,
   validateTargetRef,
 } from '../scripts/github-remote-command.mjs';
+import { resolveRuntimeToolkit } from '../scripts/resolve-remote-toolkit.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const reusable = readFileSync(join(root, '.github', 'workflows', 'design-workflow-command.yml'), 'utf8');
@@ -113,6 +114,8 @@ assert.deepEqual(
 assert.match(reusable, /^\s*workflow_call:\s*$/m);
 assert.match(reusable, /repository: \$\{\{ job\.workflow_repository \}\}/);
 assert.match(reusable, /ref: \$\{\{ job\.workflow_sha \}\}/);
+assert.match(reusable, /Resolve pinned workflow runtime/);
+assert.match(reusable, /steps\.resolve-runtime\.outputs\.toolkit-revision/);
 assert.match(reusable, /contents: write/);
 assert.match(reusable, /issues: write/);
 assert.match(reusable, /continue-on-error: true/);
@@ -122,7 +125,7 @@ assert.doesNotMatch(reusable, /force-with-lease|--force|force: true/);
 
 assert.match(caller, /^\s*issues:\s*$/m);
 assert.match(caller, /types:\s*\n\s*- opened/);
-assert.match(caller, /@<TOOLKIT_REVISION>/);
+assert.match(caller, /@<REMOTE_EXECUTOR_REVISION>/);
 assert.match(caller, /contents: write/);
 assert.match(caller, /issues: write/);
 assert.doesNotMatch(caller, /pull_request_target/);
@@ -132,6 +135,31 @@ assert.match(orchestration, /expectedHead/);
 assert.match(orchestration, /non-force/i);
 assert.match(orchestration, /must not replace human approval/i);
 assert.match(orchestration, /GITHUB_TOKEN/i);
+
+const resolverFixture = mkdtempSync(join(tmpdir(), 'design-workflow-resolver-'));
+try {
+  mkdirSync(join(resolverFixture, '.workflow'));
+  writeFileSync(join(resolverFixture, '.workflow', 'workflow-record.json'), JSON.stringify({
+    schemaVersion: 2,
+    toolkit: { repository: toolkitRepository, revision: 'a'.repeat(40) },
+  }));
+  assert.deepEqual(resolveRuntimeToolkit({
+    project: resolverFixture,
+    bridgeRepository: toolkitRepository,
+    bridgeRevision: toolkitRevision,
+  }), {
+    repository: toolkitRepository,
+    revision: 'a'.repeat(40),
+    source: 'canonical-record',
+  });
+  assert.throws(() => resolveRuntimeToolkit({
+    project: resolverFixture,
+    bridgeRepository: 'trusted/other-toolkit',
+    bridgeRevision: toolkitRevision,
+  }), /does not match trusted remote bridge repository/);
+} finally {
+  rmSync(resolverFixture, { recursive: true, force: true });
+}
 
 const fixture = makeExecutionFixture();
 try {
