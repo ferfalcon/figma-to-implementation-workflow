@@ -32,9 +32,10 @@ WORKPACK.md
 .workflow/generated/ARTIFACT-INDEX.md
 .workflow/generated/TASK-INDEX.md
 .workflow/generated/TRACEABILITY.md
+.workflow/generated/AGENT-CONTEXT.json
 ```
 
-`WORKPACK.md` contains evidence, rationale, expected behavior, planning, task detail, and review narrative. The record owns mutable status, snapshots, gates, task state, validation results, and trace definitions. Generated views must not be edited.
+`WORKPACK.md` contains evidence, rationale, expected behavior, planning, task detail, and review narrative. The record owns mutable status, snapshots, gates, task state, validation results, and trace definitions. Generated views must not be edited. `AGENT-CONTEXT.json` is the portable read-only routing projection used when an agent can inspect the project through GitHub but cannot execute `design-workflow`; it never replaces CLI-owned state transitions.
 
 ## 2. Verify inputs and approve the workpack
 

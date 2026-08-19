@@ -60,9 +60,9 @@ The exact artifact set and architecture requirements depend on the selected prof
 
 ## State and agent execution
 
-Projects can be CLI-managed or Markdown-only. In CLI-managed projects, `.workflow/workflow-record.json` owns mutable executable workflow state and `.workflow/generated/` contains read-only projections. See [`workflow/State-Ownership.md`](workflow/State-Ownership.md) for the canonical ownership model.
+Projects can be CLI-managed or Markdown-only. In CLI-managed projects, `.workflow/workflow-record.json` owns mutable executable workflow state and `.workflow/generated/` contains read-only projections. One of those projections, `.workflow/generated/AGENT-CONTEXT.json`, provides portable current-stage/task/policy/resource routing for agents that can read the repository through GitHub but cannot execute the CLI; it does not own state or authorize CLI mutations. See [`workflow/State-Ownership.md`](workflow/State-Ownership.md) for the canonical ownership model.
 
-AI-agent execution is defined by [`workflow/Agent-Orchestration.md`](workflow/Agent-Orchestration.md) and bootstrapped through [`AGENTS-instructions.md`](AGENTS-instructions.md). The orchestration contract keeps normal turns minimal-read and resolves the exact current resources instead of requiring the agent to reconstruct state from README files or broad toolkit inspection.
+AI-agent execution is defined by [`workflow/Agent-Orchestration.md`](workflow/Agent-Orchestration.md) and bootstrapped through [`AGENTS-instructions.md`](AGENTS-instructions.md). Use the executable agent packet when available; otherwise use the generated GitHub routing projection rather than reconstructing workflow state from record/generated Markdown or broad toolkit inspection. The consumer bootstrap owns the exact execution protocol.
 
 ## Repository map
 

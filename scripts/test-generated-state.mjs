@@ -59,6 +59,27 @@ try {
     }
   }
 
+  const projectionPath = join(project, '.workflow', 'generated', 'AGENT-CONTEXT.json');
+  const projection = JSON.parse(readFileSync(projectionPath, 'utf8'));
+  if (projection.generated.projectionVersion !== 1) {
+    throw new Error('Agent context projection must expose projection version 1');
+  }
+  if (projection.generated.recordSha256 !== workflowRecordDigest(record)) {
+    throw new Error('Agent context projection must identify the exact canonical record digest');
+  }
+  if (projection.state.executionKind !== 'migration') {
+    throw new Error('Schema-v1 agent projection must route to migration');
+  }
+  if (projection.policy.workflowMutation !== 'migration-required-via-cli') {
+    throw new Error('Portable projection must never authorize manual workflow mutation');
+  }
+  if (projection.resources.required[0]?.path !== 'prompts/00-intake.md') {
+    throw new Error('Agent context projection must reuse canonical stage resource routing');
+  }
+  if (JSON.stringify(projection.resources).includes('"content"')) {
+    throw new Error('Portable projection must not embed toolkit resource bodies');
+  }
+
   const reordered = {
     tasks: record.tasks,
     artifacts: record.artifacts,
@@ -111,7 +132,7 @@ try {
     throw new Error('Malformed record did not produce a controlled state finding');
   }
 
-  console.log('Generated workflow state tests passed.');
+  console.log('Generated workflow state and portable agent context tests passed.');
 } finally {
   rmSync(project, { recursive: true, force: true });
 }
