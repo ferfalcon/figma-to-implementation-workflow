@@ -60,6 +60,7 @@
     "test:replanning": "node scripts/test-replanning-transitions.mjs",
     "test:cli": "node scripts/test-cli.mjs",
     "test:lineage": "node scripts/test-sequential-task-lineage.mjs",
+    "test:github-remote": "node scripts/test-github-remote-command.mjs && node scripts/test-github-remote-authorization.mjs",
     "test:package": "node scripts/test-package-manifest.mjs"
   },
   "engines": {
