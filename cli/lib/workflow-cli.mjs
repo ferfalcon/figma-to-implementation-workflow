@@ -11,12 +11,13 @@ import {
   toolkitBindingFromRecord, withInitializationToolkitPin,
 } from './toolkit-binding.mjs';
 import { deriveNextAction, stageAdvanceFindings } from './workflow-actions.mjs';
+import { STAGES } from './workflow-model.mjs';
 import { workflowDiagnostics } from './workflow-diagnostics.mjs';
 import {
   rewindStageForReplanning, startProfileUpgradeForReplanning,
 } from './workflow-transitions.mjs';
 import {
-  fail, normalizeTaskCreateArgs, parseArgs, relativeDisplay, resolveRecordPath, write,
+  fail, normalizeTaskCreateArgs, parseArgs, printFindings, relativeDisplay, resolveRecordPath, write,
 } from './utils.mjs';
 
 function json(stdout, value) { write(stdout, JSON.stringify(value, null, 2)); }
@@ -207,6 +208,58 @@ export async function runCli(args, environment) {
         for (const finding of value.decision.findings) write(stdout, `- ${finding}`);
       }
       return value.decision.recordable || value.advance.allowedNow ? 0 : 1;
+    } catch (error) {
+      return fail(stderr, error instanceof Error ? error.message : String(error));
+    }
+  }
+
+  if (command === 'status') {
+    try {
+      const { recordPath: path, record } = load(cwd, options);
+      const diagnostics = workflowDiagnostics(path, record);
+      const value = {
+        record: relativeDisplay(cwd, path),
+        project: record.project,
+        state: record.state,
+        schemaVersion: record.schemaVersion,
+        readOnly: record.schemaVersion === 1,
+        counts: {
+          snapshots: record.snapshots.length,
+          verifications: record.verifications?.length ?? 0,
+          artifacts: record.artifacts.length,
+          traceItems: record.traceItems?.length ?? 0,
+          gates: record.gates?.length ?? 0,
+          tasks: record.tasks.length,
+          completeTasks: record.tasks.filter((task) => task.status === 'Complete').length,
+        },
+        generatedViewsCurrent: diagnostics.generatedViewsCurrent,
+        subjectIntegrityCurrent: diagnostics.subjectIntegrityCurrent,
+        valid: diagnostics.valid,
+        findings: diagnostics.findings,
+      };
+      if (options.json) json(stdout, value);
+      else {
+        write(stdout, record.project.name);
+        write(stdout, `Schema: v${record.schemaVersion}${record.schemaVersion === 1 ? ' (read-only)' : ''}`);
+        write(stdout, `Profile: ${record.project.profile}`);
+        write(stdout, `Mode: ${record.project.executionMode}`);
+        write(stdout, `Stage: ${record.state.stage} — ${STAGES[record.state.stage]}`);
+        write(stdout, `Status: ${record.state.status}`);
+        write(stdout, `Next action: ${deriveNextAction(record)}`);
+        printFindings(stdout, diagnostics.findings);
+      }
+      return diagnostics.valid ? 0 : 1;
+    } catch (error) {
+      return fail(stderr, error instanceof Error ? error.message : String(error));
+    }
+  }
+
+  if (command === 'validate') {
+    try {
+      const { recordPath: path, record } = load(cwd, options);
+      const diagnostics = workflowDiagnostics(path, record);
+      printFindings(stdout, diagnostics.findings);
+      return diagnostics.valid ? 0 : 1;
     } catch (error) {
       return fail(stderr, error instanceof Error ? error.message : String(error));
     }

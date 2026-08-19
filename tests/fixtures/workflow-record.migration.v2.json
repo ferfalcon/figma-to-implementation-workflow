@@ -30,7 +30,7 @@
       "id": "ART-WORKPACK",
       "type": "WORKPACK",
       "path": "WORKPACK.md",
-      "status": "Approved",
+      "status": "Reviewed",
       "baseline": ["SRC-REPO-001"]
     }
   ],

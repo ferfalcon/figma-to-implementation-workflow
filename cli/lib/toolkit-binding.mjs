@@ -1,4 +1,5 @@
 import { execFileSync } from 'node:child_process';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -9,6 +10,7 @@ const revisionPattern = /^[0-9a-f]{40}$/i;
 const repositoryPattern = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const moduleDirectory = dirname(fileURLToPath(import.meta.url));
 const toolkitRoot = resolve(moduleDirectory, '../..');
+const packagedProvenancePath = resolve(toolkitRoot, 'cli', 'toolkit-provenance.json');
 
 let stagedInitializationPin;
 
@@ -21,6 +23,11 @@ function git(args) {
   } catch {
     return null;
   }
+}
+
+function toolkitIsGitRoot() {
+  const detectedRoot = git(['rev-parse', '--show-toplevel']);
+  return detectedRoot ? resolve(detectedRoot) === toolkitRoot : false;
 }
 
 function githubRepositoryFromRemote(remote) {
@@ -56,18 +63,41 @@ export function normalizeToolkitBinding(value) {
   };
 }
 
-export function runtimeToolkitPin(overrides = {}) {
-  const explicitRevision = overrides.revision ?? overrides.commit ?? process.env.DESIGN_WORKFLOW_TOOLKIT_COMMIT ?? null;
-  const detectedRevision = explicitRevision ?? git(['rev-parse', 'HEAD']);
+function packagedToolkitPin() {
+  if (!existsSync(packagedProvenancePath)) return null;
+  let parsed;
+  try {
+    parsed = JSON.parse(readFileSync(packagedProvenancePath, 'utf8'));
+  } catch (error) {
+    throw new Error(`Packaged toolkit provenance at ${packagedProvenancePath} is invalid JSON: ${error.message}`);
+  }
+  try {
+    return normalizeToolkitBinding(parsed);
+  } catch (error) {
+    throw new Error(`Packaged toolkit provenance at ${packagedProvenancePath} is invalid: ${error.message}`);
+  }
+}
+
+export function observedRuntimeToolkitPin() {
+  if (!toolkitIsGitRoot()) return packagedToolkitPin();
+  const detectedRevision = git(['rev-parse', 'HEAD']);
   if (!detectedRevision) return null;
   const detectedRepository = githubRepositoryFromRemote(git(['remote', 'get-url', 'origin']));
   return normalizeToolkitBinding({
-    repository: overrides.repository
-      ?? process.env.DESIGN_WORKFLOW_TOOLKIT_REPOSITORY
-      ?? detectedRepository
-      ?? DEFAULT_TOOLKIT_REPOSITORY,
+    repository: detectedRepository ?? DEFAULT_TOOLKIT_REPOSITORY,
     revision: detectedRevision,
   });
+}
+
+export function runtimeToolkitPin(overrides = {}) {
+  const explicitRevision = overrides.revision ?? overrides.commit ?? null;
+  if (explicitRevision) {
+    return normalizeToolkitBinding({
+      repository: overrides.repository ?? DEFAULT_TOOLKIT_REPOSITORY,
+      revision: explicitRevision,
+    });
+  }
+  return observedRuntimeToolkitPin();
 }
 
 export async function withInitializationToolkitPin(pin, callback) {
@@ -171,6 +201,7 @@ function legacyPinReferences(record, snapshotId) {
   for (const task of record.tasks ?? []) {
     if (task.baseline === snapshotId) references.push(`${task.id}.baseline`);
     if (task.output === snapshotId) references.push(`${task.id}.output`);
+    for (const check of task.validation ?? []) if (check.subject?.runtime === snapshotId) references.push(`${task.id}/${check.name}.subject.runtime`);
   }
   for (const review of record.implementationReviews ?? []) {
     if (review.output === snapshotId) references.push(`${review.id}.output`);
@@ -193,8 +224,14 @@ function removeLegacyToolkitPins(record, pins) {
 export function bindToolkit(record, pin) {
   const normalized = normalizeToolkitBinding(pin);
   if (record.toolkit) {
-    const existing = normalizeToolkitBinding(record.toolkit);
-    if (sameBinding(existing, normalized)) return { changed: false, migrated: false, binding: existing };
+    let existing;
+    try {
+      existing = normalizeToolkitBinding(record.toolkit);
+    } catch {
+      record.toolkit = normalized;
+      return { changed: true, migrated: false, repaired: true, binding: normalized };
+    }
+    if (sameBinding(existing, normalized)) return { changed: false, migrated: false, repaired: false, binding: existing };
     throw new Error(
       `Toolkit is already pinned to ${existing.repository}#${existing.revision}. `
       + 'Refusing to replace it implicitly; toolkit upgrades must be explicit and preserve the previous dependency identity.',
@@ -212,7 +249,7 @@ export function bindToolkit(record, pin) {
 
   record.toolkit = normalized;
   if (legacy.length === 1) removeLegacyToolkitPins(record, legacy);
-  return { changed: true, migrated: legacy.length === 1, binding: normalized };
+  return { changed: true, migrated: legacy.length === 1, repaired: false, binding: normalized };
 }
 
 export function migrateLegacyToolkitBinding(record) {

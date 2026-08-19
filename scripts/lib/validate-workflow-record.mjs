@@ -178,7 +178,7 @@ function validateArtifact(errors, artifact, path, registry, artifactsById, versi
     ? ['id', 'type', 'path', 'status', 'baseline']
     : ['id', 'type', 'status', 'baseline'];
   const allowed = version === 2
-    ? [...required, 'statusChangedAt', 'statusEvidence', 'statusBy', 'supersededBy']
+    ? [...required, 'statusChangedAt', 'statusEvidence', 'statusBy', 'approvedRevision', 'supersededBy']
     : [...required, 'references'];
   if (!checkShape(errors, path, artifact, required, allowed)) return;
   if (expectPattern(errors, `${path}.id`, artifact.id, ID_PATTERNS.artifact)) {
@@ -220,7 +220,7 @@ function validateLegacyCheck(errors, check, path) {
 
 function validateStructuredCheck(errors, check, path) {
   const required = ['name', 'kind', 'required', 'status', 'expected', 'evidence', 'references'];
-  const allowed = [...required, 'actual', 'command', 'environment', 'executedAt', 'reason'];
+  const allowed = [...required, 'actual', 'command', 'environment', 'executedAt', 'subject', 'reason'];
   if (!checkShape(errors, path, check, required, allowed)) return;
   expectString(errors, `${path}.name`, check.name);
   expectEnum(errors, `${path}.kind`, check.kind, VALIDATION_KINDS);
@@ -657,7 +657,7 @@ function validateV2(record, errors) {
   (record.gates ?? []).forEach((item, index) => {
     const path = `$.gates[${index}]`;
     const required = ['id', 'stage', 'status', 'result', 'baseline', 'verifications', 'artifacts', 'evidence', 'recordedAt'];
-    if (!checkShape(errors, path, item, required, [...required, 'approvedBy'])) return;
+    if (!checkShape(errors, path, item, required, [...required, 'approvedBy', 'artifactRevisions'])) return;
     if (expectPattern(errors, `${path}.id`, item.id, ID_PATTERNS.gate)) {
       registerId(errors, registry, item.id, `${path}.id`);
       gatesById.set(item.id, item);
@@ -721,7 +721,7 @@ function validateV2(record, errors) {
   (record.implementationReviews ?? []).forEach((item, index) => {
     const path = `$.implementationReviews[${index}]`;
     const required = ['id', 'status', 'result', 'artifact', 'output', 'evidence', 'recordedAt', 'approvedBy', 'deviations'];
-    if (!checkShape(errors, path, item, required, [...required, 'runtime'])) return;
+    if (!checkShape(errors, path, item, required, [...required, 'runtime', 'artifactRevision'])) return;
     if (expectPattern(errors, `${path}.id`, item.id, ID_PATTERNS.review)) registerId(errors, registry, item.id, `${path}.id`);
     expectEnum(errors, `${path}.status`, item.status, ['Active', 'Superseded']);
     expectEnum(errors, `${path}.result`, item.result, FINAL_RESULTS);

@@ -5,7 +5,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'no
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { toolkitBindingFromRecord } from '../cli/lib/toolkit-binding.mjs';
+import { observedRuntimeToolkitPin, toolkitBindingFromRecord } from '../cli/lib/toolkit-binding.mjs';
 import { validateWorkflowRecord } from './lib/validate-workflow-record.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -50,11 +50,14 @@ function writeRecord(cwd, value) {
   writeFileSync(recordPath(cwd), `${JSON.stringify(value, null, 2)}\n`, 'utf8');
 }
 
-const revisionA = 'a'.repeat(40);
-const revisionB = 'b'.repeat(40);
-const repository = 'ferfalcon/figma-to-implementation-workflow';
+const runtimeToolkit = observedRuntimeToolkitPin();
+const revisionA = runtimeToolkit?.revision;
+const revisionB = revisionA === 'b'.repeat(40) ? 'c'.repeat(40) : 'b'.repeat(40);
+const repository = runtimeToolkit?.repository ?? 'ferfalcon/figma-to-implementation-workflow';
 
 try {
+  assert(revisionA, 'Toolkit source tests must resolve the executing toolkit revision.');
+
   const missing = project('missing');
   const missingContext = JSON.parse(run(missing, ['context', '--json']).stdout);
   assert(missingContext.initialized === false, 'Missing-project context must remain uninitialized.');

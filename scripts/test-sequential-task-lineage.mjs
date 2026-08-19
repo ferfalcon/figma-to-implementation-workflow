@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import {
   mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync,
@@ -7,6 +8,7 @@ import {
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { observedRuntimeToolkitPin } from '../cli/lib/toolkit-binding.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const cli = join(root, 'cli', 'design-workflow.mjs');
@@ -69,13 +71,22 @@ function task(id, prerequisites = []) {
   };
 }
 
+function artifactContent(type) {
+  return `# ${type}\n`;
+}
+
 function artifact(type) {
+  const content = artifactContent(type);
   return {
     id: `ART-${type}`,
     type,
     path: `${type}.md`,
     status: 'Approved',
     baseline: ['SRC-REPO-001'],
+    approvedRevision: {
+      algorithm: 'sha256',
+      digest: createHash('sha256').update(content).digest('hex'),
+    },
   };
 }
 
@@ -88,6 +99,8 @@ try {
   git(['add', 'seed.txt']);
   git(['commit', '-m', 'Create baseline']);
   const inputCommit = git(['rev-parse', 'HEAD']);
+  const toolkit = observedRuntimeToolkitPin();
+  assert(toolkit, 'Sequential-lineage fixture must resolve the executing toolkit identity.');
 
   mkdirSync(join(cwd, '.workflow'), { recursive: true });
   const record = {
@@ -96,6 +109,10 @@ try {
       name: 'Sequential lineage fixture',
       profile: 'Standard',
       executionMode: 'Gated',
+    },
+    toolkit: {
+      repository: toolkit.repository,
+      revision: toolkit.revision,
     },
     state: {
       stage: 10,
@@ -153,7 +170,7 @@ try {
     'utf8',
   );
   for (const item of record.artifacts) {
-    writeFileSync(join(cwd, item.path), `# ${item.type}\n`, 'utf8');
+    writeFileSync(join(cwd, item.path), artifactContent(item.type), 'utf8');
   }
   run(['sync']);
   run(['validate']);

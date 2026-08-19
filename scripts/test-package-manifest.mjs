@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 
 import { spawnSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, extname, join, normalize, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const result = spawnSync('npm', ['pack', '--dry-run', '--json'], {
+const provenancePath = join(root, 'cli', 'toolkit-provenance.json');
+const result = spawnSync('npm', ['pack', '--dry-run', '--json', '--silent'], {
   cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'],
 });
 if (result.status !== 0) {
@@ -17,13 +18,14 @@ const report = JSON.parse(result.stdout)[0];
 const files = new Set(report.files.map((item) => item.path.split('\\').join('/')));
 const requiredAreas = [
   'AGENTS-instructions.md', 'CONTRIBUTING.md', 'CHANGELOG.md',
-  'cli/', 'workflow/', 'guidelines/', 'prompts/', 'source-adapters/',
+  'cli/', 'cli/toolkit-provenance.json', 'workflow/', 'guidelines/', 'prompts/', 'source-adapters/',
   'templates/', 'examples/', 'schemas/', 'scripts/', 'tests/',
 ];
 const missingAreas = requiredAreas.filter((area) => (
   area.endsWith('/') ? ![...files].some((path) => path.startsWith(area)) : !files.has(area)
 ));
 if (missingAreas.length > 0) throw new Error(`Package is missing required areas: ${missingAreas.join(', ')}`);
+if (existsSync(provenancePath)) throw new Error('npm postpack must remove the transient source-tree toolkit provenance file.');
 
 const forbidden = [...files].filter((path) => path.startsWith('node_modules/') || path.endsWith('.tgz'));
 if (forbidden.length > 0) throw new Error(`Package contains forbidden files: ${forbidden.join(', ')}`);
@@ -56,4 +58,4 @@ for (const file of [...files].filter((path) => extname(path).toLowerCase() === '
 }
 if (broken.length > 0) throw new Error(`Packaged relative Markdown links do not resolve:\n${broken.map((item) => `- ${item}`).join('\n')}`);
 
-console.log(`Package manifest tests passed (${files.size} packaged files, all relative Markdown links resolved).`);
+console.log(`Package manifest tests passed (${files.size} packaged files, immutable toolkit provenance included, all relative Markdown links resolved).`);

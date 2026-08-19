@@ -92,7 +92,9 @@ export function migrateRecordV1(record) {
     id: artifact.id,
     type: artifact.type,
     path: artifactPath(artifact, index),
-    status: artifact.status,
+    // Schema v1 can prove that an approval was recorded, but not which bytes were approved.
+    // Preserve that evidence conservatively as Reviewed and require an explicit v2 re-approval.
+    status: artifact.status === 'Approved' ? 'Reviewed' : artifact.status,
     baseline: [...artifact.baseline],
     ...(artifact.statusChangedAt ? { statusChangedAt: artifact.statusChangedAt } : {}),
     ...(artifact.statusEvidence ? { statusEvidence: artifact.statusEvidence } : {}),
@@ -155,9 +157,13 @@ export function migrationSummary(before, after) {
     snapshot.role === 'Task start' && (!snapshot.parent || !snapshot.task)
   )).length;
   const currentTaskNormalized = (before.state.currentTask ?? null) !== after.state.currentTask;
+  const approvalsRequiringReapproval = before.artifacts.filter((artifact) => artifact.status === 'Approved').length;
   return [
     'Schema version: 1 → 2',
     `Artifacts assigned narrative paths: ${after.artifacts.length}`,
+    ...(approvalsRequiringReapproval > 0
+      ? [`Legacy approvals downgraded to Reviewed pending immutable v2 re-approval: ${approvalsRequiringReapproval}`]
+      : []),
     `Unclassified trace definitions inferred: ${after.traceItems.length}`,
     `Legacy validation entries converted: ${after.tasks.reduce((count, task) => count + task.validation.length, 0)}`,
     ...(normalizedTaskStarts > 0 ? [`Unlineaged legacy Task start snapshots normalized to Input baseline: ${normalizedTaskStarts}`] : []),

@@ -1,4 +1,4 @@
-import { validateWorkflowRecord } from '../../scripts/lib/validate-workflow-record.mjs';
+import { validateWorkflowRecord } from './canonical-validation.mjs';
 import { STAGES } from './workflow-model.mjs';
 import { activePassingGate, stageAdvanceFindings } from './workflow-actions.mjs';
 import { workflowDiagnostics } from './workflow-diagnostics.mjs';
@@ -65,6 +65,28 @@ export function checkStage(recordPath, record) {
         findings: ['Schema-v1 is read-only; migrate before recording a stage decision.'],
       },
       advance: { allowedNow: false, requiresHumanApproval: record.project?.executionMode === 'Gated', findings: ['Migration is required.'] },
+    };
+  }
+
+  if (!diagnostics.valid) {
+    return {
+      protocolVersion: 1,
+      stage: { number: stage, name: STAGES[stage] ?? 'Unknown stage', status: record.state.status },
+      workflow: diagnostics,
+      decision: {
+        current: currentGate,
+        recordable: false,
+        passing: false,
+        recommendedResult: null,
+        findings: diagnostics.findings,
+        attempts: { Passed: diagnostics.findings, 'Must upgrade': diagnostics.findings },
+      },
+      advance: {
+        allowedNow: false,
+        requiresHumanApproval: record.project.executionMode === 'Gated',
+        findings: diagnostics.findings,
+        finalStage: stage === 11,
+      },
     };
   }
 

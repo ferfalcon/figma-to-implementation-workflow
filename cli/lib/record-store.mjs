@@ -2,13 +2,14 @@ import { createHash } from 'node:crypto';
 import {
   existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync,
 } from 'node:fs';
-import { dirname, isAbsolute, resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import { renderGeneratedState } from './generated-state.mjs';
 import {
   isPortableRepositoryReference, portableRepositoryReference, resolveRepositoryWorkspace,
 } from './repository-binding.mjs';
+import { enrichIntegrityCandidate, subjectIntegrityFindings } from './subject-integrity.mjs';
 import { initializationToolkitPin } from './toolkit-binding.mjs';
-import { inspectWorkflowRecord, validateWorkflowRecord } from '../../scripts/lib/validate-workflow-record.mjs';
+import { inspectWorkflowRecord, validateWorkflowRecord } from './canonical-validation.mjs';
 
 const recordVersions = new WeakMap();
 
@@ -105,20 +106,6 @@ function canonicalizeRepositoryReferences(recordPath, candidate, currentRecord =
     }
   }
   return candidate;
-}
-
-function verifyArtifactFiles(recordPath, record, fileSet) {
-  if (record.schemaVersion !== 2) return [];
-  const projectRoot = projectRootForRecord(recordPath);
-  const findings = [];
-  for (const artifact of record.artifacts) {
-    if (artifact.status === 'Superseded') continue;
-    const path = isAbsolute(artifact.path) ? artifact.path : resolve(projectRoot, artifact.path);
-    if (!fileSet.has(path) && !existsSync(path)) {
-      findings.push(`$.artifacts: active artifact ${artifact.id} is missing its narrative file ${artifact.path}`);
-    }
-  }
-  return findings;
 }
 
 function acquireRecordLock(recordPath) {
@@ -250,16 +237,17 @@ export function commitRecordCandidate({
     }
 
     const current = stored?.record ?? null;
+    const migratingLegacy = current?.schemaVersion === 1 && candidate.schemaVersion === 2;
     if (current && current.schemaVersion === 1 && candidate.schemaVersion === 1) requireMutableRecord(current);
-    if (!current && allowCreate && candidate.schemaVersion === 2 && !candidate.toolkit) {
+    if ((!current && allowCreate || migratingLegacy) && candidate.schemaVersion === 2 && !candidate.toolkit) {
       const pin = initializationToolkitPin();
       if (pin) candidate.toolkit = pin;
     }
 
-    const beforeFindings = current ? validateWorkflowRecord(current) : [];
-    if (requireClean && beforeFindings.length > 0 && !repair) {
-      throw new Error(`Current workflow record is invalid:\n${beforeFindings.map((item) => `- ${item}`).join('\n')}`);
-    }
+    const beforeFindings = current ? [
+      ...validateWorkflowRecord(current),
+      ...subjectIntegrityFindings(recordAbsolute, current),
+    ] : [];
 
     canonicalizeRepositoryReferences(recordAbsolute, candidate, current);
 
@@ -270,12 +258,26 @@ export function commitRecordCandidate({
       }
     }
 
-    const candidateFindings = [
-      ...validateWorkflowRecord(candidate),
-      ...verifyArtifactFiles(recordAbsolute, candidate, narrativeChanges),
-    ];
+    // Migration must not manufacture historical artifact or validation provenance from current bytes or HEAD.
+    // The currently executing toolkit may be pinned because it is a present dependency, not historical evidence.
+    if (!migratingLegacy) {
+      enrichIntegrityCandidate(recordAbsolute, current, candidate, narrativeChanges);
+    }
+
+    const candidateRecordFindings = validateWorkflowRecord(candidate);
+    const candidateIntegrityFindings = subjectIntegrityFindings(recordAbsolute, candidate, {
+      fileChanges: narrativeChanges,
+      requireToolkit: !allowCreate,
+    });
+    const candidateFindings = [...candidateRecordFindings, ...candidateIntegrityFindings];
+    const strictRepair = isStrictRepair(beforeFindings, candidateFindings);
+    if (requireClean && beforeFindings.length > 0 && !repair && !strictRepair) {
+      throw new Error(`Current workflow state is invalid:\n${beforeFindings.map((item) => `- ${item}`).join('\n')}`);
+    }
     if (candidateFindings.length > 0) {
-      if (!(repair && isStrictRepair(beforeFindings, candidateFindings))) {
+      const allowedLegacyMigration = migratingLegacy && candidateRecordFindings.length === 0;
+      const allowedRepair = strictRepair && (repair || requireClean);
+      if (!allowedLegacyMigration && !allowedRepair) {
         throw new Error(`Candidate workflow record is invalid:\n${candidateFindings.map((item) => `- ${item}`).join('\n')}`);
       }
     }
