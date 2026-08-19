@@ -15,7 +15,10 @@ const requiredPaths = [
   'LICENSE',
   'CONTRIBUTING.md',
   'CHANGELOG.md',
+  'AGENTS.md',
   'AGENTS-instructions.md',
+  'AGENTS-PROMPT-Figma-file-preparation.md',
+  'AI-project-settings.md',
   'package.json',
   'workflow/Design-Implementation-Workflow.md',
   'workflow/Workflow-Profiles.md',
@@ -71,6 +74,7 @@ const requiredPaths = [
   'cli/lib/migrate-record.mjs',
   'cli/lib/commands-v2.mjs',
   'scripts/generate-workflow-schema.mjs',
+  'scripts/test-entrypoint-authority.mjs',
   'scripts/test-package-manifest.mjs',
   'scripts/test-artifact-renderer.mjs',
   'scripts/test-repository-portability.mjs',
@@ -231,11 +235,14 @@ if (existsSync(packagePath) && existsSync(changelogPath)) {
 const readmePath = join(root, 'README.md');
 if (existsSync(readmePath)) {
   const readme = readFileSync(readmePath, 'utf8');
-  const startHere = levelTwoSection(readme, 'Start here');
-  if (startHere === null) {
-    errors.push('README.md: missing Start here section');
-  } else if (!startHere.includes('](workflow/Agent-Orchestration.md)')) {
-    errors.push('README.md: Start here must link workflow/Agent-Orchestration.md');
+  const entryPoints = levelTwoSection(readme, 'Choose your entry point');
+  if (entryPoints === null) {
+    errors.push('README.md: missing Choose your entry point section');
+  } else if (!entryPoints.includes('](AGENTS-instructions.md)')) {
+    errors.push('README.md: Choose your entry point must link AGENTS-instructions.md');
+  }
+  if (!readme.includes('](workflow/Agent-Orchestration.md)')) {
+    errors.push('README.md: must keep workflow/Agent-Orchestration.md discoverable');
   }
 }
 
