@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, isAbsolute, resolve } from 'node:path';
 import { resolveRepositoryWorkspace } from './repository-binding.mjs';
-import { toolkitBindingFromRecord } from './toolkit-binding.mjs';
+import { runtimeToolkitPin, toolkitBindingFromRecord } from './toolkit-binding.mjs';
 
 const SHA256_PATTERN = /^[0-9a-f]{64}$/;
 const EXECUTED_VALIDATION_STATUSES = new Set(['Passed', 'Failed']);
@@ -92,7 +92,7 @@ export function enrichIntegrityCandidate(recordPath, currentRecord, candidate, f
     }
   }
 
-  const previousGateIds = new Set((currentRecord?.gates ?? []).map((gate) => gate.id));
+  const previousGateIds = new Set((currentRecord?.gates ?? []).map((gate) => [gate.id, gate]));
   for (const gate of candidate.gates ?? []) {
     if (previousGateIds.has(gate.id)) continue;
     gate.artifactRevisions = gate.artifacts
@@ -126,12 +126,32 @@ export function enrichIntegrityCandidate(recordPath, currentRecord, candidate, f
   }
 }
 
-function toolkitFindings(record) {
+function sameToolkitBinding(left, right) {
+  return left?.repository === right?.repository && left?.revision === right?.revision;
+}
+
+function toolkitFindings(record, { verifyRuntimeToolkit = true } = {}) {
   if (record.schemaVersion !== 2) return [];
   const toolkit = toolkitBindingFromRecord(record);
   if (toolkit.invalid) return ['$.toolkit: toolkit dependency must use owner/name plus an exact 40-character Git SHA'];
   if (toolkit.ambiguous) return ['$.toolkit: multiple legacy toolkit pins are active; migrate or reconcile them before execution'];
   if (!toolkit.pinned) return ['$.toolkit: toolkit dependency is not pinned to an immutable repository revision'];
+  if (!verifyRuntimeToolkit) return [];
+
+  let runtime;
+  try {
+    runtime = runtimeToolkitPin();
+  } catch (error) {
+    return [`$.toolkit: executing toolkit identity is invalid: ${error instanceof Error ? error.message : String(error)}`];
+  }
+  if (!runtime) {
+    return ['$.toolkit: executing toolkit identity cannot be resolved; use a source checkout rooted at its own Git worktree, an installed package with embedded provenance, or explicit toolkit provenance environment variables'];
+  }
+  if (!sameToolkitBinding(toolkit, runtime)) {
+    return [
+      `$.toolkit: recorded dependency ${toolkit.repository}#${toolkit.revision} does not match executing toolkit ${runtime.repository}#${runtime.revision}`,
+    ];
+  }
   return [];
 }
 
@@ -234,7 +254,7 @@ export function subjectIntegrityFindings(recordPath, record, options = {}) {
   if (record.schemaVersion !== 2) return [];
   const fileChanges = options.fileChanges ?? null;
   return [
-    ...(options.requireToolkit === false ? [] : toolkitFindings(record)),
+    ...(options.requireToolkit === false ? [] : toolkitFindings(record, options)),
     ...artifactFindings(recordPath, record, fileChanges),
     ...gateFindings(record),
     ...validationFindings(record),
