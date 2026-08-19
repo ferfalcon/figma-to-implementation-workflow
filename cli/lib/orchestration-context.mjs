@@ -7,6 +7,7 @@ import {
 import {
   currentTaskForRecord, executionKind, implementationAllowed, latestVerification, taskSummary,
 } from './orchestration-routing.mjs';
+import { stageTransitionPolicy } from './stage-transition-policy.mjs';
 import { deriveNextAction, readyTask } from './workflow-actions.mjs';
 import { workflowDiagnostics } from './workflow-diagnostics.mjs';
 import { STAGES } from './workflow-model.mjs';
@@ -38,9 +39,13 @@ export function buildOrchestrationContext(recordPath, record, { cwd }) {
   const toolkit = toolkitBindingFromRecord(record);
   const prompt = STAGE_PROMPTS[stage] ?? null;
   const resources = stageResources(record, toolkit);
+  const stageTransition = stageTransitionPolicy(record, {
+    workflowValid: diagnostics.valid,
+    cliAvailable: true,
+  });
 
   return {
-    protocolVersion: 2,
+    protocolVersion: 3,
     initialized: true,
     control: {
       mode: 'cli-managed',
@@ -97,7 +102,7 @@ export function buildOrchestrationContext(recordPath, record, { cwd }) {
       workflowMutation: record.schemaVersion === 2 && diagnostics.valid ? 'allowed' : 'repair-or-migration-required',
       implementation: implementationIsAllowed ? 'allowed-with-current-task-scope' : 'forbidden',
       codeEdits: implementationIsAllowed ? 'allowed-with-current-task-scope' : 'forbidden',
-      stageDecision: record.project.executionMode === 'Gated' ? 'human-approval-required' : 'agent-permitted-when-evidence-supports-it',
+      stageTransition,
       generatedViews: 'read-only-projections',
       workflowReads: 'context-resource-manifest-only',
     },
