@@ -66,14 +66,13 @@ Do not fix release drift by inventing a version bump. Decide the intended releas
 
 ## Validation
 
-Run:
+Run the full repository validation contract:
 
 ```bash
-node scripts/validate-workflow.mjs
-node scripts/test-workflow-record.mjs
+npm run validate
 ```
 
-Both commands must pass before a structural, profile, schema, semantic-rule, or link change is considered complete.
+The validation runner executes every repository check sequentially, continues after individual failures, reports per-check timing, and prints one aggregate failure summary. Focused `npm run test:*` scripts remain useful while iterating, but `npm run validate` must pass before a structural, profile, schema, semantic-rule, packaging, or link change is considered complete.
 
 Also perform two review passes:
 
