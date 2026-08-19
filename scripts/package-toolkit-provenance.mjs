@@ -46,6 +46,10 @@ function explicitIdentity() {
 function gitIdentity() {
   const root = git(['rev-parse', '--show-toplevel']);
   if (!root || resolve(root) !== toolkitRoot) return null;
+  const dirty = git(['status', '--porcelain', '--untracked-files=all']);
+  if (dirty) {
+    throw new Error('Refusing to stamp toolkit package provenance from a dirty worktree; commit or remove local changes before packaging.');
+  }
   const revision = git(['rev-parse', 'HEAD'])?.toLowerCase() ?? null;
   if (!revision) return null;
   return {
