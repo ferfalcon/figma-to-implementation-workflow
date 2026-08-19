@@ -1,4 +1,4 @@
-import { validateWorkflowRecord } from '../../scripts/lib/validate-workflow-record.mjs';
+import { validateWorkflowRecord } from './canonical-validation.mjs';
 import { STAGES } from './workflow-model.mjs';
 import { activePassingGate, stageAdvanceFindings } from './workflow-actions.mjs';
 import { workflowDiagnostics } from './workflow-diagnostics.mjs';
