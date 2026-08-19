@@ -68,8 +68,8 @@ try {
 
   const projectionPath = join(project, '.workflow', 'generated', 'AGENT-CONTEXT.json');
   const projection = JSON.parse(readFileSync(projectionPath, 'utf8'));
-  if (projection.generated.projectionVersion !== 2) {
-    throw new Error('Agent context projection must expose projection version 2');
+  if (projection.generated.projectionVersion !== 3) {
+    throw new Error('Agent context projection must expose projection version 3');
   }
   if (projection.generated.recordSha256 !== workflowRecordDigest(record)) {
     throw new Error('Agent context projection must identify the exact canonical record digest');
@@ -82,6 +82,13 @@ try {
   }
   if (projection.policy.workflowMutation !== 'migration-required-via-cli') {
     throw new Error('Portable projection must never authorize manual workflow mutation');
+  }
+  if (
+    projection.policy.stageTransition.decisionAuthority !== 'not-applicable'
+    || projection.policy.stageTransition.preflight.blocker !== 'migration-required'
+    || projection.policy.stageTransition.execution.blocker !== 'migration-required'
+  ) {
+    throw new Error('Schema-v1 projection must block stage-transition authority and capability behind migration');
   }
   if (projection.resources.required[0]?.path !== 'prompts/00-intake.md') {
     throw new Error('Agent context projection must reuse canonical stage resource routing');
