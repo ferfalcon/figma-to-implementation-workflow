@@ -68,8 +68,19 @@ function validate(identity) {
   return { repository: identity.repository, revision: identity.revision.toLowerCase() };
 }
 
+function sameIdentity(left, right) {
+  return left.repository === right.repository && left.revision === right.revision;
+}
+
 function writeProvenance() {
-  const identity = validate(explicitIdentity() ?? gitIdentity());
+  const observed = gitIdentity();
+  const explicit = explicitIdentity();
+  if (observed && explicit && !sameIdentity(validate(observed), validate(explicit))) {
+    throw new Error(
+      `Explicit toolkit package provenance ${explicit.repository}#${explicit.revision} does not match observed Git identity ${observed.repository}#${observed.revision}.`,
+    );
+  }
+  const identity = validate(observed ?? explicit);
   writeFileSync(provenancePath, `${JSON.stringify(identity, null, 2)}\n`, 'utf8');
 }
 
