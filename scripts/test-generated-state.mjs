@@ -68,8 +68,8 @@ try {
 
   const projectionPath = join(project, '.workflow', 'generated', 'AGENT-CONTEXT.json');
   const projection = JSON.parse(readFileSync(projectionPath, 'utf8'));
-  if (projection.generated.projectionVersion !== 3) {
-    throw new Error('Agent context projection must expose projection version 3');
+  if (projection.generated.projectionVersion !== 4) {
+    throw new Error('Agent context projection must expose projection version 4');
   }
   if (projection.generated.recordSha256 !== workflowRecordDigest(record)) {
     throw new Error('Agent context projection must identify the exact canonical record digest');
