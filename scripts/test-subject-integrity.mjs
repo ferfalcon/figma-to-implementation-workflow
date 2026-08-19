@@ -11,7 +11,7 @@ import { enrichIntegrityCandidate, subjectIntegrityFindings } from '../cli/lib/s
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const cli = join(root, 'cli', 'design-workflow.mjs');
 const projects = [];
-const toolkitRevision = 'a'.repeat(40);
+const toolkitRevision = git(root, ['rev-parse', 'HEAD']).toLowerCase();
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -92,6 +92,18 @@ try {
   const gateRevision = gate.artifactRevisions?.find((item) => item.artifact === artifact.id);
   assert(gateRevision?.revision?.digest === artifact.approvedRevision.digest, 'Passing gate must pin the approved artifact revision.');
 
+  const preservedGateCandidate = structuredClone(gateCandidate);
+  preservedGateCandidate.artifacts.find((item) => item.id === artifact.id).approvedRevision = {
+    algorithm: 'sha256',
+    digest: 'f'.repeat(64),
+  };
+  enrichIntegrityCandidate(recordPath(artifactProject), gateCandidate, preservedGateCandidate);
+  assert(
+    preservedGateCandidate.gates.at(-1).artifactRevisions.find((item) => item.artifact === artifact.id).revision.digest
+      === gateRevision.revision.digest,
+    'Existing gate evidence must never be rewritten when artifact revisions change later.',
+  );
+
   appendFileSync(artifactPath, '\nchanged after approval\n', 'utf8');
   const stale = run(artifactProject, ['validate'], 1);
   assert(`${stale.stdout}\n${stale.stderr}`.includes('content no longer matches approvedRevision'), 'Validation must detect post-approval artifact edits.');
@@ -132,6 +144,14 @@ try {
   enrichIntegrityCandidate(workflowRecordPath, baseRecord, candidate);
   assert(candidate.tasks[0].validation[0].subject?.commit === baselineCommit, 'Executed validation must bind to current implementation HEAD.');
   assert(subjectIntegrityFindings(workflowRecordPath, candidate).length === 0, 'Fresh validation subject should satisfy integrity diagnostics.');
+
+  const mismatchedToolkit = structuredClone(candidate);
+  mismatchedToolkit.toolkit.revision = 'f'.repeat(40);
+  assert(
+    subjectIntegrityFindings(workflowRecordPath, mismatchedToolkit)
+      .some((finding) => finding.includes('does not match executing toolkit')),
+    'Recorded toolkit provenance must match the toolkit code actually executing the workflow.',
+  );
 
   writeFileSync(join(repository, 'app.txt'), 'changed\n', 'utf8');
   git(repository, ['add', '.']);
