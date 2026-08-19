@@ -48,10 +48,18 @@ const MUTATING_COMMANDS = [
   { prefix: ['mode', 'set'], positionals: 3 },
 ];
 
+function isStageCheckJsonCommand(args) {
+  return args.length === 3 && args[0] === 'stage' && args[1] === 'check' && args[2] === '--json';
+}
+
 function isReadOnlyCommand(args) {
-  return (args.length === 3 && args[0] === 'stage' && args[1] === 'check' && args[2] === '--json')
+  return isStageCheckJsonCommand(args)
     || (args.length === 1 && args[0] === 'validate')
     || (args.length === 2 && args[0] === 'sync' && args[1] === '--check');
+}
+
+function acceptsReadOnlyExitCode(args, status) {
+  return status === 0 || (status === 1 && isStageCheckJsonCommand(args));
 }
 
 function fail(message) {
@@ -313,7 +321,7 @@ export function executeRequest({ request, project, cliPath, toolkitRepository, t
   const readOnly = isReadOnlyCommand(request.args);
   const commandResult = run(process.execPath, [cli, ...request.args], { cwd: projectPath });
   if (readOnly) {
-    if (commandResult.error || ![0, 1].includes(commandResult.status)) {
+    if (commandResult.error || !acceptsReadOnlyExitCode(request.args, commandResult.status)) {
       requireSuccess(commandResult, `design-workflow ${request.command}`);
     }
     if (gitOutput(projectPath, ['status', '--porcelain'], 'Read-only working-tree check')) {
