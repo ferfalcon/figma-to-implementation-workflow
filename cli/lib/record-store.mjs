@@ -2,11 +2,12 @@ import { createHash } from 'node:crypto';
 import {
   existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync,
 } from 'node:fs';
-import { dirname, isAbsolute, resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import { renderGeneratedState } from './generated-state.mjs';
 import {
   isPortableRepositoryReference, portableRepositoryReference, resolveRepositoryWorkspace,
 } from './repository-binding.mjs';
+import { enrichIntegrityCandidate, subjectIntegrityFindings } from './subject-integrity.mjs';
 import { initializationToolkitPin } from './toolkit-binding.mjs';
 import { inspectWorkflowRecord, validateWorkflowRecord } from '../../scripts/lib/validate-workflow-record.mjs';
 
@@ -105,20 +106,6 @@ function canonicalizeRepositoryReferences(recordPath, candidate, currentRecord =
     }
   }
   return candidate;
-}
-
-function verifyArtifactFiles(recordPath, record, fileSet) {
-  if (record.schemaVersion !== 2) return [];
-  const projectRoot = projectRootForRecord(recordPath);
-  const findings = [];
-  for (const artifact of record.artifacts) {
-    if (artifact.status === 'Superseded') continue;
-    const path = isAbsolute(artifact.path) ? artifact.path : resolve(projectRoot, artifact.path);
-    if (!fileSet.has(path) && !existsSync(path)) {
-      findings.push(`$.artifacts: active artifact ${artifact.id} is missing its narrative file ${artifact.path}`);
-    }
-  }
-  return findings;
 }
 
 function acquireRecordLock(recordPath) {
@@ -270,9 +257,14 @@ export function commitRecordCandidate({
       }
     }
 
+    enrichIntegrityCandidate(recordAbsolute, current, candidate, narrativeChanges);
+
     const candidateFindings = [
       ...validateWorkflowRecord(candidate),
-      ...verifyArtifactFiles(recordAbsolute, candidate, narrativeChanges),
+      ...subjectIntegrityFindings(recordAbsolute, candidate, {
+        fileChanges: narrativeChanges,
+        requireToolkit: !allowCreate,
+      }),
     ];
     if (candidateFindings.length > 0) {
       if (!(repair && isStrictRepair(beforeFindings, candidateFindings))) {
