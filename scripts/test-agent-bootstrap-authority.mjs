@@ -78,8 +78,13 @@ const ownershipContracts = [
   ['workflow/State-Ownership.md', stateOwnership],
 ];
 
+const manualRecordEditProhibitions = [
+  /never (manually edit|hand-edit)[^\n]*`\.workflow\/workflow-record\.json`/i,
+  /direct edits[^\n]*`\.workflow\/workflow-record\.json`[^\n]*unsupported/i,
+];
+
 for (const [path, content] of ownershipContracts) {
-  if (!/(never (manually edit|hand-edit)|direct edits[^\n]*unsupported)[^\n]*`\.workflow\/workflow-record\.json`/i.test(content)) {
+  if (!manualRecordEditProhibitions.some((pattern) => pattern.test(content))) {
     errors.push(`${path} must explicitly prohibit direct edits to .workflow/workflow-record.json.`);
   }
 }
