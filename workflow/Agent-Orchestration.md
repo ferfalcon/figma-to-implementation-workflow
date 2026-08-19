@@ -40,23 +40,25 @@ When an agent can read the implementation repository through GitHub but cannot e
 .workflow/generated/AGENT-CONTEXT.json
 ```
 
-as the portable read-only bootstrap for the current persisted workflow state. Portable projection contract v2 is identified by `generated.projectionVersion: 2`.
+as the portable read-only bootstrap for the current persisted workflow state. Portable projection contract v4 is identified by `generated.projectionVersion: 4`.
 
 This projection is generated transactionally with the other `.workflow/generated/*` views. It is derived from the same stage-target, next-action, execution-kind, task-routing, stage-transition-policy, and resource-selection logic used by the CLI orchestration context rather than maintaining parallel policy or routing maps.
 
 The projection contains:
 
-- the canonical workflow-record SHA-256 used to generate it;
+- the canonical workflow-record SHA-256 and Git blob SHA used to identify the record that generated it;
 - project profile and execution mode;
 - toolkit repository/revision binding;
 - current stage, execution kind, architecture/profile-transition state, and next action;
 - current task, Ready-task summaries, and target artifacts;
 - active source records and latest persisted verification events;
-- read-side policy including whether implementation code edits are permitted for an already-started task;
+- read-side policy that separates persisted task authorization from the runtime/source integrity prerequisite for implementation edits;
 - separated stage decision authority, preflight capability, and transition execution capability in `policy.stageTransition`;
 - required, on-demand, and conditional workflow resource descriptors with exact pinned toolkit locations when available.
 
 The projection intentionally does **not** contain embedded toolkit file bodies, local workspace paths, local Git/worktree checks, subject-integrity results, runtime deployment checks, or `stage check` preflight results. `workflow.runtimeIntegrity: not-evaluated-in-portable-projection` is a deliberate limitation, not a successful validation result.
+
+Before trusting a GitHub-only projection, compare `generated.recordGitBlobSha` with GitHub's blob SHA for `.workflow/workflow-record.json` at the same repository ref. A mismatch means the projection is stale and must not authorize implementation work or workflow decisions; require `design-workflow sync` in an executable environment.
 
 `policy.stageTransition` keeps three different questions separate:
 
@@ -68,7 +70,9 @@ For example, a healthy non-Gated GitHub-only projection can legitimately report 
 
 `availableHere` is capability information only. It is never a gate result and never proves that review or advancement is legal. Stage legality remains owned by executable workflow state and `design-workflow stage check`.
 
-A GitHub-only agent may use the projection to route reads and perform work already authorized by persisted state—for example, inspect the exact current resources or edit implementation code when `policy.codeEdits` is `allowed-with-current-task-scope`. It must not emulate CLI-owned state transitions by editing `.workflow/workflow-record.json` or generated files. Initialization, migration, repair, toolkit pin/migration, snapshot verification, artifact lifecycle, stage review/advance, task start/complete, structured validation recording, and final acceptance remain CLI mutations.
+A GitHub-only agent may use the projection to route reads and perform work already authorized by persisted state. For implementation work, `policy.implementationAuthorization: current-task-authorized` means only that the persisted Stage 10/current-task state authorizes the task scope. `policy.codeEdits: allowed-after-source-integrity-check` is conditional: verify the relevant active inputs and current repository state through authoritative remote sources before editing. If the integrity check cannot be completed or exposes an unexpected material change, do not edit implementation code.
+
+The portable projection must not emulate CLI-owned state transitions by editing `.workflow/workflow-record.json` or generated files. Initialization, migration, repair, toolkit pin/migration, snapshot verification, artifact lifecycle, stage review/advance, task start/complete, structured validation recording, and final acceptance remain CLI mutations.
 
 If `AGENT-CONTEXT.json` is missing or stale, do not reconstruct it from generated Markdown, narrative artifacts, or manual record interpretation. Require `design-workflow sync` in an executable environment. If the projection's next action requires a CLI-owned mutation and no CLI is available, report that specific capability blocker rather than inventing workflow state.
 
@@ -187,13 +191,27 @@ Use only after task decomposition. At Stage 10 select one unblocked Ready task w
 
 ## Code-edit boundary
 
-Implementation code may be edited only when the current CLI packet or GitHub projection reports:
+Implementation authorization and runtime/source integrity are separate concerns.
+
+For the executable CLI packet, implementation code may be edited only when:
 
 ```text
 policy.codeEdits = allowed-with-current-task-scope
 ```
 
-This requires Stage 10, a structurally valid schema-v2 record, an execution mode that permits implementation, and an already-started current task. The GitHub projection does not start the task; if the task is only Ready and the CLI cannot execute `task start`, implementation remains blocked. Outside Stage 10, source/repository inspection is allowed but implementation edits are not.
+This requires Stage 10, a structurally valid schema-v2 record, an execution mode that permits implementation, an already-started current task, and successful local workflow diagnostics.
+
+For the GitHub-only projection, persisted task authorization is reported separately:
+
+```text
+policy.implementationAuthorization = current-task-authorized
+policy.implementationIntegrity = runtime-verification-required-before-editing
+policy.codeEdits = allowed-after-source-integrity-check
+```
+
+This requires the same persisted Stage 10/current-task authorization, but the projection does not prove local/runtime integrity. Before editing, verify the relevant active source state and repository state through authoritative remote sources and classify differences using the Stage 10 prompt. If verification is unavailable or exposes an unexpected material change, implementation edits remain blocked.
+
+The GitHub projection does not start the task; if the task is only Ready and the CLI cannot execute `task start`, implementation remains blocked. Outside Stage 10, source/repository inspection is allowed but implementation edits are not.
 
 ## Source and lineage safety
 
