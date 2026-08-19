@@ -67,12 +67,10 @@ function validate(identity) {
 function writeProvenance() {
   const identity = validate(explicitIdentity() ?? gitIdentity());
   writeFileSync(provenancePath, `${JSON.stringify(identity, null, 2)}\n`, 'utf8');
-  process.stdout.write(`Stamped toolkit package provenance ${identity.repository}#${identity.revision}.\n`);
 }
 
 function cleanProvenance() {
   if (existsSync(provenancePath)) rmSync(provenancePath, { force: true });
-  process.stdout.write('Removed transient toolkit package provenance.\n');
 }
 
 const action = process.argv[2];
