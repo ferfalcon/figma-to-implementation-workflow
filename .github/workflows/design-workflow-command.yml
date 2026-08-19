@@ -39,9 +39,20 @@ jobs:
           --result "$RUNNER_TEMP/design-workflow-result.json"
           --github-output "$GITHUB_OUTPUT"
 
+      - name: Verify requester repository permission
+        id: authorize
+        if: steps.prepare.outcome == 'success'
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: >-
+          node "$GITHUB_WORKSPACE/_design_workflow_bridge/scripts/authorize-remote-command.mjs"
+          --event "$GITHUB_EVENT_PATH"
+          --result "$RUNNER_TEMP/design-workflow-result.json"
+
       - name: Check out target project branch
         id: checkout
-        if: steps.prepare.outcome == 'success'
+        if: steps.authorize.outcome == 'success'
         continue-on-error: true
         uses: actions/checkout@v4
         with:
@@ -51,7 +62,7 @@ jobs:
 
       - name: Resolve pinned workflow runtime
         id: resolve-runtime
-        if: steps.prepare.outcome == 'success' && steps.checkout.outcome == 'success'
+        if: steps.checkout.outcome == 'success'
         continue-on-error: true
         env:
           BRIDGE_REPOSITORY: ${{ job.workflow_repository }}
@@ -110,6 +121,7 @@ jobs:
         if: >-
           always() &&
           (steps.prepare.outcome != 'success' ||
+           steps.authorize.outcome != 'success' ||
            steps.checkout.outcome != 'success' ||
            steps.resolve-runtime.outcome != 'success' ||
            steps.runtime-checkout.outcome != 'success' ||
