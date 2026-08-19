@@ -8,7 +8,7 @@ The integrity chain is:
 
 ## Subject identities
 
-- Toolkit execution is pinned to an `owner/name` repository plus an exact 40-character Git revision. Automatic Git discovery is permitted only when the installed toolkit directory is itself the Git worktree root; a package installed under another repository must never inherit that repository's identity.
+- Toolkit execution is pinned to an `owner/name` repository plus an exact 40-character Git revision. A source checkout may discover Git identity only when the toolkit directory is itself the Git worktree root. Package creation stamps that identity into `cli/toolkit-provenance.json` inside the tarball and removes the transient stamp from the source checkout afterward; an installed package trusts that embedded identity instead of walking upward into the consumer repository.
 - An Approved narrative artifact records a SHA-256 digest in `approvedRevision`. Editing the narrative afterward makes the approval stale until the artifact is reopened, reviewed, and approved again.
 - Passing gates pin the approved revisions they relied on through `artifactRevisions`. Gate validity therefore depends on the reviewed bytes, not only an artifact ID.
 - Executed task validation records a `subject.commit` and, when present, a validation-runtime snapshot. Stage 9 may define checks but may not record executed Passed/Failed results.
