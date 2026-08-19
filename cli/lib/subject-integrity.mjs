@@ -162,12 +162,23 @@ function gateFindings(record) {
   for (const gate of record.gates ?? []) {
     if (gate.status !== 'Active' || !['Passed', 'Passed with assumptions'].includes(gate.result)) continue;
     const revisions = new Map((gate.artifactRevisions ?? []).map((entry) => [entry.artifact, entry.revision]));
+
+    for (const entry of gate.artifactRevisions ?? []) {
+      if (!(gate.artifacts ?? []).includes(entry.artifact)) {
+        findings.push(`$.gates: active passing gate ${gate.id} pins revision for unreferenced artifact ${entry.artifact}`);
+      }
+    }
+
+    // Historical gates preserve the subjects that existed at their decision point.
+    // Only the current stage gate must match artifacts that are authoritative now;
+    // later Draft -> Approved transitions must not retroactively invalidate older gates.
+    if (gate.stage !== record.state.stage) continue;
     for (const artifactId of gate.artifacts ?? []) {
       const artifact = artifacts.get(artifactId);
       if (artifact?.status !== 'Approved') continue;
       const recorded = revisions.get(artifactId);
       if (!recorded || recorded.algorithm !== artifact.approvedRevision?.algorithm || recorded.digest !== artifact.approvedRevision?.digest) {
-        findings.push(`$.gates: active passing gate ${gate.id} does not pin the approved revision of ${artifactId}`);
+        findings.push(`$.gates: current passing gate ${gate.id} does not pin the approved revision of ${artifactId}`);
       }
     }
   }
