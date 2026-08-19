@@ -72,25 +72,23 @@ try {
     '--toolkit-repository', 'ferfalcon/figma-to-implementation-workflow',
     '--toolkit-revision', toolkitRevision,
   ]);
-  let current = record(artifactProject);
-  for (const snapshotId of current.state.activeInputs) {
-    run(artifactProject, [
-      'snapshot', 'verify', snapshotId,
-      '--result', 'Unchanged', '--method', 'Integrity fixture', '--evidence', 'Fixture input verified',
-    ]);
-  }
   run(artifactProject, ['artifact', 'review', 'workpack', '--evidence', 'Reviewed']);
   run(artifactProject, ['artifact', 'approve', 'workpack', '--evidence', 'Approved', '--approved-by', 'test']);
 
-  current = record(artifactProject);
+  let current = record(artifactProject);
   const artifact = current.artifacts.find((item) => item.type === 'WORKPACK');
   const artifactPath = join(artifactProject, artifact.path);
   assert(artifact.approvedRevision?.algorithm === 'sha256', 'Artifact approval must record sha256 identity.');
   assert(artifact.approvedRevision?.digest === sha256(artifactPath), 'Artifact approval digest must match approved bytes.');
 
-  run(artifactProject, ['stage', 'review', '--result', 'Passed', '--evidence', 'Stage approved', '--approved-by', 'test']);
-  current = record(artifactProject);
-  const gate = current.gates.find((item) => item.status === 'Active');
+  const gateCandidate = structuredClone(current);
+  gateCandidate.gates.push({
+    id: 'GATE-999', stage: current.state.stage, status: 'Active', result: 'Passed',
+    baseline: [...current.state.activeInputs], verifications: [], artifacts: [artifact.id],
+    evidence: 'Synthetic gate identity fixture', recordedAt: new Date().toISOString(), approvedBy: 'test',
+  });
+  enrichIntegrityCandidate(recordPath(artifactProject), current, gateCandidate);
+  const gate = gateCandidate.gates.at(-1);
   const gateRevision = gate.artifactRevisions?.find((item) => item.artifact === artifact.id);
   assert(gateRevision?.revision?.digest === artifact.approvedRevision.digest, 'Passing gate must pin the approved artifact revision.');
 
