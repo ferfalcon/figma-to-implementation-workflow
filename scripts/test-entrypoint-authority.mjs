@@ -8,6 +8,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (path) => readFileSync(join(root, path), 'utf8');
 
 const readme = read('README.md');
+const quickstart = read('QUICKSTART.md');
 const projectSettings = read('AI-project-settings.md');
 const toolkitAgents = read('AGENTS.md');
 const consumerAgents = read('AGENTS-instructions.md');
@@ -36,6 +37,10 @@ for (const target of requiredReadmeLinks) {
   }
 }
 
+if (!readme.includes('choose a profile before initialization')) {
+  errors.push('README implementation-project entry point must route through profile selection before initialization.');
+}
+
 const delegatedReadmeHeadings = [
   'Source snapshots',
   'Workflow profiles',
@@ -53,6 +58,44 @@ for (const heading of delegatedReadmeHeadings) {
 
 if (/design-workflow\s+agent-context\s+--json/i.test(readme)) {
   errors.push('README must not become the consumer-agent bootstrap; delegate agent-context protocol to AGENTS-instructions.md.');
+}
+
+const profileSelectionHeading = '## 1. Choose a profile before initialization';
+const expressExampleHeading = '## Express worked example';
+const profileSelectionIndex = quickstart.indexOf(profileSelectionHeading);
+const expressExampleIndex = quickstart.indexOf(expressExampleHeading);
+
+if (!quickstart.startsWith('# Quickstart: Choose a Workflow Profile and Start')) {
+  errors.push('QUICKSTART must begin with profile selection rather than presenting Express as the default workflow.');
+}
+
+if (profileSelectionIndex === -1) {
+  errors.push('QUICKSTART must make profile selection the first numbered decision.');
+}
+
+if (!quickstart.includes('](workflow/Workflow-Profiles.md)')) {
+  errors.push('QUICKSTART must delegate canonical profile rules to workflow/Workflow-Profiles.md.');
+}
+
+if (expressExampleIndex === -1) {
+  errors.push('QUICKSTART must preserve Express as an explicitly labeled worked example.');
+} else if (profileSelectionIndex === -1 || expressExampleIndex <= profileSelectionIndex) {
+  errors.push('QUICKSTART profile selection must appear before the Express worked example.');
+}
+
+const quickstartRouting = expressExampleIndex === -1 ? quickstart : quickstart.slice(0, expressExampleIndex);
+for (const profile of ['Express', 'Lite', 'Standard', 'Full']) {
+  if (!quickstartRouting.includes(`**${profile}**`)) {
+    errors.push(`QUICKSTART profile-selection routing must include ${profile}.`);
+  }
+}
+
+if (!quickstartRouting.includes('--profile "<selected-profile>"')) {
+  errors.push('QUICKSTART initialization must use the selected profile instead of hard-coding Express.');
+}
+
+if (/--profile\s+Express/.test(quickstartRouting)) {
+  errors.push('QUICKSTART must not hard-code Express before the reader has selected a profile.');
 }
 
 if (!projectSettings.includes('docs/implementation-workflow/AGENTS-instructions.md')) {
@@ -84,5 +127,5 @@ if (errors.length > 0) {
   errors.forEach((error) => console.error(`- ${error}`));
   process.exitCode = 1;
 } else {
-  console.log('Entrypoint authority test passed (root entry points remain role-specific and delegated).');
+  console.log('Entrypoint authority test passed (root entry points remain role-specific and Quickstart selects a profile before examples).');
 }
