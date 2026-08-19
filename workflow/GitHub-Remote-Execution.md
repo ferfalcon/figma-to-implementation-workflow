@@ -115,26 +115,27 @@ review set-result
 mode set
 ```
 
-The bridge rejects arbitrary shell commands, unsupported/read-only CLI commands, `migrate --check`, explicit `--record`, all `--control` overrides, unsafe filesystem paths, and toolkit identity overrides. Remote initialization may use `--repository` only as `--repository .`, binding the project to the checked-out repository.
+The bridge rejects arbitrary shell commands, unsupported/read-only CLI commands, `migrate --check`, explicit `--record`, all `--control` overrides, filesystem paths that escape the checked-out project lexically or through symlinks, and toolkit identity overrides. Remote initialization may use `--repository` only as `--repository .`, binding the project to the checked-out repository.
 
 ## Execution and integrity contract
 
 For every accepted issue, the reusable workflow:
 
-1. validates the issue envelope and applies a coarse author-association screen before any target checkout;
-2. queries GitHub's calculated repository permission for the requester and requires effective `write` or `admin` access before the write-capable job proceeds;
-3. checks out the remote bridge from `job.workflow_repository` at `job.workflow_sha`, so the parser/executor is exactly the reusable-workflow revision selected by the caller;
+1. checks out the remote bridge from `job.workflow_repository` at `job.workflow_sha`, so the parser/executor is exactly the reusable-workflow revision selected by the caller;
+2. validates the issue envelope and applies a coarse author-association screen before any target checkout;
+3. queries GitHub's calculated repository permission for the requester and requires effective `write` or `admin` access before the write-capable job proceeds;
 4. checks out the caller repository's requested branch with full Git history only after authorization;
-5. resolves the runtime toolkit from project state. Canonical or legacy pins may select an older exact revision, but the recorded toolkit repository must match the trusted bridge repository; uninitialized/unpinned projects bootstrap from the bridge revision;
-6. checks out that exact runtime toolkit revision separately and runs its canonical CLI, so installing a newer transport does not silently upgrade an existing workflow toolkit;
-7. requires the checked-out project `HEAD` to equal `expectedHead` and the worktree to be clean;
-8. invokes the CLI with a process argument vector rather than shell interpolation;
-9. for mutations, runs `design-workflow validate` and `design-workflow sync --check` before committing;
-10. rolls back the local checkout when the command or post-mutation validation fails;
-11. creates one workflow-state/narrative commit only after the canonical CLI operation succeeds;
-12. rechecks the remote branch still equals `expectedHead` immediately before push;
-13. pushes normally to the target branch and never uses force or force-with-lease;
-14. posts the result on the command issue and closes it.
+5. verifies every remote filesystem-bearing command path remains inside the real project checkout, including through existing symlink ancestors;
+6. resolves the runtime toolkit from project state. Canonical or legacy pins may select an older exact revision, but the recorded toolkit repository must match the trusted bridge repository; uninitialized/unpinned projects bootstrap from the bridge revision;
+7. checks out that exact runtime toolkit revision separately and runs its canonical CLI, so installing a newer transport does not silently upgrade an existing workflow toolkit;
+8. requires the checked-out project `HEAD` to equal `expectedHead` and the worktree to be clean;
+9. invokes the CLI with a process argument vector rather than shell interpolation;
+10. for mutations, runs `design-workflow validate` and `design-workflow sync --check` before committing;
+11. rolls back the local checkout when the command or post-mutation validation fails;
+12. creates one workflow-state/narrative commit only after the canonical CLI operation succeeds;
+13. rechecks the remote branch still equals `expectedHead` immediately before push;
+14. pushes normally to the target branch and never uses force or force-with-lease;
+15. posts the result on the command issue and closes it.
 
 The reusable workflow serializes remote commands per caller repository. `expectedHead` plus the final non-force push still provide optimistic concurrency protection against branch changes that occur outside that queue.
 
@@ -170,6 +171,7 @@ Typical failures include:
 - stale `expectedHead`;
 - missing target branch;
 - dirty checkout;
+- unsafe or symlink-escaping command path;
 - untrusted/malformed toolkit binding or unavailable pinned toolkit revision;
 - canonical CLI rejection;
 - failed post-mutation validation or generated-state check;
