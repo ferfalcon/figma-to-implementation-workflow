@@ -1,0 +1,26 @@
+# Immutable subject integrity
+
+The workflow treats evidence as trustworthy only when the subject that was reviewed or validated has an immutable identity.
+
+The integrity chain is:
+
+`source snapshot -> approved artifact revision -> stage gate -> task baseline -> validation subject -> implementation output -> final-review artifact revision`
+
+## Subject identities
+
+- Toolkit execution is pinned to an `owner/name` repository plus an exact 40-character Git revision. Automatic Git discovery is permitted only when the installed toolkit directory is itself the Git worktree root; a package installed under another repository must never inherit that repository's identity.
+- An Approved narrative artifact records a SHA-256 digest in `approvedRevision`. Editing the narrative afterward makes the approval stale until the artifact is reopened, reviewed, and approved again.
+- Passing gates pin the approved revisions they relied on through `artifactRevisions`. Gate validity therefore depends on the reviewed bytes, not only an artifact ID.
+- Executed task validation records a `subject.commit` and, when present, a validation-runtime snapshot. Stage 9 may define checks but may not record executed Passed/Failed results.
+- A completed task requires every Passed check to target the exact Implementation output commit.
+- Accepted final implementation review pins the approved revision of its review artifact.
+
+## Diagnostics and repair
+
+`design-workflow validate`, `context`, and stage preflight include subject-integrity findings. Missing narrative files, stale Approved content, invalid or unpinned toolkit identity, stale validation subjects, and stale final-review evidence make the workflow non-executable.
+
+A mutation may proceed from invalid state only when it is a strict repair: the candidate must reduce the existing finding set and introduce no new finding. This keeps recovery commands such as `artifact reopen` and `toolkit pin` usable without allowing unrelated workflow progress through broken evidence.
+
+## Compatibility
+
+Schema-v2 keeps the new identity fields optional at the structural JSON-schema layer so older records remain readable. Runtime integrity diagnostics enforce the fields only when their lifecycle state makes them authoritative (for example, Approved artifacts or executed validation). The workflow does not silently reconstruct historical approvals or validation subjects from current files or current Git HEAD.
