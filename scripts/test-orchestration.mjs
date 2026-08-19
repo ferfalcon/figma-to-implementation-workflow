@@ -8,6 +8,7 @@ import { deriveNextAction } from '../cli/lib/workflow-actions.mjs';
 import { buildOrchestrationContext, canEditImplementation, stageResources, stageTargets } from '../cli/lib/orchestration-context.mjs';
 import { checkStage } from '../cli/lib/stage-check.mjs';
 import { syncGeneratedState } from '../cli/lib/generated-state.mjs';
+import { observedRuntimeToolkitPin } from '../cli/lib/toolkit-binding.mjs';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -118,6 +119,8 @@ const directory = mkdtempSync(join(tmpdir(), 'design-workflow-orchestration-'));
 const recordPath = join(directory, '.workflow', 'workflow-record.json');
 try {
   const timestamp = '2026-08-12T12:00:00.000Z';
+  const toolkitRevision = observedRuntimeToolkitPin()?.revision;
+  assert(toolkitRevision, 'Orchestration fixture must resolve the executing toolkit revision.');
   const workpackContent = '# Workflow fixture\n';
   writeFileSync(join(directory, 'WORKPACK.md'), workpackContent, 'utf8');
   const workpackRevision = {
@@ -129,7 +132,7 @@ try {
     project: { name: 'Express architecture fixture', profile: 'Express', executionMode: 'Gated' },
     toolkit: {
       repository: 'ferfalcon/figma-to-implementation-workflow',
-      revision: 'a'.repeat(40),
+      revision: toolkitRevision,
     },
     state: {
       stage: 6, status: 'Blocked', activeInputs: ['SRC-REPO-001'], currentTask: null,
@@ -170,8 +173,8 @@ try {
     'Context payload must expose the stage-local required-resource manifest.',
   );
   assert(
-    context.execution.resources.required.every((resource) => resource.location?.revision === 'a'.repeat(40)),
-    'Required resources must resolve against the canonical toolkit revision.',
+    context.execution.resources.required.every((resource) => resource.location?.revision === toolkitRevision),
+    'Required resources must resolve against the observed toolkit revision.',
   );
   assert(
     context.policy.workflowReads === 'context-resource-manifest-only',
