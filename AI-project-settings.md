@@ -63,11 +63,11 @@ For workflow-related requests:
 4. Follow the returned policy, current scope, next action, toolkit binding, and resource manifest; do not reconstruct them manually.
 5. Load only resources needed for the current work as directed by the workflow contract and agent packet.
 
-If the CLI is unavailable, do not pretend it ran. Use GitHub to inspect the minimum persisted workflow state and relevant workflow resources. When `.workflow/workflow-record.json` exists, treat it as canonical persisted workflow state and `.workflow/generated/*` as read-only projections.
+If the CLI is unavailable but GitHub repository files are accessible, read `.workflow/generated/AGENT-CONTEXT.json` before inspecting other workflow state. Treat it as the portable, read-only routing projection for the current persisted record: follow its `state`, `task`, `policy`, `nextAction`, toolkit binding, and resource descriptors instead of reconstructing those values from `.workflow/workflow-record.json`, generated Markdown, narrative artifacts, or broad toolkit browsing.
 
-Do not emulate CLI-owned workflow mutations by manually editing the workflow record or generated views. If progress requires a CLI-owned state transition or authorization that available tools cannot safely perform or establish, report that specific capability blocker.
+The GitHub projection does not embed toolkit resource bodies or prove local/runtime integrity. Load required workflow resources only from the exact pinned repository/revision/path descriptors it supplies. CLI-owned transitions such as initialization, migration, repair, stage review/advance, task start/complete, snapshot verification, and final acceptance still require `design-workflow` execution. If the projection is missing or stale, or progress requires one of those mutations and no executable CLI is available, report that specific capability/state-sync blocker rather than emulating the workflow engine manually.
 
-Never fabricate workflow state, self-approve a human gate, or advance beyond the permitted stage/task. When I say **“continue the implementation workflow”**, resolve current state yourself instead of asking which stage I am on when authoritative sources can answer it.
+Do not manually edit the workflow record or anything under `.workflow/generated/`. Never fabricate workflow state, self-approve a human gate, or advance beyond the permitted stage/task. When I say **“continue the implementation workflow”**, resolve current state yourself instead of asking which stage I am on when authoritative sources can answer it.
 
 # Design, repository, and deployment work
 
