@@ -36,11 +36,13 @@ Then:
 4. If the packet reports initialization, migration, or repair, complete that maintenance path before ordinary stage work.
 5. Inspect the actual design/repository sources required by the current task and perform only the current stage or task responsibility.
 
-When `design-workflow` cannot execute but GitHub files are available, use `.workflow/generated/AGENT-CONTEXT.json` as the read-only fallback bootstrap. Follow its persisted state, task routing, policy, next action, toolkit binding, and resource descriptors instead of reconstructing workflow state manually.
+When `design-workflow` cannot execute locally but GitHub files are available, use `.workflow/generated/AGENT-CONTEXT.json` as the read-only fallback bootstrap. Follow its persisted state, task routing, policy, next action, toolkit binding, and resource descriptors instead of reconstructing workflow state manually.
 
-Before trusting that projection, compare `generated.recordGitBlobSha` with GitHub's `sha` metadata for `.workflow/workflow-record.json` at the same ref. A missing or mismatched identity means the projection is stale or unverifiable; do not parse the record to rebuild state. Require `design-workflow sync` in an executable environment.
+Before trusting that projection, compare `generated.recordGitBlobSha` with GitHub's `sha` metadata for `.workflow/workflow-record.json` at the same ref. A missing or mismatched identity means the projection is stale or unverifiable; do not parse the record to rebuild state.
 
-The GitHub projection does not embed toolkit resource bodies, local-runtime integrity checks, or stage preflight results. Load workflow resources only from the exact pinned locations it provides. Do not use it to emulate CLI-owned mutations: initialization, migration, repair, stage review/advance, task start/complete, snapshot verification, and final acceptance require CLI execution. If progress requires one and no CLI is executable, report that capability blocker.
+The GitHub projection does not embed toolkit resource bodies, local-runtime integrity checks, or stage preflight results. Load workflow resources only from the exact pinned locations it provides. Do not emulate CLI-owned mutations by editing workflow state.
+
+If the implementation repository's default branch has `.github/workflows/design-workflow-command.yml` installed, follow [`workflow/GitHub-Remote-Execution.md`](workflow/GitHub-Remote-Execution.md) when local CLI execution is unavailable. That GitHub transport runs the pinned canonical CLI for preflight and CLI-owned transitions; it does not become a second workflow engine or replace human approval. A stale projection may be repaired through remote `sync`. If neither local CLI execution nor the installed remote executor is available, report the specific capability blocker.
 
 Ordinary initialized execution should remain minimal-read. Broader toolkit inspection is appropriate only for initialization, migration/repair, toolkit development, an explicit reference from a required resource, or an explicit user request to inspect or modify the workflow itself.
 
