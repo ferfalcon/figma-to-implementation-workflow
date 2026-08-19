@@ -36,9 +36,11 @@ Then:
 4. If the packet reports initialization, migration, or repair, complete that maintenance path before ordinary stage work.
 5. Inspect the actual design/repository sources required by the current task and perform only the current stage or task responsibility.
 
-When `design-workflow` cannot execute but GitHub repository files are available, use `.workflow/generated/AGENT-CONTEXT.json` as the read-only fallback bootstrap. It is generated from the same canonical stage/resource routing used by the CLI packet and includes the persisted state, task routing, policy, next action, toolkit binding, and portable resource descriptors needed to avoid reconstructing workflow state manually.
+When `design-workflow` cannot execute but GitHub files are available, use `.workflow/generated/AGENT-CONTEXT.json` as the read-only fallback bootstrap. Follow its persisted state, task routing, policy, next action, toolkit binding, and resource descriptors instead of reconstructing workflow state manually.
 
-The GitHub projection intentionally does not embed toolkit resource bodies, local-runtime integrity checks, or stage preflight results. Load workflow resources only from the exact pinned locations it provides. Do not use the projection to emulate CLI-owned workflow mutations: if the next action requires initialization, migration, repair, stage review/advance, task start/complete, snapshot verification, or final acceptance and no CLI is executable, report that capability blocker. If `AGENT-CONTEXT.json` is missing or stale, do not recreate it by parsing the workflow record or generated Markdown; require `design-workflow sync` in an executable environment.
+Before trusting that projection, compare `generated.recordGitBlobSha` with GitHub's `sha` metadata for `.workflow/workflow-record.json` at the same ref. A missing or mismatched identity means the projection is stale or unverifiable; do not parse the record to rebuild state. Require `design-workflow sync` in an executable environment.
+
+The GitHub projection does not embed toolkit resource bodies, local-runtime integrity checks, or stage preflight results. Load workflow resources only from the exact pinned locations it provides. Do not use it to emulate CLI-owned mutations: initialization, migration, repair, stage review/advance, task start/complete, snapshot verification, and final acceptance require CLI execution. If progress requires one and no CLI is executable, report that capability blocker.
 
 Ordinary initialized execution should remain minimal-read. Broader toolkit inspection is appropriate only for initialization, migration/repair, toolkit development, an explicit reference from a required resource, or an explicit user request to inspect or modify the workflow itself.
 
