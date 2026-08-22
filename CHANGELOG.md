@@ -119,3 +119,32 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 - Moved source-specific Figma preparation into `source-adapters/`.
 - Reorganized examples by Express, Lite, Standard, and Full profiles.
 - Extended repository CI to validate schemas, fixtures, generated state, workflow CLI behavior, package contents, and discovered workflow records.
+- Updated internal links and assistant instructions for the v2 structure and Express path.
+
+### Removed
+
+- Legacy root-level workflow and guideline paths after migration.
+
+## [0.2.0] — 2026-08-06
+
+### Added
+
+- Stage 0 project context and workflow state.
+- Lite, Standard, and Full workflow profiles.
+- Global identifier namespaces.
+- Source snapshot pinning and implementation-output lineage.
+- Core requirements, design, specification, plan, and Lite brief templates.
+
+### Changed
+
+- Integrated accessibility, responsive behavior, state handling, errors, and testing into feature work.
+- Clarified architecture-skip handling and interaction-pattern requirements.
+
+## [0.1.0] — 2026-08-05
+
+### Added
+
+- Initial design-to-implementation workflow.
+- Requirements, design, specification, architecture, and planning guidelines.
+- Audit, review, architecture, task, and implementation-review templates.
+- Figma preparation and normalization guidance.
