@@ -10,7 +10,6 @@ const read = (path) => readFileSync(resolve(root, path), 'utf8');
 
 const workflow = read('workflow/Design-Implementation-Workflow.md');
 const cliReadme = read('cli/README.md');
-const quickstart = read('QUICKSTART.md');
 const stageCommands = read('cli/lib/commands/stage.mjs');
 const invariants = read('cli/lib/workflow-record-validation-invariants.mjs');
 
@@ -71,10 +70,5 @@ assert.match(
   /Architecture is an explicit Stage 6 decision:[\s\S]*design-workflow architecture decide not-required/,
   'CLI documentation must continue to describe the explicit Stage 6 not-required decision',
 );
-assert.match(
-  quickstart,
-  /design-workflow architecture decide not-required/,
-  'Express quickstart must continue to record the not-required architecture decision',
-);
 
-console.log('Architecture contract tests passed (Express prose matches executable Stage 6 semantics).');
+console.log('Architecture contract tests passed (canonical workflow prose, CLI documentation, and executable Stage 6 semantics agree).');

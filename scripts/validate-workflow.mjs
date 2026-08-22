@@ -21,6 +21,7 @@ const requiredPaths = [
   'AGENTS-PROMPT-Figma-file-preparation.md',
   'AI-project-settings.md',
   'package.json',
+  '.github/workflows/release-consumer-bundle.yml',
   'workflow/Design-Implementation-Workflow.md',
   'workflow/Workflow-Profiles.md',
   'workflow/Source-Authority.md',
@@ -74,6 +75,8 @@ const requiredPaths = [
   'cli/lib/artifact-renderer.mjs',
   'cli/lib/migrate-record.mjs',
   'cli/lib/commands-v2.mjs',
+  'scripts/build-consumer-bundle.mjs',
+  'scripts/test-consumer-bundle.mjs',
   'scripts/generate-workflow-schema.mjs',
   'scripts/run-validation-suite.mjs',
   'scripts/lib/path-safety.mjs',
@@ -193,18 +196,6 @@ function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-function levelTwoSection(markdown, heading) {
-  const marker = `## ${heading}`;
-  const headingIndex = markdown.indexOf(marker);
-  if (headingIndex === -1) return null;
-
-  const contentStart = markdown.indexOf('\n', headingIndex);
-  if (contentStart === -1) return '';
-
-  const nextHeading = markdown.indexOf('\n## ', contentStart + 1);
-  return markdown.slice(contentStart + 1, nextHeading === -1 ? markdown.length : nextHeading);
-}
-
 for (const repositoryPath of [...requiredPaths, ...promptPaths]) {
   if (!existsSync(join(root, repositoryPath))) {
     errors.push(`Missing required path: ${repositoryPath}`);
@@ -240,14 +231,20 @@ if (existsSync(packagePath) && existsSync(changelogPath)) {
 const readmePath = join(root, 'README.md');
 if (existsSync(readmePath)) {
   const readme = readFileSync(readmePath, 'utf8');
-  const entryPoints = levelTwoSection(readme, 'Choose your entry point');
-  if (entryPoints === null) {
-    errors.push('README.md: missing Choose your entry point section');
-  } else if (!entryPoints.includes('](AGENTS-instructions.md)')) {
-    errors.push('README.md: Choose your entry point must link AGENTS-instructions.md');
+  if (!readme.includes('[Get started →](QUICKSTART.md)')) {
+    errors.push('README.md: must expose the single Get started path through QUICKSTART.md');
+  }
+  if (!readme.includes('One workflow. One onboarding. No user route selection.')) {
+    errors.push('README.md: must preserve the single-workflow consumer invariant');
+  }
+  if (!readme.includes('](AGENTS-instructions.md)')) {
+    errors.push('README.md: must keep AGENTS-instructions.md discoverable for agent execution');
   }
   if (!readme.includes('](workflow/Agent-Orchestration.md)')) {
     errors.push('README.md: must keep workflow/Agent-Orchestration.md discoverable');
+  }
+  if (/^##\s+Choose your entry point\s*$/im.test(readme)) {
+    errors.push('README.md: must not restore multiple human entry-point routing');
   }
 }
 

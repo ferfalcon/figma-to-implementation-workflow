@@ -2,7 +2,9 @@
 
 Workflow profiles keep the process proportional to project risk and complexity without removing essential design, accessibility, source integrity, implementation, or validation concerns.
 
-Select a profile before substantive documentation or implementation begins. When `.workflow/workflow-record.json` exists, it is canonical for the current profile, execution mode, stage, and other mutable control fields. Narrative artifacts retain profile rationale, eligibility evidence, decisions, and change history.
+A profile must be selected before substantive documentation or implementation begins, but normal AI-assisted onboarding does not require the human to choose it. The workflow agent classifies the work from actual design, repository, integration, and risk evidence, selects the smallest profile whose eligibility rules are fully satisfied, records the rationale, and passes that explicit profile to the canonical CLI. User profession, comfort with Figma, comfort with a terminal, or preference for a simpler process must never determine the profile.
+
+When `.workflow/workflow-record.json` exists, it is canonical for the current profile, execution mode, stage, and other mutable control fields. Narrative artifacts retain profile rationale, eligibility evidence, decisions, and change history.
 
 Follow [`State-Ownership.md`](State-Ownership.md). Do not maintain the same mutable state independently in the record and Markdown artifacts.
 
@@ -10,7 +12,7 @@ A profile controls artifact granularity. It does not permit unsupported assumpti
 
 ## Selection principles
 
-Choose a profile from actual complexity, not only file count or visual size.
+Classify the work from actual complexity, not only file count or visual size.
 
 Consider:
 
@@ -25,7 +27,11 @@ Consider:
 - number of contributors or implementation agents;
 - cost of incorrect assumptions.
 
-When uncertain, select the lower profile only when its consolidation rules can preserve every material concern. Upgrade as soon as the work exceeds those limits.
+For AI-agent execution, profile selection is a workflow responsibility rather than a user-routing question. Inspect enough of the configured design scope and implementation repository to evaluate the criteria above. Select the smallest profile that is demonstrably valid. When evidence cannot establish the lower profile's eligibility, choose the safer higher adjacent profile rather than asking the user to learn or arbitrate the taxonomy. Ask the user only when a genuine unresolved product, scope, source-authority, or other consequential decision prevents classification.
+
+For human-led/manual use, the same rules apply: select the lower profile only when its consolidation rules can preserve every material concern. Upgrade as soon as the work exceeds those limits.
+
+Record the selected profile and concise evidence-based rationale in the profile's owning narrative artifact. The CLI still receives an explicit profile and remains authoritative for the persisted profile after initialization.
 
 ## Shared required controls
 
