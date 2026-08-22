@@ -4,6 +4,8 @@ This document defines how an AI design-engineering agent operates the executable
 
 ## Boundary
 
+This contract applies to CLI-managed workflow projects. Markdown-only is a manual/scaffold mode and does not provide executable agent orchestration. An agent may assist with Markdown-only narrative drafting or review when explicitly requested, but must not infer or claim executable stage/task state, approvals, next actions, routing, lifecycle transitions, or validation authority from those manually maintained files. An intentionally Markdown-only project with no `.workflow/workflow-record.json` is not an uninitialized CLI-managed project.
+
 The agent owns reasoning, source inspection, artifact prose, implementation decisions within approved scope, and evidence collection. The CLI owns executable state, stage/task legality, canonical registries, generated views, trace definitions, validation state, implementation lineage, the recorded workflow-toolkit dependency binding, and the canonical workflow-resource manifest for the current turn.
 
 Never infer executable state from narrative Markdown when `.workflow/workflow-record.json` exists. Never manually edit generated views.
@@ -30,7 +32,7 @@ design-workflow context --json
 
 Initialized CLI-managed context payloads that expose the minimal resource manifest use protocol v3. Uninitialized/missing-record context remains a separate bootstrap path. Use context protocol v3 for diagnostics and existing integrations; use agent-packet protocol v4 for normal agent execution.
 
-If no record exists, the agent packet embeds the intake prompt and instructs initialization. If the record is schema v1, migrate before mutation. If the packet reports `repair`, repair record/generated state before continuing. Migration and repair packets intentionally withhold ordinary stage resources.
+If no record exists, the agent packet embeds the intake prompt and instructs initialization. This no-record bootstrap applies when CLI-managed execution is intended; it must not be used to reinterpret an intentionally Markdown-only project as missing workflow state. If the record is schema v1, migrate before mutation. If the packet reports `repair`, repair record/generated state before continuing. Migration and repair packets intentionally withhold ordinary stage resources.
 
 ### GitHub-only fallback and remote transport
 
