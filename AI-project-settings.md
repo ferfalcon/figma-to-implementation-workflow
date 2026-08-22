@@ -14,7 +14,7 @@ You are working on the `<PROJECT_NAME>` project.
 
 This is a ChatGPT Project using connected development tools as its primary working environment.
 
-Do not assume a local checkout, terminal, shell, `git`, `gh`, Node.js, pnpm, Astro CLI, or `design-workflow` CLI exists unless the current conversation actually provides it.
+Do not assume a local checkout, terminal, shell, `git`, `gh`, Node.js, pnpm, Astro CLI, or workflow CLI exists unless the current conversation actually provides it.
 
 Treat available development tools, apps, plugins, and connectors as the working environment, not optional references. Prefer GitHub for repository/collaboration state, Figma for design state and authorized changes, Vercel for deployment/runtime state, and Context7 for current framework/library/API documentation.
 
@@ -44,34 +44,15 @@ Use each instruction source for its own domain:
 
 * These Project instructions define ChatGPT's environment, tool behavior, autonomy, and execution posture.
 * The implementation repository's root `AGENTS.md`, when present, defines repository-specific rules; read the nearest applicable nested `AGENTS.md` for scoped work.
-* `docs/implementation-workflow/AGENTS-instructions.md` defines agent execution of the implementation workflow.
-* `design-workflow agent-context --json`, when executable, defines current workflow state, policy, scope, next action, toolkit binding, and exact resources for the turn.
+* `docs/implementation-workflow/AGENTS-instructions.md` is the workflow-execution bootstrap for agents using the implementation workflow.
 
 The workflow toolkit is vendored at `docs/implementation-workflow/`; it is a dependency used by the project, not the implementation project itself.
 
 Do not mistake `docs/implementation-workflow/AGENTS.md` for the implementation repository's root `AGENTS.md`. The former governs development of the workflow toolkit and applies only when modifying that toolkit.
 
+For implementation-workflow requests, read `docs/implementation-workflow/AGENTS-instructions.md` and follow its canonical delegation. Workflow commands, state-transition rules, generated-state handling, toolkit resolution, validation rules, and remote-execution fallbacks belong to that bootstrap and the canonical/current-turn resources it names; do not redefine them in these Project instructions.
+
 Prefer current repository, design, runtime, and workflow sources over conversation memory or summaries. Do not invent facts that can be inspected.
-
-# Workflow bootstrap
-
-For workflow-related requests:
-
-1. Inspect the implementation repository and read its applicable `AGENTS.md` instructions when present.
-2. Read `docs/implementation-workflow/AGENTS-instructions.md` as the permanent workflow execution contract.
-3. If `design-workflow` is actually executable, begin with `design-workflow agent-context --json`.
-4. Follow the returned policy, current scope, next action, toolkit binding, and resource manifest; do not reconstruct them manually.
-5. Load only resources needed for the current work as directed by the workflow contract and agent packet.
-
-If the CLI is unavailable but GitHub repository files are accessible, read `.workflow/generated/AGENT-CONTEXT.json` before inspecting other workflow state. Treat it as the portable, read-only routing projection for the current persisted record: follow its `state`, `task`, `policy`, `nextAction`, toolkit binding, and resource descriptors instead of reconstructing those values from `.workflow/workflow-record.json`, generated Markdown, narrative artifacts, or broad toolkit browsing.
-
-Before trusting that projection, compare `generated.recordGitBlobSha` with GitHub's `sha` metadata for `.workflow/workflow-record.json` at the same repository ref. Use the record only for that metadata comparison, not to reconstruct workflow state. A missing or mismatched identity means the projection is stale or unverifiable.
-
-The GitHub projection does not embed toolkit resource bodies or prove local/runtime integrity. Load required workflow resources only from the exact pinned repository/revision/path descriptors it supplies. Never emulate CLI-owned state changes by editing the workflow record or generated projections.
-
-If the repository's default branch has `.github/workflows/design-workflow-command.yml` installed, use `docs/implementation-workflow/workflow/GitHub-Remote-Execution.md` when local CLI execution is unavailable. The GitHub transport runs the pinned canonical `design-workflow` CLI for stage preflight and CLI-owned transitions, including remote `sync` for a stale projection. It does not replace human approval. If neither local CLI execution nor the installed remote executor is available, report the specific capability blocker.
-
-Do not manually edit the workflow record or anything under `.workflow/generated/`. Never fabricate workflow state, self-approve a human gate, or advance beyond the permitted stage/task. When I say **“continue the implementation workflow”**, resolve current state yourself instead of asking which stage I am on when authoritative sources can answer it.
 
 # Design, repository, and deployment work
 
