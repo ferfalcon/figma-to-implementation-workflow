@@ -37,6 +37,17 @@ for (const [pattern, description] of singleWorkflowBootstrapRequirements) {
   if (!pattern.test(bootstrap)) errors.push(`Agent bootstrap must ${description}.`);
 }
 
+const externalBootstrapRequirements = [
+  [/loaded from an exact external toolkit revision/i, 'support externally loaded bootstrap instructions'],
+  [/relative toolkit reference[^\n]*same repository and exact revision/i, 'resolve relative resources against the pinned toolkit source'],
+  [/Do not assume `docs\/implementation-workflow\/` exists/i, 'avoid a vendored-toolkit assumption'],
+  [/Install only the thin caller/i, 'install only the remote bridge in consumer repositories'],
+  [/Do not copy the toolkit runtime into the implementation repository/i, 'prohibit runtime vendoring'],
+];
+for (const [pattern, description] of externalBootstrapRequirements) {
+  if (!pattern.test(bootstrap)) errors.push(`Agent bootstrap must ${description}.`);
+}
+
 const markdownOnlyBoundaryContracts = [
   ['README.md', readme, ['The toolkit supports one executable control mode and one manual/scaffold mode:', 'AI-agent orchestration uses this mode']],
   ['QUICKSTART.md', quickstart, ['Markdown-only is a manual/scaffold mode', 'without executable workflow state, generated routing, or agent orchestration']],
@@ -45,12 +56,9 @@ const markdownOnlyBoundaryContracts = [
   ['workflow/Agent-Orchestration.md', orchestration, ['This contract applies to CLI-managed workflow projects.', 'Markdown-only is a manual/scaffold mode and does not provide executable agent orchestration.']],
   ['AGENTS-instructions.md', bootstrap, ['Markdown-only is a manual/scaffold mode, not an executable agent-orchestration mode.', 'must not infer or claim current stage/task state']],
 ];
-
 for (const [path, content, requiredPhrases] of markdownOnlyBoundaryContracts) {
   for (const phrase of requiredPhrases) {
-    if (!content.includes(phrase)) {
-      errors.push(`${path} must preserve the Markdown-only manual/scaffold boundary: ${phrase}`);
-    }
+    if (!content.includes(phrase)) errors.push(`${path} must preserve the Markdown-only manual/scaffold boundary: ${phrase}`);
   }
 }
 
@@ -60,7 +68,6 @@ const canonicalHeadings = new Set(
 const duplicatedHeadings = [...bootstrap.matchAll(/^##\s+(.+)$/gm)]
   .map((match) => match[1].trim())
   .filter((heading) => canonicalHeadings.has(heading));
-
 for (const heading of duplicatedHeadings) {
   errors.push(`Agent bootstrap duplicates canonical orchestration section heading: ${heading}`);
 }
@@ -115,5 +122,5 @@ if (errors.length > 0) {
   errors.forEach((error) => console.error(`- ${error}`));
   process.exitCode = 1;
 } else {
-  console.log(`Agent bootstrap authority test passed (${bootstrap.length} characters; one-workflow routing stays narrow and safety-critical details remain delegated).`);
+  console.log(`Agent bootstrap authority test passed (${bootstrap.length} characters; external pinned loading stays narrow and safety-critical details remain delegated).`);
 }

@@ -2,7 +2,6 @@
 
 import {
   copyFileSync,
-  cpSync,
   mkdirSync,
   readFileSync,
   rmSync,
@@ -15,19 +14,6 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const toolkitRepository = 'ferfalcon/figma-to-implementation-workflow';
 const callerTemplatePath = join(root, 'templates', 'github', 'design-workflow-command.yml.template');
 const projectInstructionsPath = join(root, 'AI-project-settings.md');
-
-const consumerToolkitEntries = [
-  'AGENTS-instructions.md',
-  'AGENTS-PROMPT-Figma-file-preparation.md',
-  'LICENSE',
-  'cli',
-  'guidelines',
-  'prompts',
-  'schemas',
-  'source-adapters',
-  'templates',
-  'workflow',
-];
 
 function parseArgs(argv) {
   const options = {
@@ -64,18 +50,10 @@ export function buildConsumerBundle({ output, revision }) {
 
   const outputRoot = resolve(output);
   const repositoryRoot = join(outputRoot, 'repository');
-  const toolkitRoot = join(repositoryRoot, 'docs', 'implementation-workflow');
   const workflowRoot = join(repositoryRoot, '.github', 'workflows');
 
   rmSync(outputRoot, { recursive: true, force: true });
-  mkdirSync(toolkitRoot, { recursive: true });
   mkdirSync(workflowRoot, { recursive: true });
-
-  for (const entry of consumerToolkitEntries) {
-    const source = join(root, entry);
-    const destination = join(toolkitRoot, entry);
-    cpSync(source, destination, { recursive: true });
-  }
 
   const callerTemplate = readFileSync(callerTemplatePath, 'utf8');
   const caller = callerTemplate.replaceAll('<REMOTE_EXECUTOR_REVISION>', revision);
@@ -87,10 +65,12 @@ export function buildConsumerBundle({ output, revision }) {
   copyFileSync(projectInstructionsPath, join(outputRoot, 'ChatGPT-Project-Instructions.md'));
 
   const manifest = {
-    bundleFormatVersion: 1,
+    bundleFormatVersion: 2,
+    installationModel: 'external-pinned-toolkit',
     toolkitRepository,
     toolkitRevision: revision,
     repositoryUploadRoot: 'repository/',
+    remoteCaller: 'repository/.github/workflows/design-workflow-command.yml',
     projectInstructions: 'ChatGPT-Project-Instructions.md',
   };
   writeFileSync(
@@ -101,7 +81,7 @@ export function buildConsumerBundle({ output, revision }) {
   return {
     outputRoot,
     repositoryRoot,
-    toolkitRoot,
+    workflowRoot,
     revision,
   };
 }

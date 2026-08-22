@@ -24,18 +24,16 @@ try {
     'ChatGPT-Project-Instructions.md',
     'consumer-bundle-manifest.json',
     'repository/.github/workflows/design-workflow-command.yml',
-    'repository/docs/implementation-workflow/AGENTS-instructions.md',
-    'repository/docs/implementation-workflow/AGENTS-PROMPT-Figma-file-preparation.md',
-    'repository/docs/implementation-workflow/workflow/Agent-Orchestration.md',
-    'repository/docs/implementation-workflow/workflow/Workflow-Profiles.md',
-    'repository/docs/implementation-workflow/source-adapters/FIGMA-PREPARATION.md',
-    'repository/docs/implementation-workflow/cli/design-workflow.mjs',
   ];
 
   for (const path of requiredFiles) {
     if (!existsSync(join(output, path))) {
       errors.push(`Consumer bundle is missing ${path}.`);
     }
+  }
+
+  if (existsSync(join(output, 'repository/docs/implementation-workflow'))) {
+    errors.push('Consumer bundle must not vendor the workflow toolkit into the implementation repository.');
   }
 
   const caller = readFileSync(
@@ -50,8 +48,11 @@ try {
   }
 
   const manifest = JSON.parse(readFileSync(join(output, 'consumer-bundle-manifest.json'), 'utf8'));
-  if (manifest.bundleFormatVersion !== 1) {
-    errors.push('Consumer bundle manifest must use bundleFormatVersion 1.');
+  if (manifest.bundleFormatVersion !== 2) {
+    errors.push('Consumer bundle manifest must use bundleFormatVersion 2.');
+  }
+  if (manifest.installationModel !== 'external-pinned-toolkit') {
+    errors.push('Consumer bundle manifest must identify the external pinned toolkit installation model.');
   }
   if (manifest.toolkitRepository !== 'ferfalcon/figma-to-implementation-workflow') {
     errors.push('Consumer bundle manifest must identify the canonical toolkit repository.');
@@ -59,25 +60,20 @@ try {
   if (manifest.toolkitRevision !== revision) {
     errors.push('Consumer bundle manifest must identify the exact toolkit revision.');
   }
+  if (manifest.remoteCaller !== 'repository/.github/workflows/design-workflow-command.yml') {
+    errors.push('Consumer bundle manifest must identify the thin GitHub remote caller.');
+  }
 
   const generatedInstructions = readFileSync(join(output, 'ChatGPT-Project-Instructions.md'), 'utf8');
   const canonicalInstructions = readFileSync(join(root, 'AI-project-settings.md'), 'utf8');
   if (generatedInstructions !== canonicalInstructions) {
     errors.push('Consumer bundle ChatGPT Project Instructions must be generated directly from AI-project-settings.md.');
   }
-
-  const forbiddenVendoredFiles = [
-    'repository/docs/implementation-workflow/AGENTS.md',
-    'repository/docs/implementation-workflow/CONTRIBUTING.md',
-    'repository/docs/implementation-workflow/README.md',
-    'repository/docs/implementation-workflow/CHANGELOG.md',
-    'repository/docs/implementation-workflow/scripts',
-    'repository/docs/implementation-workflow/tests',
-  ];
-  for (const path of forbiddenVendoredFiles) {
-    if (existsSync(join(output, path))) {
-      errors.push(`Consumer bundle must not include toolkit-development-only path ${path}.`);
-    }
+  if (generatedInstructions.includes('docs/implementation-workflow/AGENTS-instructions.md')) {
+    errors.push('Consumer Project Instructions must not require a vendored workflow bootstrap.');
+  }
+  if (!generatedInstructions.includes('ferfalcon/figma-to-implementation-workflow')) {
+    errors.push('Consumer Project Instructions must identify the canonical external toolkit repository.');
   }
 } finally {
   rmSync(tempRoot, { recursive: true, force: true });
@@ -88,5 +84,5 @@ if (errors.length > 0) {
   errors.forEach((error) => console.error(`- ${error}`));
   process.exitCode = 1;
 } else {
-  console.log('Consumer bundle test passed (uploadable repository payload and ChatGPT Project Instructions are generated from canonical sources with an immutable executor pin).');
+  console.log('Consumer bundle test passed (thin repository bootstrap, canonical Project Instructions, and immutable external toolkit pin).');
 }
