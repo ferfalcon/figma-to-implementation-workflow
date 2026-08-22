@@ -2,6 +2,8 @@
 
 This workflow converts a design source into a documented, planned, implemented, and validated web project.
 
+The workflow responsibilities are the same for every user. Profiles change artifact granularity according to project complexity and risk; they are not designer/engineer routes or alternate workflows. For AI-assisted first-run execution, [`Agent-Orchestration.md`](Agent-Orchestration.md) classifies the smallest valid profile before initialization and resolves design readiness and execution transport without asking the human to choose a workflow path.
+
 Use:
 
 - [`Workflow-Profiles.md`](Workflow-Profiles.md) for proportional artifact depth;
@@ -26,7 +28,7 @@ Use the stage-specific templates and prompts described below. Lite consolidates 
 
 ## Shared execution rules
 
-1. Respect the selected profile and execution mode. Express uses `WORKPACK.md` for control; other profiles use `SOURCE-BASELINE.md`, `PROJECT-CONTEXT.md`, and `WORKFLOW-STATE.md`.
+1. Respect the classified profile and execution mode. Express uses `WORKPACK.md` for control; other profiles use `SOURCE-BASELINE.md`, `PROJECT-CONTEXT.md`, and `WORKFLOW-STATE.md`.
 2. Inspect actual sources rather than relying on filenames or summaries.
 3. Pin material sources using `SRC-*` records. A mutable URL or branch name alone is not a sufficient snapshot.
 4. Every artifact or consolidated section must reference the snapshot IDs it actually used.
