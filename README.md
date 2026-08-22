@@ -9,7 +9,7 @@ The workflow supports AI-assisted and human-led work with explicit source baseli
 Use the smallest entry point that matches what you are doing:
 
 - **Use the workflow in an implementation project:** start with [`QUICKSTART.md`](QUICKSTART.md) to choose a profile before initialization, then use [`workflow/Design-Implementation-Workflow.md`](workflow/Design-Implementation-Workflow.md) as the normative process overview.
-- **Run the workflow with an AI agent:** use [`AGENTS-instructions.md`](AGENTS-instructions.md) as the permanent consumer-agent bootstrap. It delegates executable behavior to the canonical orchestration contract and the current agent packet.
+- **Run the CLI-managed workflow with an AI agent:** use [`AGENTS-instructions.md`](AGENTS-instructions.md) as the permanent consumer-agent bootstrap. It delegates executable behavior to the canonical orchestration contract and the current agent packet.
 - **Set up a ChatGPT Project around an implementation repository:** copy and adapt [`AI-project-settings.md`](AI-project-settings.md). It defines the ChatGPT host/tool posture and points the project back to the implementation repository and vendored workflow; it is not a workflow-state authority.
 - **Prepare a Figma file before the formal developer-handoff audit:** invoke [`AGENTS-PROMPT-Figma-file-preparation.md`](AGENTS-PROMPT-Figma-file-preparation.md), which delegates to the single canonical preparation procedure.
 - **Develop or change this toolkit:** follow [`AGENTS.md`](AGENTS.md) and [`CONTRIBUTING.md`](CONTRIBUTING.md).
@@ -66,9 +66,14 @@ The exact artifact set and architecture requirements depend on the selected prof
 
 ## State and agent execution
 
-Projects can be CLI-managed or Markdown-only. In CLI-managed projects, `.workflow/workflow-record.json` owns mutable executable workflow state and `.workflow/generated/` contains read-only projections. One of those projections, `.workflow/generated/AGENT-CONTEXT.json`, provides portable current-stage/task/policy/resource routing for agents that can read the repository through GitHub but cannot execute the CLI; it does not own state or authorize CLI mutations. See [`workflow/State-Ownership.md`](workflow/State-Ownership.md) for the canonical ownership model.
+The toolkit supports one executable control mode and one manual/scaffold mode:
 
-AI-agent execution is defined by [`workflow/Agent-Orchestration.md`](workflow/Agent-Orchestration.md) and bootstrapped through [`AGENTS-instructions.md`](AGENTS-instructions.md). Use the executable agent packet when available; otherwise use the generated GitHub routing projection rather than reconstructing workflow state from record/generated Markdown or broad toolkit inspection. The consumer bootstrap owns the exact execution protocol.
+- **CLI-managed:** `.workflow/workflow-record.json` owns mutable executable workflow state and `.workflow/generated/` contains read-only projections. `.workflow/generated/AGENT-CONTEXT.json` provides portable current-stage/task/policy/resource routing for agents that can read the repository through GitHub but cannot execute the CLI; it does not own state or authorize CLI mutations.
+- **Markdown-only manual/scaffold mode:** narrative artifacts contain manually maintained fallback registries. No workflow record, generated routing, lifecycle enforcement, or executable stage/task state exists.
+
+AI-agent workflow orchestration requires CLI-managed control and is defined by [`workflow/Agent-Orchestration.md`](workflow/Agent-Orchestration.md), bootstrapped through [`AGENTS-instructions.md`](AGENTS-instructions.md). Markdown-only documents may still be drafted or reviewed with AI assistance when explicitly requested, but an agent must not infer or claim executable stage/task state, approvals, routing, or transitions from those files. See [`workflow/State-Ownership.md`](workflow/State-Ownership.md) for the canonical ownership boundary.
+
+For CLI-managed agent work, use the executable agent packet when available; otherwise use the generated GitHub routing projection rather than reconstructing workflow state from record/generated Markdown or broad toolkit inspection. The consumer bootstrap owns the exact execution protocol.
 
 ## Repository map
 
