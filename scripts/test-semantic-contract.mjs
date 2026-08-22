@@ -6,16 +6,13 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { AGENT_PROTOCOL_VERSION } from '../cli/lib/agent-context.mjs';
-import { AGENT_PROJECTION_VERSION } from '../cli/lib/agent-projection.mjs';
+import { CONTRACT_COMPATIBILITY } from '../cli/lib/contract-compatibility.mjs';
 import { commandInit } from '../cli/lib/commands-v2.mjs';
 import { commandArchitecture } from '../cli/lib/commands/stage.mjs';
-import { ORCHESTRATION_CONTEXT_PROTOCOL_VERSION } from '../cli/lib/orchestration-context.mjs';
 import {
-  PROFILES, SCHEMA_VERSION, STAGES, artifactTypesForStage,
+  PROFILES, STAGES, artifactTypesForStage,
 } from '../cli/lib/workflow-model.mjs';
 import { loadSemanticContract, semanticContractFindings } from './generate-semantic-contract.mjs';
-import { parseCommandIssue } from './github-remote-command.mjs';
 
 const sink = { write() {} };
 const contract = loadSemanticContract();
@@ -128,9 +125,8 @@ for (const profile of PROFILES) {
     ), 0);
 
     const record = JSON.parse(readFileSync(join(directory, '.workflow', 'workflow-record.json'), 'utf8'));
-    const blocked = record.state.status === 'Blocked';
     assert.equal(
-      blocked,
+      record.state.status === 'Blocked',
       rule.requiredDecisionOutcome === 'must-upgrade',
       `${profile} required-architecture outcome must match the semantic contract`,
     );
@@ -139,47 +135,12 @@ for (const profile of PROFILES) {
   }
 }
 
-const protocols = byId(contract.protocols);
-const executableProtocolVersions = new Map([
-  ['workflow-record-schema', SCHEMA_VERSION],
-  ['orchestration-context', ORCHESTRATION_CONTEXT_PROTOCOL_VERSION],
-  ['agent-context', AGENT_PROTOCOL_VERSION],
-  ['agent-projection', AGENT_PROJECTION_VERSION],
-]);
-for (const [id, version] of executableProtocolVersions) {
-  assert.equal(protocols.get(id)?.version, version, `${id} semantic version must match executable code`);
-}
-
-function remoteCommandEvent(protocolVersion) {
-  return {
-    action: 'opened',
-    issue: {
-      title: '[design-workflow] command',
-      author_association: 'OWNER',
-      number: 1,
-      user: { login: 'semantic-contract-test' },
-      body: `\`\`\`design-workflow-command\n${JSON.stringify({
-        protocolVersion,
-        targetRef: 'main',
-        expectedHead: 'a'.repeat(40),
-        args: ['validate'],
-      })}\n\`\`\``,
-    },
-    repository: { full_name: 'example/semantic-contract-test' },
-  };
-}
-
-const remoteProtocol = protocols.get('github-remote-command');
-assert.ok(remoteProtocol, 'semantic contract must register github-remote-command');
-assert.equal(
-  parseCommandIssue(remoteCommandEvent(remoteProtocol.version)).protocolVersion,
-  remoteProtocol.version,
-  'declared remote command protocol version must be accepted',
-);
-assert.throws(
-  () => parseCommandIssue(remoteCommandEvent(remoteProtocol.version + 1)),
-  /Unsupported remote command protocolVersion/,
-  'a newer undeclared remote command protocol version must be rejected',
+assert.equal(contract.compatibility.owner, 'cli/lib/contract-compatibility.mjs');
+assert.equal(contract.compatibility.humanProjection, 'workflow/Contract-Compatibility.md');
+assert.deepEqual(
+  [...contract.compatibility.contracts].sort(),
+  CONTRACT_COMPATIBILITY.map((item) => item.id).sort(),
+  'semantic compatibility coverage must track every canonical compatibility contract without duplicating versions',
 );
 
-console.log('Semantic contract tests passed (entrypoint ownership, control modes, architecture rules, and protocol versions agree with executable behavior).');
+console.log('Semantic contract tests passed (entrypoint ownership, control modes, architecture rules, and compatibility coverage agree with executable behavior).');

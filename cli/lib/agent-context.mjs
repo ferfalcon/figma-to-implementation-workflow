@@ -1,12 +1,13 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { AGENT_PACKET_PROTOCOL_VERSION } from './contract-compatibility.mjs';
 import { buildOrchestrationContext } from './orchestration-context.mjs';
 import { blockedStageTransitionPolicy } from './stage-transition-policy.mjs';
 import { runtimeToolkitPin } from './toolkit-binding.mjs';
 import { relativeDisplay } from './utils.mjs';
 
-export const AGENT_PROTOCOL_VERSION = 4;
+export const AGENT_PROTOCOL_VERSION = AGENT_PACKET_PROTOCOL_VERSION;
 
 const TOOLKIT_ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const NON_STAGE_EXECUTION_KINDS = new Set(['migration', 'repair']);

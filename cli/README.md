@@ -18,7 +18,7 @@ npx @ferfalcon/design-workflow help
 
 Node.js 22 or newer is required.
 
-## Control modes
+## Executable control and manual scaffolding
 
 CLI-managed is the default and the only executable control mode:
 
@@ -34,12 +34,14 @@ design-workflow init \
 
 Initialization creates a schema-v2 record and only the Stage 0 artifacts for the selected profile. Later artifacts are scaffolded atomically when a passing gate is advanced.
 
-Markdown-only mode creates Stage 0 narrative artifacts without a record, generated views, lifecycle enforcement, or Markdown parsing:
+Markdown-only is a manual/scaffold mode rather than a second executable workflow runtime. It creates narrative artifacts without a record, generated views, lifecycle enforcement, agent packet, generated routing, or Markdown parsing:
 
 ```bash
 design-workflow init --name "Documentation fixture" --profile Standard --control markdown-only
 design-workflow artifact scaffold plan --control markdown-only --project "Documentation fixture" --profile Standard
 ```
+
+Markdown-only artifacts may be drafted or reviewed with AI assistance when explicitly requested, but they do not provide executable agent orchestration. An agent must not infer or claim current stage/task state, approvals, transitions, or validation authority from their manually maintained fallback registries.
 
 ## Generated views
 

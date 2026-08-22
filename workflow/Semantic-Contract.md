@@ -45,16 +45,16 @@ Stage 6 requires an explicit architecture decision: **yes**.
 | Standard | `continue` | `required-when-required` |
 | Full | `continue` | `required` |
 
-## Protocol versions
+## Compatibility contract coverage
 
-| Protocol | Version | Executable source | Verification surface |
-|---|---:|---|---|
-| `workflow-record-schema` | 2 | [`cli/lib/workflow-model.mjs`](../cli/lib/workflow-model.mjs) | `SCHEMA_VERSION` |
-| `orchestration-context` | 3 | [`cli/lib/orchestration-context.mjs`](../cli/lib/orchestration-context.mjs) | `ORCHESTRATION_CONTEXT_PROTOCOL_VERSION` |
-| `agent-context` | 4 | [`cli/lib/agent-context.mjs`](../cli/lib/agent-context.mjs) | `AGENT_PROTOCOL_VERSION` |
-| `agent-projection` | 4 | [`cli/lib/agent-projection.mjs`](../cli/lib/agent-projection.mjs) | `AGENT_PROJECTION_VERSION` |
-| `github-remote-command` | 1 | [`scripts/github-remote-command.mjs`](../scripts/github-remote-command.mjs) | `parseCommandIssue` |
+Version numbers and compatibility rules are owned by [`cli/lib/contract-compatibility.mjs`](../cli/lib/contract-compatibility.mjs) and projected in [`workflow/Contract-Compatibility.md`](Contract-Compatibility.md). This semantic contract only records which compatibility contracts must remain represented across the documentation architecture.
+
+- `workflow-record`
+- `orchestration-context`
+- `agent-packet`
+- `portable-agent-projection`
+- `github-remote-command`
 
 ## Maintenance rule
 
-Change the JSON registry first. Regenerate this projection, then run the semantic-contract behavioral test and the full repository validation suite. Cross-document prose may explain these rules, but it must not become an independent source of truth for the relationships listed here.
+Change the JSON registry first. Regenerate this projection, then run the semantic-contract behavioral test and the full repository validation suite. Cross-document prose may explain these relationships, but it must not become an independent source of truth for the relationships listed here.

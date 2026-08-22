@@ -2,12 +2,12 @@
 
 This document prevents executable state from being maintained independently in several files.
 
-The workflow has two control modes:
+The toolkit has one executable control mode and one manual/scaffold mode:
 
 - **CLI-managed:** `.workflow/workflow-record.json` is canonical. Files under `.workflow/generated/` are read-only projections of canonical state and routing.
-- **Markdown-only:** no workflow record exists. Rendered fallback registries in the narrative artifacts are maintained manually. This mode is scaffolded but not executable.
+- **Markdown-only manual/scaffold:** no workflow record exists. Rendered fallback registries in the narrative artifacts are maintained manually. This mode is scaffolded but not executable and does not provide agent orchestration.
 
-Never mix ownership modes for the same field.
+Never mix ownership models for the same field. Markdown-only documents may be drafted or reviewed with AI assistance when explicitly requested, but no agent may infer or claim executable stage/task state, approvals, next actions, generated routing, lifecycle transitions, or validation authority from those files. An intentionally Markdown-only project with no workflow record is not an uninitialized CLI-managed project.
 
 ## Canonical ownership in CLI-managed mode
 
@@ -127,7 +127,7 @@ When CLI-managed mode is active:
 
 The CLI never overwrites an existing unregistered narrative. If a stage destination exists, use `artifact adopt` before advancement.
 
-Markdown-only rendering includes the complete fallback registries. No record, generated views, parser, or lifecycle enforcement is introduced.
+Markdown-only rendering includes the complete fallback registries. Those registries are manual documentation only: no record, generated views, parser, lifecycle enforcement, agent packet, or generated routing is introduced.
 
 ## Lifecycle history
 
@@ -176,7 +176,7 @@ Commit the canonical record and generated views together whenever a supported CL
 
 ## Review checklist
 
-- [ ] The workflow uses exactly one control mode.
+- [ ] The project uses CLI-managed executable control or Markdown-only manual/scaffold ownership without mixing the same fields between them.
 - [ ] Every executable field has one canonical owner.
 - [ ] CLI-managed canonical state is mutated only through supported `design-workflow` commands.
 - [ ] The record is schema v2 before mutation.
@@ -184,7 +184,7 @@ Commit the canonical record and generated views together whenever a supported CL
 - [ ] No generated file contains manual decisions or rationale.
 - [ ] The agent projection is used only for portable read-side routing, not CLI mutation or runtime-integrity claims.
 - [ ] CLI-managed artifacts omit record-owned status, registries, validation results, and output lineage.
-- [ ] Markdown-only artifacts retain complete fallback registries.
+- [ ] Markdown-only artifacts retain complete fallback registries without being treated as executable agent state.
 - [ ] Snapshot, artifact, gate, task, profile, and final-review history is preserved rather than rewritten.
 - [ ] Trace definitions have active compatible owners and required coverage.
 - [ ] Task start has no dirty narrative or implementation-scope paths; only workflow-control files may remain dirty.

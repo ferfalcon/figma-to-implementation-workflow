@@ -97,14 +97,16 @@ export function semanticContractFindings(contract, { rootDir = root } = {}) {
     push('architecture.profiles must be an object');
   }
 
-  const protocols = Array.isArray(contract.protocols) ? contract.protocols : [];
-  if (protocols.length === 0) push('protocols must contain at least one protocol');
-  for (const id of duplicates(protocols.map((protocol) => protocol?.id))) push(`duplicate protocol id: ${id}`);
-  for (const protocol of protocols) {
-    if (typeof protocol?.id !== 'string' || !protocol.id) push('every protocol requires a non-empty id');
-    if (!Number.isInteger(protocol?.version) || protocol.version < 1) push(`protocol ${protocol?.id ?? '<missing>'} requires a positive integer version`);
-    if (!repositoryPathExists(protocol?.source, rootDir)) push(`protocol source does not exist: ${protocol?.source ?? '<missing>'}`);
-    if (typeof protocol?.verification !== 'string' || !protocol.verification) push(`protocol ${protocol?.id ?? '<missing>'} requires verification metadata`);
+  const compatibility = contract.compatibility ?? {};
+  if (!repositoryPathExists(compatibility.owner, rootDir)) push(`compatibility owner does not exist: ${compatibility.owner ?? '<missing>'}`);
+  if (!repositoryPathExists(compatibility.humanProjection, rootDir)) push(`compatibility projection does not exist: ${compatibility.humanProjection ?? '<missing>'}`);
+  if (!Array.isArray(compatibility.contracts) || compatibility.contracts.length === 0) {
+    push('compatibility.contracts must contain at least one contract id');
+  } else {
+    for (const id of duplicates(compatibility.contracts)) push(`duplicate compatibility contract id: ${id}`);
+    for (const id of compatibility.contracts) {
+      if (typeof id !== 'string' || !id) push('every compatibility contract id must be a non-empty string');
+    }
   }
 
   return findings;
@@ -144,9 +146,7 @@ export function renderSemanticContractMarkdown(contract) {
   }
 
   lines.push('', '## Canonical domains', '', '| Domain | Canonical owner |', '|---|---|');
-  for (const domain of contract.domains) {
-    lines.push(`| \`${cell(domain.id)}\` | ${markdownLink(domain.owner)} |`);
-  }
+  for (const domain of contract.domains) lines.push(`| \`${cell(domain.id)}\` | ${markdownLink(domain.owner)} |`);
 
   lines.push('', '## Control modes', '', '| Mode | Executable control plane | Canonical mutable state | Generated projections |', '|---|---:|---|---|');
   for (const mode of contract.controlModes) {
@@ -158,21 +158,23 @@ export function renderSemanticContractMarkdown(contract) {
     lines.push(`| ${cell(profile)} | \`${cell(rule.requiredDecisionOutcome)}\` | \`${cell(rule.artifactPolicy)}\` |`);
   }
 
-  lines.push('', '## Protocol versions', '', '| Protocol | Version | Executable source | Verification surface |', '|---|---:|---|---|');
-  for (const protocol of contract.protocols) {
-    lines.push(`| \`${cell(protocol.id)}\` | ${protocol.version} | ${markdownLink(protocol.source)} | \`${cell(protocol.verification)}\` |`);
-  }
+  lines.push(
+    '',
+    '## Compatibility contract coverage',
+    '',
+    `Version numbers and compatibility rules are owned by ${markdownLink(contract.compatibility.owner)} and projected in ${markdownLink(contract.compatibility.humanProjection)}. This semantic contract only records which compatibility contracts must remain represented across the documentation architecture.`,
+    '',
+  );
+  for (const id of contract.compatibility.contracts) lines.push(`- \`${cell(id)}\``);
 
-  lines.push('', '## Maintenance rule', '', 'Change the JSON registry first. Regenerate this projection, then run the semantic-contract behavioral test and the full repository validation suite. Cross-document prose may explain these rules, but it must not become an independent source of truth for the relationships listed here.', '');
+  lines.push('', '## Maintenance rule', '', 'Change the JSON registry first. Regenerate this projection, then run the semantic-contract behavioral test and the full repository validation suite. Cross-document prose may explain these relationships, but it must not become an independent source of truth for the relationships listed here.', '');
   return lines.join('\n');
 }
 
 export function generateSemanticContract({ check = false } = {}) {
   const contract = loadSemanticContract();
   const findings = semanticContractFindings(contract);
-  if (findings.length > 0) {
-    throw new Error(`Semantic contract is invalid:\n${findings.map((finding) => `- ${finding}`).join('\n')}`);
-  }
+  if (findings.length > 0) throw new Error(`Semantic contract is invalid:\n${findings.map((finding) => `- ${finding}`).join('\n')}`);
 
   const rendered = renderSemanticContractMarkdown(contract);
   if (check) {

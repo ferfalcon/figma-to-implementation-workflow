@@ -163,36 +163,15 @@
       }
     }
   },
-  "protocols": [
-    {
-      "id": "workflow-record-schema",
-      "version": 2,
-      "source": "cli/lib/workflow-model.mjs",
-      "verification": "SCHEMA_VERSION"
-    },
-    {
-      "id": "orchestration-context",
-      "version": 3,
-      "source": "cli/lib/orchestration-context.mjs",
-      "verification": "ORCHESTRATION_CONTEXT_PROTOCOL_VERSION"
-    },
-    {
-      "id": "agent-context",
-      "version": 4,
-      "source": "cli/lib/agent-context.mjs",
-      "verification": "AGENT_PROTOCOL_VERSION"
-    },
-    {
-      "id": "agent-projection",
-      "version": 4,
-      "source": "cli/lib/agent-projection.mjs",
-      "verification": "AGENT_PROJECTION_VERSION"
-    },
-    {
-      "id": "github-remote-command",
-      "version": 1,
-      "source": "scripts/github-remote-command.mjs",
-      "verification": "parseCommandIssue"
-    }
-  ]
+  "compatibility": {
+    "owner": "cli/lib/contract-compatibility.mjs",
+    "humanProjection": "workflow/Contract-Compatibility.md",
+    "contracts": [
+      "workflow-record",
+      "orchestration-context",
+      "agent-packet",
+      "portable-agent-projection",
+      "github-remote-command"
+    ]
+  }
 }

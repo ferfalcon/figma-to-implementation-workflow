@@ -16,6 +16,8 @@ This is GitHub-first, not GitHub-only. Keep repository state and workflow state 
 
 ## Workflow bootstrap
 
+This contract governs CLI-managed execution. Markdown-only is a manual/scaffold mode, not an executable agent-orchestration mode. When Markdown-only is explicitly selected, agents may draft or review artifacts when asked but must not infer or claim current stage/task state, approvals, routing, or transitions. Its missing workflow record is intentional.
+
 For CLI-managed work, prefer:
 
 ```bash
