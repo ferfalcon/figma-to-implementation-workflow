@@ -131,6 +131,24 @@ for (const [pattern, description] of forbiddenProjectWorkflowDetails) {
   }
 }
 
+const implementationRootRequirements = [
+  [/Treat `<IMPLEMENTATION_ROOT>` as the repo-relative implementation boundary/i, 'define Implementation root as a repository-relative implementation boundary'],
+  [/`\.` for repo root; e\.g\. `frontend\/` or `apps\/web\/` when nested/i, 'document root and nested Implementation root examples'],
+  [/scope app code inspection, edits, app-specific commands, architecture, and validation to it/i, 'scope implementation work to Implementation root'],
+  [/Go outside it only for required repo-wide integration/i, 'limit outside-root work to required repository-wide integration'],
+  [/Instruction files may be read outside it without expanding the edit boundary/i, 'allow governing instructions outside Implementation root without widening edit scope'],
+];
+
+for (const [pattern, description] of implementationRootRequirements) {
+  if (!pattern.test(projectSettings)) {
+    errors.push(`ChatGPT Project settings must ${description}.`);
+  }
+}
+
+if (projectSettings.length > 8000) {
+  errors.push(`ChatGPT Project settings exceed the 8000-character host limit (${projectSettings.length} characters).`);
+}
+
 if (!toolkitAgents.includes('# Repository Guidelines')) {
   errors.push('AGENTS.md must remain the toolkit repository-development contract.');
 }
