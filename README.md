@@ -4,7 +4,7 @@
 
 A single, evidence-driven workflow for turning design intent into validated implementation — whether your strongest side is design or engineering.
 
-Designers do not need to become engineers. Engineers do not need to become advanced Figma practitioners. Connect the project sources, add the workflow, and tell ChatGPT to start. The workflow keeps the handoff scoped, traceable, approval-aware, and validated.
+Designers do not need to become engineers. Engineers do not need to become advanced Figma practitioners. Connect the project sources, install the workflow through ChatGPT, and tell ChatGPT to start. The workflow keeps the handoff scoped, traceable, approval-aware, and validated.
 
 **One workflow. One onboarding. No user route selection.**
 
@@ -44,15 +44,40 @@ The workflow is identical in both cases. User profession, terminal familiarity, 
 
 The normal consumer setup is intentionally small:
 
-1. Add the workflow consumer files to the implementation repository.
-2. Connect GitHub and Figma to your ChatGPT Project.
-3. Copy [`AI-project-settings.md`](AI-project-settings.md) into the ChatGPT Project instructions.
-4. Customize the project values at the top of that file.
-5. Tell ChatGPT: **“Start the implementation workflow.”**
+1. Connect GitHub and Figma to your ChatGPT Project.
+2. Copy [`AI-project-settings.md`](AI-project-settings.md) into the ChatGPT Project instructions and customize the project values at the top.
+3. Tell ChatGPT: **“Install the Design-to-Implementation Workflow in this repository.”**
+4. Tell ChatGPT: **“Start the implementation workflow.”**
 
-From there, the agent resolves the project details that should not become user routing questions. It inspects the configured design and repository scope, determines whether design-source preparation is required, classifies the smallest valid workflow profile, discovers the current workflow state, resolves direct versus GitHub-hosted CLI execution, and continues until a real human approval, consequential decision, or capability blocker is reached.
+The installation step is repository setup, not a second workflow route. ChatGPT resolves the canonical toolkit repository to an exact immutable revision and installs only the thin GitHub caller when remote execution is required. The implementation repository does not need a copied `docs/implementation-workflow/` toolkit tree.
+
+From there, the agent inspects the configured design and repository scope, determines whether design-source preparation is required, classifies the smallest valid workflow profile, discovers the current workflow state, resolves direct versus GitHub-hosted CLI execution, and continues until a real human approval, consequential decision, or capability blocker is reached.
 
 See [`QUICKSTART.md`](QUICKSTART.md) for the complete consumer setup and first-run contract.
+
+## External pinned toolkit model
+
+The workflow toolkit is a dependency, not part of the implementation project's product source.
+
+The normal GitHub-first lifecycle has three dependency-authority phases:
+
+```text
+Before install
+canonical toolkit repository
+        ↓ resolve once
+exact bootstrap commit SHA
+        ↓
+Installed, not initialized
+.github/workflows/design-workflow-command.yml
+        ↓ owns bootstrap pin
+Initialized
+.workflow/workflow-record.json
+        ↓ owns canonical toolkit binding
+```
+
+Before initialization, ChatGPT resolves the canonical toolkit repository's current default-branch HEAD once to an exact 40-character Git SHA when no caller exists. After that resolution, workflow resources are loaded from that immutable revision rather than from a branch or floating tag.
+
+After initialization, `.workflow/workflow-record.json` becomes the canonical toolkit binding and generated agent context identifies the exact required resources for each turn.
 
 ## No local terminal required
 
@@ -119,13 +144,13 @@ The toolkit supports one executable control mode and one manual/scaffold mode:
 - **CLI-managed:** `.workflow/workflow-record.json` owns mutable executable workflow state and `.workflow/generated/` contains read-only projections. AI-agent orchestration uses this mode.
 - **Markdown-only manual/scaffold:** narrative artifacts can be maintained manually, but no executable stage/task state, generated routing, lifecycle enforcement, or agent orchestration exists.
 
-For CLI-managed agent work, [`AGENTS-instructions.md`](AGENTS-instructions.md) is the permanent consumer bootstrap. It delegates executable behavior to [`workflow/Agent-Orchestration.md`](workflow/Agent-Orchestration.md) and the exact current resources selected by the workflow runtime.
+For CLI-managed agent work, [`AGENTS-instructions.md`](AGENTS-instructions.md) is the permanent consumer bootstrap. It may be loaded directly from the pinned external toolkit revision; it does not need to be copied into the implementation repository. It delegates executable behavior to [`workflow/Agent-Orchestration.md`](workflow/Agent-Orchestration.md) and the exact current resources selected by the workflow runtime.
 
 Do not manually edit `.workflow/workflow-record.json` or `.workflow/generated/*`.
 
 ## Consumer bundle
 
-The repository includes a generator for an uploadable consumer package:
+A thin generated consumer bundle remains available as a manual fallback for environments where ChatGPT cannot install the caller directly through GitHub:
 
 ```bash
 npm run build:consumer-bundle -- --revision <40-character-toolkit-commit-sha>
@@ -133,15 +158,23 @@ npm run build:consumer-bundle -- --revision <40-character-toolkit-commit-sha>
 
 The generated bundle contains:
 
-- `repository/` — files to add to the implementation repository, including the vendored runtime toolkit and the GitHub remote caller;
+- `repository/.github/workflows/design-workflow-command.yml` — the thin GitHub caller pinned to the exact toolkit revision;
 - `ChatGPT-Project-Instructions.md` — generated directly from `AI-project-settings.md`;
-- `consumer-bundle-manifest.json` — bundle format and immutable toolkit identity.
+- `consumer-bundle-manifest.json` — bundle format, external installation model, and immutable toolkit identity.
 
-The generated GitHub caller is pinned to the exact revision supplied to the build command. The build intentionally excludes toolkit-development-only files from the vendored consumer payload.
+The bundle intentionally does **not** vendor the runtime toolkit into the implementation repository.
 
 ## Advanced and direct usage
 
-You can use the toolkit without ChatGPT as well:
+Local environments can install the toolkit directly from GitHub at an exact revision:
+
+```bash
+npm install --save-dev github:ferfalcon/figma-to-implementation-workflow#<40-character-toolkit-commit-sha>
+```
+
+The package exposes the `design-workflow` executable.
+
+Other technical references:
 
 - [`cli/README.md`](cli/README.md) — direct CLI commands and schemas;
 - [`schemas/README.md`](schemas/README.md) — machine-readable control definitions;
@@ -164,7 +197,7 @@ These are technical surfaces, not separate consumer workflows.
 | `scripts/` and `tests/` | Repository integrity, bundle generation, semantic validation, and regression coverage |
 | `AGENTS-instructions.md` | Consumer-agent bootstrap |
 | `AGENTS-PROMPT-Figma-file-preparation.md` | Narrow explicit preparation-only launcher |
-| `AI-project-settings.md` | ChatGPT Project host template; not workflow-state authority |
+| `AI-project-settings.md` | ChatGPT Project host template and external bootstrap discovery |
 | `AGENTS.md` | Toolkit-development instructions |
 
 ## Reference contracts
