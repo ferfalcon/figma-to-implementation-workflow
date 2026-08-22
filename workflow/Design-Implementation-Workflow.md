@@ -157,7 +157,7 @@ Meaningful routing, shared state, data flow, APIs, integrations, persistence, au
 
 ## Express
 
-Express does not permit a separate architecture decision. If meaningful architecture is required, stop and upgrade to Standard or Full, or to Lite only when the concern can remain safely bounded without a separate architecture artifact.
+Express does not permit required architecture or a separate architecture artifact. Stage 6 still requires an explicit `not-required` architecture decision. If meaningful architecture is required, stop and upgrade to Standard or Full, or to Lite only when the concern can remain safely bounded without a separate architecture artifact.
 
 ## Lite, Standard, and Full
 

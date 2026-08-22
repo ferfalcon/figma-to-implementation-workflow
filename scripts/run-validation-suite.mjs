@@ -22,6 +22,7 @@ export const validationSteps = [
   { name: 'workflow validation architecture', script: 'scripts/test-workflow-validation-architecture.mjs' },
   { name: 'workflow record', script: 'scripts/test-workflow-record.mjs' },
   { name: 'canonical invariants', script: 'scripts/test-canonical-invariants.mjs' },
+  { name: 'architecture contract', script: 'scripts/test-architecture-contract.mjs' },
   { name: 'stage gates', script: 'scripts/test-stage-gates.mjs' },
   { name: 'generated state', script: 'scripts/test-generated-state.mjs' },
   { name: 'agent projection', script: 'scripts/test-agent-projection.mjs' },
