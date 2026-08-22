@@ -13,6 +13,7 @@ const projectSettings = read('AI-project-settings.md');
 const toolkitAgents = read('AGENTS.md');
 const consumerAgents = read('AGENTS-instructions.md');
 const figmaLauncher = read('AGENTS-PROMPT-Figma-file-preparation.md');
+const remoteExecution = read('workflow/GitHub-Remote-Execution.md');
 const errors = [];
 
 const requiredReadmeLinks = [
@@ -61,8 +62,12 @@ if (/design-workflow\s+agent-context\s+--json/i.test(readme)) {
 }
 
 const profileSelectionHeading = '## 1. Choose a profile before initialization';
+const executionPathHeading = '## 2. Choose an execution path before initialization';
+const initializationHeading = '## 3. Initialize the selected profile';
 const expressExampleHeading = '## Express worked example';
 const profileSelectionIndex = quickstart.indexOf(profileSelectionHeading);
+const executionPathIndex = quickstart.indexOf(executionPathHeading);
+const initializationIndex = quickstart.indexOf(initializationHeading);
 const expressExampleIndex = quickstart.indexOf(expressExampleHeading);
 
 if (!quickstart.startsWith('# Quickstart: Choose a Workflow Profile and Start')) {
@@ -73,14 +78,29 @@ if (profileSelectionIndex === -1) {
   errors.push('QUICKSTART must make profile selection the first numbered decision.');
 }
 
+if (executionPathIndex === -1) {
+  errors.push('QUICKSTART must choose local CLI versus GitHub/connector-only execution before initialization.');
+}
+
+if (initializationIndex === -1) {
+  errors.push('QUICKSTART must initialize only after profile and execution-path selection.');
+}
+
 if (!quickstart.includes('](workflow/Workflow-Profiles.md)')) {
   errors.push('QUICKSTART must delegate canonical profile rules to workflow/Workflow-Profiles.md.');
 }
 
 if (expressExampleIndex === -1) {
   errors.push('QUICKSTART must preserve Express as an explicitly labeled worked example.');
-} else if (profileSelectionIndex === -1 || expressExampleIndex <= profileSelectionIndex) {
-  errors.push('QUICKSTART profile selection must appear before the Express worked example.');
+} else if (
+  profileSelectionIndex === -1
+  || executionPathIndex === -1
+  || initializationIndex === -1
+  || !(profileSelectionIndex < executionPathIndex
+    && executionPathIndex < initializationIndex
+    && initializationIndex < expressExampleIndex)
+) {
+  errors.push('QUICKSTART must order profile selection, execution-path selection, initialization, then the Express example.');
 }
 
 const quickstartRouting = expressExampleIndex === -1 ? quickstart : quickstart.slice(0, expressExampleIndex);
@@ -96,6 +116,24 @@ if (!quickstartRouting.includes('--profile "<selected-profile>"')) {
 
 if (/--profile\s+Express/.test(quickstartRouting)) {
   errors.push('QUICKSTART must not hard-code Express before the reader has selected a profile.');
+}
+
+const remoteQuickstartRequirements = [
+  [/### Local CLI available/i, 'present a local CLI execution path'],
+  [/### GitHub\/connector-only execution/i, 'present a GitHub/connector-only execution path'],
+  [/templates\/github\/design-workflow-command\.yml\.template/i, 'identify the canonical remote caller template'],
+  [/\.github\/workflows\/design-workflow-command\.yml/i, 'identify the caller installation path'],
+  [/exact 40-character commit SHA/i, 'require an immutable remote-executor revision'],
+  [/default branch before initialization/i, 'require caller installation on the default branch before initialization'],
+  [/workflow\/GitHub-Remote-Execution\.md/i, 'delegate remote protocol details to the canonical remote-execution contract'],
+  [/"init"[\s\S]*"--repository"[\s\S]*"\."/i, 'show the canonical remote init argument vector'],
+  [/recordGitBlobSha/i, 'require projection freshness verification after remote initialization'],
+];
+
+for (const [pattern, description] of remoteQuickstartRequirements) {
+  if (!pattern.test(quickstartRouting)) {
+    errors.push(`QUICKSTART remote-first onboarding must ${description}.`);
+  }
 }
 
 if (!projectSettings.includes('docs/implementation-workflow/AGENTS-instructions.md')) {
@@ -157,6 +195,27 @@ if (!consumerAgents.includes('# Agent bootstrap contract')) {
   errors.push('AGENTS-instructions.md must remain the implementation-project consumer bootstrap.');
 }
 
+if (!/first-run GitHub-only project/i.test(consumerAgents)
+  || !/One-time repository installation/i.test(consumerAgents)
+  || !/before remote `init`/i.test(consumerAgents)) {
+  errors.push('AGENTS-instructions.md must route first-run GitHub-only projects through caller installation before remote init.');
+}
+
+const remoteExecutionRequirements = [
+  [/^### Remote-only first run$/im, 'define an explicit remote-only first-run procedure'],
+  [/caller installation is \*\*step zero\*\*/i, 'treat caller installation as pre-initialization setup'],
+  [/default branch/i, 'require the caller on the repository default branch'],
+  [/target branch[\s\S]*expectedHead/i, 'refresh target-branch HEAD after repository setup'],
+  [/remote `init`/i, 'use the canonical remote init transition'],
+  [/recordGitBlobSha/i, 'verify the regenerated projection after initialization'],
+];
+
+for (const [pattern, description] of remoteExecutionRequirements) {
+  if (!pattern.test(remoteExecution)) {
+    errors.push(`GitHub-Remote-Execution.md must ${description}.`);
+  }
+}
+
 if (!figmaLauncher.includes('single normative procedure')) {
   errors.push('Figma preparation launcher must identify one canonical preparation owner.');
 }
@@ -166,5 +225,5 @@ if (errors.length > 0) {
   errors.forEach((error) => console.error(`- ${error}`));
   process.exitCode = 1;
 } else {
-  console.log('Entrypoint authority test passed (root entry points remain role-specific, Project settings stay host-only, and Quickstart selects a profile before examples).');
+  console.log('Entrypoint authority test passed (root entry points remain role-specific, remote-first initialization is explicit, Project settings stay host-only, and Quickstart selects a profile before examples).');
 }

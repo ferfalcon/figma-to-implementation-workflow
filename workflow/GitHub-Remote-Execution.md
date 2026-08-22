@@ -33,6 +33,21 @@ Repository/organization Actions policy must permit the pinned public reusable wo
 
 Install this caller before initializing the design workflow when possible. Adding the caller later is a real repository commit and may affect implementation lineage if it is introduced after planning baselines are already approved.
 
+### Remote-only first run
+
+When no workflow record exists and local CLI execution is unavailable, caller installation is **step zero** rather than a later recovery action:
+
+1. choose the exact immutable toolkit commit that contains the remote executor you intend to use;
+2. install the pinned caller on the implementation repository's default branch and commit or merge it there;
+3. verify repository/organization Actions policy permits the caller and pinned reusable workflow;
+4. read the current HEAD of the existing target branch after repository setup is complete. If the target branch is the default branch, the caller-installation commit changes the `expectedHead` that must be used for `init`;
+5. submit remote `init` through the command issue protocol below, using that fresh target-branch HEAD;
+6. after successful initialization, re-read `.workflow/workflow-record.json` and `.workflow/generated/AGENT-CONTEXT.json`, verify the projection's `generated.recordGitBlobSha` against the current record blob SHA at the same ref, and continue from the refreshed projection.
+
+If the correctly pinned caller already exists on the default branch, do not rewrite it merely to begin initialization. Verify its pin and the applicable Actions policy, then continue with the fresh target-branch HEAD.
+
+Do not intentionally initialize first and install the transport afterward when the transport is required for all mutations. Installing it before `init` keeps the transport commit outside workflow planning baselines. If an existing initialized project needs the caller added later, treat that installation as a real repository change and assess its lineage impact before task execution rather than hiding or rewriting history.
+
 ## Command issue protocol
 
 Create one GitHub Issue with the exact title:
@@ -69,16 +84,17 @@ Each command issue is single-use. The executor posts a result and closes it. If 
 
 When local CLI execution is unavailable:
 
-1. Read `.workflow/generated/AGENT-CONTEXT.json` when it exists.
-2. Verify `generated.recordGitBlobSha` against GitHub's current `.workflow/workflow-record.json` blob `sha` at the same ref before trusting the projection.
-3. Load only the exact pinned workflow resources it identifies and perform the design/repository/narrative work required by the current stage or task.
-4. Verify `.github/workflows/design-workflow-command.yml` exists on the repository default branch before treating remote execution as available.
-5. If runtime preflight is required, submit a remote `stage check --json` request and use the reported CLI output before deciding the gate result.
-6. When a CLI-owned transition is permitted, read the current target branch HEAD from GitHub and submit a command issue using that SHA as `expectedHead`.
-7. Wait for the issue result before treating the transition as recorded. Re-read the branch and `.workflow/generated/AGENT-CONTEXT.json` after a successful mutating command.
-8. Continue only as allowed by the refreshed state and workflow execution mode.
+1. If no `.workflow/workflow-record.json` exists, do not expect a generated projection yet. Verify the caller exists on the repository default branch; if it is absent and repository mutation is authorized, complete **Remote-only first run** above before submitting remote `init`. If the caller cannot be installed because of permission or Actions-policy constraints, remote mutation is blocked.
+2. When a workflow record exists, read `.workflow/generated/AGENT-CONTEXT.json` when it exists.
+3. Verify `generated.recordGitBlobSha` against GitHub's current `.workflow/workflow-record.json` blob `sha` at the same ref before trusting the projection.
+4. Load only the exact pinned workflow resources it identifies and perform the design/repository/narrative work required by the current stage or task.
+5. Verify `.github/workflows/design-workflow-command.yml` exists on the repository default branch before treating remote execution as available.
+6. If runtime preflight is required, submit a remote `stage check --json` request and use the reported CLI output before deciding the gate result.
+7. When a CLI-owned transition is permitted, read the current target branch HEAD from GitHub and submit a command issue using that SHA as `expectedHead`.
+8. Wait for the issue result before treating the transition as recorded. Re-read the branch and `.workflow/generated/AGENT-CONTEXT.json` after a successful mutating command.
+9. Continue only as allowed by the refreshed state and workflow execution mode.
 
-If `AGENT-CONTEXT.json` is missing or stale but the record exists, remote `sync` can regenerate it through the canonical CLI. If no workflow record exists, remote `init` is the bootstrap path.
+If `AGENT-CONTEXT.json` is missing or stale but the record exists, remote `sync` can regenerate it through the canonical CLI. If no workflow record exists, remote `init` is the bootstrap path after the caller installation above.
 
 A remote command issue is an execution request, **not approval evidence**. In Gated mode it must not replace human approval. An agent may submit a command containing `--approved-by` only after the required explicit human approval already exists; GitHub write access or the ability to create an issue does not grant approval authority.
 
