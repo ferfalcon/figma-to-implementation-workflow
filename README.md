@@ -97,6 +97,7 @@ Read these when the current task needs the corresponding domain:
 - [`workflow/Identifier-Conventions.md`](workflow/Identifier-Conventions.md) — stable identifiers and traceability namespaces.
 - [`workflow/Validation-Rules.md`](workflow/Validation-Rules.md) — validation evidence, review passes, retesting, and final acceptance.
 - [`workflow/Agent-Orchestration.md`](workflow/Agent-Orchestration.md) — canonical AI-agent runtime behavior.
+- [`workflow/Contract-Compatibility.md`](workflow/Contract-Compatibility.md) — generated map of independently versioned record, context, agent, projection, and remote-transport contracts plus their compatibility relationships.
 
 ## Toolkit validation
 

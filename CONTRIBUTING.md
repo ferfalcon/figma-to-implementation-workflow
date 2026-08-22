@@ -20,6 +20,7 @@ Contributions should improve the workflow without weakening evidence, accessibil
 - Reusable project artifact structures belong in `templates/`.
 - Stage-specific or profile-specific executable instructions belong in `prompts/`.
 - Machine-readable control definitions belong in `schemas/`.
+- Independent external contract versions and compatibility relationships belong in `cli/lib/contract-compatibility.mjs`; `workflow/Contract-Compatibility.md` is generated from that source and must not be edited manually.
 - Non-normative demonstrations belong in `examples/`.
 - Repository and semantic checks belong in `scripts/`.
 - Validator fixtures belong in `tests/fixtures/`.
@@ -60,7 +61,8 @@ Repository-level contracts must evolve together:
 - new work after the current release belongs under `## [Unreleased]` until the next version is intentionally released;
 - required human, agent, host, and contributor entry points must remain discoverable from the README `Choose your entry point` section;
 - canonical workflow contracts must remain reachable from the README reference map or the narrow entry point that delegates to them;
-- focused authority tests should protect root launchers or host templates when duplication would create competing owners.
+- focused authority tests should protect root launchers or host templates when duplication would create competing owners;
+- when the workflow-record schema, orchestration context, agent packet, portable projection, or GitHub remote-command contract changes, update only that contract's version/compatibility entry in `cli/lib/contract-compatibility.mjs`, regenerate `workflow/Contract-Compatibility.md`, and update the affected producer/consumer tests. Never bump unrelated contracts merely to align version numbers.
 
 Do not fix release drift by inventing a version bump. Decide the intended released version first, then align package metadata, changelog history, discovery links, and validation together.
 
@@ -72,7 +74,7 @@ Run the full repository validation contract:
 npm run validate
 ```
 
-The validation runner executes every repository check sequentially, continues after individual failures, reports per-check timing, and prints one aggregate failure summary. Focused `npm run test:*` scripts remain useful while iterating, but `npm run validate` must pass before a structural, profile, schema, semantic-rule, packaging, or link change is considered complete.
+The validation runner executes every repository check sequentially, continues after individual failures, reports per-check timing, and prints one aggregate failure summary. It also checks that the generated contract-compatibility table matches its machine-readable source. Focused `npm run test:*` scripts remain useful while iterating, but `npm run validate` must pass before a structural, profile, schema, semantic-rule, packaging, or link change is considered complete.
 
 Also perform two review passes:
 

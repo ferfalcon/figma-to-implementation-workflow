@@ -1,6 +1,11 @@
 import { createHash } from 'node:crypto';
 import { basename } from 'node:path';
 import { validateWorkflowRecord } from './canonical-validation.mjs';
+import {
+  LEGACY_WORKFLOW_RECORD_SCHEMA_VERSION,
+  PORTABLE_AGENT_PROJECTION_VERSION,
+  WORKFLOW_RECORD_SCHEMA_VERSION,
+} from './contract-compatibility.mjs';
 import { stageResources, stageTargets } from './orchestration-resources.mjs';
 import {
   currentTaskForRecord, executionKind, implementationAllowed, latestVerification, taskSummary,
@@ -10,7 +15,7 @@ import { toolkitBindingFromRecord } from './toolkit-binding.mjs';
 import { deriveNextAction, readyTask } from './workflow-actions.mjs';
 import { STAGES } from './workflow-model.mjs';
 
-export const AGENT_PROJECTION_VERSION = 4;
+export const AGENT_PROJECTION_VERSION = PORTABLE_AGENT_PROJECTION_VERSION;
 export const AGENT_PROJECTION_FILE = 'AGENT-CONTEXT.json';
 
 function workflowRecordGitBlobSha(record) {
@@ -33,7 +38,7 @@ function targetArtifacts(record, targets) {
 }
 
 function workflowMutationPolicy(record, valid) {
-  if (record.schemaVersion === 1) return 'migration-required-via-cli';
+  if (record.schemaVersion === LEGACY_WORKFLOW_RECORD_SCHEMA_VERSION) return 'migration-required-via-cli';
   if (!valid) return 'repair-required-via-cli';
   return 'cli-required';
 }
@@ -78,7 +83,7 @@ export function buildAgentProjection(recordPath, record, recordDigest) {
     control: {
       mode: 'cli-managed',
       schemaVersion: record.schemaVersion,
-      readOnly: record.schemaVersion !== 2,
+      readOnly: record.schemaVersion !== WORKFLOW_RECORD_SCHEMA_VERSION,
     },
     project: {
       name: record.project.name,
