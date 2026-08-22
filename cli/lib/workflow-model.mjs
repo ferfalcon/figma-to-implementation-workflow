@@ -1,5 +1,10 @@
-export const SCHEMA_VERSION = 2;
-export const LEGACY_SCHEMA_VERSION = 1;
+import {
+  LEGACY_WORKFLOW_RECORD_SCHEMA_VERSION,
+  WORKFLOW_RECORD_SCHEMA_VERSION,
+} from './contract-compatibility.mjs';
+
+export const SCHEMA_VERSION = WORKFLOW_RECORD_SCHEMA_VERSION;
+export const LEGACY_SCHEMA_VERSION = LEGACY_WORKFLOW_RECORD_SCHEMA_VERSION;
 
 export const PROFILES = ['Express', 'Lite', 'Standard', 'Full'];
 export const PROFILE_RANK = new Map(PROFILES.map((profile, index) => [profile, index]));
@@ -192,4 +197,3 @@ export function domainKind(id) {
   if (id.startsWith('IMPL-')) return 'Implementation finding';
   return null;
 }
-
