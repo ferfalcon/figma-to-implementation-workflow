@@ -75,7 +75,7 @@ design-workflow migrate --check
 design-workflow migrate
 ```
 
-`--check` reports the deterministic conversion without writing and exits non-zero when migration is required. Migration assigns artifact paths, infers optional trace owners, leaves migrated trace definitions optional, converts legacy checks to structured `kind: Other` checks, and records a `legacyBoundary` at the current stage. A legacy Passed check without a trustworthy execution timestamp is preserved as evidence but changed to `Not executed` so it must be rerun before completion. Running `migrate` again is a no-op.
+`--check` reports the deterministic conversion without writing and exits non-zero when migration is required. Migration assigns artifact paths, infers optional trace definitions, converts legacy checks to structured `kind: Other` checks, and records a `legacyBoundary` at the current stage. A legacy Passed check without a trustworthy execution timestamp is preserved as evidence but changed to `Not executed` so it must be rerun before completion. Running `migrate` again is a no-op.
 
 ## Stage decisions
 
@@ -239,7 +239,7 @@ design-workflow profile upgrade finish \
   --approved-by "Reviewer"
 ```
 
-`start` selects the higher profile, rewinds, blocks advancement, and scaffolds missing target artifacts—including compatible owner artifacts for active trace items. If implementation was already in progress, it resets the current task to `Ready` and invalidates execution-time validation so the affected task must be rerun after reconciliation. While a profile transition is active, the canonical next action points to artifact reconciliation and transition completion rather than the generic Blocked-state instruction. Before `finish`, reconcile target artifacts and move active trace items off obsolete Workpack or Implementation Brief owners with `trace update --owner`. `finish` then supersedes obsolete consolidated artifacts. Downgrades are rejected.
+`start` selects the higher profile, rewinds, blocks advancement, and scaffolds missing target artifacts—including compatible owner artifacts for active trace items. If implementation was already in progress, it resets the current task to `Ready` and invalidates execution-time validation so the task must be rerun after reconciliation. While a profile transition is active, the canonical next action points to artifact reconciliation and transition completion rather than the generic Blocked-state instruction. Before `finish`, reconcile target artifacts and move active trace items off obsolete Workpack or Implementation Brief owners with `trace update --owner`. `finish` then supersedes obsolete consolidated artifacts. Downgrades are rejected.
 
 ## Final review
 
