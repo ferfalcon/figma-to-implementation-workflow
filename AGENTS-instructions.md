@@ -16,7 +16,7 @@ This is GitHub-first, not GitHub-only. Keep repository state and workflow state 
 
 ## Workflow bootstrap
 
-This execution contract applies to CLI-managed workflow projects. Markdown-only is a manual/scaffold mode, not an executable agent-orchestration mode. In an intentionally Markdown-only project, an agent may help draft or review narrative artifacts only when explicitly asked, but must not infer or claim current stage/task state, approvals, next actions, generated routing, or lifecycle transitions from Markdown. Do not treat the absence of `.workflow/workflow-record.json` as an initialization failure when Markdown-only was intentionally selected. If executable workflow orchestration is required, CLI-managed control must be established intentionally through supported CLI paths first.
+This execution contract applies when CLI-managed workflow execution is intended. Markdown-only is a manual/scaffold mode, not an executable agent-orchestration mode. In an intentionally Markdown-only project, an agent may help draft or review narrative artifacts only when explicitly asked, but must not infer or claim current stage/task state, approvals, next actions, generated routing, or lifecycle transitions from Markdown. Do not reinterpret the absence of `.workflow/workflow-record.json` as missing CLI-managed state when Markdown-only was explicitly selected. If executable workflow orchestration is required, CLI-managed control must be established intentionally through supported CLI paths first.
 
 For CLI-managed work, prefer:
 
@@ -26,11 +26,13 @@ design-workflow agent-context --json
 
 Treat the packet as canonical operational state, follow its state/task/policy/next action, load only its required resources plus applicable missing-artifact templates and one matching conditional source adapter, resolve exact pinned toolkit locations, and perform only the current stage/task responsibility. Complete reported initialization, migration, or repair before ordinary stage work.
 
-When the CLI cannot execute locally but GitHub files are available, use `.workflow/generated/AGENT-CONTEXT.json` as the read-only routing bootstrap. Before trusting it, compare `generated.recordGitBlobSha` with GitHub's `sha` for `.workflow/workflow-record.json` at the same ref. A missing/mismatched identity is stale or unverifiable; never parse the record to reconstruct workflow state.
+For a first-run GitHub-only project with no `.workflow/workflow-record.json`, do not wait for `AGENT-CONTEXT.json`; it does not exist yet. If local CLI execution is unavailable, inspect only the known caller workflow on the implementation repository's default branch. When that caller is absent and repository mutation is authorized, follow the **One-time repository installation** and **Remote-only first run** sections in [`workflow/GitHub-Remote-Execution.md`](workflow/GitHub-Remote-Execution.md), install the pinned caller on the default branch before remote `init`, and then continue through the canonical remote transport. If permissions or repository/organization Actions policy prevent that installation, report the specific capability blocker.
+
+When a workflow record exists but the CLI cannot execute locally and GitHub files are available, use `.workflow/generated/AGENT-CONTEXT.json` as the read-only routing bootstrap. Before trusting it, compare `generated.recordGitBlobSha` with GitHub's `sha` for `.workflow/workflow-record.json` at the same ref. A missing/mismatched identity is stale or unverifiable; never parse the record to reconstruct workflow state.
 
 The projection does not prove runtime integrity or stage preflight. Load only its exact pinned resources and never emulate CLI mutations by editing workflow state.
 
-If the implementation repository's default branch has `.github/workflows/design-workflow-command.yml`, follow [`workflow/GitHub-Remote-Execution.md`](workflow/GitHub-Remote-Execution.md) when local CLI execution is unavailable. That transport runs the pinned canonical CLI for preflight/transitions and can repair a stale projection through remote `sync`; it is not a second workflow engine and never replaces human approval. Without either execution path, report the specific capability blocker.
+If the implementation repository's default branch has `.github/workflows/design-workflow-command.yml`, follow [`workflow/GitHub-Remote-Execution.md`](workflow/GitHub-Remote-Execution.md) when local CLI execution is unavailable. That transport runs the pinned canonical CLI for preflight/transitions and can repair a stale projection through remote `sync`; it is not a second workflow engine and never replaces human approval. Without a local CLI or an installable/installed remote transport, report the specific capability blocker.
 
 Broader toolkit inspection is appropriate only for initialization, migration/repair, toolkit development, an explicit required-resource reference, or an explicit request to inspect/modify the toolkit.
 
