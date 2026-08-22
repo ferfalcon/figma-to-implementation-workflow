@@ -9,11 +9,17 @@ const bootstrapPath = join(root, 'AGENTS-instructions.md');
 const repositoryContractPath = join(root, 'AGENTS.md');
 const orchestrationPath = join(root, 'workflow', 'Agent-Orchestration.md');
 const stateOwnershipPath = join(root, 'workflow', 'State-Ownership.md');
+const readmePath = join(root, 'README.md');
+const quickstartPath = join(root, 'QUICKSTART.md');
+const cliReadmePath = join(root, 'cli', 'README.md');
 
 const bootstrap = readFileSync(bootstrapPath, 'utf8');
 const repositoryContract = readFileSync(repositoryContractPath, 'utf8');
 const orchestration = readFileSync(orchestrationPath, 'utf8');
 const stateOwnership = readFileSync(stateOwnershipPath, 'utf8');
+const readme = readFileSync(readmePath, 'utf8');
+const quickstart = readFileSync(quickstartPath, 'utf8');
+const cliReadme = readFileSync(cliReadmePath, 'utf8');
 const errors = [];
 
 if (!bootstrap.includes('[`workflow/Agent-Orchestration.md`](workflow/Agent-Orchestration.md)')) {
@@ -26,6 +32,65 @@ if (!bootstrap.includes('design-workflow agent-context --json')) {
 
 if (bootstrap.length > 6000) {
   errors.push(`Agent bootstrap is too large (${bootstrap.length} characters); keep it under 6000 characters.`);
+}
+
+const markdownOnlyBoundaryContracts = [
+  [
+    'README.md',
+    readme,
+    [
+      'The toolkit supports one executable control mode and one manual/scaffold mode:',
+      'AI-agent workflow orchestration requires CLI-managed control',
+    ],
+  ],
+  [
+    'QUICKSTART.md',
+    quickstart,
+    [
+      'This quickstart covers **CLI-managed workflow execution**.',
+      'Markdown-only is a manual/scaffold mode',
+    ],
+  ],
+  [
+    'cli/README.md',
+    cliReadme,
+    [
+      'Markdown-only is a manual/scaffold mode rather than a second executable workflow runtime.',
+      'they do not provide executable agent orchestration',
+    ],
+  ],
+  [
+    'workflow/State-Ownership.md',
+    stateOwnership,
+    [
+      'The toolkit has one executable control mode and one manual/scaffold mode:',
+      'does not provide agent orchestration',
+    ],
+  ],
+  [
+    'workflow/Agent-Orchestration.md',
+    orchestration,
+    [
+      'This contract applies to CLI-managed workflow projects.',
+      'Markdown-only is a manual/scaffold mode and does not provide executable agent orchestration.',
+    ],
+  ],
+  [
+    'AGENTS-instructions.md',
+    bootstrap,
+    [
+      'Markdown-only is a manual/scaffold mode, not an executable agent-orchestration mode.',
+      'must not infer or claim current stage/task state',
+    ],
+  ],
+];
+
+for (const [path, content, requiredPhrases] of markdownOnlyBoundaryContracts) {
+  for (const phrase of requiredPhrases) {
+    if (!content.includes(phrase)) {
+      errors.push(`${path} must preserve the Markdown-only manual/scaffold boundary: ${phrase}`);
+    }
+  }
 }
 
 const canonicalHeadings = new Set(
@@ -115,5 +180,5 @@ if (errors.length > 0) {
   errors.forEach((error) => console.error(`- ${error}`));
   process.exitCode = 1;
 } else {
-  console.log(`Agent bootstrap authority test passed (${bootstrap.length} characters; canonical detail remains delegated).`);
+  console.log(`Agent bootstrap authority test passed (${bootstrap.length} characters; canonical detail remains delegated and Markdown-only remains manual/scaffold only).`);
 }
