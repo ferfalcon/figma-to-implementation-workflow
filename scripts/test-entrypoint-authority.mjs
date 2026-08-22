@@ -110,6 +110,27 @@ if (/workflow\/Agent-Orchestration\.md/.test(projectSettings)) {
   errors.push('ChatGPT Project settings must route through AGENTS-instructions.md rather than bypassing the consumer bootstrap.');
 }
 
+if (!/do not redefine them in these Project instructions/i.test(projectSettings)) {
+  errors.push('ChatGPT Project settings must explicitly keep workflow execution mechanics delegated.');
+}
+
+const forbiddenProjectWorkflowDetails = [
+  [/^#\s+Workflow bootstrap$/im, 'a second workflow-bootstrap section'],
+  [/design-workflow\s+agent-context\s+--json/i, 'the canonical CLI bootstrap command'],
+  [/\.workflow\/generated\/AGENT-CONTEXT\.json/i, 'portable projection internals'],
+  [/recordGitBlobSha/i, 'record/projection freshness internals'],
+  [/\.workflow\/workflow-record\.json/i, 'canonical record internals'],
+  [/design-workflow\s+sync/i, 'projection-recovery commands'],
+  [/GitHub-Remote-Execution\.md/i, 'remote-execution procedure routing'],
+  [/design-workflow-command\.yml/i, 'remote-executor installation details'],
+];
+
+for (const [pattern, description] of forbiddenProjectWorkflowDetails) {
+  if (pattern.test(projectSettings)) {
+    errors.push(`ChatGPT Project settings must delegate ${description} to AGENTS-instructions.md and canonical workflow resources.`);
+  }
+}
+
 if (!toolkitAgents.includes('# Repository Guidelines')) {
   errors.push('AGENTS.md must remain the toolkit repository-development contract.');
 }
@@ -127,5 +148,5 @@ if (errors.length > 0) {
   errors.forEach((error) => console.error(`- ${error}`));
   process.exitCode = 1;
 } else {
-  console.log('Entrypoint authority test passed (root entry points remain role-specific and Quickstart selects a profile before examples).');
+  console.log('Entrypoint authority test passed (root entry points remain role-specific, Project settings stay host-only, and Quickstart selects a profile before examples).');
 }
