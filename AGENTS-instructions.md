@@ -6,6 +6,8 @@ This file is the permanent bootstrap for agents using the workflow in an impleme
 
 Follow [`workflow/Agent-Orchestration.md`](workflow/Agent-Orchestration.md) as the canonical execution contract. Detailed profile classification, design-source readiness, toolkit resolution, execution modes, state ownership, source authority, validation, and remote-execution rules belong to canonical workflow documents and current-turn resources.
 
+This bootstrap may be loaded from an exact external toolkit revision rather than from files copied into the implementation repository. When that is the case, resolve every relative toolkit reference in this file against the same toolkit repository and exact revision that supplied this bootstrap. Do not assume `docs/implementation-workflow/` exists in the implementation repository, and never continue from a mutable branch or floating tag after an exact bootstrap revision has been resolved.
+
 If the task is to develop this workflow toolkit rather than use it in an implementation project, also follow [`AGENTS.md`](AGENTS.md).
 
 ## Repository environment
@@ -32,7 +34,7 @@ Treat the packet as canonical operational state, follow its state/task/policy/ne
 
 When workflow mutation or preflight is needed, use the canonical CLI directly when it is actually executable in the current environment. Otherwise discover only the known GitHub remote caller on the implementation repository's default branch and use [`workflow/GitHub-Remote-Execution.md`](workflow/GitHub-Remote-Execution.md). Do not ask the human to choose the transport.
 
-For a first-run project with no `.workflow/workflow-record.json`, classify the profile first. If local CLI execution is unavailable, do not wait for `AGENT-CONTEXT.json`; it does not exist yet. Verify the known caller workflow on the default branch. When absent and repository mutation is authorized, follow **One-time repository installation** and **Remote-only first run** in [`workflow/GitHub-Remote-Execution.md`](workflow/GitHub-Remote-Execution.md), install the pinned caller before remote `init`, and continue through that transport. If permissions or Actions policy prevent installation, report the specific blocker.
+For a first-run project with no `.workflow/workflow-record.json`, classify the profile first. If local CLI execution is unavailable, do not wait for `AGENT-CONTEXT.json`; it does not exist yet. Verify the known caller workflow on the default branch. When absent and repository mutation is authorized, follow **One-time repository installation** and **Remote-only first run** in [`workflow/GitHub-Remote-Execution.md`](workflow/GitHub-Remote-Execution.md), installing only the thin caller pinned to the same exact toolkit revision that supplied this bootstrap before remote `init`. Do not copy the toolkit runtime into the implementation repository. If permissions or Actions policy prevent installation, report the specific blocker.
 
 When a workflow record exists but the CLI cannot execute locally and GitHub files are available, use `.workflow/generated/AGENT-CONTEXT.json` as the read-only routing bootstrap. Before trusting it, compare `generated.recordGitBlobSha` with GitHub's `sha` for `.workflow/workflow-record.json` at the same ref. A missing/mismatched identity is stale or unverifiable; never parse the record to reconstruct workflow state. The installed remote transport may repair a stale projection through canonical `sync`.
 
