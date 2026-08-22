@@ -10,6 +10,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const validationSteps = [
   { name: 'schema drift', script: 'scripts/generate-workflow-schema.mjs', args: ['--check'] },
   { name: 'contract compatibility drift', script: 'scripts/generate-contract-compatibility.mjs', args: ['--check'] },
+  { name: 'semantic contract drift', script: 'scripts/generate-semantic-contract.mjs', args: ['--check'] },
   { name: 'repository contract', script: 'scripts/validate-workflow.mjs' },
   { name: 'contract compatibility behavior', script: 'scripts/test-contract-compatibility.mjs' },
   { name: 'validation runner', script: 'scripts/test-validation-runner.mjs' },
@@ -18,6 +19,7 @@ export const validationSteps = [
   { name: 'Figma preparation authority', script: 'scripts/test-figma-preparation-authority.mjs' },
   { name: 'agent bootstrap authority', script: 'scripts/test-agent-bootstrap-authority.mjs' },
   { name: 'entrypoint authority', script: 'scripts/test-entrypoint-authority.mjs' },
+  { name: 'semantic contract behavior', script: 'scripts/test-semantic-contract.mjs' },
   { name: 'CLI layering', script: 'scripts/test-cli-layering.mjs' },
   { name: 'workflow validation architecture', script: 'scripts/test-workflow-validation-architecture.mjs' },
   { name: 'workflow record', script: 'scripts/test-workflow-record.mjs' },

@@ -1,0 +1,177 @@
+{
+  "contractVersion": 1,
+  "authority": {
+    "machineReadable": "workflow/semantic-contract.json",
+    "humanProjection": "workflow/Semantic-Contract.md",
+    "projectionGenerated": true
+  },
+  "entrypoints": [
+    {
+      "id": "readme",
+      "path": "README.md",
+      "role": "human overview and role-based router",
+      "owns": [
+        "toolkit overview",
+        "role-based entry-point discovery",
+        "high-level reference map"
+      ],
+      "delegatesTo": [
+        "QUICKSTART.md",
+        "workflow/Design-Implementation-Workflow.md",
+        "AGENTS-instructions.md",
+        "AGENTS.md"
+      ]
+    },
+    {
+      "id": "quickstart",
+      "path": "QUICKSTART.md",
+      "role": "human onboarding and first-run guide",
+      "owns": [
+        "profile-selection onboarding",
+        "first-run command examples"
+      ],
+      "delegatesTo": [
+        "workflow/Workflow-Profiles.md",
+        "workflow/State-Ownership.md",
+        "workflow/GitHub-Remote-Execution.md"
+      ]
+    },
+    {
+      "id": "toolkit-agents",
+      "path": "AGENTS.md",
+      "role": "toolkit repository agent contract",
+      "owns": [
+        "toolkit-maintainer agent behavior",
+        "repository development and validation expectations"
+      ],
+      "delegatesTo": [
+        "workflow/Design-Implementation-Workflow.md",
+        "workflow/Validation-Rules.md"
+      ]
+    },
+    {
+      "id": "consumer-agent-bootstrap",
+      "path": "AGENTS-instructions.md",
+      "role": "implementation-project consumer agent bootstrap",
+      "owns": [
+        "minimal workflow bootstrap",
+        "safety-critical agent guardrails"
+      ],
+      "delegatesTo": [
+        "workflow/Agent-Orchestration.md",
+        "workflow/State-Ownership.md",
+        "workflow/GitHub-Remote-Execution.md"
+      ]
+    },
+    {
+      "id": "chatgpt-project-settings",
+      "path": "AI-project-settings.md",
+      "role": "ChatGPT host and tool-behavior template",
+      "owns": [
+        "host environment behavior",
+        "tool posture and autonomy",
+        "repository and implementation boundaries"
+      ],
+      "delegatesTo": [
+        "AGENTS-instructions.md"
+      ]
+    },
+    {
+      "id": "figma-preparation-launcher",
+      "path": "AGENTS-PROMPT-Figma-file-preparation.md",
+      "role": "Figma preparation-only launcher",
+      "owns": [
+        "preparation-only launch boundary"
+      ],
+      "delegatesTo": [
+        "source-adapters/FIGMA-PREPARATION.md"
+      ]
+    },
+    {
+      "id": "contributing",
+      "path": "CONTRIBUTING.md",
+      "role": "contributor guide",
+      "owns": [
+        "repository contribution workflow",
+        "change verification expectations"
+      ],
+      "delegatesTo": [
+        "AGENTS.md",
+        "workflow/Validation-Rules.md"
+      ]
+    }
+  ],
+  "domains": [
+    {
+      "id": "workflow-process",
+      "owner": "workflow/Design-Implementation-Workflow.md"
+    },
+    {
+      "id": "workflow-profiles",
+      "owner": "workflow/Workflow-Profiles.md"
+    },
+    {
+      "id": "control-modes",
+      "owner": "workflow/State-Ownership.md"
+    },
+    {
+      "id": "agent-orchestration",
+      "owner": "workflow/Agent-Orchestration.md"
+    },
+    {
+      "id": "remote-execution",
+      "owner": "workflow/GitHub-Remote-Execution.md"
+    },
+    {
+      "id": "validation",
+      "owner": "workflow/Validation-Rules.md"
+    }
+  ],
+  "controlModes": [
+    {
+      "id": "cli-managed",
+      "executable": true,
+      "canonicalState": ".workflow/workflow-record.json",
+      "generatedProjectionRoot": ".workflow/generated/"
+    },
+    {
+      "id": "markdown-only",
+      "executable": false,
+      "canonicalState": "narrative artifacts",
+      "generatedProjectionRoot": null
+    }
+  ],
+  "architecture": {
+    "stage": 6,
+    "decisionRequired": true,
+    "profiles": {
+      "Express": {
+        "requiredDecisionOutcome": "must-upgrade",
+        "artifactPolicy": "never"
+      },
+      "Lite": {
+        "requiredDecisionOutcome": "must-upgrade",
+        "artifactPolicy": "never"
+      },
+      "Standard": {
+        "requiredDecisionOutcome": "continue",
+        "artifactPolicy": "required-when-required"
+      },
+      "Full": {
+        "requiredDecisionOutcome": "continue",
+        "artifactPolicy": "required"
+      }
+    }
+  },
+  "compatibility": {
+    "owner": "cli/lib/contract-compatibility.mjs",
+    "humanProjection": "workflow/Contract-Compatibility.md",
+    "contracts": [
+      "workflow-record",
+      "orchestration-context",
+      "agent-packet",
+      "portable-agent-projection",
+      "github-remote-command"
+    ]
+  }
+}

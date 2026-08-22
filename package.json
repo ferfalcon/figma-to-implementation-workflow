@@ -32,6 +32,8 @@
     "prepack": "node scripts/package-toolkit-provenance.mjs write",
     "postpack": "node scripts/package-toolkit-provenance.mjs clean",
     "validate": "node scripts/run-validation-suite.mjs",
+    "generate:semantic-contract": "node scripts/generate-semantic-contract.mjs",
+    "test:semantic-contract": "node scripts/test-semantic-contract.mjs",
     "test:runner": "node scripts/test-validation-runner.mjs",
     "test:path-safety": "node scripts/test-path-safety.mjs",
     "test:release": "node scripts/test-release-metadata.mjs",
