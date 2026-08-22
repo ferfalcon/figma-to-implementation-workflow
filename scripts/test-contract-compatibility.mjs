@@ -49,6 +49,30 @@ assert.match(
   'Orchestration context must consume the central protocol version rather than a local literal.',
 );
 
+const agentOrchestration = readFileSync(join(root, 'workflow', 'Agent-Orchestration.md'), 'utf8');
+assert(
+  agentOrchestration.includes(`protocolVersion: ${AGENT_PACKET_PROTOCOL_VERSION}`),
+  'Agent orchestration must document the current agent-packet protocol version.',
+);
+assert(
+  agentOrchestration.includes(`protocol-v${ORCHESTRATION_CONTEXT_PROTOCOL_VERSION} orchestration context`),
+  'Agent orchestration must document the current wrapped context protocol version.',
+);
+assert(
+  agentOrchestration.includes(`projection contract v${PORTABLE_AGENT_PROJECTION_VERSION}`),
+  'Agent orchestration must document the current portable projection version.',
+);
+
+const remoteExecution = readFileSync(join(root, 'workflow', 'GitHub-Remote-Execution.md'), 'utf8');
+assert(
+  remoteExecution.includes(`"protocolVersion": ${GITHUB_REMOTE_COMMAND_PROTOCOL_VERSION}`),
+  'GitHub remote execution must show the current command-envelope protocol version.',
+);
+assert(
+  remoteExecution.includes(`\`protocolVersion\` must be \`${GITHUB_REMOTE_COMMAND_PROTOCOL_VERSION}\``),
+  'GitHub remote execution must document the current required command-envelope protocol version.',
+);
+
 function commandEvent(protocolVersion) {
   const payload = {
     protocolVersion,
@@ -81,4 +105,4 @@ assert.throws(
   'Remote command bridge must reject undeclared future protocol versions.',
 );
 
-console.log('Independent contract versions, compatibility relationships, consumer aliases, orchestration usage, and remote transport behavior are aligned.');
+console.log('Independent contract versions, compatibility relationships, runtime consumers, documented examples, and remote transport behavior are aligned.');
