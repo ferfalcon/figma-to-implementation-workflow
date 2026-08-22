@@ -20,9 +20,11 @@ When the user asks to start the implementation workflow and no CLI-managed recor
 2. assess design-source readiness and whether source preparation is materially required before the formal developer-handoff audit;
 3. classify the smallest valid workflow profile under [`Workflow-Profiles.md`](Workflow-Profiles.md) from actual complexity and risk evidence;
 4. resolve how the canonical CLI can execute in the current environment: direct execution when actually available, otherwise the installed/authorized GitHub remote transport;
-5. initialize the explicit classified profile and continue under the configured execution mode until a real approval, consequential decision, or capability blocker requires the human.
+5. initialize the explicit classified profile using the execution mode explicitly configured by project/workflow context, or `Gated` when no initial mode is configured, and continue until a real approval, consequential decision, or capability blocker requires the human.
 
-Do not ask "Are you a designer or engineer?", "Which profile do you want?", or "Should I use the CLI or GitHub Actions?" Those are not product decisions. Briefly report important resolutions, such as the selected profile and evidence-based rationale, as information rather than as route-selection questions.
+`Gated` is the deterministic first-run default for AI-assisted initialization when no supported execution mode has been explicitly configured. This default preserves human authority without turning execution mode into another onboarding question. An explicitly configured supported mode remains authoritative.
+
+Do not ask "Are you a designer or engineer?", "Which profile do you want?", "Which execution mode do you want?", or "Should I use the CLI or GitHub Actions?" Those are not normal onboarding decisions. Briefly report important resolutions, such as the selected profile, initial mode, and evidence-based rationale, as information rather than as route-selection questions.
 
 ### Pre-initialization profile classification
 
