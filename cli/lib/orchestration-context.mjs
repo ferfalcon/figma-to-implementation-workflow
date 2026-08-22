@@ -13,6 +13,8 @@ import { workflowDiagnostics } from './workflow-diagnostics.mjs';
 import { STAGES } from './workflow-model.mjs';
 import { projectRootForRecord } from './workspace.mjs';
 
+export const ORCHESTRATION_CONTEXT_PROTOCOL_VERSION = 3;
+
 function projectRootDisplay(recordPath, cwd) {
   return relative(cwd, projectRootForRecord(recordPath)).split('\\').join('/') || '.';
 }
@@ -45,7 +47,7 @@ export function buildOrchestrationContext(recordPath, record, { cwd }) {
   });
 
   return {
-    protocolVersion: 3,
+    protocolVersion: ORCHESTRATION_CONTEXT_PROTOCOL_VERSION,
     initialized: true,
     control: {
       mode: 'cli-managed',
