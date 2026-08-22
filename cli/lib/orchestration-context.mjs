@@ -1,4 +1,8 @@
 import { relative } from 'node:path';
+import {
+  ORCHESTRATION_CONTEXT_PROTOCOL_VERSION,
+  WORKFLOW_RECORD_SCHEMA_VERSION,
+} from './contract-compatibility.mjs';
 import { checkStage } from './stage-check.mjs';
 import { toolkitBindingFromRecord } from './toolkit-binding.mjs';
 import {
@@ -45,12 +49,12 @@ export function buildOrchestrationContext(recordPath, record, { cwd }) {
   });
 
   return {
-    protocolVersion: 3,
+    protocolVersion: ORCHESTRATION_CONTEXT_PROTOCOL_VERSION,
     initialized: true,
     control: {
       mode: 'cli-managed',
       schemaVersion: record.schemaVersion,
-      readOnly: record.schemaVersion !== 2,
+      readOnly: record.schemaVersion !== WORKFLOW_RECORD_SCHEMA_VERSION,
       record: relative(cwd, recordPath).split('\\').join('/'),
     },
     project: {
@@ -99,7 +103,7 @@ export function buildOrchestrationContext(recordPath, record, { cwd }) {
     profileTransition: record.profileTransitions.find((item) => item.status === 'In progress') ?? null,
     stageCheck: check,
     policy: {
-      workflowMutation: record.schemaVersion === 2 && diagnostics.valid ? 'allowed' : 'repair-or-migration-required',
+      workflowMutation: record.schemaVersion === WORKFLOW_RECORD_SCHEMA_VERSION && diagnostics.valid ? 'allowed' : 'repair-or-migration-required',
       implementation: implementationIsAllowed ? 'allowed-with-current-task-scope' : 'forbidden',
       codeEdits: implementationIsAllowed ? 'allowed-with-current-task-scope' : 'forbidden',
       stageTransition,
