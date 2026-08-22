@@ -2,6 +2,8 @@
 
 Start by selecting the workflow profile from the actual complexity and risk of the work. The profile is not a tutorial choice: it controls artifact granularity and must be selected before substantive documentation or implementation begins. [`workflow/Workflow-Profiles.md`](workflow/Workflow-Profiles.md) owns the canonical eligibility, artifact, and upgrade rules.
 
+This quickstart covers **CLI-managed workflow execution**. Markdown-only is a manual/scaffold mode for producing narrative artifacts without executable workflow state, generated routing, or agent orchestration; see [`cli/README.md`](cli/README.md) and [`workflow/State-Ownership.md`](workflow/State-Ownership.md) if that is the intended use.
+
 This quickstart initializes any profile, then uses Express as a concrete worked example. Do not choose Express only because the worked example is shorter.
 
 ## Prerequisites
