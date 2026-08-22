@@ -9,7 +9,9 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 export const validationSteps = [
   { name: 'schema drift', script: 'scripts/generate-workflow-schema.mjs', args: ['--check'] },
+  { name: 'contract compatibility drift', script: 'scripts/generate-contract-compatibility.mjs', args: ['--check'] },
   { name: 'repository contract', script: 'scripts/validate-workflow.mjs' },
+  { name: 'contract compatibility behavior', script: 'scripts/test-contract-compatibility.mjs' },
   { name: 'validation runner', script: 'scripts/test-validation-runner.mjs' },
   { name: 'path safety', script: 'scripts/test-path-safety.mjs' },
   { name: 'release metadata', script: 'scripts/test-release-metadata.mjs' },
