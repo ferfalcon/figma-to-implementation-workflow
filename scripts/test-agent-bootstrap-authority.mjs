@@ -47,7 +47,7 @@ const markdownOnlyBoundaryContracts = [
     'QUICKSTART.md',
     quickstart,
     [
-      'This quickstart covers **CLI-managed workflow execution**.',
+      'This quickstart covers **CLI-managed workflow execution**, whether the CLI runs locally or through the GitHub/connector-only transport.',
       'Markdown-only is a manual/scaffold mode',
     ],
   ],
