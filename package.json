@@ -31,6 +31,7 @@
   "scripts": {
     "prepack": "node scripts/package-toolkit-provenance.mjs write",
     "postpack": "node scripts/package-toolkit-provenance.mjs clean",
+    "build:consumer-bundle": "node scripts/build-consumer-bundle.mjs",
     "validate": "node scripts/run-validation-suite.mjs",
     "generate:semantic-contract": "node scripts/generate-semantic-contract.mjs",
     "test:semantic-contract": "node scripts/test-semantic-contract.mjs",
@@ -40,6 +41,7 @@
     "test:figma-preparation": "node scripts/test-figma-preparation-authority.mjs",
     "test:agent-bootstrap": "node scripts/test-agent-bootstrap-authority.mjs",
     "test:entrypoints": "node scripts/test-entrypoint-authority.mjs",
+    "test:consumer-bundle": "node scripts/test-consumer-bundle.mjs",
     "test:layering": "node scripts/test-cli-layering.mjs",
     "test:validation-architecture": "node scripts/test-workflow-validation-architecture.mjs",
     "test:records": "node scripts/test-workflow-record.mjs",
