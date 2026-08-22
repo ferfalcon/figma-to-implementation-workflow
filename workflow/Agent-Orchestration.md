@@ -6,13 +6,47 @@ This document defines how an AI design-engineering agent operates the executable
 
 This contract applies to CLI-managed workflow projects. Markdown-only is a manual/scaffold mode and does not provide executable agent orchestration. An agent may assist with Markdown-only narrative drafting or review when explicitly requested, but must not infer or claim executable stage/task state, approvals, next actions, routing, lifecycle transitions, or validation authority from those manually maintained files. An intentionally Markdown-only project with no `.workflow/workflow-record.json` is not an uninitialized CLI-managed project.
 
-The agent owns reasoning, source inspection, artifact prose, implementation decisions within approved scope, and evidence collection. The CLI owns executable state, stage/task legality, canonical registries, generated views, trace definitions, validation state, implementation lineage, the recorded workflow-toolkit dependency binding, and the canonical workflow-resource manifest for the current turn.
+The agent owns reasoning, source inspection, pre-initialization classification, design-source readiness decisions, artifact prose, implementation decisions within approved scope, and evidence collection. The CLI owns executable state, stage/task legality, canonical registries, generated views, trace definitions, validation state, implementation lineage, the recorded workflow-toolkit dependency binding, and the canonical workflow-resource manifest for the current turn.
 
 Never infer executable state from narrative Markdown when `.workflow/workflow-record.json` exists. Never manually edit generated views.
 
+## One workflow intake
+
+Normal AI-assisted use has one workflow entry point regardless of whether the human's strongest discipline is design or engineering. User profession, Figma expertise, terminal familiarity, or coding confidence must not create a different workflow route, profile, stage sequence, approval policy, or safety model.
+
+When the user asks to start the implementation workflow and no CLI-managed record exists, resolve these concerns before initialization without asking the human to choose among implementation details:
+
+1. inspect the configured design source/scope and implementation repository sufficiently to establish the intended work boundary;
+2. assess design-source readiness and whether source preparation is materially required before the formal developer-handoff audit;
+3. classify the smallest valid workflow profile under [`Workflow-Profiles.md`](Workflow-Profiles.md) from actual complexity and risk evidence;
+4. resolve how the canonical CLI can execute in the current environment: direct execution when actually available, otherwise the installed/authorized GitHub remote transport;
+5. initialize the explicit classified profile and continue under the configured execution mode until a real approval, consequential decision, or capability blocker requires the human.
+
+Do not ask "Are you a designer or engineer?", "Which profile do you want?", or "Should I use the CLI or GitHub Actions?" Those are not product decisions. Briefly report important resolutions, such as the selected profile and evidence-based rationale, as information rather than as route-selection questions.
+
+### Pre-initialization profile classification
+
+Apply [`Workflow-Profiles.md`](Workflow-Profiles.md) before `init`. Inspect enough source and repository evidence to evaluate its eligibility criteria. Select the smallest profile whose conditions are demonstrably satisfied. When the lower adjacent profile cannot be established safely from available evidence, choose the safer higher profile rather than delegating taxonomy arbitration to the user.
+
+A user question is appropriate only when a genuine unresolved product, scope, source-authority, or other consequential decision prevents classification. Do not ask merely because classification requires engineering judgment. Record a concise rationale in the profile's owning narrative artifact once initialized. The CLI still receives an explicit profile and remains authoritative for persisted profile state.
+
+### Design-source readiness before the formal audit
+
+Preparation and the formal Stage 1 audit remain distinct responsibilities. Before initialization or formal audit work, inspect the configured design scope only far enough to determine whether material source preparation is required for a reliable handoff. For Figma, [`../source-adapters/FIGMA-PREPARATION.md`](../source-adapters/FIGMA-PREPARATION.md) is the single normative preparation procedure.
+
+When preparation is required, the design source is editable through an authorized tool, and the configured editing scope permits the necessary changes, perform that canonical preparation procedure before beginning the formal developer-handoff audit. Preparation remains outside `.workflow/` executable state and is not a hidden Stage -1, workflow approval, or substitute for Stage 1 evidence.
+
+When preparation is unnecessary, proceed without creating preparation work for its own sake. When preparation is necessary but the source cannot be safely edited, report the exact source/tool/permission blocker or ask for the consequential design decision that is actually missing. Never select a different workflow because of the user's discipline.
+
+### Execution transport resolution
+
+The workflow has one canonical engine and multiple possible transports. Use the direct `design-workflow` CLI when it can actually execute in the current environment. When it cannot, discover only the known GitHub caller described in [`GitHub-Remote-Execution.md`](GitHub-Remote-Execution.md) and use that transport when installed or safely installable. The GitHub bridge runs the same canonical CLI; it is not a second workflow engine.
+
+Do not expose local-versus-remote execution as a normal onboarding choice. Capability resolution belongs to the agent. If neither direct execution nor an authorized/installable remote transport is available, report that specific blocker rather than inventing workflow state or asking the user to choose another process.
+
 ## Agent packet handshake
 
-Begin every CLI-managed workflow turn with:
+Begin every initialized CLI-managed workflow turn with:
 
 ```bash
 design-workflow agent-context --json
@@ -30,9 +64,9 @@ The lower-level compatibility handshake remains available:
 design-workflow context --json
 ```
 
-Initialized CLI-managed context payloads that expose the minimal resource manifest use protocol v3. Uninitialized/missing-record context remains a separate bootstrap path. Use context protocol v3 for diagnostics and existing integrations; use agent-packet protocol v4 for normal agent execution.
+Initialized CLI-managed context payloads that expose the minimal resource manifest use protocol v3. Uninitialized/missing-record context remains a separate bootstrap path. Use context protocol v3 for diagnostics and existing integrations; use agent-packet protocol v4 for normal initialized agent execution.
 
-If no record exists, the agent packet embeds the intake prompt and instructs initialization. This no-record bootstrap applies when CLI-managed execution is intended; it must not be used to reinterpret an intentionally Markdown-only project as missing workflow state. If the record is schema v1, migrate before mutation. If the packet reports `repair`, repair record/generated state before continuing. Migration and repair packets intentionally withhold ordinary stage resources.
+If no record exists and CLI-managed execution is intended, use the one-workflow intake above before initialization rather than treating an intake prompt as a request for the human to select a profile or transport. An intentionally Markdown-only project must not be reinterpreted as missing workflow state. If the record is schema v1, migrate before mutation. If the packet reports `repair`, repair record/generated state before continuing. Migration and repair packets intentionally withhold ordinary stage resources.
 
 ### GitHub-only fallback and remote transport
 
@@ -141,9 +175,9 @@ For the GitHub-only projection, use `resources.required` directly, consult `reso
 
 Do not recursively inspect the toolkit or read `README.md`, `QUICKSTART.md`, `cli/README.md`, broad `workflow/` documentation, unrelated prompts, unrelated guidelines, unrelated templates, or every source adapter to rediscover how the workflow works.
 
-Broader workflow reads are permitted only for initialization, migration/repair, an explicit reference from a required resource, toolkit development, or an explicit user request to inspect/modify the workflow toolkit.
+Broader workflow reads are permitted only for pre-initialization classification/preparation, migration/repair, an explicit reference from a required resource, toolkit development, or an explicit user request to inspect/modify the workflow toolkit.
 
-The goal is deterministic startup: permanent agent contract → local CLI `agent-context --json` when executable, otherwise freshness-verified `AGENT-CONTEXT.json` → installed remote CLI transport when preflight/mutation requires it → exact current resources → work.
+The goal is deterministic startup: permanent agent contract → pre-initialization classification/preparation when needed → local CLI `agent-context --json` when executable, otherwise freshness-verified `AGENT-CONTEXT.json` → installed remote CLI transport when preflight/mutation requires it → exact current resources → work.
 
 ## Stage-local execution
 
