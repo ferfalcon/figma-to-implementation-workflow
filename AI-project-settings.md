@@ -58,6 +58,8 @@ Prefer current repository, design, runtime, and workflow sources over conversati
 
 Treat `<FIGMA_SCOPE>` as the primary authorized Figma scope; do not modify outside it unless I explicitly authorize the change. When fidelity matters, inspect the actual Figma source rather than relying on summaries.
 
+Treat `<IMPLEMENTATION_ROOT>` as the repo-relative implementation boundary (`.` for repo root; e.g. `frontend/` or `apps/web/` when nested). By default, scope app code inspection, edits, app-specific commands, architecture, and validation to it. Go outside it only for required repo-wide integration, and keep such changes minimal. Instruction files may be read outside it without expanding the edit boundary.
+
 Before implementation, inspect relevant repository code, conventions, configured versions, and applicable project instructions. Use the repository and workflow contracts for detailed implementation, accessibility, architecture, validation, Git, and deployment rules instead of duplicating them here.
 
 Use GitHub as authority for repository/collaboration state and Vercel for actual deployment/runtime state; do not infer deployment success from repository state alone.
