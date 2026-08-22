@@ -33,6 +33,7 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 
 ### Changed
 
+- Markdown-only is now explicitly defined as a manual/scaffold mode rather than a peer executable control mode; AI orchestration requires CLI-managed state, while AI assistance in Markdown-only is limited to explicitly requested narrative drafting or review.
 - GitHub remote read-only execution now accepts exit code `1` only for `stage check --json`; `validate` and `sync --check` require exit code `0` so failed checks cannot be reported as successful commands.
 - The write-capable remote executor now pins external GitHub Actions dependencies to full commit SHAs while retaining human-readable release versions in comments.
 - Workflow-record validation is decomposed into reusable primitives, domain validators, shared rules, and final cross-record invariants while preserving the public validation API and validation order.
