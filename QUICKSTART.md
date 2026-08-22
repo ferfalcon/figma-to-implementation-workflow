@@ -2,16 +2,13 @@
 
 Start by selecting the workflow profile from the actual complexity and risk of the work. The profile is not a tutorial choice: it controls artifact granularity and must be selected before substantive documentation or implementation begins. [`workflow/Workflow-Profiles.md`](workflow/Workflow-Profiles.md) owns the canonical eligibility, artifact, and upgrade rules.
 
-This quickstart initializes any profile, then uses Express as a concrete worked example. Do not choose Express only because the worked example is shorter.
+This quickstart supports both a local CLI and a GitHub/connector-only environment, then uses Express as a concrete worked example. Do not choose Express only because the worked example is shorter.
 
-## Prerequisites
+## Common prerequisites
 
-- Node.js 22 or newer;
 - a Git repository with at least one commit;
 - a precisely identifiable design source or other input;
-- the installed `design-workflow` command, or the repository CLI invoked with `node /path/to/cli/design-workflow.mjs`.
-
-Run commands from the implementation repository root.
+- enough repository access for the execution path you choose below.
 
 ## 1. Choose a profile before initialization
 
@@ -26,9 +23,44 @@ Use these as routing cues; [`workflow/Workflow-Profiles.md`](workflow/Workflow-P
 
 Express is an all-conditions profile: if any Express eligibility condition is false, do not initialize as Express. When choosing between adjacent profiles, use the lower profile only when its consolidation rules can preserve every material concern clearly; otherwise choose the higher profile. Upgrade as soon as new evidence crosses the selected profile's limits.
 
-## 2. Initialize the selected profile
+## 2. Choose an execution path before initialization
 
-Replace `<selected-profile>` with `Express`, `Lite`, `Standard`, or `Full` based on Step 1:
+The canonical `design-workflow` CLI owns executable workflow state in both paths. The difference is only where that CLI runs.
+
+### Local CLI available
+
+Use this path when the current environment can actually execute the workflow CLI.
+
+Prerequisites:
+
+- Node.js 22 or newer;
+- the installed `design-workflow` command, or the repository CLI invoked with `node /path/to/cli/design-workflow.mjs`.
+
+Run workflow commands from the implementation repository root.
+
+### GitHub/connector-only execution
+
+Use this path when an agent or user can read and mutate the implementation repository through GitHub but cannot execute `design-workflow` locally. GitHub Actions becomes the temporary runtime for the same canonical CLI; GitHub Issues are only the authenticated command transport.
+
+Before the **first** `init`:
+
+1. choose an exact 40-character commit SHA of `ferfalcon/figma-to-implementation-workflow` that contains the remote executor you intend to use;
+2. copy [`templates/github/design-workflow-command.yml.template`](templates/github/design-workflow-command.yml.template) into the implementation repository as `.github/workflows/design-workflow-command.yml`;
+3. replace `<REMOTE_EXECUTOR_REVISION>` with that exact SHA;
+4. commit or merge the caller onto the implementation repository's **default branch before initialization**; installing it only on a feature branch does not activate issue-triggered commands;
+5. verify repository/organization Actions policy permits the pinned reusable workflow and that the caller can receive the required `contents: write` and `issues: write` permissions.
+
+If the correctly pinned caller is already present on the default branch, reuse it rather than reinstalling it.
+
+The caller installation is deliberately repository setup that happens before workflow initialization, so its commit is not introduced later as unexpected implementation lineage. [`workflow/GitHub-Remote-Execution.md`](workflow/GitHub-Remote-Execution.md) is the canonical owner of installation, command-envelope, authorization, concurrency, and failure semantics.
+
+If the caller cannot be installed on the default branch because of repository permissions or Actions policy, remote workflow mutation is unavailable. Do not compensate by manually editing `.workflow/workflow-record.json` or `.workflow/generated/*`.
+
+## 3. Initialize the selected profile
+
+Replace `<selected-profile>` with `Express`, `Lite`, `Standard`, or `Full` based on Step 1.
+
+### Local CLI
 
 ```bash
 design-workflow init \
@@ -47,9 +79,35 @@ Check the initialized state before substantive work:
 design-workflow status
 ```
 
-If an AI agent is running the workflow, use the consumer bootstrap in [`AGENTS-instructions.md`](AGENTS-instructions.md); it resolves the current stage, profile, next action, and exact required resources without broad toolkit browsing.
+### GitHub/connector-only
 
-## 3. Continue with the selected profile
+After the pinned caller is present on the default branch, follow the command-issue protocol in [`workflow/GitHub-Remote-Execution.md`](workflow/GitHub-Remote-Execution.md). Read the current HEAD of the existing target branch immediately before submitting the command and use it as `expectedHead`.
+
+For the same example, the command envelope's `args` are:
+
+```json
+[
+  "init",
+  "--name",
+  "Article preview card",
+  "--profile",
+  "<selected-profile>",
+  "--mode",
+  "Gated",
+  "--design",
+  "https://www.figma.com/design/...",
+  "--repository",
+  "."
+]
+```
+
+For a new remote initialization, the pinned remote-executor revision also becomes the initial workflow toolkit runtime/pin. The remote bridge runs canonical validation and generated-state checks before committing successful initialization output.
+
+After a successful remote `init`, re-read the target branch, `.workflow/workflow-record.json`, and `.workflow/generated/AGENT-CONTEXT.json`. Before trusting the projection, compare `generated.recordGitBlobSha` with GitHub's blob SHA for the record at that same ref. Continue from the refreshed projection rather than reconstructing state from narrative Markdown.
+
+If an AI agent is running the workflow, use the consumer bootstrap in [`AGENTS-instructions.md`](AGENTS-instructions.md); it resolves local versus GitHub-only startup, current stage, profile, next action, and exact required resources without broad toolkit browsing.
+
+## 4. Continue with the selected profile
 
 - **Express:** continue with the worked example below.
 - **Lite, Standard, or Full:** follow [`workflow/Design-Implementation-Workflow.md`](workflow/Design-Implementation-Workflow.md) for the normative stage sequence and [`workflow/Workflow-Profiles.md`](workflow/Workflow-Profiles.md) for the selected profile's artifact requirements. Use [`cli/README.md`](cli/README.md) for command reference.
