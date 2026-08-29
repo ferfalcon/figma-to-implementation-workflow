@@ -14,6 +14,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const toolkitRepository = 'ferfalcon/figma-to-implementation-workflow';
 const callerTemplatePath = join(root, 'templates', 'github', 'design-workflow-command.yml.template');
 const projectInstructionsPath = join(root, 'AI-project-settings.md');
+const projectConfigTemplatePath = join(root, 'templates', 'design-workflow.config.template.json');
 
 function parseArgs(argv) {
   const options = {
@@ -63,15 +64,17 @@ export function buildConsumerBundle({ output, revision }) {
   writeFileSync(join(workflowRoot, 'design-workflow-command.yml'), caller);
 
   copyFileSync(projectInstructionsPath, join(outputRoot, 'ChatGPT-Project-Instructions.md'));
+  copyFileSync(projectConfigTemplatePath, join(outputRoot, 'design-workflow.config.template.json'));
 
   const manifest = {
-    bundleFormatVersion: 2,
+    bundleFormatVersion: 3,
     installationModel: 'external-pinned-toolkit',
     toolkitRepository,
     toolkitRevision: revision,
     repositoryUploadRoot: 'repository/',
     remoteCaller: 'repository/.github/workflows/design-workflow-command.yml',
     projectInstructions: 'ChatGPT-Project-Instructions.md',
+    projectConfigTemplate: 'design-workflow.config.template.json',
   };
   writeFileSync(
     join(outputRoot, 'consumer-bundle-manifest.json'),
