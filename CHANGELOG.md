@@ -37,12 +37,12 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 ### Changed
 
 - ChatGPT Project Instructions now keep only a repository bootstrap locator; project name, Figma source/scope, implementation root, and optional deployment targets move to repository-owned project configuration.
-- ChatGPT-first onboarding now has one human workflow entry point: add the consumer files, connect project sources, customize the Project Instructions, and say `Start the implementation workflow`.
+- ChatGPT-first onboarding now has one human workflow entry point: connect project sources, set the repository locator once, let ChatGPT read/create repository-owned project configuration, and say `Start the implementation workflow`.
 - Workflow profile selection is now an agent-owned pre-initialization classification based on actual design/repository complexity and risk; user profession and tooling comfort cannot select a profile.
 - Direct CLI versus GitHub Actions execution is now resolved by agent capability detection instead of presented as a normal user choice; both continue to execute the same canonical CLI.
 - Figma preparation can be invoked from the same agent intake when source readiness requires it while remaining outside executable workflow state and separate from the formal Stage 1 audit.
 - README now presents designers and engineers as two value perspectives on the same workflow rather than role-based routes and promotes no-terminal GitHub execution as a first-class capability.
-- `AI-project-settings.md` now puts the small user-editable project value block first while keeping workflow mechanics delegated to the consumer bootstrap.
+- `AI-project-settings.md` now keeps only the repository bootstrap locator at the top while repository-owned `design-workflow.config.json` carries persistent project values.
 - Markdown-only is now explicitly defined as a manual/scaffold mode rather than a peer executable control mode; AI orchestration requires CLI-managed state, while AI assistance in Markdown-only is limited to explicitly requested narrative drafting or review.
 - GitHub remote read-only execution now accepts exit code `1` only for `stage check --json`; `validate` and `sync --check` require exit code `0` so failed checks cannot be reported as successful commands.
 - The write-capable remote executor now pins external GitHub Actions dependencies to full commit SHAs while retaining human-readable release versions in comments.
