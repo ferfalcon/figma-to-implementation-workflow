@@ -153,7 +153,7 @@ const projectBootstrapRequirements = [
   [/Load `AGENTS-instructions\.md`[^\n]*exactly that bootstrap revision/i, 'load the bootstrap from the immutable source'],
   [/one workflow regardless of whether my strongest discipline is design or engineering/i, 'preserve one workflow across user backgrounds'],
   [/do not redefine them in these Project instructions/i, 'keep detailed workflow mechanics delegated'],
-  [/verify `design-workflow\.config\.json`/i, 'require project configuration before first initialization'],
+  [/design-workflow\.config\.json` exists and is verified/i, 'require project configuration before first initialization'],
 ];
 for (const [pattern, description] of projectBootstrapRequirements) {
   if (!pattern.test(projectSettings)) errors.push(`ChatGPT Project settings must ${description}.`);
