@@ -41,6 +41,7 @@
     "test:figma-preparation": "node scripts/test-figma-preparation-authority.mjs",
     "test:agent-bootstrap": "node scripts/test-agent-bootstrap-authority.mjs",
     "test:entrypoints": "node scripts/test-entrypoint-authority.mjs",
+    "test:project-config": "node scripts/test-project-configuration.mjs",
     "test:consumer-bundle": "node scripts/test-consumer-bundle.mjs",
     "test:layering": "node scripts/test-cli-layering.mjs",
     "test:validation-architecture": "node scripts/test-workflow-validation-architecture.mjs",
