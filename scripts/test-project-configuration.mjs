@@ -29,6 +29,15 @@ for (const key of ['schemaVersion', 'project', 'repository', 'design', 'deployme
 expect(schema.properties?.repository?.additionalProperties === false, 'Repository config must reject unknown properties.');
 expect(typeof schema.properties?.repository?.properties?.implementationRoot?.pattern === 'string', 'Implementation root must have a relative-path schema constraint.');
 expect(schema.properties?.repository?.properties?.implementationRoot?.not?.pattern === '(^|/)\\.\\.(/|$)', 'Implementation root must reject parent-directory escapes.');
+const implementationRootRule = schema.properties.repository.properties.implementationRoot;
+const implementationRootPattern = new RegExp(implementationRootRule.pattern);
+const implementationRootForbidden = new RegExp(implementationRootRule.not.pattern);
+for (const candidate of ['.', 'frontend/', 'apps/web/', './apps/web']) {
+  expect(implementationRootPattern.test(candidate) && !implementationRootForbidden.test(candidate), `Implementation root should accept ${candidate}.`);
+}
+for (const candidate of ['/frontend', '../frontend', 'apps/../web', 'C:\\repo']) {
+  expect(!implementationRootPattern.test(candidate) || implementationRootForbidden.test(candidate), `Implementation root should reject ${candidate}.`);
+}
 expect(schema.properties?.design?.properties?.provider?.const === 'figma', 'Project config v1 design provider must be figma.');
 expect(schema.properties?.deployment?.required?.includes('vercelProjectUrl'), 'Deployment config must include vercelProjectUrl.');
 expect(schema.properties?.deployment?.required?.includes('productionUrl'), 'Deployment config must include productionUrl.');
