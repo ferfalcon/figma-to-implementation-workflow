@@ -24,7 +24,7 @@ At each project conversation start, locate the repository and read root `design-
 
 The configuration owns stable project/repository identity, implementation root, Figma source/edit scope, and optional deployment targets across chats/agents. Connected tools verify current state; they do not silently replace those values. Repository-identity mismatch is a blocker.
 
-If absent during setup/install, create and commit it before workflow initialization from authoritative evidence; ask only for ambiguous required values, never invent/broaden Figma edit scope, and never store secrets. Persist approved changes before treating them as shared truth.
+If absent during setup/install, first resolve the exact bootstrap revision, then create and commit it from the pinned project-configuration contract/template before workflow initialization. Use authoritative evidence; ask only for ambiguous required values, never invent/broaden Figma edit scope, and never store secrets. Persist approved changes before treating them as shared truth.
 
 ## Execution posture
 
@@ -52,9 +52,9 @@ For implementation-workflow requests, do not look for a vendored `docs/implement
 
 If `.workflow/workflow-record.json` exists, use the canonical toolkit binding and generated agent context owned by that initialized workflow.
 
-Before first initialization, verify `design-workflow.config.json`, then inspect `.github/workflows/design-workflow-command.yml` on the implementation repository's default branch. If it already calls `ferfalcon/figma-to-implementation-workflow` at an exact 40-character commit SHA, use that SHA as the bootstrap revision. If the caller is absent, resolve the canonical toolkit repository's current default-branch HEAD once to an exact 40-character SHA and use that immutable SHA as the bootstrap revision.
+Before first initialization, inspect `.github/workflows/design-workflow-command.yml` on the implementation repository's default branch. If it already calls `ferfalcon/figma-to-implementation-workflow` at an exact 40-character commit SHA, use that SHA as the bootstrap revision. If the caller is absent, resolve the canonical toolkit repository's current default-branch HEAD once to an exact 40-character SHA and use that immutable SHA as the bootstrap revision.
 
-Load `AGENTS-instructions.md` from `ferfalcon/figma-to-implementation-workflow` at exactly that bootstrap revision and follow its canonical delegation. Never continue workflow bootstrap from `main`, another branch, or a floating tag after the exact revision has been resolved. When the GitHub remote caller is required and absent, let the pinned bootstrap install it before remote initialization when repository mutation is authorized.
+Load `AGENTS-instructions.md` and the project-configuration contract/template from exactly that bootstrap revision. Then ensure `design-workflow.config.json` exists and is verified before initialization. Never continue bootstrap from `main`, another branch, or a floating tag after the exact revision has been resolved. When the GitHub remote caller is required and absent, let the pinned bootstrap install it before remote initialization when repository mutation is authorized.
 
 ## Instruction boundaries
 
