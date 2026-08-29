@@ -8,6 +8,7 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 
 ### Added
 
+- Repository-root `design-workflow.config.json` as canonical persistent project configuration shared across chats/users/agents, with schema, template, authority contract, and regression coverage.
 - Generated consumer bundle tooling that produces an upload-ready repository payload, ChatGPT Project Instructions from the canonical host template, a bundle manifest, and an exact immutable GitHub remote-executor pin.
 - Release automation that publishes the consumer bundle and ChatGPT Project Instructions as release assets from the exact released toolkit commit.
 - Regression coverage that enforces one human workflow entry point, agent-owned profile/transport resolution, and consumer-bundle integrity.
@@ -35,6 +36,7 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 
 ### Changed
 
+- ChatGPT Project Instructions now keep only a repository bootstrap locator; project name, Figma source/scope, implementation root, and optional deployment targets move to repository-owned project configuration.
 - ChatGPT-first onboarding now has one human workflow entry point: add the consumer files, connect project sources, customize the Project Instructions, and say `Start the implementation workflow`.
 - Workflow profile selection is now an agent-owned pre-initialization classification based on actual design/repository complexity and risk; user profession and tooling comfort cannot select a profile.
 - Direct CLI versus GitHub Actions execution is now resolved by agent capability detection instead of presented as a normal user choice; both continue to execute the same canonical CLI.
