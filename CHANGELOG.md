@@ -9,8 +9,8 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 ### Added
 
 - Repository-root `design-workflow.config.json` as canonical persistent project configuration shared across chats/users/agents, with schema, template, authority contract, and regression coverage.
-- Generated consumer bundle tooling that produces an upload-ready repository payload, ChatGPT Project Instructions from the canonical host template, a bundle manifest, and an exact immutable GitHub remote-executor pin.
-- Release automation that publishes the consumer bundle and ChatGPT Project Instructions as release assets from the exact released toolkit commit.
+- Generated consumer bundle tooling that produces an upload-ready repository payload, ChatGPT Project Instructions, the project-configuration template, a bundle manifest, and an exact immutable GitHub remote-executor pin.
+- Release automation that publishes the consumer bundle, ChatGPT Project Instructions, and project-configuration template as release assets from the exact released toolkit commit.
 - Regression coverage that enforces one human workflow entry point, agent-owned profile/transport resolution, and consumer-bundle integrity.
 - GitHub Issue command transport plus a pinned reusable Actions executor for connector-first preflight and canonical CLI-owned workflow mutations against exact expected heads and pinned toolkit revisions.
 - Remote-execution regression coverage for requester permissions, command allowlisting, stale heads, rollback, runtime resolution, read-only preflight, shell/path injection boundaries, filesystem containment, and non-force mutation.
