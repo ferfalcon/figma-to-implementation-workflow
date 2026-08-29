@@ -1,5 +1,7 @@
 # Workflow State Ownership
 
+Project configuration is separate from executable workflow state. Root `design-workflow.config.json` is normal version-controlled project content governed by [`Project-Configuration.md`](Project-Configuration.md); it owns stable project identity/boundaries and may be intentionally edited by humans/authorized agents. It is never mutated as workflow-record state.
+
 This document prevents executable state from being maintained independently in several files.
 
 The toolkit has one executable control mode and one manual/scaffold mode:
