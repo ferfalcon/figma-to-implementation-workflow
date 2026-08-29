@@ -187,6 +187,7 @@ if (!consumerAgents.includes('design-workflow.config.json') || !consumerAgents.i
 for (const [pattern, description] of [
   [/^### Remote-only first run$/im, 'define remote-only first run'],
   [/caller installation is \*\*step zero\*\*/i, 'treat caller install as pre-init setup'],
+  [/design-workflow\.config\.json/i, 'require repository-owned project configuration before remote init'],
   [/default branch/i, 'require caller on default branch'],
   [/remote `init`/i, 'use canonical remote init'],
   [/recordGitBlobSha/i, 'verify regenerated projection after init'],
