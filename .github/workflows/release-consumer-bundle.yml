@@ -47,4 +47,5 @@ jobs:
           gh release upload "${{ github.event.release.tag_name }}"
           dist/design-workflow-consumer.zip
           dist/consumer-bundle/ChatGPT-Project-Instructions.md
+          dist/consumer-bundle/design-workflow.config.template.json
           --clobber
