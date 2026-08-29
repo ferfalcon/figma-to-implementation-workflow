@@ -1,6 +1,6 @@
 # Express Workpack Template
 
-Use only for the Express profile. In CLI-managed mode this is the single normative narrative artifact; the workflow record owns mutable control/registry/validation/output-lineage state.
+Use only for the Express profile. In CLI-managed mode this is the single normative narrative artifact; the workflow record owns mutable control/registry/validation/output-lineage state. Root `design-workflow.config.json` remains the source of truth for stable project identity/boundaries.
 
 <!-- artifact:start -->
 

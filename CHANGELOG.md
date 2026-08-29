@@ -8,8 +8,9 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 
 ### Added
 
-- Generated consumer bundle tooling that produces an upload-ready repository payload, ChatGPT Project Instructions from the canonical host template, a bundle manifest, and an exact immutable GitHub remote-executor pin.
-- Release automation that publishes the consumer bundle and ChatGPT Project Instructions as release assets from the exact released toolkit commit.
+- Repository-root `design-workflow.config.json` as canonical persistent project configuration shared across chats/users/agents, with schema, template, authority contract, and regression coverage.
+- Generated consumer bundle tooling that produces an upload-ready repository payload, ChatGPT Project Instructions, the project-configuration template, a bundle manifest, and an exact immutable GitHub remote-executor pin.
+- Release automation that publishes the consumer bundle, ChatGPT Project Instructions, and project-configuration template as release assets from the exact released toolkit commit.
 - Regression coverage that enforces one human workflow entry point, agent-owned profile/transport resolution, and consumer-bundle integrity.
 - GitHub Issue command transport plus a pinned reusable Actions executor for connector-first preflight and canonical CLI-owned workflow mutations against exact expected heads and pinned toolkit revisions.
 - Remote-execution regression coverage for requester permissions, command allowlisting, stale heads, rollback, runtime resolution, read-only preflight, shell/path injection boundaries, filesystem containment, and non-force mutation.
@@ -35,12 +36,13 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 
 ### Changed
 
-- ChatGPT-first onboarding now has one human workflow entry point: add the consumer files, connect project sources, customize the Project Instructions, and say `Start the implementation workflow`.
+- ChatGPT Project Instructions now keep only a repository bootstrap locator; project name, Figma source/scope, implementation root, and optional deployment targets move to repository-owned project configuration.
+- ChatGPT-first onboarding now has one human workflow entry point: connect project sources, set the repository locator once, let ChatGPT read/create repository-owned project configuration, and say `Start the implementation workflow`.
 - Workflow profile selection is now an agent-owned pre-initialization classification based on actual design/repository complexity and risk; user profession and tooling comfort cannot select a profile.
 - Direct CLI versus GitHub Actions execution is now resolved by agent capability detection instead of presented as a normal user choice; both continue to execute the same canonical CLI.
 - Figma preparation can be invoked from the same agent intake when source readiness requires it while remaining outside executable workflow state and separate from the formal Stage 1 audit.
 - README now presents designers and engineers as two value perspectives on the same workflow rather than role-based routes and promotes no-terminal GitHub execution as a first-class capability.
-- `AI-project-settings.md` now puts the small user-editable project value block first while keeping workflow mechanics delegated to the consumer bootstrap.
+- `AI-project-settings.md` now keeps only the repository bootstrap locator at the top while repository-owned `design-workflow.config.json` carries persistent project values.
 - Markdown-only is now explicitly defined as a manual/scaffold mode rather than a peer executable control mode; AI orchestration requires CLI-managed state, while AI assistance in Markdown-only is limited to explicitly requested narrative drafting or review.
 - GitHub remote read-only execution now accepts exit code `1` only for `stage check --json`; `validate` and `sync --check` require exit code `0` so failed checks cannot be reported as successful commands.
 - The write-capable remote executor now pins external GitHub Actions dependencies to full commit SHAs while retaining human-readable release versions in comments.

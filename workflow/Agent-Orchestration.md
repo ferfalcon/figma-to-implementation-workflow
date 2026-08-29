@@ -6,17 +6,19 @@ This document defines how an AI design-engineering agent operates the executable
 
 This contract applies to CLI-managed workflow projects. Markdown-only is a manual/scaffold mode and does not provide executable agent orchestration. An agent may assist with Markdown-only narrative drafting or review when explicitly requested, but must not infer or claim executable stage/task state, approvals, next actions, routing, lifecycle transitions, or validation authority from those manually maintained files. An intentionally Markdown-only project with no `.workflow/workflow-record.json` is not an uninitialized CLI-managed project.
 
-The agent owns reasoning, source inspection, pre-initialization classification, design-source readiness decisions, artifact prose, implementation decisions within approved scope, and evidence collection. The CLI owns executable state, stage/task legality, canonical registries, generated views, trace definitions, validation state, implementation lineage, the recorded workflow-toolkit dependency binding, and the canonical workflow-resource manifest for the current turn.
+The agent owns reasoning, project-configuration reads/authorized edits, source inspection, pre-initialization classification, design-source readiness decisions, artifact prose, implementation decisions within approved scope, and evidence collection. The CLI owns executable state, stage/task legality, canonical registries, generated views, trace definitions, validation state, implementation lineage, the recorded workflow-toolkit dependency binding, and the canonical workflow-resource manifest for the current turn.
 
 Never infer executable state from narrative Markdown when `.workflow/workflow-record.json` exists. Never manually edit generated views.
 
 ## One workflow intake
 
+Before normal intake, read root `design-workflow.config.json` according to [`Project-Configuration.md`](Project-Configuration.md). It owns stable project identity/boundaries across sessions, not source snapshots or executable state. If missing during first setup, establish/commit it before `init`; repository-identity conflict is a blocker.
+
 Normal AI-assisted use has one workflow entry point regardless of whether the human's strongest discipline is design or engineering. User profession, Figma expertise, terminal familiarity, or coding confidence must not create a different workflow route, profile, stage sequence, approval policy, or safety model.
 
 When the user asks to start the implementation workflow and no CLI-managed record exists, resolve these concerns before initialization without asking the human to choose among implementation details:
 
-1. inspect the configured design source/scope and implementation repository sufficiently to establish the intended work boundary;
+1. verify repository-owned project configuration and inspect its design source/scope and implementation repository sufficiently to establish the intended work boundary;
 2. assess design-source readiness and whether source preparation is materially required before the formal developer-handoff audit;
 3. classify the smallest valid workflow profile under [`Workflow-Profiles.md`](Workflow-Profiles.md) from actual complexity and risk evidence;
 4. resolve how the canonical CLI can execute in the current environment: direct execution when actually available, otherwise the installed/authorized GitHub remote transport;

@@ -45,8 +45,8 @@ The workflow is identical in both cases. User profession, terminal familiarity, 
 The normal consumer setup is intentionally small:
 
 1. Connect GitHub and Figma to your ChatGPT Project.
-2. Copy [`AI-project-settings.md`](AI-project-settings.md) into the ChatGPT Project instructions and customize the project values at the top.
-3. Tell ChatGPT: **“Install the Design-to-Implementation Workflow in this repository.”**
+2. Copy [`AI-project-settings.md`](AI-project-settings.md) into the ChatGPT Project instructions and set the implementation repository locator once.
+3. Tell ChatGPT: **“Install the Design-to-Implementation Workflow in this repository.”** ChatGPT reads or creates root `design-workflow.config.json` and installs the thin caller when needed.
 4. Tell ChatGPT: **“Start the implementation workflow.”**
 
 The installation step is repository setup, not a second workflow route. ChatGPT resolves the canonical toolkit repository to an exact immutable revision and installs only the thin GitHub caller when remote execution is required. The implementation repository does not need a copied `docs/implementation-workflow/` toolkit tree.
@@ -54,6 +54,14 @@ The installation step is repository setup, not a second workflow route. ChatGPT 
 From there, the agent inspects the configured design and repository scope, determines whether design-source preparation is required, classifies the smallest valid workflow profile, discovers the current workflow state, resolves direct versus GitHub-hosted CLI execution, and continues until a real human approval, consequential decision, or capability blocker is reached.
 
 See [`QUICKSTART.md`](QUICKSTART.md) for the complete consumer setup and first-run contract.
+
+## Repository-owned project configuration
+
+Stable project identity does not live in conversation memory. Each implementation repository owns root `design-workflow.config.json` with project/repository identity, implementation root, Figma source/authorized scope, and optional deployment targets.
+
+ChatGPT Project Instructions retain only a repository bootstrap locator so a new chat can find that file. Once found, the repository configuration is canonical across chats, users, and agents; connected GitHub/Figma/Vercel tools verify current state rather than redefining identity.
+
+The configuration is normal version-controlled project content and is separate from CLI-owned `.workflow/workflow-record.json`. See [`workflow/Project-Configuration.md`](workflow/Project-Configuration.md).
 
 ## External pinned toolkit model
 
@@ -160,6 +168,7 @@ The generated bundle contains:
 
 - `repository/.github/workflows/design-workflow-command.yml` — the thin GitHub caller pinned to the exact toolkit revision;
 - `ChatGPT-Project-Instructions.md` — generated directly from `AI-project-settings.md`;
+- `design-workflow.config.template.json` — reusable project-configuration shape for first setup/manual fallback;
 - `consumer-bundle-manifest.json` — bundle format, external installation model, and immutable toolkit identity.
 
 The bundle intentionally does **not** vendor the runtime toolkit into the implementation repository.
@@ -187,7 +196,7 @@ These are technical surfaces, not separate consumer workflows.
 
 | Area | Responsibility |
 |---|---|
-| `workflow/` | Normative process contracts: stages, profiles, execution, source authority, state ownership, identifiers, validation, and orchestration |
+| `workflow/` | Normative process contracts: project configuration, stages, profiles, execution, source authority, state ownership, identifiers, validation, and orchestration |
 | `source-adapters/` | Source-specific inspection and preparation guidance |
 | `guidelines/` | Artifact-writing and review guidance |
 | `templates/` | Reusable project artifact structures and GitHub caller template |
@@ -204,6 +213,7 @@ These are technical surfaces, not separate consumer workflows.
 
 Read these when the current task needs the corresponding domain:
 
+- [`workflow/Project-Configuration.md`](workflow/Project-Configuration.md) — repository-owned project identity, boundaries, bootstrap, and configuration lifecycle.
 - [`workflow/Workflow-Profiles.md`](workflow/Workflow-Profiles.md) — profile eligibility, agent classification, artifact sets, and upgrade rules.
 - [`workflow/Source-Snapshots.md`](workflow/Source-Snapshots.md) — source identity, pinning, reverification, and supersession.
 - [`workflow/Source-Authority.md`](workflow/Source-Authority.md) — evidence classifications and decision authority.

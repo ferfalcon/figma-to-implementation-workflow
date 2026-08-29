@@ -20,6 +20,8 @@ const files = new Set(report.files.map((item) => item.path.split('\\').join('/')
 const requiredAreas = [
   'AGENTS.md', 'AGENTS-instructions.md', 'AGENTS-PROMPT-Figma-file-preparation.md',
   'AI-project-settings.md', 'CONTRIBUTING.md', 'CHANGELOG.md',
+  'workflow/Project-Configuration.md', 'schemas/design-workflow-config.schema.json',
+  'templates/design-workflow.config.template.json',
   'cli/', 'cli/toolkit-provenance.json', 'workflow/', 'guidelines/', 'prompts/', 'source-adapters/',
   'templates/', 'examples/', 'schemas/', 'scripts/', 'tests/',
 ];

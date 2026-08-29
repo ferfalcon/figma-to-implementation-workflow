@@ -1,4 +1,12 @@
-# Executable Workflow Records
+# Workflow Schemas
+
+## Project configuration
+
+Implementation repositories use root `design-workflow.config.json` as the persistent project identity/boundary source of truth across chats and agents. Its shape is [`design-workflow-config.schema.json`](design-workflow-config.schema.json); creation template: [`../templates/design-workflow.config.template.json`](../templates/design-workflow.config.template.json).
+
+This is normal version-controlled project content, not executable workflow state, and must not contain secrets. See [`../workflow/Project-Configuration.md`](../workflow/Project-Configuration.md).
+
+## Executable workflow records
 
 CLI-managed projects use `.workflow/workflow-record.json` as the canonical mutable control record. Markdown-only projects have no executable record and maintain the complete fallback registries rendered into their Stage 0 artifacts.
 

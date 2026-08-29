@@ -14,6 +14,7 @@ const toolkitAgents = read('AGENTS.md');
 const consumerAgents = read('AGENTS-instructions.md');
 const figmaLauncher = read('AGENTS-PROMPT-Figma-file-preparation.md');
 const orchestration = read('workflow/Agent-Orchestration.md');
+const projectConfiguration = read('workflow/Project-Configuration.md');
 const profiles = read('workflow/Workflow-Profiles.md');
 const remoteExecution = read('workflow/GitHub-Remote-Execution.md');
 const errors = [];
@@ -21,6 +22,7 @@ const errors = [];
 const requiredReadmeLinks = [
   'QUICKSTART.md',
   'workflow/Design-Implementation-Workflow.md',
+  'workflow/Project-Configuration.md',
   'workflow/Workflow-Profiles.md',
   'workflow/Agent-Orchestration.md',
   'workflow/GitHub-Remote-Execution.md',
@@ -75,6 +77,8 @@ const requiredQuickstartContracts = [
   [/You do \*\*not\*\* need to choose a workflow profile/i, 'remove human profile selection'],
   [/decide whether the workflow should run through a local terminal or GitHub Actions/i, 'remove human transport selection'],
   [/Install the Design-to-Implementation Workflow in this repository/i, 'make installation an agent-owned setup action'],
+  [/design-workflow\.config\.json/i, 'persist project configuration in the implementation repository'],
+  [/repository locator/i, 'keep only a bootstrap repository locator in host instructions'],
   [/setup action, not a second workflow route/i, 'keep installation separate from workflow routing'],
   [/resolve[^\n]*default-branch HEAD once[^\n]*exact 40-character/i, 'resolve a mutable bootstrap ref only once into an immutable pin'],
   [/does \*\*not\*\* receive a copied `docs\/implementation-workflow\/` toolkit tree/i, 'reject vendored toolkit installation'],
@@ -116,15 +120,28 @@ for (const [pattern, description] of [
   [/^### Design-source readiness before the formal audit$/im, 'own preparation readiness'],
   [/^### Execution transport resolution$/im, 'own direct-versus-remote resolution'],
   [/Do not expose local-versus-remote execution as a normal onboarding choice/i, 'keep transport internal'],
+  [/design-workflow\.config\.json/i, 'load repository-owned project configuration before intake'],
 ]) {
   if (!pattern.test(orchestration)) errors.push(`Agent-Orchestration.md must ${description}.`);
 }
 
-if (!projectSettings.startsWith('# Customize these project values')) {
-  errors.push('ChatGPT Project settings must put the small editable value block first.');
+if (!projectSettings.startsWith('# Project locator')) {
+  errors.push('ChatGPT Project settings must begin with the repository bootstrap locator.');
 }
-for (const field of ['Project:', 'Repository:', 'Figma:', 'Figma scope:', 'Implementation root:']) {
-  if (!projectSettings.includes(`- ${field}`)) errors.push(`ChatGPT Project settings must expose ${field}.`);
+if (!projectSettings.includes('- Repository: `<REPOSITORY_URL>`')) {
+  errors.push('ChatGPT Project settings must expose the repository bootstrap locator.');
+}
+for (const placeholder of ['<PROJECT_NAME>', '<FIGMA_URL>', '<FIGMA_SCOPE>', '<IMPLEMENTATION_ROOT>', '<VERCEL_URL>', '<PRODUCTION_URL>']) {
+  if (projectSettings.includes(placeholder)) errors.push(`ChatGPT Project settings must not duplicate repository-owned project configuration placeholder ${placeholder}.`);
+}
+if (!projectSettings.includes('design-workflow.config.json') || !projectSettings.includes('workflow/Project-Configuration.md')) {
+  errors.push('ChatGPT Project settings must delegate stable project configuration to the repository manifest contract.');
+}
+if (!projectConfiguration.includes('canonical, version-controlled project configuration')) {
+  errors.push('Project-Configuration.md must define the repository manifest as canonical persistent project configuration.');
+}
+if (!projectConfiguration.includes('only a bootstrap pointer')) {
+  errors.push('Project-Configuration.md must distinguish the host repository locator from configuration authority.');
 }
 
 const projectBootstrapRequirements = [
@@ -136,6 +153,7 @@ const projectBootstrapRequirements = [
   [/Load `AGENTS-instructions\.md`[^\n]*exactly that bootstrap revision/i, 'load the bootstrap from the immutable source'],
   [/one workflow regardless of whether my strongest discipline is design or engineering/i, 'preserve one workflow across user backgrounds'],
   [/do not redefine them in these Project instructions/i, 'keep detailed workflow mechanics delegated'],
+  [/design-workflow\.config\.json` exists and is verified/i, 'require project configuration before first initialization'],
 ];
 for (const [pattern, description] of projectBootstrapRequirements) {
   if (!pattern.test(projectSettings)) errors.push(`ChatGPT Project settings must ${description}.`);
@@ -145,11 +163,12 @@ if (/docs\/implementation-workflow\/AGENTS-instructions\.md/i.test(projectSettin
 }
 
 for (const [pattern, description] of [
-  [/Treat `<IMPLEMENTATION_ROOT>` as the repo-relative implementation boundary/i, 'define Implementation root'],
+  [/repository\.implementationRoot/i, 'read Implementation root from project configuration'],
   [/`\.` for repo root; e\.g\. `frontend\/` or `apps\/web\/` when nested/i, 'document root and nested examples'],
   [/scope app code inspection, edits, app-specific commands, architecture, and validation to it/i, 'scope implementation work'],
   [/Go outside it only for required repo-wide integration/i, 'limit outside-root work'],
   [/Instruction files may be read outside it without expanding the edit boundary/i, 'allow instruction reads outside edit boundary'],
+  [/configuration `design\.scope`/i, 'read Figma edit scope from project configuration'],
 ]) {
   if (!pattern.test(projectSettings)) errors.push(`ChatGPT Project settings must ${description}.`);
 }
@@ -163,10 +182,12 @@ if (!consumerAgents.includes('Do not ask whether they are a designer or engineer
 if (!consumerAgents.includes('Do not ask the human to choose the transport')) errors.push('Consumer bootstrap must resolve transport automatically.');
 if (!consumerAgents.includes('Do not assume `docs/implementation-workflow/` exists')) errors.push('Consumer bootstrap must support external pinned loading.');
 if (!consumerAgents.includes('Do not copy the toolkit runtime into the implementation repository.')) errors.push('Consumer bootstrap must prohibit runtime vendoring during remote install.');
+if (!consumerAgents.includes('design-workflow.config.json') || !consumerAgents.includes('workflow/Project-Configuration.md')) errors.push('Consumer bootstrap must load repository-owned project configuration.');
 
 for (const [pattern, description] of [
   [/^### Remote-only first run$/im, 'define remote-only first run'],
   [/caller installation is \*\*step zero\*\*/i, 'treat caller install as pre-init setup'],
+  [/design-workflow\.config\.json/i, 'require repository-owned project configuration before remote init'],
   [/default branch/i, 'require caller on default branch'],
   [/remote `init`/i, 'use canonical remote init'],
   [/recordGitBlobSha/i, 'verify regenerated projection after init'],
@@ -183,5 +204,5 @@ if (errors.length > 0) {
   errors.forEach((error) => console.error(`- ${error}`));
   process.exitCode = 1;
 } else {
-  console.log('Entrypoint authority test passed (one workflow entry point, agent-owned external bootstrap, no vendored toolkit requirement, and delegated safety contracts).');
+  console.log('Entrypoint authority test passed (one workflow entry point, repository-owned project configuration, agent-owned external bootstrap, and delegated safety contracts).');
 }

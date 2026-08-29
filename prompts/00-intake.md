@@ -2,6 +2,8 @@
 
 Establish the exact source and repository baseline before auditing, documenting, planning, or implementing.
 
+Read/verify root `design-workflow.config.json` first. It owns stable project identity/boundaries; current tools/snapshots verify state. Do not copy stable values into narrative artifacts as a competing authority. Missing/materially conflicting configuration blocks Stage 0 until resolved.
+
 ## Profile targets
 
 - Express: update `WORKPACK.md` source/scope/eligibility sections only.
