@@ -29,23 +29,17 @@ The workflow uses GitHub as the repository environment and Figma as the design s
 
 Copy [`AI-project-settings.md`](AI-project-settings.md) into the ChatGPT Project instructions.
 
-Customize the project values at the top:
+Set the repository locator once when the ChatGPT Project is not already scoped to the implementation repository:
 
 ```text
-Project: <PROJECT_NAME>
 Repository: <REPOSITORY_URL>
-Figma: <FIGMA_URL>
-Figma scope: <FIGMA_SCOPE>
-Implementation root: <IMPLEMENTATION_ROOT>
-Vercel: <VERCEL_URL>
-Production: <PRODUCTION_URL>
 ```
 
-`Implementation root` is repository-relative: use `.` for the repository root, or a path such as `frontend/` or `apps/web/` when the application lives in a nested directory.
+That line only tells a new chat where to find the project. The persistent project source of truth lives in `design-workflow.config.json` at the implementation repository root, so Figma, authorized scope, implementation root, deployment targets, and project name do not need to be repeated in every chat or copied into host instructions.
 
-`Vercel` and `Production` are optional when they do not apply.
+On an existing configured repository, a new chat reads that file before substantive project work. On first setup, ChatGPT creates and commits it before workflow initialization, asking only for required values that cannot be established safely from connected project sources.
 
-In normal setup, these project values are the only lines you need to customize. The canonical workflow repository and bootstrap rules are part of the Project Instructions and are not another user configuration choice.
+See [`workflow/Project-Configuration.md`](workflow/Project-Configuration.md) for the canonical ownership and lifecycle contract.
 
 ## 3. Install the workflow
 
@@ -57,13 +51,15 @@ This is a setup action, not a second workflow route.
 
 ChatGPT should:
 
-1. inspect the implementation repository's default branch;
-2. inspect `.github/workflows/design-workflow-command.yml` when it already exists;
-3. if a valid caller is already installed, preserve its exact pinned toolkit revision;
-4. otherwise resolve the canonical `ferfalcon/figma-to-implementation-workflow` repository's current default-branch HEAD once to an exact 40-character Git commit SHA;
-5. load `AGENTS-instructions.md` from that exact toolkit revision;
-6. install only the thin GitHub caller on the implementation repository's default branch, pinned to that same exact revision, when remote execution is required and repository mutation is authorized;
-7. verify the installed caller before reporting setup complete.
+1. inspect the implementation repository's default branch and read `design-workflow.config.json` when it exists;
+2. if missing, establish required values from explicit intent and authoritative project sources, ask only for genuine ambiguities, create/commit the configuration from the pinned toolkit contract/template, and verify it before initialization;
+3. verify its repository identity matches the repository being operated on;
+4. inspect `.github/workflows/design-workflow-command.yml` when it already exists;
+5. if a valid caller is already installed, preserve its exact pinned toolkit revision;
+6. otherwise resolve the canonical `ferfalcon/figma-to-implementation-workflow` repository's current default-branch HEAD once to an exact 40-character Git commit SHA;
+7. load `AGENTS-instructions.md` from that exact toolkit revision;
+8. install only the thin GitHub caller on the default branch, pinned to that same revision, when remote execution is required and mutation is authorized;
+9. verify the committed project configuration and installed caller before reporting setup complete.
 
 After the exact bootstrap revision is resolved, workflow resources must not be loaded from `main`, another branch, or a floating tag.
 
@@ -87,7 +83,7 @@ Before first initialization, the agent follows the pinned [`AGENTS-instructions.
 
 It will:
 
-1. inspect the configured Figma/design scope and implementation repository;
+1. inspect the project-configured Figma/design scope and implementation repository;
 2. determine whether the design source needs material preparation before formal audit work;
 3. classify the smallest valid workflow profile from actual complexity and risk under [`workflow/Workflow-Profiles.md`](workflow/Workflow-Profiles.md);
 4. determine whether the canonical CLI can run directly or must run through the installed GitHub remote executor;
@@ -105,14 +101,20 @@ That is a report of an evidence-based workflow decision, not a request for you t
 Before initialization, the normal remote-capable setup is intentionally small:
 
 ```text
+design-workflow.config.json
+
 .github/
 └── workflows/
     └── design-workflow-command.yml
 ```
 
+`design-workflow.config.json` is normal project configuration, not CLI-owned workflow state.
+
 After initialization, the implementation project also owns its workflow state:
 
 ```text
+design-workflow.config.json
+
 .github/
 └── workflows/
     └── design-workflow-command.yml
@@ -128,7 +130,7 @@ The workflow engine, prompts, guidelines, templates, source adapters, schemas, a
 
 Figma preparation is not a separate user workflow route.
 
-If the configured design scope materially needs normalization before a reliable developer handoff, agent orchestration can invoke the canonical [`source-adapters/FIGMA-PREPARATION.md`](source-adapters/FIGMA-PREPARATION.md) procedure when Figma editing is authorized.
+If the project-configured design scope materially needs normalization before a reliable developer handoff, agent orchestration can invoke the canonical [`source-adapters/FIGMA-PREPARATION.md`](source-adapters/FIGMA-PREPARATION.md) procedure when Figma editing is authorized.
 
 Preparation remains outside `.workflow/` executable state and does not replace the formal Stage 1 design audit. If the source is already implementation-ready, the agent proceeds without unnecessary preparation.
 
@@ -204,6 +206,7 @@ The generated bundle contains:
 ```text
 consumer-bundle/
 ├── ChatGPT-Project-Instructions.md
+├── design-workflow.config.template.json
 ├── consumer-bundle-manifest.json
 └── repository/
     └── .github/
@@ -257,7 +260,9 @@ Connect GitHub + Figma
       ↓
 Paste Project Instructions
       ↓
-Customize project values
+Set the repository locator once
+      ↓
+ChatGPT reads or creates design-workflow.config.json
       ↓
 "Install the Design-to-Implementation Workflow"
       ↓
@@ -266,4 +271,4 @@ Customize project values
 
 The first command prepares the repository transport; the second is the single workflow entry point.
 
-If normal onboarding requires the user to understand commit SHAs, `expectedHead`, command envelopes, generated projection internals, profile taxonomy, local-versus-remote execution, or npm installation before they can start, the abstraction has leaked. Those details remain important, but they belong to the agent and engine layers.
+If normal onboarding requires repeating project boundaries in every chat, or understanding commit SHAs, `expectedHead`, command envelopes, generated projection internals, profile taxonomy, local-versus-remote execution, or npm installation before starting, the abstraction has leaked. Those details remain important, but they belong to the agent and engine layers.
