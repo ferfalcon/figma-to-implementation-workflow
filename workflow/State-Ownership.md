@@ -15,6 +15,7 @@ Never mix ownership models for the same field. Markdown-only documents may be dr
 
 | Information | Canonical owner | Human/agent-readable projection |
 |---|---|---|
+| Stable project identity and working boundaries | root `design-workflow.config.json` | Same file |
 | Profile and execution mode | `workflow-record.json` | `generated/WORKFLOW-STATUS.md` |
 | Stage, workflow status, current task, latest output, and latest validation runtime | `workflow-record.json` | `generated/WORKFLOW-STATUS.md` |
 | Current architecture decision | `workflow-record.json` | `generated/WORKFLOW-STATUS.md` |
