@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "project": { "name": "<PROJECT_NAME>" },
+  "repository": {
+    "url": "<REPOSITORY_URL>",
+    "implementationRoot": "<IMPLEMENTATION_ROOT>"
+  },
+  "design": {
+    "provider": "figma",
+    "url": "<FIGMA_URL>",
+    "scope": "<FIGMA_SCOPE>"
+  },
+  "deployment": {
+    "vercelProjectUrl": null,
+    "productionUrl": null
+  }
+}
