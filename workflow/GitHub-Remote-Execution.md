@@ -35,14 +35,15 @@ Install this caller before initializing the design workflow when possible. Addin
 
 ### Remote-only first run
 
-When no workflow record exists and local CLI execution is unavailable, caller installation is **step zero** rather than a later recovery action:
+When no workflow record exists and local CLI execution is unavailable, caller installation is **step zero** for the remote transport rather than a later recovery action. Repository-owned project configuration is also required before initialization:
 
 1. choose the exact immutable toolkit commit that contains the remote executor you intend to use;
-2. install the pinned caller on the implementation repository's default branch and commit or merge it there;
-3. verify repository/organization Actions policy permits the caller and pinned reusable workflow;
-4. read the current HEAD of the existing target branch after repository setup is complete. If the target branch is the default branch, the caller-installation commit changes the `expectedHead` that must be used for `init`;
-5. submit remote `init` through the command issue protocol below, using that fresh target-branch HEAD;
-6. after successful initialization, re-read `.workflow/workflow-record.json` and `.workflow/generated/AGENT-CONTEXT.json`, verify the projection's `generated.recordGitBlobSha` against the current record blob SHA at the same ref, and continue from the refreshed projection.
+2. load the pinned project-configuration contract/template from that same revision, then preserve or create/commit root `design-workflow.config.json` according to that contract;
+3. install the pinned caller on the implementation repository's default branch and commit or merge it there;
+4. verify repository/organization Actions policy permits the caller and pinned reusable workflow;
+5. read the current HEAD of the existing target branch after **all** pre-initialization repository setup is complete. If the target branch is the default branch, both configuration and caller-installation commits affect the `expectedHead` used for `init`;
+6. submit remote `init` through the command issue protocol below, using that fresh target-branch HEAD;
+7. after successful initialization, re-read `.workflow/workflow-record.json` and `.workflow/generated/AGENT-CONTEXT.json`, verify the projection's `generated.recordGitBlobSha` against the current record blob SHA at the same ref, and continue from the refreshed projection.
 
 If the correctly pinned caller already exists on the default branch, do not rewrite it merely to begin initialization. Verify its pin and the applicable Actions policy, then continue with the fresh target-branch HEAD.
 
@@ -84,7 +85,7 @@ Each command issue is single-use. The executor posts a result and closes it. If 
 
 When local CLI execution is unavailable:
 
-1. If no `.workflow/workflow-record.json` exists, do not expect a generated projection yet. Verify the caller exists on the repository default branch; if it is absent and repository mutation is authorized, complete **Remote-only first run** above before submitting remote `init`. If the caller cannot be installed because of permission or Actions-policy constraints, remote mutation is blocked.
+1. If no `.workflow/workflow-record.json` exists, do not expect a generated projection yet. Verify repository-owned `design-workflow.config.json` and the caller on the repository default branch; if either setup requirement is absent and repository mutation is authorized, complete **Remote-only first run** above before submitting remote `init`. If required configuration/caller setup cannot be committed because of permissions or Actions-policy constraints, remote mutation is blocked.
 2. When a workflow record exists, read `.workflow/generated/AGENT-CONTEXT.json` when it exists.
 3. Verify `generated.recordGitBlobSha` against GitHub's current `.workflow/workflow-record.json` blob `sha` at the same ref before trusting the projection.
 4. Load only the exact pinned workflow resources it identifies and perform the design/repository/narrative work required by the current stage or task.
