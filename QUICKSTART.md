@@ -51,15 +51,13 @@ This is a setup action, not a second workflow route.
 
 ChatGPT should:
 
-1. inspect the implementation repository's default branch and read `design-workflow.config.json` when it exists;
-2. if missing, establish required values from explicit intent and authoritative project sources, ask only for genuine ambiguities, create/commit the configuration from the pinned toolkit contract/template, and verify it before initialization;
-3. verify its repository identity matches the repository being operated on;
-4. inspect `.github/workflows/design-workflow-command.yml` when it already exists;
-5. if a valid caller is already installed, preserve its exact pinned toolkit revision;
-6. otherwise resolve the canonical `ferfalcon/figma-to-implementation-workflow` repository's current default-branch HEAD once to an exact 40-character Git commit SHA;
-7. load `AGENTS-instructions.md` from that exact toolkit revision;
-8. install only the thin GitHub caller on the default branch, pinned to that same revision, when remote execution is required and mutation is authorized;
-9. verify the committed project configuration and installed caller before reporting setup complete.
+1. inspect the implementation repository's default branch and `.github/workflows/design-workflow-command.yml` when it exists;
+2. if a valid caller is already installed, preserve its exact pinned toolkit revision; otherwise resolve the canonical `ferfalcon/figma-to-implementation-workflow` repository's current default-branch HEAD once to an exact 40-character Git commit SHA;
+3. load `AGENTS-instructions.md`, `workflow/Project-Configuration.md`, and `templates/design-workflow.config.template.json` from that exact revision;
+4. read `design-workflow.config.json`; if missing, establish required values from explicit intent and authoritative project sources, ask only for genuine ambiguities, create/commit it from the pinned contract/template, and verify it before initialization;
+5. verify the configuration's repository identity matches the repository being operated on;
+6. install only the thin GitHub caller on the default branch, pinned to that same revision, when remote execution is required and mutation is authorized;
+7. verify the committed project configuration and installed caller before reporting setup complete.
 
 After the exact bootstrap revision is resolved, workflow resources must not be loaded from `main`, another branch, or a floating tag.
 
