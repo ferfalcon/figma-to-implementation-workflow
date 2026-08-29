@@ -1,8 +1,8 @@
 # Project Context Template
 
-Use this template during Stage 0 to establish the stable project baseline before auditing, documenting, planning, or implementing.
+Use this template during Stage 0 to establish the workflow-specific baseline before auditing, documenting, planning, or implementing.
 
-Create `SOURCE-BASELINE.md` first or alongside this file. Follow `Source-Snapshots.md` and reference snapshot IDs rather than describing mutable sources as if they were pinned.
+Stable project identity/boundaries are owned by root `design-workflow.config.json`; reference it instead of redefining Figma URL/scope, repository identity, implementation root, or deployment targets. Create `SOURCE-BASELINE.md` first or alongside this file. Follow `Source-Snapshots.md` and reference snapshot IDs rather than describing mutable sources as if they were pinned.
 
 <!-- artifact:start -->
 
@@ -48,7 +48,8 @@ Every listed ID must exist in `SOURCE-BASELINE.md` with Active status.
 
 ## 3. Design Scope
 
-- Included pages, frames, nodes, screens, files, URLs, or regions:
+- Project configuration: `design-workflow.config.json`
+- Workflow-specific included pages, frames, nodes, screens, or regions within configured scope:
 - Explicitly excluded areas:
 - Access limitations:
 - Known design-source dependencies:
@@ -57,8 +58,9 @@ Do not repeat source identity details already owned by `SOURCE-BASELINE.md`.
 
 ## 4. Repository Scope
 
+- Project configuration: `design-workflow.config.json`
 - Target branch:
-- Relevant application, package, or directory:
+- Workflow-specific repository scope within configured implementation root:
 - Existing implementation state:
 - Known technical constraints:
 - Access or tooling limitations:
@@ -132,6 +134,7 @@ Record only approved or source-supported expectations.
 
 ## 12. Stage 0 Completion
 
+- [ ] `design-workflow.config.json` was read and material configuration drift resolved.
 - [ ] Scope is explicit.
 - [ ] `SOURCE-BASELINE.md` exists.
 - [ ] Every active snapshot ID exists and its pin strength is honest.
