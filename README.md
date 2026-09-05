@@ -2,13 +2,9 @@
 
 ## Figma ↔ GitHub, safely connected through ChatGPT
 
-A single, evidence-driven workflow for turning design intent into validated implementation — whether your strongest side is design or engineering.
+A single, evidence-driven workflow for turning design intent into validated implementation.
 
-Designers do not need to become engineers. Engineers do not need to become advanced Figma practitioners. Connect the project sources, install the workflow through ChatGPT, and tell ChatGPT to start. The workflow keeps the handoff scoped, traceable, approval-aware, and validated.
-
-**One workflow. One onboarding. No user route selection.**
-
-[Get started →](QUICKSTART.md)
+Connect the project sources, install the workflow through ChatGPT, and tell ChatGPT to start. The workflow keeps the handoff scoped, traceable, approval-aware, and validated.
 
 ## The bridge
 
