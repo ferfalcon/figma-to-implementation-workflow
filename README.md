@@ -6,6 +6,13 @@ A single, evidence-driven workflow for turning design intent into validated impl
 
 Connect the project sources, install the workflow through ChatGPT, and tell ChatGPT to start. The workflow keeps the handoff scoped, traceable, approval-aware, and validated.
 
+## Start with ChatGPT
+
+1. Connect GitHub and Figma to your ChatGPT Project.
+2. Copy [`AI-project-settings.md`](AI-project-settings.md) into the ChatGPT Project instructions and set the implementation repository locator.
+3. Tell ChatGPT: **“Install the Design-to-Implementation Workflow in this repository.”** ChatGPT reads or creates root `design-workflow.config.json` and installs the thin caller when needed.
+4. Tell ChatGPT: **“Start the implementation workflow.”**
+
 ## The bridge
 
 The workflow is designed for the gap between design and engineering:
@@ -35,21 +42,6 @@ The workflow is identical in both cases. User profession, terminal familiarity, 
                               ▼
                    implementation + validation
 ```
-
-## Start with ChatGPT
-
-The normal consumer setup is intentionally small:
-
-1. Connect GitHub and Figma to your ChatGPT Project.
-2. Copy [`AI-project-settings.md`](AI-project-settings.md) into the ChatGPT Project instructions and set the implementation repository locator once.
-3. Tell ChatGPT: **“Install the Design-to-Implementation Workflow in this repository.”** ChatGPT reads or creates root `design-workflow.config.json` and installs the thin caller when needed.
-4. Tell ChatGPT: **“Start the implementation workflow.”**
-
-The installation step is repository setup, not a second workflow route. ChatGPT resolves the canonical toolkit repository to an exact immutable revision and installs only the thin GitHub caller when remote execution is required. The implementation repository does not need a copied `docs/implementation-workflow/` toolkit tree.
-
-From there, the agent inspects the configured design and repository scope, determines whether design-source preparation is required, classifies the smallest valid workflow profile, discovers the current workflow state, resolves direct versus GitHub-hosted CLI execution, and continues until a real human approval, consequential decision, or capability blocker is reached.
-
-See [`QUICKSTART.md`](QUICKSTART.md) for the complete consumer setup and first-run contract.
 
 ## Repository-owned project configuration
 
@@ -88,8 +80,6 @@ After initialization, `.workflow/workflow-record.json` becomes the canonical too
 The workflow has one canonical engine: `design-workflow`.
 
 When the current environment can execute the CLI directly, the agent may use it. When ChatGPT can work through GitHub but has no local CLI, [`workflow/GitHub-Remote-Execution.md`](workflow/GitHub-Remote-Execution.md) lets GitHub Actions run the same pinned canonical CLI. GitHub Issues are only the authenticated command transport; they do not become a second workflow engine or approval mechanism.
-
-The user does not need to choose between “local mode” and “GitHub mode.” Execution transport is a capability-resolution concern owned by agent orchestration.
 
 ## Why not just ask ChatGPT to “implement the Figma”?
 
@@ -218,15 +208,3 @@ Read these when the current task needs the corresponding domain:
 - [`workflow/Validation-Rules.md`](workflow/Validation-Rules.md) — validation evidence, review passes, retesting, and final acceptance.
 - [`workflow/Agent-Orchestration.md`](workflow/Agent-Orchestration.md) — canonical AI-agent runtime behavior, one-workflow intake, preparation/classification, and execution-transport resolution.
 - [`workflow/Contract-Compatibility.md`](workflow/Contract-Compatibility.md) — generated contract compatibility map.
-
-## Toolkit development
-
-If you are changing this toolkit rather than consuming it, follow [`AGENTS.md`](AGENTS.md) and [`CONTRIBUTING.md`](CONTRIBUTING.md), then run:
-
-```bash
-npm run validate
-```
-
-## License
-
-Licensed under the MIT License. See [`LICENSE`](LICENSE).
