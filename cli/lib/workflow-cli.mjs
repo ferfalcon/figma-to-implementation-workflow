@@ -1,3 +1,4 @@
+import { readProjectConfiguration, resolveProjectSession } from './project-configuration.mjs';
 import { existsSync } from 'node:fs';
 import { runWorkflowCli } from './commands-v2.mjs';
 import { mutateRecord, readStoredRecord } from './record-store.mjs';
@@ -67,6 +68,8 @@ export async function runCli(args, environment) {
 
   if (!command || command === 'help' || options.help) {
     const result = await runWorkflowCli(workflowArgsBase, workflowEnvironment);
+    write(stdout, '\nProject settings:');
+    write(stdout, '  design-workflow project check [--json]');
     write(stdout, '\nTask phases:');
     write(stdout, '  design-workflow task create [--phase <0-99|P00-P99> | --id <Pxx-Txx>] ...');
     write(stdout, '  --phase and --id are mutually exclusive. Without either, numbering continues in the highest existing phase and defaults to Phase 01.');
@@ -81,6 +84,21 @@ export async function runCli(args, environment) {
     write(stdout, '\nLocal repository binding:');
     write(stdout, '  design-workflow repository bind <snapshot-id> --path <checkout>');
     return result;
+  }
+
+  if (command === 'project' && positionals[1] === 'check') {
+    try {
+      const config = readProjectConfiguration(projectRoot);
+      const session = resolveProjectSession(config);
+      if (options.json) json(stdout, { valid: true, ...session });
+      else write(stdout, `Project configuration is valid (v${config.schemaVersion}); working branch: ${session.workingBranch}.`);
+      return 0;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (options.json) json(stdout, { valid: false, findings: [message] });
+      else fail(stderr, message);
+      return 1;
+    }
   }
 
   if (command === 'repository' && positionals[1] === 'bind') {

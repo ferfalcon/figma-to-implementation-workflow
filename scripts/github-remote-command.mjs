@@ -52,14 +52,19 @@ function isStageCheckJsonCommand(args) {
   return args.length === 3 && args[0] === 'stage' && args[1] === 'check' && args[2] === '--json';
 }
 
+function isProjectCheckJsonCommand(args) {
+  return args.length === 3 && args[0] === 'project' && args[1] === 'check' && args[2] === '--json';
+}
+
 function isReadOnlyCommand(args) {
   return isStageCheckJsonCommand(args)
+    || isProjectCheckJsonCommand(args)
     || (args.length === 1 && args[0] === 'validate')
     || (args.length === 2 && args[0] === 'sync' && args[1] === '--check');
 }
 
 function acceptsReadOnlyExitCode(args, status) {
-  return status === 0 || (status === 1 && isStageCheckJsonCommand(args));
+  return status === 0 || (status === 1 && (isStageCheckJsonCommand(args) || isProjectCheckJsonCommand(args)));
 }
 
 function fail(message) {
@@ -275,7 +280,7 @@ function readCanonicalToolkitBinding(project) {
 function requireToolkitCompatibility(project, request, toolkitRepository, toolkitRevision) {
   const binding = readCanonicalToolkitBinding(project);
   if (binding === null) {
-    if (!commandMatches(request.args, ['init'])) fail('Workflow is not initialized; the next remote mutation must be init.');
+    if (!commandMatches(request.args, ['init']) && !isProjectCheckJsonCommand(request.args)) fail('Workflow is not initialized; the next remote mutation must be init.');
     return;
   }
   if (!binding.present) {

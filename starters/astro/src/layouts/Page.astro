@@ -1,0 +1,45 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const {
+  title,
+  description = 'A considered starting point for your next website.',
+} = Astro.props;
+const pathname = Astro.url.pathname.replace(/\/$/, '') || '/';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href="/mark.svg" />
+    <title>{title}</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header shell">
+      <a class="brand" href="/" aria-label="Fieldnotes home">
+        <img src="/mark.svg" width="30" height="30" alt="" />
+        <span>Fieldnotes</span>
+      </a>
+      <nav aria-label="Main navigation">
+        <a href="/" aria-current={pathname === '/' ? 'page' : undefined}>Home</a>
+        <a href="/about/" aria-current={pathname === '/about' ? 'page' : undefined}>About</a>
+      </nav>
+    </header>
+    <main id="main" class="shell" tabindex="-1">
+      <slot />
+    </main>
+    <footer class="site-footer shell">
+      <p>Good ideas deserve a place to begin.</p>
+      <a href="/about/">About this space <span aria-hidden="true">↗</span></a>
+    </footer>
+  </body>
+</html>

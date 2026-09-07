@@ -10,6 +10,10 @@ The agent owns reasoning, project-configuration reads/authorized edits, source i
 
 Never infer executable state from narrative Markdown when `.workflow/workflow-record.json` exists. Never manually edit generated views.
 
+## ChatGPT consumer preferences
+
+[ChatGPT-Experience.md](ChatGPT-Experience.md) owns the ordinary-ChatGPT product experience: plugin capability checks, configuration-v2 branch discovery, saved review styles, scoped implementation approval, durable assets, preview evidence, and recovery. Read the applicable section during setup or resuming; it does not replace the canonical packet/projection or introduce another execution mode. Configuration v1 keeps its established ref and mode until explicit adoption. An approved complete task scope in Brief and final preview permits sequential task continuation; all task integrity and final human acceptance requirements remain in force.
+
 ## One workflow intake
 
 Before normal intake, read root `design-workflow.config.json` according to [`Project-Configuration.md`](Project-Configuration.md). It owns stable project identity/boundaries across sessions, not source snapshots or executable state. If missing during first setup, establish/commit it before `init`; repository-identity conflict is a blocker.

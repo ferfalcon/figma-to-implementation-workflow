@@ -26,7 +26,9 @@
     "source-adapters",
     "templates",
     "tests",
-    "workflow"
+    "workflow",
+    "starters",
+    "release"
   ],
   "scripts": {
     "prepack": "node scripts/package-toolkit-provenance.mjs write",
@@ -68,7 +70,11 @@
     "test:lineage": "node scripts/test-sequential-task-lineage.mjs",
     "test:github-remote": "node scripts/test-github-remote-command.mjs && node scripts/test-github-remote-authorization.mjs && node scripts/test-github-remote-paths.mjs",
     "test:action-pinning": "node scripts/test-github-actions-pinning.mjs",
-    "test:package": "node scripts/test-package-manifest.mjs"
+    "test:package": "node scripts/test-package-manifest.mjs",
+    "build:astro-starter": "node scripts/build-consumer-bundle.mjs --starter astro",
+    "test:product": "node scripts/test-product-experience.mjs",
+    "test:starter": "node scripts/test-astro-starter.mjs",
+    "check:release-readiness": "node scripts/check-release-readiness.mjs"
   },
   "engines": {
     "node": ">=22"

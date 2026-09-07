@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/ferfalcon/figma-to-implementation-workflow/schemas/design-workflow-config.schema.json",
-  "title": "Design Workflow Project Configuration",
+  "$id": "https://github.com/ferfalcon/figma-to-implementation-workflow/schemas/design-workflow-config.v1.schema.json",
+  "title": "Design Workflow Project Configuration v1 (legacy)",
   "description": "Stable project identity and working boundaries shared across agents and chats.",
   "type": "object",
   "additionalProperties": false,
@@ -10,12 +10,11 @@
     "project",
     "repository",
     "design",
-    "deployment",
-    "workflow"
+    "deployment"
   ],
   "properties": {
     "schemaVersion": {
-      "const": 2
+      "const": 1
     },
     "project": {
       "type": "object",
@@ -35,8 +34,7 @@
       "additionalProperties": false,
       "required": [
         "url",
-        "implementationRoot",
-        "workingBranch"
+        "implementationRoot"
       ],
       "properties": {
         "url": {
@@ -51,12 +49,6 @@
           "not": {
             "pattern": "(^|/)\\.\\.(/|$)"
           }
-        },
-        "workingBranch": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 200,
-          "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]*$"
         }
       }
     },
@@ -104,22 +96,6 @@
             "null"
           ],
           "format": "uri"
-        }
-      }
-    },
-    "workflow": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "reviewStyle"
-      ],
-      "properties": {
-        "reviewStyle": {
-          "type": "string",
-          "enum": [
-            "brief-and-preview",
-            "every-stage"
-          ]
         }
       }
     }
