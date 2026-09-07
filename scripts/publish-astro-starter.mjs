@@ -86,7 +86,13 @@ export async function publishAstroStarter({ repository, source, revision, token,
   const refPath = base + '/git/refs/heads/' + encodeURIComponent(info.default_branch);
   const head = (await request('GET', refPath)).object.sha;
   const parent = await request('GET', base + '/git/commits/' + head);
-  if (!created) {
+  if (created) {
+    const initial = await request('GET', base + '/git/trees/' + parent.tree.sha + '?recursive=1');
+    if (parent.parents?.length !== 0 || initial.truncated || initial.tree.length !== 1
+      || initial.tree[0].path !== 'README.md' || initial.tree[0].type !== 'blob') {
+      throw new Error('New template changed before its first generated commit; inspect it before recovery.');
+    }
+  } else {
     const currentFile = await request('GET', base + '/contents/' + markerPath + '?ref=' + head, undefined, { allow404: true });
     if (!currentFile || currentFile.encoding !== 'base64') throw new Error('Refusing to replace a repository without generated starter provenance.');
     const currentMarkerBytes = Buffer.from(currentFile.content, 'base64');

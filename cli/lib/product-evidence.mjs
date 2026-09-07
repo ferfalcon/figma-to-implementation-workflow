@@ -74,7 +74,7 @@ export function validateAcceptanceReport(report) {
     if (session.usedWork !== false || session.usedCodex !== false || session.usedLocalTerminal !== false) findings.push(prefix + 'must complete without Work, Codex, or a local terminal.');
     if (session.result !== 'passed' || session.humanVisualAcceptance !== true) findings.push(prefix + 'human visual acceptance and a passing result are required.');
     for (const name of ['setupSteps', 'clarificationCount', 'timeToFirstPreviewSeconds']) {
-      if (!Number.isFinite(session[name]) || session[name] < 0 || (name === 'timeToFirstPreviewSeconds' && session[name] === 0)) findings.push(prefix + name + ' must be recorded.');
+      if (!Number.isFinite(session[name]) || (name !== 'timeToFirstPreviewSeconds' && !Number.isInteger(session[name])) || session[name] < 0 || (name === 'timeToFirstPreviewSeconds' && session[name] === 0)) findings.push(prefix + name + ' must be recorded.');
     }
     for (const result of [assessCapabilities(session.capabilityEvidence), assessPreviewEvidence(session.previewEvidence)]) {
       findings.push(...result.findings.map(finding => prefix + finding));

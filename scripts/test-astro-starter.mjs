@@ -43,6 +43,7 @@ try {
   assert.equal(JSON.parse(read(join(repo, 'design-workflow.config.template.json'))).schemaVersion, 2);
   for (const absent of ['node_modules', 'dist', '.astro', 'docs/implementation-workflow', '.workflow']) assert(!existsSync(join(repo, absent)), absent);
   assert.throws(() => buildConsumerBundle({ output: root, revision, starter: 'astro' }), /toolkit sources/);
+  assert.throws(() => buildConsumerBundle({ output: dirname(root), revision }), /toolkit sources/);
   assert.throws(() => buildConsumerBundle({ output: join(root, 'workflow'), revision }), /under dist/);
   assert.throws(() => buildConsumerBundle({ output: join(temp, 'bad'), revision, starter: 'react' }), /Only the astro/);
   assert.throws(() => buildConsumerBundle({ output: join(temp, 'bad'), revision: 'main' }), /exact 40-character/);

@@ -34,9 +34,10 @@ try {
         return { full_name: repository, is_template: true, private: false, default_branch: 'main' };
       }
       if (method === 'GET' && path === base + '/git/refs/heads/main') return { object: { sha: concurrent && ++refs > 1 ? 'e'.repeat(40) : 'c'.repeat(40) } };
-      if (method === 'GET' && path.includes('/git/commits/')) return { tree: { sha: 'd'.repeat(40) } };
+      if (method === 'GET' && path.includes('/git/commits/')) return { tree: { sha: 'd'.repeat(40) }, parents: [] };
       if (method === 'GET' && path.includes('/contents/.starter-source.json')) return missingMarker ? null : { encoding: 'base64', content: current.files.get('.starter-source.json').toString('base64') };
       if (method === 'GET' && path.includes('/git/trees/')) {
+        if (create) return { tree: [{ path: 'README.md', type: 'blob', mode: '100644', sha: 'd'.repeat(40) }], truncated: false };
         const tree = [...current.files].map(([path, bytes]) => ({ path, mode: '100644', type: 'blob', sha: blobSha(bytes) }));
         if (dirty) tree.push({ path: 'unexpected.txt', mode: '100644', type: 'blob', sha: 'f'.repeat(40) });
         return { tree, truncated: false };

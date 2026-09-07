@@ -13,6 +13,7 @@ import {
 import { createHash } from 'node:crypto';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { isPathWithin } from './lib/path-safety.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const toolkitRepository = 'ferfalcon/figma-to-implementation-workflow';
@@ -66,10 +67,10 @@ export function buildConsumerBundle({ output, revision, starter = null }) {
   const repositoryRoot = join(outputRoot, 'repository');
   const workflowRoot = join(repositoryRoot, '.github', 'workflows');
 
-  if (outputRoot === root || root.startsWith(outputRoot + '/') || outputRoot === starterRoot || outputRoot.startsWith(starterRoot + '/')) {
+  if (isPathWithin(outputRoot, root) || isPathWithin(starterRoot, outputRoot)) {
     throw new Error('Bundle output must not replace toolkit sources.');
   }
-  if (outputRoot.startsWith(root + '/') && !outputRoot.startsWith(join(root, 'dist') + '/')) {
+  if (isPathWithin(root, outputRoot) && (outputRoot === join(root, 'dist') || !isPathWithin(join(root, 'dist'), outputRoot))) {
     throw new Error('In-repository bundle output must be under dist/.');
   }
   rmSync(outputRoot, { recursive: true, force: true });
