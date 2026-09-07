@@ -213,10 +213,28 @@ try {
   git(['add', 'second.txt']);
   git(['commit', '-m', 'Implement second task']);
   const secondCommit = git(['rev-parse', 'HEAD']);
-  run(['task', 'complete', 'P01-T02', '--commit', secondCommit, '--check', 'Build=Second build passed']);
+  // The remote bridge records validation in a bookkeeping commit before completion.
+  run(['task', 'validation', 'set', 'P01-T02', '--name', 'Build',
+    '--kind', 'Build', '--required', 'true', '--status', 'Passed',
+    '--expected', 'Build succeeds', '--actual', 'Second build passed',
+    '--executed-at', '2026-09-07T00:00:00Z', '--evidence', 'https://github.com/example/product/actions/runs/123']);
+  git(['add', '.workflow']);
+  git(['commit', '-m', 'Record remote validation before completion']);
+  const validationHead = git(['rev-parse', 'HEAD']);
+  assert(validationHead !== secondCommit, 'Fixture needs a later bookkeeping commit.');
+  writeFileSync(join(cwd, 'unverified.txt'), 'later code\n');
+  git(['add', 'unverified.txt']);
+  git(['commit', '-m', 'Concurrent application change before completion']);
+  const beforeRejectedCompletion = readFileSync(join(cwd, '.workflow/workflow-record.json'));
+  const staleCompletion = run(['task', 'complete', 'P01-T02', '--commit', secondCommit], 1);
+  assert(staleCompletion.stderr.includes('later history changes implementation-scope'), 'Stale output must be rejected.');
+  assert(Buffer.compare(beforeRejectedCompletion, readFileSync(join(cwd, '.workflow/workflow-record.json'))) === 0, 'Rejected completion must not change workflow state.');
+  git(['reset', '--hard', validationHead]);
+  run(['task', 'complete', 'P01-T02', '--commit', secondCommit]);
   current = workflowRecord();
   const secondOutput = current.tasks[1].output;
   assert(secondOutput, 'Second task did not record an output snapshot.');
+  assert(current.snapshots.find(snapshot => snapshot.id === secondOutput)?.commit === secondCommit, 'Remote completion must preserve the tested implementation SHA, not the bookkeeping HEAD.');
   assert(
     current.snapshots.find((snapshot) => snapshot.id === secondOutput)?.parent === firstOutput,
     'Second output parent is not the first task implementation output.',

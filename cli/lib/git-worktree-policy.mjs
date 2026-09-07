@@ -147,7 +147,25 @@ export function taskCompletionGitFindings(recordPath, record, task, commit) {
     'Only workflow-managed state and active narrative artifacts may remain dirty.',
   );
   if (!FULL_COMMIT.test(String(commit ?? ''))) return findings;
-  const paths = commitPaths(resolved.repository, String(commit).toLowerCase());
+  const outputCommit = String(commit).toLowerCase();
+  const head = gitRaw(resolved.repository, ['rev-parse', 'HEAD'])?.trim();
+  if (!head) findings.push('Could not resolve repository HEAD before task completion.');
+  if (head && head !== outputCommit) {
+    if (gitRaw(resolved.repository, ['merge-base', '--is-ancestor', outputCommit, head]) === null) {
+      findings.push('Implementation output is not HEAD or an ancestor of HEAD.');
+    } else {
+      const subsequent = rangePaths(resolved.repository, outputCommit, head);
+      if (subsequent === null) findings.push('Could not inspect history after the implementation output.');
+      else {
+        const unexpected = subsequent.filter(path => !managed.has(path));
+        if (unexpected.length) findings.push(
+          'Implementation output is not HEAD and later history changes implementation-scope paths: '
+          + unexpected.join(', ') + '. Validate the replacement implementation commit before completion.',
+        );
+      }
+    }
+  }
+  const paths = commitPaths(resolved.repository, outputCommit);
   if (paths === null) return findings;
   const mixed = paths.filter((path) => managed.has(path));
   if (mixed.length > 0) {

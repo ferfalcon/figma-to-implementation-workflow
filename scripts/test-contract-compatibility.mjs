@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+  PROJECT_CONFIGURATION_SCHEMA_VERSION,
   AGENT_PACKET_PROTOCOL_VERSION,
   CONTRACT_COMPATIBILITY,
   GITHUB_REMOTE_COMMAND_PROTOCOL_VERSION,
@@ -31,6 +32,8 @@ for (const contract of CONTRACT_COMPATIBILITY) {
   }
 }
 
+assert.equal(contractCompatibility('project-configuration').currentVersion, PROJECT_CONFIGURATION_SCHEMA_VERSION);
+assert.deepEqual(contractCompatibility('project-configuration').compatibility.map(item => item.versions[0]), [2, 1]);
 assert.equal(contractCompatibility('workflow-record').currentVersion, WORKFLOW_RECORD_SCHEMA_VERSION);
 assert.equal(contractCompatibility('orchestration-context').currentVersion, ORCHESTRATION_CONTEXT_PROTOCOL_VERSION);
 assert.equal(contractCompatibility('agent-packet').currentVersion, AGENT_PACKET_PROTOCOL_VERSION);

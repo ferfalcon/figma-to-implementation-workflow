@@ -9,10 +9,10 @@
     {
       "id": "readme",
       "path": "README.md",
-      "role": "human overview and role-based router",
+      "role": "human product overview and single onboarding discovery",
       "owns": [
-        "toolkit overview",
-        "role-based entry-point discovery",
+        "product promise and both personas",
+        "one Get started link",
         "high-level reference map"
       ],
       "delegatesTo": [
@@ -27,12 +27,12 @@
       "path": "QUICKSTART.md",
       "role": "human onboarding and first-run guide",
       "owns": [
-        "profile-selection onboarding",
-        "first-run command examples"
+        "one-time plugin and starter setup",
+        "Figma-first start and review preference choice"
       ],
       "delegatesTo": [
-        "workflow/Workflow-Profiles.md",
-        "workflow/State-Ownership.md",
+        "workflow/ChatGPT-Experience.md",
+        "workflow/Project-Configuration.md",
         "workflow/GitHub-Remote-Execution.md"
       ]
     },
@@ -60,7 +60,8 @@
       "delegatesTo": [
         "workflow/Agent-Orchestration.md",
         "workflow/State-Ownership.md",
-        "workflow/GitHub-Remote-Execution.md"
+        "workflow/GitHub-Remote-Execution.md",
+        "workflow/ChatGPT-Experience.md"
       ]
     },
     {
@@ -68,12 +69,13 @@
       "path": "AI-project-settings.md",
       "role": "ChatGPT host and tool-behavior template",
       "owns": [
-        "host environment behavior",
-        "tool posture and autonomy",
-        "repository and implementation boundaries"
+        "repository bootstrap locator",
+        "host boundary and immutable bootstrap loading"
       ],
       "delegatesTo": [
-        "AGENTS-instructions.md"
+        "AGENTS-instructions.md",
+        "workflow/Project-Configuration.md",
+        "workflow/ChatGPT-Experience.md"
       ]
     },
     {
@@ -125,6 +127,18 @@
     {
       "id": "validation",
       "owner": "workflow/Validation-Rules.md"
+    },
+    {
+      "id": "chatgpt-experience",
+      "owner": "workflow/ChatGPT-Experience.md"
+    },
+    {
+      "id": "product-acceptance",
+      "owner": "workflow/Product-Acceptance.md"
+    },
+    {
+      "id": "project-configuration",
+      "owner": "workflow/Project-Configuration.md"
     }
   ],
   "controlModes": [
@@ -167,6 +181,7 @@
     "owner": "cli/lib/contract-compatibility.mjs",
     "humanProjection": "workflow/Contract-Compatibility.md",
     "contracts": [
+      "project-configuration",
       "workflow-record",
       "orchestration-context",
       "agent-packet",

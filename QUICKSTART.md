@@ -74,3 +74,5 @@ Markdown-only is a manual/scaffold mode without executable workflow state, gener
 ### Manual fallback: thin consumer bundle
 
 Maintainers can still generate the thin caller and instructions for an existing repository. It does not include application scaffolding or vendor the toolkit. See the [CLI reference](cli/README.md) for direct installation and bundle generation.
+
+Detailed agent behavior for both review styles, capability checks, assets, recovery, and preview evidence is owned by [ChatGPT Experience](workflow/ChatGPT-Experience.md).

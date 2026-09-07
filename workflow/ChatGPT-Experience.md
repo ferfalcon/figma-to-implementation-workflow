@@ -70,7 +70,7 @@ The starter's Validate UI workflow checks out the exact pushed commit or PR head
 
 Read the workflow run and job logs through GitHub. Use the machine-readable VALIDATION_RESULT log entry and artifact for check names, outcomes, repository, and tested commit. Missing, skipped, cancelled, stale, or failing required checks block readiness. Do not translate workflow bookkeeping validation into application validation.
 
-Wait for a READY Vercel deployment whose git commit equals the tested implementation commit. Inspect the URL with the available provider tool and report that URL. An alias that moved to another commit is not evidence. Bind this deployment as the Validation runtime snapshot and use the ordinary task validation/output mechanisms. Later bookkeeping commits do not change which implementation commit was tested.
+Wait for a READY Vercel deployment whose git commit equals the tested implementation commit. Inspect the URL with the available provider tool and report that URL. An alias that moved to another commit is not evidence. Bind this deployment as the Validation runtime snapshot and use the ordinary task validation/output mechanisms. Later bookkeeping commits do not change which implementation commit was tested. Use that exact SHA for task completion, even if recording validation has added bookkeeping commits. The CLI inspects every later commit and rejects any implementation-scope touch, including reverted edits.
 
 The remote CLI bridge uses GITHUB_TOKEN; its bookkeeping pushes do not normally trigger another Actions run. Application checks run from the ordinary plugin-authored implementation push. Do not rely on a bookkeeping push to start UI checks, and do not widen the command bridge into arbitrary shell execution.
 

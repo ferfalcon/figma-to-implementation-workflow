@@ -6,6 +6,7 @@ import {
   mkdirSync,
   readFileSync,
   readdirSync,
+  renameSync,
   rmSync,
   writeFileSync,
 } from 'node:fs';
@@ -80,6 +81,8 @@ export function buildConsumerBundle({ output, revision, starter = null }) {
       recursive: true,
       filter: (path) => !path.slice(starterRoot.length).split(/[\\/]/).some((part) => ignored.has(part)),
     });
+    renameSync(join(repositoryRoot, 'package-lock.template.json'), join(repositoryRoot, 'package-lock.json'));
+    renameSync(join(repositoryRoot, 'gitignore.template'), join(repositoryRoot, '.gitignore'));
     copyFileSync(join(root, 'LICENSE'), join(repositoryRoot, 'LICENSE'));
     const readmePath = join(repositoryRoot, 'README.md');
     writeFileSync(readmePath, readFileSync(readmePath, 'utf8').replaceAll('<TOOLKIT_REVISION>', revision));

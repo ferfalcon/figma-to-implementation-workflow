@@ -229,11 +229,11 @@ Completion accepts the existing `--check name=evidence` shorthand only for check
 
 ```bash
 design-workflow task complete P01-T01 \
-  --commit <current-head-sha> \
+  --commit <tested-implementation-sha> \
   --check "Build=Production build completed successfully"
 ```
 
-Completion rejects dirty implementation-scope leftovers and rejects an Implementation-output commit that contains workflow-managed files. It resolves the task baseline's local checkout from its portable identity, project-relative location, or local binding, verifies that the supplied commit exists in that repository, equals `HEAD`, and descends from the exact task-start baseline, then creates the portable Implementation-output snapshot. Passed validation is bound to that exact output commit. Task-by-task execution cannot begin before Stage 9, and Continuous-documentation mode cannot enter Stage 10.
+Completion rejects dirty implementation-scope leftovers and rejects an Implementation-output commit that contains workflow-managed files. It resolves the task baseline's local checkout from its portable identity, project-relative location, or local binding, verifies that the supplied commit exists in that repository, descends from the exact task-start baseline, and equals `HEAD` or has only workflow-managed commits between it and `HEAD`, then creates the portable Implementation-output snapshot. The history check inspects every intervening commit, including reverted edits. Passed validation is bound to that exact output commit; recording it in later remote bookkeeping must not substitute the bookkeeping SHA for the implementation SHA. Task-by-task execution cannot begin before Stage 9, and Continuous-documentation mode cannot enter Stage 10.
 
 ## Profile upgrades
 

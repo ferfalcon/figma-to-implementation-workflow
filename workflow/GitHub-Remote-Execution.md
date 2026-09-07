@@ -167,8 +167,11 @@ A transport file committed to the target branch before execution would change `H
 
 - `task start` executes against the exact committed planning HEAD, then the bridge commits the resulting workflow-control update;
 - implementation work is committed normally by the implementation agent/user;
-- `task complete` executes while that implementation commit is still `HEAD`, allowing the canonical CLI to bind validation/output lineage to it;
-- only after completion succeeds does the bridge add the separate workflow bookkeeping commit.
+- read the exact implementation commit's UI workflow logs and matching Vercel preview;
+- declare/record task validation through the canonical commands; these may create later workflow bookkeeping commits;
+- `task complete --commit <tested-implementation-sha>` binds the output to the implementation commit. It must equal `HEAD` or be its ancestor with every later commit touching only workflow-managed paths;
+- any later application change, including one subsequently reverted, blocks completion against earlier evidence;
+- after completion succeeds, the bridge adds a separate bookkeeping commit and preserves the implementation SHA.
 
 The bridge therefore preserves the CLI's distinction between implementation-output commits and workflow/documentation commits.
 

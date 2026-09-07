@@ -237,13 +237,15 @@ export function bindRepositoryWorkspace(cwd, snapshot, repositoryInput) {
   return { path, repository, reference: snapshot.reference };
 }
 
-export function verifyRepositoryCommit(cwd, snapshot, commit, repositoryOverride = null) {
+export function verifyRepositoryCommit(cwd, snapshot, commit, repositoryOverride = null, { allowHeadDescendant = false } = {}) {
   const repository = resolveRepositoryWorkspace(cwd, snapshot, repositoryOverride);
   if (!gitSucceeds(repository, ['cat-file', '-e', `${commit}^{commit}`])) {
     throw new Error(`Commit ${commit} does not exist in the resolved Git repository.`);
   }
   const head = git(repository, ['rev-parse', 'HEAD']);
-  if (head !== commit) throw new Error(`Commit ${commit} is not HEAD (${head ?? 'unavailable'}).`);
+  if (head !== commit && (!allowHeadDescendant || !head || !gitSucceeds(repository, ['merge-base', '--is-ancestor', commit, head]))) {
+    throw new Error(`Commit ${commit} is not HEAD (${head ?? 'unavailable'}) or an allowed ancestor.`);
+  }
   if (!gitSucceeds(repository, ['merge-base', '--is-ancestor', snapshot.commit, commit]) && snapshot.commit !== commit) {
     throw new Error(`Commit ${commit} does not descend from task baseline ${snapshot.commit}.`);
   }

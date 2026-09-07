@@ -8,11 +8,11 @@ This projection makes cross-document ownership and executable compatibility visi
 
 | ID | Path | Role | Owns | Delegates to |
 |---|---|---|---|---|
-| `readme` | [`README.md`](../README.md) | human overview and role-based router | `toolkit overview`<br>`role-based entry-point discovery`<br>`high-level reference map` | [`QUICKSTART.md`](../QUICKSTART.md)<br>[`workflow/Design-Implementation-Workflow.md`](Design-Implementation-Workflow.md)<br>[`AGENTS-instructions.md`](../AGENTS-instructions.md)<br>[`AGENTS.md`](../AGENTS.md) |
-| `quickstart` | [`QUICKSTART.md`](../QUICKSTART.md) | human onboarding and first-run guide | `profile-selection onboarding`<br>`first-run command examples` | [`workflow/Workflow-Profiles.md`](Workflow-Profiles.md)<br>[`workflow/State-Ownership.md`](State-Ownership.md)<br>[`workflow/GitHub-Remote-Execution.md`](GitHub-Remote-Execution.md) |
+| `readme` | [`README.md`](../README.md) | human product overview and single onboarding discovery | `product promise and both personas`<br>`one Get started link`<br>`high-level reference map` | [`QUICKSTART.md`](../QUICKSTART.md)<br>[`workflow/Design-Implementation-Workflow.md`](Design-Implementation-Workflow.md)<br>[`AGENTS-instructions.md`](../AGENTS-instructions.md)<br>[`AGENTS.md`](../AGENTS.md) |
+| `quickstart` | [`QUICKSTART.md`](../QUICKSTART.md) | human onboarding and first-run guide | `one-time plugin and starter setup`<br>`Figma-first start and review preference choice` | [`workflow/ChatGPT-Experience.md`](ChatGPT-Experience.md)<br>[`workflow/Project-Configuration.md`](Project-Configuration.md)<br>[`workflow/GitHub-Remote-Execution.md`](GitHub-Remote-Execution.md) |
 | `toolkit-agents` | [`AGENTS.md`](../AGENTS.md) | toolkit repository agent contract | `toolkit-maintainer agent behavior`<br>`repository development and validation expectations` | [`workflow/Design-Implementation-Workflow.md`](Design-Implementation-Workflow.md)<br>[`workflow/Validation-Rules.md`](Validation-Rules.md) |
-| `consumer-agent-bootstrap` | [`AGENTS-instructions.md`](../AGENTS-instructions.md) | implementation-project consumer agent bootstrap | `minimal workflow bootstrap`<br>`safety-critical agent guardrails` | [`workflow/Agent-Orchestration.md`](Agent-Orchestration.md)<br>[`workflow/State-Ownership.md`](State-Ownership.md)<br>[`workflow/GitHub-Remote-Execution.md`](GitHub-Remote-Execution.md) |
-| `chatgpt-project-settings` | [`AI-project-settings.md`](../AI-project-settings.md) | ChatGPT host and tool-behavior template | `host environment behavior`<br>`tool posture and autonomy`<br>`repository and implementation boundaries` | [`AGENTS-instructions.md`](../AGENTS-instructions.md) |
+| `consumer-agent-bootstrap` | [`AGENTS-instructions.md`](../AGENTS-instructions.md) | implementation-project consumer agent bootstrap | `minimal workflow bootstrap`<br>`safety-critical agent guardrails` | [`workflow/Agent-Orchestration.md`](Agent-Orchestration.md)<br>[`workflow/State-Ownership.md`](State-Ownership.md)<br>[`workflow/GitHub-Remote-Execution.md`](GitHub-Remote-Execution.md)<br>[`workflow/ChatGPT-Experience.md`](ChatGPT-Experience.md) |
+| `chatgpt-project-settings` | [`AI-project-settings.md`](../AI-project-settings.md) | ChatGPT host and tool-behavior template | `repository bootstrap locator`<br>`host boundary and immutable bootstrap loading` | [`AGENTS-instructions.md`](../AGENTS-instructions.md)<br>[`workflow/Project-Configuration.md`](Project-Configuration.md)<br>[`workflow/ChatGPT-Experience.md`](ChatGPT-Experience.md) |
 | `figma-preparation-launcher` | [`AGENTS-PROMPT-Figma-file-preparation.md`](../AGENTS-PROMPT-Figma-file-preparation.md) | Figma preparation-only launcher | `preparation-only launch boundary` | [`source-adapters/FIGMA-PREPARATION.md`](../source-adapters/FIGMA-PREPARATION.md) |
 | `contributing` | [`CONTRIBUTING.md`](../CONTRIBUTING.md) | contributor guide | `repository contribution workflow`<br>`change verification expectations` | [`AGENTS.md`](../AGENTS.md)<br>[`workflow/Validation-Rules.md`](Validation-Rules.md) |
 
@@ -26,6 +26,9 @@ This projection makes cross-document ownership and executable compatibility visi
 | `agent-orchestration` | [`workflow/Agent-Orchestration.md`](Agent-Orchestration.md) |
 | `remote-execution` | [`workflow/GitHub-Remote-Execution.md`](GitHub-Remote-Execution.md) |
 | `validation` | [`workflow/Validation-Rules.md`](Validation-Rules.md) |
+| `chatgpt-experience` | [`workflow/ChatGPT-Experience.md`](ChatGPT-Experience.md) |
+| `product-acceptance` | [`workflow/Product-Acceptance.md`](Product-Acceptance.md) |
+| `project-configuration` | [`workflow/Project-Configuration.md`](Project-Configuration.md) |
 
 ## Control modes
 
@@ -49,6 +52,7 @@ Stage 6 requires an explicit architecture decision: **yes**.
 
 Version numbers and compatibility rules are owned by [`cli/lib/contract-compatibility.mjs`](../cli/lib/contract-compatibility.mjs) and projected in [`workflow/Contract-Compatibility.md`](Contract-Compatibility.md). This semantic contract only records which compatibility contracts must remain represented across the documentation architecture.
 
+- `project-configuration`
 - `workflow-record`
 - `orchestration-context`
 - `agent-packet`

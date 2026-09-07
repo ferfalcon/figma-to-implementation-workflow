@@ -27,7 +27,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
-          cache-dependency-path: starters/astro/package-lock.json
+          cache-dependency-path: starters/astro/package-lock.template.json
       - name: Generate the consumer project
         env:
           TOOLKIT_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}

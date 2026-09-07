@@ -29,7 +29,7 @@ Start from [PRODUCT-ACCEPTANCE.template.json](../templates/PRODUCT-ACCEPTANCE.te
 
 The report records the exact tested toolkit revision, conversation/PR/run/preview locators, actual capability observations, validation outcomes, explicit human visual acceptance, and absence of Work/Codex/local-terminal execution. Set status to complete only after both sessions actually pass.
 
-Commit the completed report in a separate commit after the tested revision. The release guard permits only this report file to differ from the tested source. Any other source change requires new acceptance evidence. Retain full Git history in release jobs.
+Commit the completed report in a separate commit after the tested revision. The release guard permits only this report file to differ from the tested source. Any other source change requires new acceptance evidence, including a release-version or documentation update. Select and commit release metadata before the tester sessions. Retain full Git history in release jobs.
 
 Run npm run check:release-readiness with the intended release revision. The guard rejects pending/malformed evidence, missing personas/styles, reused tester identities, failed or stale validation, mismatched preview commits, missing assets, and source changes after acceptance. It checks recorded evidence; maintainers must verify its authenticity through the actual providers. Automated fixtures never constitute acceptance.
 
@@ -37,7 +37,9 @@ Run npm run check:release-readiness with the intended release revision. The guar
 
 Use a new release only after repository CI, generated-starter CI, the actual preview inspections, and the release guard pass. Package metadata remains unchanged until the maintainer intentionally selects a release version.
 
-Configure STARTER_TEMPLATE_REPOSITORY as the companion owner/name and STARTER_PUBLISH_TOKEN as a repository secret for a narrowly scoped publisher account with permission to create/update that template and its workflow files. The publisher generates all template files from the exact released toolkit revision. Do not maintain a second source copy by hand.
+Configure STARTER_TEMPLATE_REPOSITORY as the companion owner/name and STARTER_PUBLISH_TOKEN as a repository secret for a narrowly scoped publisher account with permission to create/update that template and its workflow files. The publisher generates all template files from the exact released toolkit revision. Do not maintain a second source copy by hand. The publisher creates the public template if absent; an existing target must be a public template with matching generated provenance. It checks every previous generated file against its recorded Git blob identity, rejects unexpected edits and concurrent branch movement, and updates without force. Rerunning an unchanged release is a no-op.
+
+If repository creation succeeds but publication stops before the first generated commit, inspect the partial repository before recovery. The next run deliberately refuses an unmarked existing repository; seed it with the exact candidate repository payload and provenance through an authorized browser upload, or choose a new empty companion name. Do not bypass the provenance check.
 
 The release workflow checks acceptance, runs toolkit and starter verification, generates bundles, updates the companion template, and uploads the public release assets. Without valid acceptance or publisher configuration, it stops before publishing assets. Preview acceptance never authorizes merging an implementation PR or promoting a production deployment.
 

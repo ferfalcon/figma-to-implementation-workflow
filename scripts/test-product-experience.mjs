@@ -9,7 +9,6 @@ import { REQUIRED_CAPABILITIES, assessCapabilities, assessPreviewEvidence, valid
 import { checkReleaseReadiness } from './check-release-readiness.mjs';
 import { resolveProjectSession } from '../cli/lib/project-configuration.mjs';
 import { deriveNextAction } from '../cli/lib/workflow-actions.mjs';
-import { buildOrchestrationContext } from '../cli/lib/orchestration-context.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 // Synthetic contract fixtures only. Never copy these into release/acceptance.json.

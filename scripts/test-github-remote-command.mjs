@@ -111,6 +111,10 @@ assert.throws(() => validateCommandArgs(['artifact', 'adopt', 'requirements', '-
 assert.throws(() => validateCommandArgs(['init', '--repository', '..']), /--repository \./);
 assert.throws(() => validateCommandArgs(['stage', 'advance', 'unexpected']), /command shapes/);
 assert.deepEqual(validateCommandArgs(['stage', 'check', '--json']), ['stage', 'check', '--json']);
+assert.deepEqual(validateCommandArgs(['project', 'check', '--json']), ['project', 'check', '--json']);
+assert.throws(() => validateCommandArgs(['project', 'check']), /command shapes/);
+assert.throws(() => validateCommandArgs(['project', 'check', '--json', '--record', '../record.json']), /command shapes|--record/);
+assert.throws(() => validateCommandArgs(['project', 'check', '--json', 'extra']), /command shapes/);
 assert.deepEqual(validateCommandArgs(['validate']), ['validate']);
 assert.deepEqual(validateCommandArgs(['sync', '--check']), ['sync', '--check']);
 assert.deepEqual(
@@ -273,4 +277,34 @@ try {
   rmSync(fixture.temp, { recursive: true, force: true });
 }
 
+// Exercise the actual CLI through the bridge before initialization. It must return
+// configuration findings without creating state, committing, or requiring a record.
+const uninitialized = makeExecutionFixture();
+try {
+  git(uninitialized.work, 'config', 'user.name', 'Fixture');
+  git(uninitialized.work, 'config', 'user.email', 'fixture@example.com');
+  git(uninitialized.work, 'rm', '-r', '.workflow');
+  writeFileSync(join(uninitialized.work, 'design-workflow.config.json'), JSON.stringify({ schemaVersion: 3 }));
+  git(uninitialized.work, 'add', '.');
+  git(uninitialized.work, 'commit', '-m', 'Uninitialized project configuration');
+  git(uninitialized.work, 'push', 'origin', 'feature/workflow');
+  const head = git(uninitialized.work, 'rev-parse', 'HEAD');
+  const result = executeRequest({
+    request: {
+      repository: 'ferfalcon/example', issueNumber: 19, requester: 'ferfalcon', requesterAssociation: 'OWNER',
+      targetRef: 'feature/workflow', expectedHead: head, args: ['project', 'check', '--json'], command: 'project check',
+    },
+    project: uninitialized.work,
+    cliPath: join(root, 'cli/design-workflow.mjs'),
+    toolkitRepository, toolkitRevision,
+  });
+  assert.equal(result.status, 'succeeded', 'The check ran; its findings must remain visible.');
+  assert.equal(result.commandExitCode, 1);
+  assert.equal(result.changed, false);
+  assert.equal(JSON.parse(result.output).valid, false);
+  assert.equal(git(uninitialized.work, 'rev-parse', 'HEAD'), head);
+  assert.equal(git(uninitialized.work, 'status', '--porcelain'), '');
+} finally {
+  rmSync(uninitialized.temp, { recursive: true, force: true });
+}
 console.log('GitHub remote command bridge tests passed.');

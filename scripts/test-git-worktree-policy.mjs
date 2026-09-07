@@ -90,6 +90,26 @@ try {
 
   git(cwd, ['add', '.workflow']);
   git(cwd, ['commit', '-m', 'Record workflow control state']);
+
+  const bookkeepingHead = git(cwd, ['rev-parse', 'HEAD']);
+  assert(
+    taskCompletionGitFindings(recordPath, record, task, implementationCommit).length === 0,
+    'An implementation commit must remain usable after committed validation bookkeeping.',
+  );
+  writeFileSync(join(cwd, 'unexpected.js'), 'unverified application change\n');
+  git(cwd, ['add', 'unexpected.js']);
+  git(cwd, ['commit', '-m', 'Unexpected application edit']);
+  const unexpectedCommit = git(cwd, ['rev-parse', 'HEAD']);
+  assert(
+    taskCompletionGitFindings(recordPath, record, task, implementationCommit).some(finding => finding.includes('later history changes implementation-scope')),
+    'Later implementation edits must invalidate earlier output evidence.',
+  );
+  git(cwd, ['revert', '--no-edit', unexpectedCommit]);
+  assert(
+    taskCompletionGitFindings(recordPath, record, task, implementationCommit).some(finding => finding.includes('later history changes implementation-scope')),
+    'Reverting an intervening implementation edit does not make old evidence current.',
+  );
+  git(cwd, ['reset', '--hard', bookkeepingHead]);
   writeFileSync(recordPath, '{"state":"changed"}\n', 'utf8');
   writeFileSync(join(cwd, 'implementation-2.js'), 'export const mixed = true;\n', 'utf8');
   git(cwd, ['add', '.workflow/workflow-record.json', 'TASK.md', 'implementation-2.js']);

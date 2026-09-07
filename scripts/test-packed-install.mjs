@@ -100,6 +100,16 @@ try {
   assert(context.workflow?.valid === true, `Installed package context is invalid: ${(context.workflow?.findings ?? []).join('; ')}`);
   assert(context.resources?.stagePrompt?.resolution === 'embedded', 'Installed package did not trust its matching embedded provenance.');
 
+  const installedRoot = resolve(dirname(cli), '..');
+  const bundleOutput = join(temporary, 'generated-astro');
+  run(process.execPath, [
+    join(installedRoot, 'scripts/build-consumer-bundle.mjs'),
+    '--starter', 'astro', '--revision', runtime.revision, '--output', bundleOutput,
+  ], consumer);
+  for (const path of ['package-lock.json', '.gitignore', '.github/workflows/validate-ui.yml', '.starter-source.json']) {
+    assert(existsSync(join(bundleOutput, 'repository', path)), 'Packed starter generation lost ' + path);
+  }
+
   console.log(`Packed install preserved toolkit provenance ${runtime.repository}#${runtime.revision} inside unrelated consumer ${basename(consumer)}.`);
 } finally {
   rmSync(temporary, { recursive: true, force: true });

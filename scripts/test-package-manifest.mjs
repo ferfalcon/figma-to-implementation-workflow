@@ -24,6 +24,9 @@ const requiredAreas = [
   'templates/design-workflow.config.template.json',
   'cli/', 'cli/toolkit-provenance.json', 'workflow/', 'guidelines/', 'prompts/', 'source-adapters/',
   'templates/', 'examples/', 'schemas/', 'scripts/', 'tests/',
+  'starters/astro/package.json', 'starters/astro/package-lock.template.json',
+  'starters/astro/gitignore.template', 'starters/astro/.github/workflows/validate-ui.yml',
+  'release/acceptance.json', 'workflow/ChatGPT-Experience.md', 'workflow/Product-Acceptance.md',
 ];
 const missingAreas = requiredAreas.filter((area) => (
   area.endsWith('/') ? ![...files].some((path) => path.startsWith(area)) : !files.has(area)
