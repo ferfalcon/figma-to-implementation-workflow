@@ -4,6 +4,18 @@ The dependency-free CLI owns executable workflow state in `.workflow/workflow-re
 
 See [`../workflow/State-Ownership.md`](../workflow/State-Ownership.md) for ownership rules and [`../schemas/README.md`](../schemas/README.md) for the record model.
 
+## Project configuration
+
+New consumer projects use configuration v2 with a saved working branch and review style. The read-only command checks settings before initialization or after an update:
+
+```bash
+design-workflow project check --json
+```
+
+Exit 0 means valid configuration; exit 1 returns findings. The result is configuration-only: provider capabilities, remote branch existence, and preview status still require observed plugin evidence. Existing v1 settings remain readable, with their established mode and working ref retained until adoption. This configuration version is independent of the workflow record version.
+
+See [Project Configuration](../workflow/Project-Configuration.md) and [ChatGPT Experience](../workflow/ChatGPT-Experience.md). Ordinary ChatGPT uses the installed GitHub bridge for this check.
+
 ## Run locally
 
 ```bash
@@ -217,11 +229,11 @@ Completion accepts the existing `--check name=evidence` shorthand only for check
 
 ```bash
 design-workflow task complete P01-T01 \
-  --commit <current-head-sha> \
+  --commit <tested-implementation-sha> \
   --check "Build=Production build completed successfully"
 ```
 
-Completion rejects dirty implementation-scope leftovers and rejects an Implementation-output commit that contains workflow-managed files. It resolves the task baseline's local checkout from its portable identity, project-relative location, or local binding, verifies that the supplied commit exists in that repository, equals `HEAD`, and descends from the exact task-start baseline, then creates the portable Implementation-output snapshot. Passed validation is bound to that exact output commit. Task-by-task execution cannot begin before Stage 9, and Continuous-documentation mode cannot enter Stage 10.
+Completion rejects dirty implementation-scope leftovers and rejects an Implementation-output commit that contains workflow-managed files. It resolves the task baseline's local checkout from its portable identity, project-relative location, or local binding, verifies that the supplied commit exists in that repository, descends from the exact task-start baseline, and equals `HEAD` or has only workflow-managed commits between it and `HEAD`, then creates the portable Implementation-output snapshot. The history check inspects every intervening commit, including reverted edits. Passed validation is bound to that exact output commit; recording it in later remote bookkeeping must not substitute the bookkeeping SHA for the implementation SHA. Task-by-task execution cannot begin before Stage 9, and Continuous-documentation mode cannot enter Stage 10.
 
 ## Profile upgrades
 
@@ -291,3 +303,9 @@ design-workflow agent-context --record /path/to/project/.workflow/workflow-recor
 - Rejected mutations leave the record, generated views, and narrative files byte-identical.
 - Existing unregistered narrative files are never overwritten.
 - Use `--record path/to/workflow-record.json` to override the default record location; the resolved record determines the canonical project workspace.
+
+For an optional direct GitHub package installation, pin an immutable toolkit revision:
+
+```bash
+npm install --save-dev github:ferfalcon/figma-to-implementation-workflow#<40-character-toolkit-commit-sha>
+```

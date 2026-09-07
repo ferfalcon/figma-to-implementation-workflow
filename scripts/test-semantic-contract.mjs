@@ -41,7 +41,9 @@ for (const required of [
 }
 assert.equal(entrypoints.get('consumer-agent-bootstrap').path, 'AGENTS-instructions.md');
 assert.ok(entrypoints.get('consumer-agent-bootstrap').delegatesTo.includes('workflow/Agent-Orchestration.md'));
-assert.deepEqual(entrypoints.get('chatgpt-project-settings').delegatesTo, ['AGENTS-instructions.md']);
+assert.deepEqual(entrypoints.get('chatgpt-project-settings').delegatesTo, ['AGENTS-instructions.md', 'workflow/Project-Configuration.md', 'workflow/ChatGPT-Experience.md']);
+assert(entrypoints.get('quickstart').delegatesTo.includes('workflow/ChatGPT-Experience.md'));
+assert(!entrypoints.get('quickstart').owns.includes('profile-selection onboarding'));
 assert.deepEqual(entrypoints.get('figma-preparation-launcher').delegatesTo, ['source-adapters/FIGMA-PREPARATION.md']);
 
 const controlModes = byId(contract.controlModes);

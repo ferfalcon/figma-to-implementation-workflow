@@ -49,8 +49,8 @@ try {
   }
 
   const manifest = JSON.parse(readFileSync(join(output, 'consumer-bundle-manifest.json'), 'utf8'));
-  if (manifest.bundleFormatVersion !== 3) {
-    errors.push('Consumer bundle manifest must use bundleFormatVersion 3.');
+  if (manifest.bundleFormatVersion !== 4) {
+    errors.push('Consumer bundle manifest must use bundleFormatVersion 4.');
   }
   if (manifest.installationModel !== 'external-pinned-toolkit') {
     errors.push('Consumer bundle manifest must identify the external pinned toolkit installation model.');

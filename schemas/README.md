@@ -4,6 +4,8 @@
 
 Implementation repositories use root `design-workflow.config.json` as the persistent project identity/boundary source of truth across chats and agents. Its shape is [`design-workflow-config.schema.json`](design-workflow-config.schema.json); creation template: [`../templates/design-workflow.config.template.json`](../templates/design-workflow.config.template.json).
 
+Configuration v2 adds required `repository.workingBranch` and `workflow.reviewStyle` (`brief-and-preview` or `every-stage`). [Configuration v1](design-workflow-config.v1.schema.json) remains readable and preserves the established ref and execution mode until explicit adoption. `design-workflow project check --json` checks either version without mutating state or verifying provider access.
+
 This is normal version-controlled project content, not executable workflow state, and must not contain secrets. See [`../workflow/Project-Configuration.md`](../workflow/Project-Configuration.md).
 
 ## Executable workflow records
@@ -89,7 +91,7 @@ command, environment, executedAt, evidence[], reason, references[]
 
 `name`, `kind`, `required`, `status`, `expected`, `evidence`, and `references` are always present. A Passed check requires a non-empty actual result, ISO-8601 execution time, and evidence. Every non-passing state requires a reason. A required check cannot be `Not applicable`.
 
-Completion also requires the CLI to verify the supplied output commit against the real repository: it must exist, equal `HEAD`, and descend from the task baseline commit.
+Completion also requires the CLI to verify the supplied output commit against the real repository: it must exist and descend from the task baseline commit. It must equal `HEAD` or be its ancestor with only workflow-managed paths touched in every intervening commit. Any later implementation edit, even if reverted, invalidates earlier output evidence.
 
 Before task start, checkpoint inspection is history-aware: every commit between the effective repository anchor and `HEAD` is inspected. A task-start checkpoint is allowed only when all touched paths are workflow-managed. Any intervening implementation-scope touch requires impact assessment even when a later commit reverts it and the endpoint tree is clean.
 

@@ -1,6 +1,11 @@
 #!/usr/bin/env node
 
-import { readFileSync } from 'node:fs';
+import assert from 'node:assert/strict';
+import { readFileSync, writeFileSync, mkdtempSync, readdirSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { validateProjectConfiguration, readProjectConfiguration, resolveProjectSession, validWorkingBranch, PROJECT_CONFIGURATION_VERSION } from '../cli/lib/project-configuration.mjs';
+import { PROJECT_CONFIGURATION_SCHEMA_VERSION } from '../cli/lib/contract-compatibility.mjs';
+import { runCli } from '../cli/lib/workflow-cli.mjs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -22,7 +27,7 @@ function expect(condition, message) {
 
 expect(schema.$schema === 'https://json-schema.org/draft/2020-12/schema', 'Project config schema must use JSON Schema draft 2020-12.');
 expect(schema.additionalProperties === false, 'Project config root must reject unknown properties.');
-expect(schema.properties?.schemaVersion?.const === 1, 'Project config schemaVersion must be exactly 1.');
+expect(schema.properties?.schemaVersion?.const === 2, 'Project config schemaVersion must be exactly 2.');
 for (const key of ['schemaVersion', 'project', 'repository', 'design', 'deployment']) {
   expect(schema.required?.includes(key), `Project config schema must require ${key}.`);
 }
@@ -42,7 +47,7 @@ expect(schema.properties?.design?.properties?.provider?.const === 'figma', 'Proj
 expect(schema.properties?.deployment?.required?.includes('vercelProjectUrl'), 'Deployment config must include vercelProjectUrl.');
 expect(schema.properties?.deployment?.required?.includes('productionUrl'), 'Deployment config must include productionUrl.');
 
-expect(template.schemaVersion === 1, 'Project config template must use schemaVersion 1.');
+expect(template.schemaVersion === 2, 'Project config template must use schemaVersion 2.');
 expect(template.project?.name === '<PROJECT_NAME>', 'Project config template must expose project name.');
 expect(template.repository?.url === '<REPOSITORY_URL>', 'Project config template must expose repository URL.');
 expect(template.repository?.implementationRoot === '<IMPLEMENTATION_ROOT>', 'Project config template must expose implementation root.');
@@ -67,6 +72,101 @@ for (const placeholder of ['<PROJECT_NAME>', '<FIGMA_URL>', '<FIGMA_SCOPE>', '<I
 expect(quickstart.includes('ChatGPT reads or creates design-workflow.config.json'), 'Quickstart must include persistent project configuration in the setup test.');
 expect(bootstrap.includes('design-workflow.config.json'), 'Consumer agent bootstrap must read project configuration.');
 expect(orchestration.includes('design-workflow.config.json'), 'Agent orchestration must read project configuration before intake.');
+
+
+assert.equal(PROJECT_CONFIGURATION_VERSION, PROJECT_CONFIGURATION_SCHEMA_VERSION);
+assert.equal(JSON.parse(read('schemas/design-workflow-config.v1.schema.json')).properties.schemaVersion.const, 1);
+assert.deepEqual(schema.properties.workflow.properties.reviewStyle.enum, ['brief-and-preview', 'every-stage']);
+assert(schema.required.includes('workflow'));
+assert(schema.properties.repository.required.includes('workingBranch'));
+assert.equal(template.workflow.reviewStyle, '<REVIEW_STYLE>', 'Choose a preference; do not treat a default as consent.');
+
+const config = {
+  schemaVersion: 2,
+  project: { name: 'Configuration fixture' },
+  repository: { url: 'https://github.com/example/product', implementationRoot: '.', workingBranch: 'design/initial-ui' },
+  design: { provider: 'figma', url: 'https://www.figma.com/design/file?node-id=1-2', scope: 'Home and About' },
+  deployment: { vercelProjectUrl: null, productionUrl: null },
+  workflow: { reviewStyle: 'brief-and-preview' },
+};
+const initial = structuredClone(config);
+assert.deepEqual(validateProjectConfiguration(config), { valid: true, findings: [] });
+assert.equal(resolveProjectSession(config).initialMode, 'Continuous documentation');
+assert.equal(resolveProjectSession(config).workingBranch, 'design/initial-ui');
+const resumed = resolveProjectSession(config, { currentRef: 'design/initial-ui', currentMode: 'Task-by-task' });
+assert.equal(resumed.initialMode, 'Task-by-task', 'Resuming must preserve the approved execution mode.');
+assert.deepEqual(config, initial, 'Settings resolution must not write executable state.');
+assert.throws(() => resolveProjectSession(config, { currentRef: 'main' }), /explicit working ref/);
+assert.throws(() => resolveProjectSession(config, { repositoryUrl: 'https://github.com/example/another' }), /identity mismatch/);
+assert.equal(resolveProjectSession(config, { repositoryUrl: 'https://github.com/EXAMPLE/product.git/' }).workingBranch, 'design/initial-ui');
+config.workflow.reviewStyle = 'every-stage';
+assert.equal(resolveProjectSession(config).initialMode, 'Gated');
+assert.equal(resolveProjectSession(config, { currentMode: 'Task-by-task' }).initialMode, 'Task-by-task', 'Preference changes must not silently mutate the active mode.');
+config.workflow.reviewStyle = 'brief-and-preview';
+
+const legacy = structuredClone(config);
+legacy.schemaVersion = 1;
+delete legacy.workflow;
+delete legacy.repository.workingBranch;
+legacy.deployment.productionUrl = 'http://localhost:4321';
+assert(validateProjectConfiguration(legacy).valid, 'Legacy URI configuration must remain readable.');
+for (const currentMode of ['Gated', 'Continuous documentation', 'Task-by-task']) {
+  const session = resolveProjectSession(legacy, { currentRef: 'legacy/feature', currentMode });
+  assert.equal(session.workingBranch, 'legacy/feature');
+  assert.equal(session.initialMode, currentMode);
+  assert.equal(session.reviewStyle, null);
+  assert.equal(session.requiresAdoption, true);
+}
+assert.equal(resolveProjectSession(legacy).workingBranch, null, 'Unknown legacy working refs must not be guessed.');
+assert.equal(resolveProjectSession(legacy, { defaultBranch: 'trunk' }).workingBranch, 'trunk');
+
+for (const branch of ['design/initial-ui', 'feature_1', 'release/v1.2']) assert(validWorkingBranch(branch), branch);
+for (const branch of ['', 'HEAD', 'refs/heads/main', '../main', 'foo//bar', 'foo.lock', 'foo/.hidden', 'foo/', 'main.', 'a'.repeat(40), 'x\nmain', 'a b']) assert(!validWorkingBranch(branch), branch);
+for (const alter of [
+  value => { value.schemaVersion = 3; },
+  value => { value.workflow.reviewStyle = '<REVIEW_STYLE>'; },
+  value => { value.workflow.progress = 'done'; },
+  value => { delete value.repository.workingBranch; },
+  value => { value.repository.implementationRoot = '../escape'; },
+  value => { value.repository.implementationRoot = 'C:\\repo'; },
+  value => { value.repository.url = 'https://github.com/other/product/issues'; },
+  value => { value.design.url = 'https://example.com/design'; },
+  value => { value.design.scope = '<FIGMA_SCOPE>'; },
+  value => { value.deployment.productionUrl = 'http://localhost:4321'; },
+  value => { value.state = { stage: 10 }; },
+]) {
+  const invalid = structuredClone(config);
+  alter(invalid);
+  assert(!validateProjectConfiguration(invalid).valid, JSON.stringify(invalid));
+  assert.throws(() => resolveProjectSession(invalid));
+}
+assert(!validateProjectConfiguration(template).valid, 'Unresolved setup templates must not pass.');
+assert(!validateProjectConfiguration(null).valid);
+
+const directory = mkdtempSync(join(tmpdir(), 'project-configuration-'));
+try {
+  const path = join(directory, 'design-workflow.config.json');
+  writeFileSync(path, JSON.stringify(config));
+  assert.deepEqual(readProjectConfiguration(directory), config);
+  const before = readFileSync(path, 'utf8');
+  let output = '';
+  const status = await runCli(['project', 'check', '--json'], {
+    cwd: directory, stdout: { write: value => { output += value; } }, stderr: { write() {} },
+  });
+  assert.equal(status, 0);
+  assert.equal(JSON.parse(output).workingBranch, 'design/initial-ui');
+  assert.equal(JSON.parse(output).verification, 'configuration-only');
+  assert.equal(readFileSync(path, 'utf8'), before);
+  assert.deepEqual(readdirSync(directory), ['design-workflow.config.json'], 'Configuration checks must not initialize a workflow.');
+  writeFileSync(path, '{"schemaVersion":3}');
+  output = '';
+  assert.equal(await runCli(['project', 'check', '--json'], {
+    cwd: directory, stdout: { write: value => { output += value; } }, stderr: { write() {} },
+  }), 1);
+  assert.equal(JSON.parse(output).valid, false);
+} finally {
+  rmSync(directory, { recursive: true, force: true });
+}
 
 if (errors.length > 0) {
   console.error('Project configuration test failed:');

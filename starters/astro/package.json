@@ -1,0 +1,28 @@
+{
+  "name": "design-workflow-astro-starter",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "check": "astro check",
+    "build": "astro build",
+    "preview": "astro preview",
+    "test:e2e": "playwright test",
+    "validate": "npm run check && npm run build && npm run test:e2e"
+  },
+  "dependencies": {
+    "astro": "7.3.1"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.10",
+    "typescript": "6.0.3",
+    "@types/node": "22.20.1",
+    "@playwright/test": "1.63.0",
+    "@axe-core/playwright": "4.13.0"
+  },
+  "license": "MIT"
+}

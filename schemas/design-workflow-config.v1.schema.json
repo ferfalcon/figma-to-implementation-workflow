@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferfalcon/figma-to-implementation-workflow/schemas/design-workflow-config.v1.schema.json",
+  "title": "Design Workflow Project Configuration v1 (legacy)",
+  "description": "Stable project identity and working boundaries shared across agents and chats.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "project",
+    "repository",
+    "design",
+    "deployment"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "url",
+        "implementationRoot"
+      ],
+      "properties": {
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://github\\.com/[^/]+/[^/]+/?$"
+        },
+        "implementationRoot": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?:\\.|[^/\\\\][^\\\\]*)$",
+          "not": {
+            "pattern": "(^|/)\\.\\.(/|$)"
+          }
+        }
+      }
+    },
+    "design": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider",
+        "url",
+        "scope"
+      ],
+      "properties": {
+        "provider": {
+          "const": "figma"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://(www\\.)?figma\\.com/"
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "deployment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "vercelProjectUrl",
+        "productionUrl"
+      ],
+      "properties": {
+        "vercelProjectUrl": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uri"
+        },
+        "productionUrl": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uri"
+        }
+      }
+    }
+  }
+}

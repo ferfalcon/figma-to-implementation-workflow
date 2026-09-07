@@ -8,6 +8,12 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 
 ### Added
 
+- Maintained Astro + strict TypeScript starter with native CSS/interactions, committed assets, locked dependencies, desktop/mobile Playwright and accessibility checks, exact-commit validation reports, and generated template/release packaging.
+- Configuration v2 with saved review style and working branch, v1 compatibility, and read-only local/remote `project check --json`.
+- Ordinary-ChatGPT capability checks, concise onboarding, both review preferences using existing execution modes, and recovery/asset/preview guidance.
+- Acceptance evidence for both personas and review styles, recorded setup metrics, and a publication gate that requires real personal-ChatGPT sessions on unchanged source.
+- Companion-template publisher with generated-file provenance, non-force updates, and rejection of unexpected or concurrent template edits.
+
 - Repository-root `design-workflow.config.json` as canonical persistent project configuration shared across chats/users/agents, with schema, template, authority contract, and regression coverage.
 - Generated consumer bundle tooling that produces an upload-ready repository payload, ChatGPT Project Instructions, the project-configuration template, a bundle manifest, and an exact immutable GitHub remote-executor pin.
 - Release automation that publishes the consumer bundle, ChatGPT Project Instructions, and project-configuration template as release assets from the exact released toolkit commit.
@@ -36,6 +42,11 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 
 ### Changed
 
+- Brief and final preview uses Continuous documentation through planning, then Task-by-task only after explicit approval of the implementation scope; Every stage retains Gated mode.
+- Task completion can retain the tested implementation commit after later workflow bookkeeping, only when every intervening commit touches workflow-managed paths. Later application changes, including reverted edits, reject stale completion.
+- Consumer bundle format advances to v4 and includes an optional maintained Astro starter; CLI dependencies remain unchanged.
+- Root toolkit-development instructions are restored and README onboarding/license contracts are reconciled.
+
 - ChatGPT Project Instructions now keep only a repository bootstrap locator; project name, Figma source/scope, implementation root, and optional deployment targets move to repository-owned project configuration.
 - ChatGPT-first onboarding now has one human workflow entry point: connect project sources, set the repository locator once, let ChatGPT read/create repository-owned project configuration, and say `Start the implementation workflow`.
 - Workflow profile selection is now an agent-owned pre-initialization classification based on actual design/repository complexity and risk; user profession and tooling comfort cannot select a profile.
@@ -44,7 +55,7 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 - README now presents designers and engineers as two value perspectives on the same workflow rather than role-based routes and promotes no-terminal GitHub execution as a first-class capability.
 - `AI-project-settings.md` now keeps only the repository bootstrap locator at the top while repository-owned `design-workflow.config.json` carries persistent project values.
 - Markdown-only is now explicitly defined as a manual/scaffold mode rather than a peer executable control mode; AI orchestration requires CLI-managed state, while AI assistance in Markdown-only is limited to explicitly requested narrative drafting or review.
-- GitHub remote read-only execution now accepts exit code `1` only for `stage check --json`; `validate` and `sync --check` require exit code `0` so failed checks cannot be reported as successful commands.
+- GitHub remote read-only execution now accepts exit code `1` only for `stage check --json` and `project check --json`; `validate` and `sync --check` require exit code `0` so failed checks cannot be reported as successful commands.
 - The write-capable remote executor now pins external GitHub Actions dependencies to full commit SHAs while retaining human-readable release versions in comments.
 - Workflow-record validation is decomposed into reusable primitives, domain validators, shared rules, and final cross-record invariants while preserving the public validation API and validation order.
 - CLI lifecycle implementation is split into domain command modules while `commands-v2.mjs` remains the compatibility export surface and high-level router.

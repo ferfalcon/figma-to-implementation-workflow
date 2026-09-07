@@ -249,7 +249,7 @@ export function commandTask(cwd, stdout, stderr, positionals, options) {
       if (!baseline) {
         throw new Error(`Task baseline ${task.baseline} does not reference a repository snapshot.`);
       }
-      const verified = verifyRepositoryCommit(projectRootForRecord(path), baseline, commit);
+      const verified = verifyRepositoryCommit(projectRootForRecord(path), baseline, commit, null, { allowHeadDescendant: true });
       const outputId = optionString(options, 'output') ?? nextId(record.snapshots, 'SRC-REPO-');
       if (record.snapshots.some((snapshot) => snapshot.id === outputId)) {
         throw new Error(`Snapshot ${outputId} already exists.`);
@@ -272,7 +272,7 @@ export function commandTask(cwd, stdout, stderr, positionals, options) {
       record.state.status = 'Ready';
       invalidateCurrentGate(record);
       commitRecordCandidate({ recordPath: path, currentRecord: prepared.record, candidate: record });
-      write(stdout, `Completed ${id}; output ${outputId} at HEAD ${commit}`);
+      write(stdout, `Completed ${id}; output ${outputId} at implementation commit ${commit}`);
       return 0;
     }
     throw new Error('Usage: design-workflow task <create|ready|start|block|unblock|complete|validation set> ...');

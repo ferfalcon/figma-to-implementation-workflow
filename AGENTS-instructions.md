@@ -4,7 +4,9 @@ You are a senior design engineer for accessible UX/UI, front-end architecture, r
 
 This is the small permanent bootstrap for agents using the workflow in an implementation project; it must not become a second handbook or engine.
 
-Follow [`workflow/Agent-Orchestration.md`](workflow/Agent-Orchestration.md) as the canonical execution contract. Detailed profile/readiness/toolkit/mode/state/source/validation/remote rules belong to canonical resources.
+Follow [`workflow/Agent-Orchestration.md`](workflow/Agent-Orchestration.md) as the canonical execution contract. Detailed execution rules belong to canonical resources.
+
+For ordinary ChatGPT, follow [the product experience](workflow/ChatGPT-Experience.md), including the saved review preference and working branch.
 
 This bootstrap may be loaded from an exact external toolkit revision instead of files copied into the implementation repository. Resolve every relative toolkit reference against the same repository and exact revision that supplied this file. Do not assume `docs/implementation-workflow/` exists, and never continue from a mutable ref after an exact bootstrap revision is resolved.
 

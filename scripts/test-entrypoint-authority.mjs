@@ -80,22 +80,30 @@ const requiredQuickstartContracts = [
   [/design-workflow\.config\.json/i, 'persist project configuration in the implementation repository'],
   [/repository locator/i, 'keep only a bootstrap repository locator in host instructions'],
   [/setup action, not a second workflow route/i, 'keep installation separate from workflow routing'],
-  [/resolve[^\n]*default-branch HEAD once[^\n]*exact 40-character/i, 'resolve a mutable bootstrap ref only once into an immutable pin'],
-  [/does \*\*not\*\* receive a copied `docs\/implementation-workflow\/` toolkit tree/i, 'reject vendored toolkit installation'],
-  [/installed caller's exact revision is the bootstrap identity/i, 'define pre-init pin authority'],
-  [/workflow-record\.json` owns the canonical toolkit binding/i, 'define initialized pin authority'],
   [/GitHub for the implementation repository/i, 'connect GitHub as repository source'],
   [/Figma for design inspection and authorized design changes/i, 'connect Figma as design source'],
   [/Start the implementation workflow/i, 'use one workflow start command'],
-  [/classify the smallest valid workflow profile/i, 'make profile classification agent-owned'],
-  [/canonical CLI can run directly or must run through the installed GitHub remote executor/i, 'make transport agent-owned'],
   [/Figma preparation is not a separate user workflow route/i, 'integrate preparation without another route'],
   [/Manual fallback: thin consumer bundle/i, 'retain a no-vendoring manual fallback'],
-  [/npm install --save-dev github:ferfalcon\/figma-to-implementation-workflow#<40-character-toolkit-commit-sha>/i, 'document optional direct GitHub package installation'],
 ];
 for (const [pattern, description] of requiredQuickstartContracts) {
   if (!pattern.test(quickstart)) errors.push(`QUICKSTART must ${description}.`);
 }
+
+// Technical setup rules belong to the pinned bootstrap and CLI reference.
+const advancedContracts = [
+  [projectSettings, /current default-branch HEAD once to an exact 40-character SHA/i, 'immutable bootstrap resolution'],
+  [consumerAgents, /Do not copy the toolkit runtime into the implementation repository\./, 'external toolkit ownership'],
+  [remoteExecution, /installed caller.*revision|caller.*bootstrap/is, 'pre-init caller identity'],
+  [consumerAgents, /workflow-record\.json/, 'canonical initialized state'],
+  [orchestration, /smallest valid workflow profile/i, 'agent-owned profile selection'],
+  [orchestration, /Execution transport resolution/i, 'agent-owned transport resolution'],
+  [read('cli/README.md'), /npm install --save-dev github:ferfalcon\/figma-to-implementation-workflow#<40-character-toolkit-commit-sha>/i, 'optional direct GitHub installation'],
+];
+for (const [source, pattern, description] of advancedContracts) {
+  if (!pattern.test(source)) errors.push('Missing delegated contract: ' + description);
+}
+if (!quickstart.includes('workflow/ChatGPT-Experience.md')) errors.push('Quickstart must delegate detailed agent behavior to the product contract.');
 
 for (const pattern of [
   /^##\s+\d+\. Choose a profile/im,

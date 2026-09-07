@@ -1,0 +1,73 @@
+name: Validate Astro starter
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: starter-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  starter:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [22, 24]
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          cache-dependency-path: starters/astro/package-lock.template.json
+      - name: Generate the consumer project
+        env:
+          TOOLKIT_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: node scripts/build-consumer-bundle.mjs --starter astro --revision "$TOOLKIT_REVISION"
+      - name: Validate generated package
+        working-directory: dist/consumer-bundle/repository
+        run: npm ci
+      - name: Check types
+        working-directory: dist/consumer-bundle/repository
+        run: npm run check
+      - name: Build production output
+        working-directory: dist/consumer-bundle/repository
+        run: npm run build
+      - name: Install browser
+        working-directory: dist/consumer-bundle/repository
+        run: npx --no-install playwright install --with-deps chromium
+      - name: Verify built pages
+        working-directory: dist/consumer-bundle/repository
+        run: npm run test:e2e
+      - name: Save browser evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: starter-browser-node-${{ matrix.node-version }}
+          path: |
+            dist/consumer-bundle/repository/playwright-report/
+            dist/consumer-bundle/repository/test-results/
+          if-no-files-found: ignore
+      - name: Package clean release candidate
+        if: matrix.node-version == 24
+        env:
+          TOOLKIT_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          node scripts/build-consumer-bundle.mjs --starter astro --revision "$TOOLKIT_REVISION" --output dist/astro-candidate
+          cd dist
+          zip -qr design-workflow-astro-candidate.zip astro-candidate
+      - name: Save generated starter
+        if: matrix.node-version == 24
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: astro-starter-candidate
+          path: dist/design-workflow-astro-candidate.zip
+          if-no-files-found: error

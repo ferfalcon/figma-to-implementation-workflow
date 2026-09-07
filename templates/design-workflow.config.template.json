@@ -1,9 +1,12 @@
 {
-  "schemaVersion": 1,
-  "project": { "name": "<PROJECT_NAME>" },
+  "schemaVersion": 2,
+  "project": {
+    "name": "<PROJECT_NAME>"
+  },
   "repository": {
     "url": "<REPOSITORY_URL>",
-    "implementationRoot": "<IMPLEMENTATION_ROOT>"
+    "implementationRoot": "<IMPLEMENTATION_ROOT>",
+    "workingBranch": "design/initial-ui"
   },
   "design": {
     "provider": "figma",
@@ -13,5 +16,8 @@
   "deployment": {
     "vercelProjectUrl": null,
     "productionUrl": null
+  },
+  "workflow": {
+    "reviewStyle": "<REVIEW_STYLE>"
   }
 }

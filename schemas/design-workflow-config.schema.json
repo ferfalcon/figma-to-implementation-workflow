@@ -10,11 +10,12 @@
     "project",
     "repository",
     "design",
-    "deployment"
+    "deployment",
+    "workflow"
   ],
   "properties": {
     "schemaVersion": {
-      "const": 1
+      "const": 2
     },
     "project": {
       "type": "object",
@@ -34,7 +35,8 @@
       "additionalProperties": false,
       "required": [
         "url",
-        "implementationRoot"
+        "implementationRoot",
+        "workingBranch"
       ],
       "properties": {
         "url": {
@@ -49,6 +51,12 @@
           "not": {
             "pattern": "(^|/)\\.\\.(/|$)"
           }
+        },
+        "workingBranch": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]*$"
         }
       }
     },
@@ -96,6 +104,22 @@
             "null"
           ],
           "format": "uri"
+        }
+      }
+    },
+    "workflow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reviewStyle"
+      ],
+      "properties": {
+        "reviewStyle": {
+          "type": "string",
+          "enum": [
+            "brief-and-preview",
+            "every-stage"
+          ]
         }
       }
     }

@@ -212,6 +212,10 @@ Full-profile work should explicitly cover, when applicable:
 | Task decomposition | Exactly one task in workpack | Proportional | Required | Required |
 | Final implementation review | Workpack section | Required separately | Required separately | Required separately |
 
+## Consumer review preference
+
+Configuration v2 may select Brief and final preview or Every stage under [ChatGPT Experience](ChatGPT-Experience.md). This is a human checkpoint preference within the same workflow, not a profile or persona route. Brief and final preview uses Continuous documentation before scoped human implementation approval, then Task-by-task for the approved tasks; Every stage uses Gated. Required evidence, internal reviews, profile eligibility, and human final acceptance remain unchanged.
+
 ## Execution modes
 
 In CLI-managed mode, record the current execution mode in the workflow record. In Markdown-only mode, record it in `WORKPACK.md` for Express or `WORKFLOW-STATE.md` for other profiles.

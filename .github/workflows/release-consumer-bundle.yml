@@ -2,50 +2,103 @@ name: Publish consumer bundle
 
 on:
   release:
-    types:
-      - published
+    types: [published]
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: publish-astro-starter
+  cancel-in-progress: false
 
 jobs:
-  bundle:
+  verify:
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 24]
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - name: Check out released toolkit
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: ${{ github.event.release.tag_name }}
           fetch-depth: 0
           persist-credentials: false
-
       - name: Set up Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
-          node-version: 22
+          node-version: ${{ matrix.node }}
+      - name: Require real ChatGPT acceptance on unchanged source
+        run: npm run check:release-readiness
+      - name: Validate repository and package contracts
+        run: npm run validate
+      - name: Generate exact released starter
+        run: node scripts/build-consumer-bundle.mjs --starter astro --revision "$(git rev-parse HEAD)"
+      - name: Install starter dependencies
+        working-directory: dist/consumer-bundle/repository
+        run: npm ci
+      - name: Check Astro and TypeScript
+        working-directory: dist/consumer-bundle/repository
+        run: npm run check
+      - name: Build static output
+        working-directory: dist/consumer-bundle/repository
+        run: npm run build
+      - name: Install browser
+        working-directory: dist/consumer-bundle/repository
+        run: npx playwright install --with-deps chromium
+      - name: Verify production pages
+        working-directory: dist/consumer-bundle/repository
+        run: npm run test:e2e
 
+  bundle:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - name: Check out released toolkit
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24
       - name: Resolve immutable release revision
         id: revision
         run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-
-      - name: Build consumer bundle
-        run: >-
-          node scripts/build-consumer-bundle.mjs
-          --revision "${{ steps.revision.outputs.sha }}"
-          --output dist/consumer-bundle
-
-      - name: Package repository upload bundle
+      - name: Recheck publication evidence
+        run: npm run check:release-readiness
+      - name: Build consumer bundles
+        env:
+          TOOLKIT_REVISION: ${{ steps.revision.outputs.sha }}
         run: |
-          cd dist
-          zip -r design-workflow-consumer.zip consumer-bundle
-
+          node scripts/build-consumer-bundle.mjs --revision "$TOOLKIT_REVISION" --output dist/consumer-bundle
+          node scripts/build-consumer-bundle.mjs --starter astro --revision "$TOOLKIT_REVISION" --output dist/astro-starter
+      - name: Package release downloads
+        working-directory: dist
+        run: |
+          zip -qr design-workflow-consumer.zip consumer-bundle
+          zip -qr design-workflow-astro-starter.zip astro-starter
+      - name: Publish generated companion template
+        env:
+          STARTER_PUBLISH_TOKEN: ${{ secrets.STARTER_PUBLISH_TOKEN }}
+          STARTER_TEMPLATE_REPOSITORY: ${{ vars.STARTER_TEMPLATE_REPOSITORY }}
+          TOOLKIT_REVISION: ${{ steps.revision.outputs.sha }}
+        run: node scripts/publish-astro-starter.mjs --repository "$STARTER_TEMPLATE_REPOSITORY" --revision "$TOOLKIT_REVISION"
       - name: Upload consumer assets to release
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: >-
-          gh release upload "${{ github.event.release.tag_name }}"
+          gh release upload "$RELEASE_TAG"
           dist/design-workflow-consumer.zip
+          dist/design-workflow-astro-starter.zip
           dist/consumer-bundle/ChatGPT-Project-Instructions.md
           dist/consumer-bundle/design-workflow.config.template.json
           --clobber
