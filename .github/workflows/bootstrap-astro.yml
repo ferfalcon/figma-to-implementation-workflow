@@ -39,6 +39,7 @@ jobs:
             devDependencies: {
               '@astrojs/check': version('@astrojs/check'),
               typescript: version('typescript@6'),
+              '@types/node': version('@types/node@22'),
               '@playwright/test': version('@playwright/test'),
               '@axe-core/playwright': version('@axe-core/playwright')
             }
