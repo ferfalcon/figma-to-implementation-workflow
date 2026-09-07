@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "status": "pending",
+  "testedRevision": "<TESTED_TOOLKIT_COMMIT>",
+  "sessions": [
+    {
+      "tester": "<TESTER_HANDLE>",
+      "persona": "designer-code",
+      "reviewStyle": "brief-and-preview",
+      "plan": "Plus",
+      "conversationUrl": "<CHATGPT_CONVERSATION_URL>",
+      "pullRequestUrl": "<PULL_REQUEST_URL>",
+      "usedWork": false,
+      "usedCodex": false,
+      "usedLocalTerminal": false,
+      "result": "pending",
+      "humanVisualAcceptance": false,
+      "setupSteps": null,
+      "clarificationCount": null,
+      "timeToFirstPreviewSeconds": null,
+      "resumedInNewChat": false,
+      "correctionVerified": false,
+      "capabilityEvidence": {
+        "surface": "ordinary-chatgpt",
+        "capabilities": {
+          "figmaDesign": {
+            "status": "unverified",
+            "evidenceUrl": null
+          },
+          "githubWrites": {
+            "status": "unverified",
+            "evidenceUrl": null
+          },
+          "commandIssues": {
+            "status": "unverified",
+            "evidenceUrl": null
+          },
+          "actionsLogs": {
+            "status": "unverified",
+            "evidenceUrl": null
+          },
+          "previewInspection": {
+            "status": "unverified",
+            "evidenceUrl": null
+          }
+        }
+      },
+      "previewEvidence": {
+        "repository": "<OWNER/REPOSITORY>",
+        "implementationCommit": "<IMPLEMENTATION_COMMIT>",
+        "assetsCommitted": false,
+        "validation": {
+          "schemaVersion": 1,
+          "repository": "<OWNER/REPOSITORY>",
+          "testedCommit": "<IMPLEMENTATION_COMMIT>",
+          "runUrl": "<VALIDATION_RUN_URL>",
+          "checks": {
+            "dependencies": "not-run",
+            "types": "not-run",
+            "build": "not-run",
+            "browserInstallation": "not-run",
+            "browserTests": "not-run"
+          },
+          "passed": false
+        },
+        "preview": {
+          "commit": "<IMPLEMENTATION_COMMIT>",
+          "status": "pending",
+          "url": "<PREVIEW_URL>",
+          "inspected": false
+        }
+      }
+    }
+  ]
+}

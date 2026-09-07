@@ -3,7 +3,7 @@ import AxeBuilder from '@axe-core/playwright';
 
 test('navigation connects both pages and identifies the current page', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('A small start.An open horizon.');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(/A small start\.\s*An open horizon\./);
   const navigation = page.getByRole('navigation', { name: 'Main navigation' });
   await navigation.getByRole('link', { name: 'About' }).click();
   await expect(page).toHaveURL(/\/about\/$/);

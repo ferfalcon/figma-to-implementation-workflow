@@ -1,7 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-export const PROJECT_CONFIGURATION_VERSION = 2;
+import { PROJECT_CONFIGURATION_SCHEMA_VERSION } from './contract-compatibility.mjs';
+export const PROJECT_CONFIGURATION_VERSION = PROJECT_CONFIGURATION_SCHEMA_VERSION;
 export const REVIEW_STYLES = ['brief-and-preview', 'every-stage'];
 
 function object(value) {
@@ -38,7 +39,7 @@ function https(value, host) {
 export function validWorkingBranch(value) {
   return text(value) && value.length <= 200
     && /^[A-Za-z0-9][A-Za-z0-9._/-]*$/.test(value)
-    && value !== 'HEAD' && !value.startsWith('refs/')
+    && value !== 'HEAD' && !/^[0-9a-f]{40}$/i.test(value) && !value.startsWith('refs/')
     && !value.includes('..') && !value.includes('//')
     && !value.endsWith('/') && !value.endsWith('.')
     && value.split('/').every((part) => !part.startsWith('.') && !part.endsWith('.lock'));
@@ -71,7 +72,10 @@ export function validateProjectConfiguration(config) {
   if (fields(config.deployment, ['vercelProjectUrl', 'productionUrl'], 'deployment', findings)) {
     for (const name of ['vercelProjectUrl', 'productionUrl']) {
       const value = config.deployment[name];
-      if (value !== null && !https(value)) findings.push('deployment.' + name + ' must be an HTTPS URL or null.');
+      if (value === null) continue;
+      let legacyUri = false;
+      try { legacyUri = version === 1 && text(value) && Boolean(new URL(value).protocol); } catch { /* Invalid URI. */ }
+      if (!legacyUri && !https(value)) findings.push('deployment.' + name + ' must be ' + (version === 1 ? 'a URI' : 'an HTTPS URL') + ' or null.');
     }
   }
   if (version === 2 && fields(config.workflow, ['reviewStyle'], 'workflow', findings)
@@ -93,7 +97,7 @@ function repositoryIdentity(value) {
 // Resolves stable settings only. Stage/task legality and approval evidence remain CLI-owned.
 export function resolveProjectSession(config, {
   repositoryUrl = config.repository?.url,
-  defaultBranch = 'main',
+  defaultBranch = null,
   currentRef = null,
   currentMode = null,
 } = {}) {

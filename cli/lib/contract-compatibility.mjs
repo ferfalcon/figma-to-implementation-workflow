@@ -1,3 +1,4 @@
+export const PROJECT_CONFIGURATION_SCHEMA_VERSION = 2;
 export const WORKFLOW_RECORD_SCHEMA_VERSION = 2;
 export const LEGACY_WORKFLOW_RECORD_SCHEMA_VERSION = 1;
 export const ORCHESTRATION_CONTEXT_PROTOCOL_VERSION = 3;
@@ -24,6 +25,21 @@ function entry({
 }
 
 export const CONTRACT_COMPATIBILITY = Object.freeze([
+  entry({
+    id: 'project-configuration',
+    label: 'Project configuration',
+    kind: 'schema',
+    currentVersion: PROJECT_CONFIGURATION_SCHEMA_VERSION,
+    owner: 'cli/lib/project-configuration.mjs + schemas/design-workflow-config.schema.json',
+    compatibility: [
+      { contract: 'project-configuration', versions: [2], mode: 'current-read-write' },
+      { contract: 'project-configuration', versions: [1], mode: 'legacy-read-preserve-execution' },
+    ],
+    notes: [
+      'Schema v2 adds the saved working branch and chosen review style; it does not store executable progress.',
+      'Schema v1 remains readable and preserves its established execution mode and ref until explicit adoption.',
+    ],
+  }),
   entry({
     id: 'workflow-record',
     label: 'Workflow record',

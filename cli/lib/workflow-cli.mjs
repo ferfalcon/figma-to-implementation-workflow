@@ -89,9 +89,10 @@ export async function runCli(args, environment) {
   if (command === 'project' && positionals[1] === 'check') {
     try {
       const config = readProjectConfiguration(projectRoot);
-      const session = resolveProjectSession(config);
-      if (options.json) json(stdout, { valid: true, ...session });
-      else write(stdout, `Project configuration is valid (v${config.schemaVersion}); working branch: ${session.workingBranch}.`);
+      const currentMode = existsSync(recordPath) ? readStoredRecord(recordPath).record.project?.executionMode : null;
+      const session = resolveProjectSession(config, { currentMode });
+      if (options.json) json(stdout, { valid: true, ...session, verification: 'configuration-only' });
+      else write(stdout, `Project configuration is valid (v${config.schemaVersion}); working branch: ${session.workingBranch ?? 'use the established v1 working ref'}.`);
       return 0;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
