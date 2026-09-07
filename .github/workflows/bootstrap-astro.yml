@@ -20,7 +20,7 @@ jobs:
           node --input-type=module <<'NODE'
           import { execFileSync } from 'node:child_process';
           import { writeFileSync } from 'node:fs';
-          const version = (name) => execFileSync('npm', ['view', name, 'version'], { encoding: 'utf8' }).trim();
+          const version = (name) => (() => { const result = JSON.parse(execFileSync('npm', ['view', name, 'version', '--json'], { encoding: 'utf8' })); return Array.isArray(result) ? result.at(-1) : result; })();
           const pkg = {
             name: 'design-workflow-astro-starter',
             version: '0.1.0',
@@ -38,7 +38,7 @@ jobs:
             dependencies: { astro: version('astro') },
             devDependencies: {
               '@astrojs/check': version('@astrojs/check'),
-              typescript: version('typescript'),
+              typescript: version('typescript@6'),
               '@playwright/test': version('@playwright/test'),
               '@axe-core/playwright': version('@axe-core/playwright')
             }
