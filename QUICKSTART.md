@@ -2,8 +2,6 @@
 
 Use ordinary ChatGPT with plugins to turn a Figma design into an Astro + TypeScript project, a GitHub pull request, and a verified preview.
 
-You do **not** need to choose a workflow profile, understand workflow state files, or decide whether the workflow should run through a local terminal or GitHub Actions. Both personas follow this same setup.
-
 ## 1. Connect your plugins
 
 In ordinary ChatGPT, connect:
