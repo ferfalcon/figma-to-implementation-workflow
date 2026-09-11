@@ -1,18 +1,14 @@
 # Quickstart: Start the Implementation Workflow
 
-Use ordinary ChatGPT with plugins to turn a Figma design into an Astro + TypeScript project, a GitHub pull request, and a verified preview.
+Use ChatGPT with plugins to turn a Figma design into an Astro + TypeScript project, a GitHub pull request, and a verified preview.
 
 ## 1. Connect your plugins
 
-In ordinary ChatGPT, connect:
+In ChatGPT, connect:
 
 - GitHub for the implementation repository.
 - Figma for design inspection and authorized design changes.
 - Vercel for preview status and inspection.
-
-Use a personal ChatGPT account with the required plugin actions available. ChatGPT checks actual Figma Design access, repository writes, command issues, Actions results/logs, and preview access. Installing a plugin is not proof that every action is available.
-
-This flow does not invoke Work or Codex. Ordinary ChatGPT and provider usage still apply. Neon is optional and not required for the first frontend preview.
 
 ## 2. Create your project
 
