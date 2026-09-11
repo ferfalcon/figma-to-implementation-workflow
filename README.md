@@ -17,12 +17,6 @@ Connect Figma, GitHub, and Vercel; create a project from the maintained Astro st
 
 Choose once during setup. The preference and working branch are saved in the project, so a new chat can continue where you left off. Neither preference changes design fidelity, evidence requirements, or human final acceptance.
 
-### No local terminal required
-
-The maintained product uses ordinary ChatGPT for reasoning, GitHub plugins for code, GitHub Actions for workflow execution and application checks, and Vercel for previews. One-time browser setup and otherwise unavailable asset uploads are supported.
-
-It does not invoke ChatGPT Work, Codex, or an API-backed coding service. Ordinary ChatGPT and provider usage still apply. Plugin capabilities must be verified in the user's actual ChatGPT account.
-
 ### What you get
 
 - Astro components, TypeScript, shared native CSS, and working browser interactions.
