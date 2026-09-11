@@ -4,10 +4,6 @@
 
 Turn selected Figma designs into an editable Astro + TypeScript project, a GitHub pull request, and a verified Vercel preview using ordinary ChatGPT and existing plugins.
 
-For designers comfortable with code and engineers comfortable with Figma, the value is a shorter path from design intent to a working result. The workflow is identical in both cases.
-
-**One workflow. One onboarding. No user route selection.**
-
 [Get started →](QUICKSTART.md)
 
 Connect Figma, GitHub, and Vercel; create a project from the maintained Astro starter; set your repository locator once; and tell ChatGPT: **“Start the implementation workflow for this Figma design.”**
