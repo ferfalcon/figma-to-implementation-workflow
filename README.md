@@ -1,74 +1,84 @@
-# Design-to-Implementation Workflow
+# Figma to Implementation Workflow
 
-## Figma ↔ GitHub, safely connected through ChatGPT
+Turn a Figma design into working frontend code through ChatGPT — entirely online.
 
-Turn selected Figma designs into an editable Astro + TypeScript project, a GitHub pull request, and a verified Vercel preview using ordinary ChatGPT and existing plugins.
+No local development environment is required. You do not need to clone the repository, open a terminal, install Node.js, or run a package manager to get your first working implementation.
 
-[Get started →](QUICKSTART.md)
+The workflow uses ChatGPT as the interface between your design, your GitHub repository, and the services needed to build, verify, and preview the result.
 
-Connect Figma, GitHub, and Vercel; create a project from the maintained Astro starter; set your repository locator once; and tell ChatGPT: **“Start the implementation workflow for this Figma design.”**
+## Just want to use it? Do this.
 
-### Choose how you review
+1. **Choose the GitHub repository you want to use.**
+2. **Create a ChatGPT Project.**
+3. **Copy the project instructions into the Project Instructions.** Use [`Project-settings--Instructions.md`](AI-project-settings.md).
+4. **Replace `<REPOSITORY_URL>` with your repository URL.**
+5. Start a chat and say:
 
-| Review style | What you approve |
-|---|---|
-| Brief and final preview | The complete implementation brief, then the working preview. Material changes still require a decision. |
-| Every stage | Each stage under the existing Gated mode. |
+   > **Start the implementation workflow.**
 
-Choose once during setup. The preference and working branch are saved in the project, so a new chat can continue where you left off. Neither preference changes design fidelity, evidence requirements, or human final acceptance.
+That's it.
 
-### What you get
+The repository URL is the only project information you need to configure up front.
 
-- Astro components, TypeScript, shared native CSS, and working browser interactions.
-- Durable design assets saved in your repository.
-- A pull request, implementation commit, and matching preview URL.
-- Executed type, build, browser, responsive, and automated accessibility checks.
-- A clear distinction between automated verification and human visual acceptance.
+ChatGPT will inspect the repository, determine what information or permissions are missing, and ask you only for what it needs to continue. You do not need to prepare all of the workflow inputs in advance or configure its internal state manually.
 
-New frontend projects are the maintained v1 path. Neon, persistence, authentication, existing-framework adaptation, and production publishing are later or explicitly scoped work. Preview acceptance does not automatically merge or promote production.
+If GitHub, Figma, Vercel, an asset, or a project decision is required, ChatGPT will ask for it when it becomes relevant.
 
-## Release status
+## What happens next
 
-The Astro starter is a release candidate until the [ordinary-ChatGPT acceptance criteria](workflow/Product-Acceptance.md) pass. CI builds downloadable candidate bundles for testing. The generated companion template and public release assets are published only after recorded sessions with both personas and verified previews pass the release guard. See [releases](https://github.com/ferfalcon/figma-to-implementation-workflow/releases) for published assets.
+Once ChatGPT knows which repository owns the implementation, it can progressively establish the rest of the project context.
 
-## Repository-owned project configuration
+Depending on the project, it may ask for the Figma design or scope, a decision that cannot be inferred safely, a required service connection, or an asset that is not available through the connected tools.
 
-Root design-workflow.config.json owns project identity, design scope, implementation root, and deployment targets. Configuration v2 also owns the selected review style and working branch. Existing v1 configurations retain their established behavior until explicit adoption.
+From there the workflow inspects the actual sources, prepares the implementation plan, works through the required review gates, writes the code through GitHub, runs the available verification, and returns the result for human review.
 
-[Project configuration](workflow/Project-Configuration.md) owns the schema, branch discovery, and migration contract. [ChatGPT experience](workflow/ChatGPT-Experience.md) owns capability checks, review preferences, previews, assets, and recovery.
+You can leave and continue later. The repository owns the durable workflow state needed for another conversation to continue the work.
 
-## External pinned toolkit model
+## What you get
 
-The toolkit remains an external dependency. A generated project receives application scaffolding and a thin caller pinned to an exact toolkit commit, not a copy of the engine, prompts, or workflow handbook.
+- A working implementation of the selected design.
+- Code committed to your GitHub repository.
+- A pull request you can inspect, review, and continue developing from.
+- Automated type, build, browser, responsive, and accessibility checks where supported by the project.
+- A matching preview when the configured deployment provider is available.
+- A clear separation between automated verification and final human visual acceptance.
 
-Before initialization, the installed caller's immutable revision is the bootstrap identity. After initialization, .workflow/workflow-record.json owns the canonical toolkit binding. [GitHub remote execution](workflow/GitHub-Remote-Execution.md) runs that same canonical CLI.
+The maintained frontend path currently targets Astro + TypeScript. Existing-framework adaptation, persistence, authentication, backend work, and production publishing are supported only when explicitly in scope.
 
-Existing projects can still request **“Install the Design-to-Implementation Workflow in this repository.”** Installation remains setup for the same workflow.
+## Fully online by design
 
-## Workflow and state
+One of the main goals of this project is to make the first implementation accessible without requiring a traditional local development setup.
 
-The toolkit supports one executable control mode and one manual/scaffold mode:
+You can run the workflow from any device that gives you access to ChatGPT and the required connected services. The code still lives in GitHub, the design still lives in Figma, and deployment still happens through the deployment provider — ChatGPT coordinates the work between them.
 
-- **CLI-managed:** the canonical record owns executable workflow state; AI-agent orchestration uses this mode. Generated views are read-only.
-- **Markdown-only manual/scaffold:** narrative drafting without executable workflow state or agent orchestration.
+A local checkout remains useful when an engineer wants to take over or extend the result, but it is not a prerequisite for using the workflow.
 
-The evidence chain remains source baseline → audit → requirements/design/specification → reviews and planning → tasks → implementation → validation and human acceptance. Express, Lite, Standard, and Full remain evidence-based artifact profiles selected by the workflow.
+## How the workflow works
 
-Never hand-edit the canonical record or generated views. [State ownership](workflow/State-Ownership.md) and [agent orchestration](workflow/Agent-Orchestration.md) define the operational contracts.
+The human-facing interaction is intentionally simple. Behind it, the workflow keeps a stricter engineering process: it establishes source authority, inspects the design and repository, records project state, determines the appropriate workflow profile, creates implementation artifacts, requires the necessary approvals, validates the result, and preserves enough evidence for the work to be continued safely.
 
-## Consumer bundle
+You do not need to understand those mechanics to use the workflow.
 
-Maintainers generate the Astro starter or the existing thin bundle from an immutable toolkit revision. Consumer instructions are generated from [AI-project-settings.md](AI-project-settings.md). The starter's dependency lockfile is separate from the dependency-free toolkit CLI.
+## Under the hood
 
-[CLI reference](cli/README.md) covers build and validation commands. The [consumer bootstrap](AGENTS-instructions.md) remains the agent's pinned execution entry point.
+If you want to understand, audit, or extend the system, the detailed contracts live outside this README:
 
-## Reference contracts
+- [ChatGPT experience](workflow/ChatGPT-Experience.md) — capability checks, conversational setup, review behavior, assets, previews, and recovery.
+- [Workflow stages](workflow/Design-Implementation-Workflow.md) — the canonical implementation process.
+- [Project configuration](workflow/Project-Configuration.md) — repository-owned project configuration and migration rules.
+- [GitHub remote execution](workflow/GitHub-Remote-Execution.md) — how executable work runs without requiring a local checkout.
+- [State ownership](workflow/State-Ownership.md) — canonical workflow state and generated views.
+- [Agent orchestration](workflow/Agent-Orchestration.md) — executable workflow behavior and gates.
+- [Figma preparation](source-adapters/FIGMA-PREPARATION.md) — design-source preparation rules.
+- [Validation rules](workflow/Validation-Rules.md) — required implementation evidence and checks.
+- [CLI reference](cli/README.md) — maintainer and direct CLI operations.
+- [Contribution guide](CONTRIBUTING.md) — development and contribution guidance.
 
-- [Workflow stages](workflow/Design-Implementation-Workflow.md), [profiles](workflow/Workflow-Profiles.md), and [artifact identifiers](workflow/Identifier-Conventions.md).
-- [Source snapshots](workflow/Source-Snapshots.md), [source authority](workflow/Source-Authority.md), and [validation rules](workflow/Validation-Rules.md).
-- [Contract compatibility](workflow/Contract-Compatibility.md) and [schemas](schemas/README.md).
-- [Figma preparation](source-adapters/FIGMA-PREPARATION.md) and its [explicit preparation launcher](AGENTS-PROMPT-Figma-file-preparation.md).
-- [Contribution guide](CONTRIBUTING.md) and [toolkit-development instructions](AGENTS.md).
+## For maintainers
+
+The workflow engine, immutable toolkit binding, profiles, schemas, generated artifacts, release machinery, and compatibility rules are implementation concerns rather than onboarding requirements. Their detailed contracts remain in the workflow documentation and source tree.
+
+The consumer-facing Project Instructions are currently stored in [`AI-project-settings.md`](AI-project-settings.md) and are intended to become `Project-settings--Instructions.md`.
 
 ## License
 
