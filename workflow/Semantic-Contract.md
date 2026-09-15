@@ -4,12 +4,44 @@
 
 This projection makes cross-document ownership and executable compatibility visible to humans while the JSON registry remains the canonical machine-readable contract.
 
+## Product onboarding model
+
+Surface: `ordinary-chatgpt`  
+Local development required: **No**  
+Start command: `Start the implementation workflow.`
+
+### Required before starting
+
+| Input | Host | Placeholder |
+|---|---|---|
+| `repository-url` | [`AI-project-settings.md`](../AI-project-settings.md) | `<REPOSITORY_URL>` |
+
+### Acquired progressively
+
+| Input | Requirement | Needed by | Resolution |
+|---|---|---|---|
+| `figma-design` | `required` | `design-inspection` | `discover-or-ask` |
+| `figma-scope` | `required` | `design-mutation` | `discover-or-ask` |
+| `review-style` | `required` | `workflow-initialization` | `ask-once` |
+| `deployment` | `optional` | `preview` | `discover-when-relevant` |
+
+### Interaction policy
+
+Infer when safe: **Yes**
+
+Ask only for:
+
+- `consequential-decisions`
+- `missing-required-information`
+- `missing-required-capabilities`
+- `real-blockers`
+
 ## Entrypoint responsibilities
 
 | ID | Path | Role | Owns | Delegates to |
 |---|---|---|---|---|
-| `readme` | [`README.md`](../README.md) | human product overview and single onboarding discovery | `product promise and both personas`<br>`one Get started link`<br>`high-level reference map` | [`QUICKSTART.md`](../QUICKSTART.md)<br>[`workflow/Design-Implementation-Workflow.md`](Design-Implementation-Workflow.md)<br>[`AGENTS-instructions.md`](../AGENTS-instructions.md)<br>[`AGENTS.md`](../AGENTS.md) |
-| `quickstart` | [`QUICKSTART.md`](../QUICKSTART.md) | human onboarding and first-run guide | `one-time plugin and starter setup`<br>`Figma-first start and review preference choice` | [`workflow/ChatGPT-Experience.md`](ChatGPT-Experience.md)<br>[`workflow/Project-Configuration.md`](Project-Configuration.md)<br>[`workflow/GitHub-Remote-Execution.md`](GitHub-Remote-Execution.md) |
+| `readme` | [`README.md`](../README.md) | human product overview and zero-to-start instructions | `product promise and both personas`<br>`repository-url-first start`<br>`maintained product scope and high-level reference map` | [`QUICKSTART.md`](../QUICKSTART.md)<br>[`workflow/Design-Implementation-Workflow.md`](Design-Implementation-Workflow.md)<br>[`AGENTS-instructions.md`](../AGENTS-instructions.md)<br>[`AGENTS.md`](../AGENTS.md) |
+| `quickstart` | [`QUICKSTART.md`](../QUICKSTART.md) | detailed first-run and resume guide | `progressive setup and capability resolution`<br>`first-run discovery and continuation behavior` | [`workflow/ChatGPT-Experience.md`](ChatGPT-Experience.md)<br>[`workflow/Project-Configuration.md`](Project-Configuration.md)<br>[`workflow/GitHub-Remote-Execution.md`](GitHub-Remote-Execution.md) |
 | `toolkit-agents` | [`AGENTS.md`](../AGENTS.md) | toolkit repository agent contract | `toolkit-maintainer agent behavior`<br>`repository development and validation expectations` | [`workflow/Design-Implementation-Workflow.md`](Design-Implementation-Workflow.md)<br>[`workflow/Validation-Rules.md`](Validation-Rules.md) |
 | `consumer-agent-bootstrap` | [`AGENTS-instructions.md`](../AGENTS-instructions.md) | implementation-project consumer agent bootstrap | `minimal workflow bootstrap`<br>`safety-critical agent guardrails` | [`workflow/Agent-Orchestration.md`](Agent-Orchestration.md)<br>[`workflow/State-Ownership.md`](State-Ownership.md)<br>[`workflow/GitHub-Remote-Execution.md`](GitHub-Remote-Execution.md)<br>[`workflow/ChatGPT-Experience.md`](ChatGPT-Experience.md) |
 | `chatgpt-project-settings` | [`AI-project-settings.md`](../AI-project-settings.md) | ChatGPT host and tool-behavior template | `repository bootstrap locator`<br>`host boundary and immutable bootstrap loading` | [`AGENTS-instructions.md`](../AGENTS-instructions.md)<br>[`workflow/Project-Configuration.md`](Project-Configuration.md)<br>[`workflow/ChatGPT-Experience.md`](ChatGPT-Experience.md) |
