@@ -82,12 +82,12 @@ const baseCapabilities = {
   ])),
 };
 assert(
-  assessCapabilities(baseCapabilities, { previewRequired: false }).ready,
-  'Repository/design workflow capabilities must be assessable before preview capability is needed.',
+  assessCapabilities(baseCapabilities).ready,
+  'Repository/design workflow capabilities must be sufficient when deployment evidence is not required.',
 );
 assert(
-  !assessCapabilities(baseCapabilities).ready,
-  'Maintained product acceptance must continue to require preview capability by default.',
+  !assessCapabilities(baseCapabilities, { deploymentRequired: true }).ready,
+  'A runtime-dependent acceptance path must still require deployment-inspection capability.',
 );
 
 const nativeEvidence = {
@@ -128,7 +128,7 @@ const astroEvidence = {
 };
 assert(
   assessPreviewEvidence(astroEvidence).readyForHumanReview,
-  'Maintained Astro acceptance must retain its strict validation and preview evidence path.',
+  'Legacy maintained-Astro preview assessment must retain strict validation and commit-bound runtime evidence.',
 );
 
 const experience = read('workflow/ChatGPT-Experience.md');
@@ -147,4 +147,4 @@ assert(
   'Semantic contract must register implementation adapters as a canonical domain.',
 );
 
-console.log('Implementation adapter tests passed (repository-driven selection, maintained/best-effort boundaries, Stage 10 scaffolding, conditional resources, and adapter-aware validation).');
+console.log('Implementation adapter tests passed (repository-driven selection, maintained/best-effort boundaries, Stage 10 scaffolding, optional deployment, and adapter-aware validation).');
