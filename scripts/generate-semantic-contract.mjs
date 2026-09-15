@@ -55,14 +55,19 @@ export function semanticContractFindings(contract, { rootDir = root } = {}) {
   }
 
   const productModel = contract.productModel ?? {};
-  if (!productModel || typeof productModel !== 'object' || Array.isArray(productModel)) {
+  if (!contract.productModel || typeof contract.productModel !== 'object' || Array.isArray(contract.productModel)) {
     push('productModel must be an object');
   }
   if (typeof productModel.surface !== 'string' || !productModel.surface) {
     push('productModel.surface must be a non-empty string');
   }
 
-  const bootstrap = productModel.bootstrap ?? {};
+  if (!productModel.bootstrap || typeof productModel.bootstrap !== 'object' || Array.isArray(productModel.bootstrap)) {
+    push('productModel.bootstrap must be an object');
+  }
+  const bootstrap = productModel.bootstrap && typeof productModel.bootstrap === 'object' && !Array.isArray(productModel.bootstrap)
+    ? productModel.bootstrap
+    : {};
   const requiredInitialInputs = Array.isArray(bootstrap.requiredInitialInputs)
     ? bootstrap.requiredInitialInputs
     : [];
@@ -90,6 +95,9 @@ export function semanticContractFindings(contract, { rootDir = root } = {}) {
     push('productModel.bootstrap.localDevelopmentRequired must be boolean');
   }
 
+  if (!Array.isArray(productModel.progressiveInputs)) {
+    push('productModel.progressiveInputs must be an array');
+  }
   const progressiveInputs = Array.isArray(productModel.progressiveInputs)
     ? productModel.progressiveInputs
     : [];
@@ -115,7 +123,12 @@ export function semanticContractFindings(contract, { rootDir = root } = {}) {
     }
   }
 
-  const interactionPolicy = productModel.interactionPolicy ?? {};
+  if (!productModel.interactionPolicy || typeof productModel.interactionPolicy !== 'object' || Array.isArray(productModel.interactionPolicy)) {
+    push('productModel.interactionPolicy must be an object');
+  }
+  const interactionPolicy = productModel.interactionPolicy && typeof productModel.interactionPolicy === 'object' && !Array.isArray(productModel.interactionPolicy)
+    ? productModel.interactionPolicy
+    : {};
   if (typeof interactionPolicy.inferWhenSafe !== 'boolean') {
     push('productModel.interactionPolicy.inferWhenSafe must be boolean');
   }
