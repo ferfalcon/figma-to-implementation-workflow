@@ -29,7 +29,7 @@ The maintained default for a new safely scaffoldable frontend is Astro + TypeScr
 
 Adapter resolution may happen before planning, but creating application files is Stage 10 implementation work. Do not scaffold during intake or use scaffolding to bypass required documentation, review, or approval gates.
 
-The toolkit's `starters/astro/` directory is an internal maintained scaffold/validation fixture. Use it as pinned implementation guidance when appropriate, but adapt the actual project to its approved scope rather than treating sample pages, sample tests, or fixture content as product requirements.
+The source repository's `starters/astro/` directory is a development-only scaffold and validation fixture. It is intentionally excluded from the packaged workflow runtime. Toolkit maintainers use it to verify the maintained Astro baseline; implementation agents should follow this adapter contract and the approved project scope rather than requiring an installed package or consumer repository to contain the fixture. Sample pages, sample tests, and fixture content are never product requirements.
 
 When scaffolding:
 
