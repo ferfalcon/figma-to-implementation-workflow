@@ -4,7 +4,7 @@ This contract owns the consumer experience for ordinary ChatGPT with existing pl
 
 ## Supported first result
 
-New Astro + TypeScript projects produce a GitHub pull request and a working Vercel preview of the selected frontend scope. Static pages, navigation, and native browser interactions are supported. Persistence, authentication, server rendering, production publishing, and arbitrary existing-framework adaptation are outside the maintained starter path. Neon is optional for later explicitly scoped work.
+New Astro + TypeScript projects produce a GitHub pull request and a working Vercel preview of the selected frontend scope. Static pages, navigation, and native browser interactions are supported. Persistence, authentication, server rendering, production publishing, and arbitrary existing-framework adaptation are outside the maintained Astro implementation path. Neon is optional for later explicitly scoped work.
 
 All reasoning and code generation happen in ordinary ChatGPT. GitHub plugins write files; GitHub Actions run the canonical CLI and consumer checks; Vercel's Git integration builds previews. Do not invoke Work, Codex, coding agents, or an API-backed generation service, including as a fallback. The product avoids those execution surfaces, not ordinary ChatGPT or provider usage.
 
@@ -12,7 +12,7 @@ A Vercel preview is part of the maintained Astro result, but it is not a prerequ
 
 ## Progressive setup and capability checks
 
-Follow the single human [QUICKSTART.md](../QUICKSTART.md). Begin from the repository locator in the ChatGPT Project instructions. Do not require the Figma design, review style, deployment provider, a generated starter, or every downstream capability before the first conversation. Existing project configuration and repository evidence should be reused before asking the human for anything already known.
+Follow the single human [QUICKSTART.md](../QUICKSTART.md). Begin from the repository locator in the ChatGPT Project instructions. Do not require the Figma design, review style, deployment provider, pre-generated application scaffolding, or every downstream capability before the first conversation. Existing project configuration and repository evidence should be reused before asking the human for anything already known.
 
 Progressively establish the project in this order:
 
@@ -24,7 +24,7 @@ Progressively establish the project in this order:
 6. discover and verify deployment capability when preview evidence becomes relevant;
 7. create or update project configuration only after the required stable values have been resolved, and commit a complete valid configuration before first workflow initialization.
 
-Browser authorization, provider connection, controlled scaffolding, and otherwise unavailable asset uploads are allowed when the corresponding operation becomes necessary. A maintained starter may still be used for controlled scaffolding or release acceptance, but downloading or preparing it is not part of normal consumer onboarding.
+Browser authorization, provider connection, controlled scaffolding, and otherwise unavailable asset uploads are allowed when the corresponding operation becomes necessary. Controlled scaffolding is an internal implementation action, not a prerequisite or a user-selected onboarding route.
 
 Verify capabilities at the point of use:
 
@@ -84,7 +84,7 @@ Keep Figma inspection separate from design mutation. Material preparation is all
 
 ## Remote validation and preview
 
-The starter's Validate UI workflow checks out the exact pushed commit or PR head commit, installs from the lockfile, runs astro check, builds production output, and runs Playwright against that output. Tests cover actual project behavior, keyboard interaction, responsive layout, assets, and accessibility. Extend the starter smoke tests to the approved requirements as the UI changes.
+The maintained Astro implementation validation workflow checks out the exact pushed commit or PR head commit, installs from the lockfile, runs astro check, builds production output, and runs Playwright against that output. Tests cover actual project behavior, keyboard interaction, responsive layout, assets, and accessibility. Extend the baseline smoke tests to the approved requirements as the UI changes.
 
 Read the workflow run and job logs through GitHub. Use the machine-readable VALIDATION_RESULT log entry and artifact for check names, outcomes, repository, and tested commit. Missing, skipped, cancelled, stale, or failing required checks block readiness. Do not translate workflow bookkeeping validation into application validation.
 
