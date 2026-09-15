@@ -4,7 +4,7 @@ Turn a Figma design into working frontend code through ChatGPT — entirely onli
 
 You can start without a local development environment. You do not need to clone the repository, open a terminal, install Node.js, or run a package manager to get your first working implementation.
 
-The workflow uses ChatGPT as the interface between your design, your GitHub repository, and the services needed to build, verify, and preview the result.
+The workflow uses ChatGPT as the interface between your design, your GitHub repository, and the services needed to build and verify the result. Deployment is an optional evidence layer unless the approved project scope explicitly requires a runtime.
 
 ## Just want to use it? Do this.
 
@@ -42,8 +42,9 @@ You can leave and continue later. The repository owns the durable workflow state
 - Code committed to your GitHub repository.
 - A pull request you can inspect, review, and continue developing from.
 - Automated type, build, browser, responsive, and accessibility checks where supported by the project.
-- A matching preview when the approved result requires one and the configured deployment provider is available.
-- A clear separation between automated verification and final human visual acceptance.
+- Matching deployment/runtime evidence when a configured provider is available and relevant.
+- A clear `Not applicable` runtime status when no deployment is configured or required.
+- A clear separation between automated verification, runtime evidence, and final human acceptance.
 
 Astro + TypeScript is the **maintained implementation adapter** for new scaffoldable frontends and existing Astro + TypeScript projects. Existing frameworks are preserved on a best-effort path. Persistence, authentication, backend work, framework migration, server rendering, and production publishing are supported only when explicitly in scope and subject to the normal architecture/profile rules.
 
@@ -51,13 +52,13 @@ Astro + TypeScript is the **maintained implementation adapter** for new scaffold
 
 One of the main goals of this project is to make the first implementation accessible without requiring a traditional local development setup.
 
-You can run the workflow from any device that gives you access to ChatGPT and the required connected services. The code still lives in GitHub, the design still lives in Figma, and deployment still happens through the deployment provider when one is used — ChatGPT coordinates the work between them.
+You can run the workflow from any device that gives you access to ChatGPT and the required connected services. The code still lives in GitHub, the design still lives in Figma, and deployment happens through a deployment provider only when one is used — ChatGPT coordinates the work between them.
 
 A local checkout remains useful when an engineer wants to take over or extend the result, but it is not a prerequisite for using the workflow.
 
 ## How the workflow works
 
-The human-facing interaction is intentionally simple. Behind it, the workflow keeps a stricter engineering process: it establishes source authority, inspects the design and repository, resolves implementation capability, records project state, determines the appropriate workflow profile, creates implementation artifacts, requires the necessary approvals, validates the result, and preserves enough evidence for the work to be continued safely.
+The human-facing interaction is intentionally simple. Behind it, the workflow keeps a stricter engineering process: it establishes source authority, inspects the design and repository, resolves implementation capability, records project state, determines the appropriate workflow profile, creates implementation artifacts, requires the necessary approvals, validates the result, resolves runtime evidence when applicable, and preserves enough evidence for the work to be continued safely.
 
 You do not need to understand those mechanics to use the workflow.
 
@@ -66,9 +67,10 @@ You do not need to understand those mechanics to use the workflow.
 If you want to understand, audit, or extend the system, the detailed contracts live outside this README:
 
 - [Quickstart](QUICKSTART.md) — the detailed first-run and resume guide.
-- [ChatGPT experience](workflow/ChatGPT-Experience.md) — capability checks, conversational setup, review behavior, assets, previews, and recovery.
+- [ChatGPT experience](workflow/ChatGPT-Experience.md) — capability checks, conversational setup, review behavior, assets, runtime evidence, and recovery.
 - [Workflow stages](workflow/Design-Implementation-Workflow.md) — the canonical implementation process.
 - [Implementation adapters](workflow/Implementation-Adapters.md) — repository-driven implementation-environment resolution and maintained/best-effort adapter rules.
+- [Deployment adapters](workflow/Deployment-Adapters.md) — optional provider-neutral runtime evidence and commit-binding rules.
 - [Project configuration](workflow/Project-Configuration.md) — repository-owned project configuration and migration rules.
 - [GitHub remote execution](workflow/GitHub-Remote-Execution.md) — how executable work runs without requiring a local checkout.
 - [State ownership](workflow/State-Ownership.md) — canonical workflow state and generated views.

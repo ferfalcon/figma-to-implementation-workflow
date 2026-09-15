@@ -139,6 +139,13 @@ assert(entrypoints.get('quickstart').delegatesTo.includes('workflow/ChatGPT-Expe
 assert(!entrypoints.get('quickstart').owns.includes('profile-selection onboarding'));
 assert.deepEqual(entrypoints.get('figma-preparation-launcher').delegatesTo, ['source-adapters/FIGMA-PREPARATION.md']);
 
+const domains = byId(contract.domains);
+assert.equal(
+  domains.get('deployment-adapters')?.owner,
+  'workflow/Deployment-Adapters.md',
+  'provider-neutral deployment evidence must have one canonical semantic owner',
+);
+
 const controlModes = byId(contract.controlModes);
 assert.deepEqual(
   [...controlModes.keys()].sort(),
@@ -238,4 +245,4 @@ assert.deepEqual(
   'semantic compatibility coverage must track every canonical compatibility contract without duplicating versions',
 );
 
-console.log('Semantic contract tests passed (canonical installation artifact, product onboarding, entrypoint ownership, control modes, architecture rules, and compatibility coverage agree with executable behavior).');
+console.log('Semantic contract tests passed (canonical installation artifact, product onboarding, deployment-adapter ownership, entrypoint ownership, control modes, architecture rules, and compatibility coverage agree with executable behavior).');

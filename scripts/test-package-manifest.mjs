@@ -20,10 +20,11 @@ const files = new Set(report.files.map((item) => item.path.split('\\').join('/')
 const requiredAreas = [
   'AGENTS.md', 'AGENTS-instructions.md', 'AGENTS-PROMPT-Figma-file-preparation.md',
   'Project-settings--Instructions.md', 'CONTRIBUTING.md', 'CHANGELOG.md',
-  'workflow/Project-Configuration.md', 'schemas/design-workflow-config.schema.json',
-  'templates/design-workflow.config.template.json',
+  'workflow/Project-Configuration.md', 'workflow/Deployment-Adapters.md',
+  'schemas/design-workflow-config.schema.json', 'templates/design-workflow.config.template.json',
+  'templates/PRODUCT-ACCEPTANCE.v2.template.json',
   'cli/', 'cli/toolkit-provenance.json', 'workflow/', 'guidelines/', 'prompts/', 'source-adapters/',
-  'templates/', 'examples/', 'schemas/', 'scripts/', 'tests/',
+  'implementation-adapters/', 'deployment-adapters/', 'templates/', 'examples/', 'schemas/', 'scripts/', 'tests/',
   'starters/astro/package.json', 'starters/astro/package-lock.template.json',
   'starters/astro/gitignore.template', 'starters/astro/.github/workflows/validate-ui.yml',
   'workflow/ChatGPT-Experience.md', 'workflow/Product-Acceptance.md',
@@ -72,4 +73,4 @@ for (const file of [...files].filter((path) => extname(path).toLowerCase() === '
 }
 if (broken.length > 0) throw new Error(`Packaged relative Markdown links do not resolve:\n${broken.map((item) => `- ${item}`).join('\n')}`);
 
-console.log(`Package manifest tests passed (${files.size} packaged files, canonical Project Instructions included, immutable toolkit provenance included, all relative Markdown links resolved).`);
+console.log(`Package manifest tests passed (${files.size} packaged files, canonical Project Instructions and adapter contracts included, immutable toolkit provenance included, all relative Markdown links resolved).`);

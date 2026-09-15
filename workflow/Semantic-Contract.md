@@ -57,6 +57,7 @@ Ask only for:
 | `control-modes` | [`workflow/State-Ownership.md`](State-Ownership.md) |
 | `agent-orchestration` | [`workflow/Agent-Orchestration.md`](Agent-Orchestration.md) |
 | `implementation-adapters` | [`workflow/Implementation-Adapters.md`](Implementation-Adapters.md) |
+| `deployment-adapters` | [`workflow/Deployment-Adapters.md`](Deployment-Adapters.md) |
 | `remote-execution` | [`workflow/GitHub-Remote-Execution.md`](GitHub-Remote-Execution.md) |
 | `validation` | [`workflow/Validation-Rules.md`](Validation-Rules.md) |
 | `chatgpt-experience` | [`workflow/ChatGPT-Experience.md`](ChatGPT-Experience.md) |

@@ -78,8 +78,8 @@ Normal architecture rules still apply when the project introduces meaningful rou
 - Required project checks must actually run and pass.
 - An adapter may define a maintained baseline of checks.
 - Existing-framework work should use the repository's native validation commands and record unavailable or inapplicable checks honestly.
-- Preview evidence is required only when the approved project/review contract requires a preview and a deployment capability is configured or otherwise necessary.
-- A deployment being unavailable does not convert unexecuted validation into a pass.
+- Deployment/runtime evidence is owned separately by [`Deployment-Adapters.md`](Deployment-Adapters.md); an implementation adapter must not make a deployment provider a hidden prerequisite.
+- A deployment being unavailable does not convert unexecuted validation into a pass or successful implementation evidence into a failure when runtime evidence is not required.
 
 ## Current adapters
 
