@@ -22,6 +22,15 @@ if (result.status !== 0) {
 
 const report = JSON.parse(result.stdout)[0];
 const files = new Set(report.files.map((item) => item.path.split('\\').join('/')));
+const maxRuntimeFiles = 175;
+const maxUnpackedBytes = 1_250_000;
+if (files.size > maxRuntimeFiles) {
+  throw new Error(`Runtime package contains ${files.size} files; review the distribution boundary before exceeding ${maxRuntimeFiles}.`);
+}
+if (report.unpackedSize > maxUnpackedBytes) {
+  throw new Error(`Runtime package unpacks to ${report.unpackedSize} bytes; review the distribution boundary before exceeding ${maxUnpackedBytes}.`);
+}
+
 const requiredAreas = [
   'AGENTS.md', 'AGENTS-instructions.md', 'AGENTS-PROMPT-Figma-file-preparation.md',
   'Project-settings--Instructions.md', 'CONTRIBUTING.md', 'CHANGELOG.md',
@@ -86,4 +95,4 @@ for (const file of [...files].filter((path) => extname(path).toLowerCase() === '
 }
 if (broken.length > 0) throw new Error(`Packaged relative Markdown links do not resolve:\n${broken.map((item) => `- ${item}`).join('\n')}`);
 
-console.log(`Package manifest tests passed (${files.size} runtime files; development examples, scripts, tests, Astro fixture, and obsolete bootstrap alias excluded; all relative Markdown links resolved).`);
+console.log(`Package manifest tests passed (${files.size} runtime files, ${report.unpackedSize} unpacked bytes; development examples, scripts, tests, Astro fixture, and obsolete bootstrap alias excluded; all relative Markdown links resolved).`);
