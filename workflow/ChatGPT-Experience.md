@@ -1,18 +1,18 @@
 # ChatGPT Product Experience
 
-This contract owns the consumer experience for ordinary ChatGPT with existing plugins. It delegates executable state, stage legality, and source integrity to [Agent-Orchestration.md](Agent-Orchestration.md), and implementation-environment resolution to [Implementation-Adapters.md](Implementation-Adapters.md). It does not introduce another engine, a new execution mode, or persona-based profiles.
+This contract owns the consumer experience for ordinary ChatGPT with existing plugins. It delegates executable state, stage legality, and source integrity to [Agent-Orchestration.md](Agent-Orchestration.md), implementation-environment resolution to [Implementation-Adapters.md](Implementation-Adapters.md), and provider-neutral runtime evidence to [Deployment-Adapters.md](Deployment-Adapters.md). It does not introduce another engine, a new execution mode, or persona-based profiles.
 
 ## Supported first result
 
-The workflow produces frontend implementation work in the selected GitHub repository, a pull request, and verified implementation evidence appropriate to that repository. A matching deployment preview is included when the approved project/review contract requires one and a deployment capability is configured and available.
+The workflow produces frontend implementation work in the selected GitHub repository, a pull request, and verified implementation evidence appropriate to that repository. Deployment/runtime evidence is additional evidence when a provider is configured and relevant. It is required only when the approved project scope or acceptance contract explicitly requires a runtime.
 
 Astro + TypeScript is the maintained implementation adapter for safely scaffoldable frontend roots and existing Astro + TypeScript applications. Existing applications using other implementation environments are preserved through the best-effort existing-framework adapter rather than being silently replaced with Astro. Adapter selection is an internal repository-resolution step, not a user workflow choice.
 
 Static pages, navigation, accessible native interactions, responsive behavior, and design-system implementation are part of the maintained frontend scope. Persistence, authentication, server rendering, backend work, production publishing, framework migration, and other architecture-expanding work are supported only when explicitly in scope and must follow the normal architecture/profile rules.
 
-All reasoning and code generation happen in ordinary ChatGPT. GitHub plugins write files; GitHub Actions or the repository's native CI provide remote execution and validation evidence when applicable; configured deployment providers build previews when available. Do not invoke Work, Codex, coding agents, or an API-backed generation service, including as a fallback. The product avoids those execution surfaces, not ordinary ChatGPT or provider usage.
+All reasoning and code generation happen in ordinary ChatGPT. GitHub plugins write files; GitHub Actions or the repository's native CI provide remote execution and validation evidence when applicable; configured deployment providers may supply additional runtime evidence. Do not invoke Work, Codex, coding agents, or an API-backed generation service, including as a fallback. The product avoids those execution surfaces, not ordinary ChatGPT or provider usage.
 
-A deployment preview is not a prerequisite for starting the conversation, establishing the project, resolving an implementation adapter, or planning. Deployment capability is resolved when preview evidence becomes relevant. If an approved result requires a preview and that capability is unavailable, report that specific blocker at that point rather than blocking unrelated repository inspection or planning.
+A deployment is not a prerequisite for starting the conversation, establishing the project, resolving an implementation adapter, planning, implementing, or reporting successful repository/CI evidence. Resolve deployment capability when runtime evidence becomes relevant. If the approved result requires runtime evidence and that capability is unavailable, report that specific blocker. If runtime evidence is optional, keep the deployment limitation visible without converting successful implementation validation into failure.
 
 ## Progressive setup and capability checks
 
@@ -26,7 +26,7 @@ Progressively establish the project in this order:
 4. verify Figma access when design inspection becomes necessary, and establish authorized edit scope before any design mutation;
 5. ask once for review style before first workflow initialization when no saved choice exists;
 6. verify repository write access, the canonical command bridge, and Actions only when their corresponding mutation, remote execution, or validation operation becomes necessary;
-7. discover and verify deployment capability when preview evidence becomes relevant;
+7. when runtime evidence becomes relevant, follow [Deployment-Adapters.md](Deployment-Adapters.md) to determine whether deployment is not configured, available, or blocked and load only the matching provider adapter;
 8. create or update project configuration only after the required stable values have been resolved, and commit a complete valid configuration before first workflow initialization.
 
 Browser authorization, provider connection, controlled Stage 10 scaffolding, and otherwise unavailable asset uploads are allowed when the corresponding operation becomes necessary. Resolving `astro-typescript` in `scaffold` mode does not authorize creating application files during intake; scaffolding remains approved implementation work.
@@ -41,7 +41,7 @@ Verify capabilities at the point of use:
 | Figma edit | At the first authorized design-preparation mutation | A successful permitted edit and readback within configured/explicitly authorized scope. Read access alone does not prove edit permission. |
 | Command bridge | At the first canonical CLI mutation when direct execution is unavailable | Create an authorized canonical request and read its terminal result; merely seeing an issue tool is insufficient. |
 | Actions / native CI evidence | Before relying on remote command or automated validation evidence | Read the relevant workflow run, job logs, or equivalent provider evidence for the intended repository and commit. |
-| Preview provider | When configured preview evidence is required | Inspect the connected deployment project, deployment status/commit, and resulting URL. |
+| Deployment/runtime inspection | Only when runtime evidence is configured or explicitly required | Inspect the matching provider project/deployment, exact implementation commit, normalized ready state, and resulting HTTPS runtime URL. |
 
 Use real required operations as evidence, not dummy production mutations. Before an operation is needed, mark it available-but-unverified rather than passed. A plugin listing in Codex does not prove availability in ordinary ChatGPT. The owner's successful normal-chat tests establish initial feasibility only, not universal account compatibility.
 
@@ -51,11 +51,11 @@ Keep a concise capability table with evidence links in the current profile's own
 
 Read default-branch configuration first, then the saved working branch in v2. Verify repository identity, branch existence, and configuration consistency before reading that branch's record/projection. Do not fall back to default-branch workflow state when the saved branch is missing or inaccessible.
 
-On first setup, start from the repository locator and reuse authoritative repository/configuration evidence before asking for missing context. When configuration is absent, resolve required values progressively in conversation; do not commit a partially filled configuration. Ask once for review style before initialization when it is not already saved, recommend Brief and final preview, and persist the user's actual choice. Create the complete valid configuration on the default branch before initializing the feature branch. Preserve an existing valid caller. Create the working branch from the resulting setup commit, then initialize there with fresh HEAD. Never reuse an unrelated existing branch silently.
+On first setup, start from the repository locator and reuse authoritative repository/configuration evidence before asking for missing context. When configuration is absent, resolve required values progressively in conversation; do not commit a partially filled configuration. Ask once for review style before initialization when it is not already saved, recommend **Brief and final review**, and persist the user's actual choice. Configuration v2 keeps the existing internal `brief-and-preview` identifier for compatibility. Create the complete valid configuration on the default branch before initializing the feature branch. Preserve an existing valid caller. Create the working branch from the resulting setup commit, then initialize there with fresh HEAD. Never reuse an unrelated existing branch silently.
 
 Implementation-adapter selection is not stored in project configuration. Re-resolve it from the configured implementation root and current repository evidence when material repository changes could invalidate the earlier observation, and record the observation against the relevant repository snapshot in Stage 0/planning artifacts.
 
-Deployment URLs may remain null when no deployment identity is configured; that does not block initial repository setup or workflow planning. If the approved result later requires preview evidence, resolve the deployment capability then and report a precise blocker if it cannot be established.
+Deployment URLs may remain null when no deployment identity is configured. That does not block repository setup, workflow planning, implementation, or implementation-evidence reporting. If approved scope later requires runtime evidence, resolve the deployment capability then and report a precise blocker if it cannot be established.
 
 Version 1 configurations retain the established ref and mode until the user chooses adoption. Version 2 adoption adds the chosen reviewStyle and the existing working branch; it must not move work or silently switch an active mode. A configuration change after planning is subject to the ordinary lineage/impact checks. Updates to stable configuration must agree on the default and working branches before further work.
 
@@ -63,9 +63,11 @@ A new chat reloads the saved branch, toolkit pin, and freshness-verified generat
 
 ## Review preferences
 
-The preference controls human checkpoints, not profile selection, implementation-adapter selection, or evidence requirements.
+The preference controls human checkpoints, not profile selection, implementation-adapter selection, deployment availability, or evidence requirements.
 
-### Brief and final preview
+### Brief and final review
+
+This human-facing label maps to configuration value `brief-and-preview` until a separately planned configuration-schema migration changes that stored identifier.
 
 Initialize with Continuous documentation. Continue through audit, documentation, required architecture, reviews, and Stage 9 while no consequential decision is unresolved. Agent-permitted internal artifact approvals must identify the agent honestly; they are not human approvals.
 
@@ -73,7 +75,7 @@ Present a concise implementation brief describing the selected pages, implementa
 
 Only after explicit approval, record its actor, scope, artifact versions, and evidence in the owning narrative. Use the canonical mode command to switch to Task-by-task at Stage 9, rerun preflight/review because mode changes invalidate the current gate, and enter Stage 10. Execute the approved tasks sequentially with normal task start, source verification, validation, commit, and completion. The scoped approval explicitly permits continuing to the next approved task; it does not authorize unrelated tasks, framework migrations, or design changes.
 
-Material scope changes, unexpected source changes, adapter-invalidating repository changes, and consequential ambiguity stop affected work for impact assessment and renewed approval. At Stage 11, show the matching preview when required/available plus the actual validation evidence, or state the precise missing runtime evidence when no preview exists, and obtain explicit human final acceptance. Never infer an approval actor.
+Material scope changes, unexpected source changes, adapter-invalidating repository changes, and consequential ambiguity stop affected work for impact assessment and renewed approval. At Stage 11, present the exact implementation commit and actual validation evidence. Add matching runtime evidence when it is available; if runtime evidence is required but blocked, stop the runtime-dependent acceptance claim. When deployment is not configured or required, state that runtime evidence is not applicable rather than claiming a preview was inspected. Obtain explicit human final acceptance and never infer an approval actor.
 
 ### Every stage
 
@@ -91,26 +93,33 @@ Save required images, icons, and fonts inside the implementation repository with
 
 Keep Figma inspection separate from design mutation. Material preparation is allowed only within explicitly authorized editing scope under [FIGMA-PREPARATION.md](../source-adapters/FIGMA-PREPARATION.md). Design ambiguity may require clarification; a code-generation request alone does not authorize destructive source cleanup.
 
-## Remote validation and preview
+## Remote validation and deployment evidence
 
 Apply [Validation-Rules.md](Validation-Rules.md) plus the selected implementation adapter. Validation must reflect the actual repository, commands, changed scope, and tested commit rather than imposing Astro-shaped checks on unrelated frameworks.
 
-For the maintained Astro + TypeScript adapter, use the maintained Astro baseline in [`../implementation-adapters/ASTRO.md`](../implementation-adapters/ASTRO.md): deterministic install, Astro/type checks, production build, browser setup when required, and browser/end-to-end coverage. For existing-framework work, inspect and run the repository's native applicable checks under [`../implementation-adapters/EXISTING-FRAMEWORK.md`](../implementation-adapters/EXISTING-FRAMEWORK.md). Missing, skipped, cancelled, stale, blocked, or failing required checks block the corresponding readiness claim.
+For the maintained Astro + TypeScript adapter, use the maintained Astro baseline in [`../implementation-adapters/ASTRO.md`](../implementation-adapters/ASTRO.md): deterministic install, Astro/type checks, production build, browser setup when required, and browser/end-to-end coverage. For existing-framework work, inspect and run the repository's native applicable checks under [`../implementation-adapters/EXISTING-FRAMEWORK.md`](../implementation-adapters/EXISTING-FRAMEWORK.md). Missing, skipped, cancelled, stale, blocked, or failing required checks block the corresponding implementation-readiness claim.
 
 Read automated validation evidence through the connected provider. When the maintained validation workflow emits a machine-readable `VALIDATION_RESULT`, use it for check names, outcomes, repository, and tested commit. Other repositories may expose equivalent native CI evidence; record exactly what was actually inspected. Do not translate workflow bookkeeping validation into application validation.
 
-When preview evidence is required, use a deployment whose git commit equals the tested implementation commit and inspect the resulting URL through the available provider tool. An alias that moved to another commit is not evidence. Bind the deployment as the Validation runtime snapshot when applicable. Later bookkeeping commits do not change which implementation commit was tested.
+After implementation evidence is established, handle runtime evidence independently under [Deployment-Adapters.md](Deployment-Adapters.md):
+
+- no configured or required deployment: record runtime evidence as not applicable;
+- deployment available: load the provider adapter, inspect a runtime tied to the exact tested implementation commit, and bind it as a Validation runtime snapshot when used;
+- deployment configured but blocked: report the deployment limitation without erasing successful implementation evidence;
+- runtime explicitly required by approved scope: keep final runtime-dependent acceptance blocked until valid deployment evidence exists or the requirement is explicitly changed.
+
+A moving alias that resolves to another commit is not evidence. Later workflow-only bookkeeping commits do not change which implementation commit was tested. A replacement implementation commit requires fresh implementation validation and fresh deployment evidence whenever runtime evidence is required.
 
 The remote CLI bridge uses `GITHUB_TOKEN`; its bookkeeping pushes do not normally trigger another Actions run. Application checks run from the ordinary implementation push or the repository's native CI trigger. Do not rely on a bookkeeping push to start application checks, and do not widen the command bridge into arbitrary shell execution.
 
-Before final acceptance, distinguish automated checks, any actually inspected screenshots/runtime behavior, preview evidence when available, and the human visual review. Provide the PR, implementation commit, actual checks, preview when applicable, and deviations. A READY deployment alone does not establish functional or visual correctness. Final acceptance does not merge the PR or promote production.
+Before final acceptance, distinguish automated checks, any actually inspected screenshots/runtime behavior, deployment evidence when available, and human acceptance. Provide the PR, implementation commit, actual checks, runtime evidence when applicable, and deviations. A provider-ready deployment alone does not establish functional or visual correctness. Final acceptance does not merge the PR or promote production.
 
 ## Failures and corrections
 
 For failed builds or checks, inspect the exact failing evidence, fix only affected approved work, commit, and rerun required checks for the replacement commit. For stale command HEAD or projections, refresh authoritative state and follow canonical recovery; never hand-edit the record.
 
-When the human requests a correction, follow the existing stage rewind, artifact reopening, snapshot supersession, and task mechanisms. Reassess the scope and implementation adapter; upgrade the profile if necessary, including a second independent task in Express. Retest the corrected output and request final acceptance again. Old evidence and approvals remain historical, not proof of the new output.
+When the human requests a correction, follow the existing stage rewind, artifact reopening, snapshot supersession, and task mechanisms. Reassess the scope and implementation adapter; upgrade the profile if necessary, including a second independent task in Express. Retest the corrected output and request final acceptance again. Old implementation, deployment, and approval evidence remain historical, not proof of the new output.
 
 ## Product acceptance
 
-Use [Product-Acceptance.md](Product-Acceptance.md) for ordinary personal ChatGPT acceptance sessions and maintainer QA evidence. Product acceptance is not a distribution or release gate. Synthetic fixtures and repository CI do not substitute for real-user acceptance evidence. Maintainer acceptance may explicitly qualify the maintained Astro adapter without implying that every best-effort framework has equivalent maintained coverage.
+Use [Product-Acceptance.md](Product-Acceptance.md) for ordinary personal ChatGPT acceptance sessions and maintainer QA evidence. Current acceptance deliberately exercises both a no-deployment path and a deployment-required path. Product acceptance is not a distribution or release gate. Synthetic fixtures and repository CI do not substitute for real-user acceptance evidence. Maintainer acceptance may explicitly qualify the maintained Astro adapter without implying that every best-effort framework has equivalent maintained coverage.
