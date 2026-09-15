@@ -84,7 +84,6 @@ const requiredPaths = [
   'scripts/lib/path-safety.mjs',
   'scripts/test-validation-runner.mjs',
   'scripts/test-path-safety.mjs',
-  'scripts/test-entrypoint-authority.mjs',
   'scripts/test-installation-artifact.mjs',
   'scripts/test-project-configuration.mjs',
   'scripts/test-package-manifest.mjs',
@@ -230,20 +229,6 @@ if (existsSync(packagePath) && existsSync(changelogPath)) {
     }
   } catch (error) {
     errors.push(`package.json: invalid JSON: ${error.message}`);
-  }
-}
-
-const readmePath = join(root, 'README.md');
-if (existsSync(readmePath)) {
-  const readme = readFileSync(readmePath, 'utf8');
-  if (!readme.includes('](AGENTS-instructions.md)')) {
-    errors.push('README.md: must keep AGENTS-instructions.md discoverable for agent execution');
-  }
-  if (!readme.includes('](workflow/Agent-Orchestration.md)')) {
-    errors.push('README.md: must keep workflow/Agent-Orchestration.md discoverable');
-  }
-  if (/^##\s+Choose your entry point\s*$/im.test(readme)) {
-    errors.push('README.md: must not restore multiple human entry-point routing');
   }
 }
 

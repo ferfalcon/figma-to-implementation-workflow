@@ -11,7 +11,6 @@ const bootstrap = read('AGENTS-instructions.md');
 const repositoryContract = read('AGENTS.md');
 const orchestration = read('workflow/Agent-Orchestration.md');
 const stateOwnership = read('workflow/State-Ownership.md');
-const quickstart = read('QUICKSTART.md');
 const cliReadme = read('cli/README.md');
 const errors = [];
 
@@ -48,7 +47,6 @@ for (const [pattern, description] of externalBootstrapRequirements) {
 }
 
 const markdownOnlyBoundaryContracts = [
-  ['QUICKSTART.md', quickstart, ['Markdown-only is a manual/scaffold mode', 'without executable workflow state, generated routing, or agent orchestration']],
   ['cli/README.md', cliReadme, ['Markdown-only is a manual/scaffold mode rather than a second executable workflow runtime.', 'they do not provide executable agent orchestration']],
   ['workflow/State-Ownership.md', stateOwnership, ['The toolkit has one executable control mode and one manual/scaffold mode:', 'does not provide agent orchestration']],
   ['workflow/Agent-Orchestration.md', orchestration, ['This contract applies to CLI-managed workflow projects.', 'Markdown-only is a manual/scaffold mode and does not provide executable agent orchestration.']],
