@@ -17,7 +17,8 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (path) => readFileSync(join(root, path), 'utf8');
 
 const record = {
-  schemaVersion: 2, project: { name: 'Adapter fixture', profile: 'Standard', executionMode: 'Gated' },
+  schemaVersion: 2,
+  project: { name: 'Adapter fixture', profile: 'Standard', executionMode: 'Gated' },
   state: {
     stage: 0,
     status: 'In progress',
