@@ -63,12 +63,15 @@ You do not need to understand those mechanics to use the workflow.
 
 If you want to understand, audit, or extend the system, the detailed contracts live outside this README:
 
+- [Quickstart](QUICKSTART.md) — the detailed first-run and resume guide.
 - [ChatGPT experience](workflow/ChatGPT-Experience.md) — capability checks, conversational setup, review behavior, assets, previews, and recovery.
 - [Workflow stages](workflow/Design-Implementation-Workflow.md) — the canonical implementation process.
 - [Project configuration](workflow/Project-Configuration.md) — repository-owned project configuration and migration rules.
 - [GitHub remote execution](workflow/GitHub-Remote-Execution.md) — how executable work runs without requiring a local checkout.
 - [State ownership](workflow/State-Ownership.md) — canonical workflow state and generated views.
 - [Agent orchestration](workflow/Agent-Orchestration.md) — executable workflow behavior and gates.
+- [Consumer agent bootstrap](AGENTS-instructions.md) — minimal runtime bootstrap and safety guardrails for implementation projects.
+- [Toolkit repository guidelines](AGENTS.md) — maintainer-facing development and validation expectations.
 - [Figma preparation](source-adapters/FIGMA-PREPARATION.md) — design-source preparation rules.
 - [Validation rules](workflow/Validation-Rules.md) — required implementation evidence and checks.
 - [CLI reference](cli/README.md) — maintainer and direct CLI operations.
