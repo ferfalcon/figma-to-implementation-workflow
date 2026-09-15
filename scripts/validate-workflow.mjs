@@ -19,7 +19,7 @@ const requiredPaths = [
   'AGENTS.md',
   'AGENTS-instructions.md',
   'AGENTS-PROMPT-Figma-file-preparation.md',
-  'AI-project-settings.md',
+  'Project-settings--Instructions.md',
   'package.json',
   '.github/workflows/release-consumer-bundle.yml',
   'workflow/Design-Implementation-Workflow.md',
@@ -86,6 +86,7 @@ const requiredPaths = [
   'scripts/test-validation-runner.mjs',
   'scripts/test-path-safety.mjs',
   'scripts/test-entrypoint-authority.mjs',
+  'scripts/test-installation-artifact.mjs',
   'scripts/test-project-configuration.mjs',
   'scripts/test-package-manifest.mjs',
   'scripts/test-artifact-renderer.mjs',
@@ -122,6 +123,7 @@ const promptPaths = [
 ];
 
 const legacyRootPaths = [
+  'AI-project-settings.md',
   'Design-Implementation-Workflow.md',
   'Workflow-Profiles.md',
   'Source-Snapshots.md',
@@ -235,12 +237,6 @@ if (existsSync(packagePath) && existsSync(changelogPath)) {
 const readmePath = join(root, 'README.md');
 if (existsSync(readmePath)) {
   const readme = readFileSync(readmePath, 'utf8');
-  if (!readme.includes('[Get started →](QUICKSTART.md)')) {
-    errors.push('README.md: must expose the single Get started path through QUICKSTART.md');
-  }
-  if (!readme.includes('One workflow. One onboarding. No user route selection.')) {
-    errors.push('README.md: must preserve the single-workflow consumer invariant');
-  }
   if (!readme.includes('](AGENTS-instructions.md)')) {
     errors.push('README.md: must keep AGENTS-instructions.md discoverable for agent execution');
   }

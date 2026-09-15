@@ -15,13 +15,14 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const tempRoot = mkdtempSync(join(tmpdir(), 'design-workflow-consumer-'));
 const output = join(tempRoot, 'bundle');
 const revision = '0123456789abcdef0123456789abcdef01234567';
+const projectInstructionsFilename = 'Project-settings--Instructions.md';
 const errors = [];
 
 try {
   buildConsumerBundle({ output, revision });
 
   const requiredFiles = [
-    'ChatGPT-Project-Instructions.md',
+    projectInstructionsFilename,
     'design-workflow.config.template.json',
     'consumer-bundle-manifest.json',
     'repository/.github/workflows/design-workflow-command.yml',
@@ -49,8 +50,8 @@ try {
   }
 
   const manifest = JSON.parse(readFileSync(join(output, 'consumer-bundle-manifest.json'), 'utf8'));
-  if (manifest.bundleFormatVersion !== 4) {
-    errors.push('Consumer bundle manifest must use bundleFormatVersion 4.');
+  if (manifest.bundleFormatVersion !== 5) {
+    errors.push('Consumer bundle manifest must use bundleFormatVersion 5.');
   }
   if (manifest.installationModel !== 'external-pinned-toolkit') {
     errors.push('Consumer bundle manifest must identify the external pinned toolkit installation model.');
@@ -64,6 +65,9 @@ try {
   if (manifest.remoteCaller !== 'repository/.github/workflows/design-workflow-command.yml') {
     errors.push('Consumer bundle manifest must identify the thin GitHub remote caller.');
   }
+  if (manifest.projectInstructions !== projectInstructionsFilename) {
+    errors.push('Consumer bundle manifest must identify the canonical Project Instructions artifact.');
+  }
   if (manifest.projectConfigTemplate !== 'design-workflow.config.template.json') {
     errors.push('Consumer bundle manifest must identify the project configuration template.');
   }
@@ -74,10 +78,10 @@ try {
     errors.push('Consumer bundle project configuration template must match the canonical template.');
   }
 
-  const generatedInstructions = readFileSync(join(output, 'ChatGPT-Project-Instructions.md'), 'utf8');
-  const canonicalInstructions = readFileSync(join(root, 'AI-project-settings.md'), 'utf8');
+  const generatedInstructions = readFileSync(join(output, projectInstructionsFilename), 'utf8');
+  const canonicalInstructions = readFileSync(join(root, projectInstructionsFilename), 'utf8');
   if (generatedInstructions !== canonicalInstructions) {
-    errors.push('Consumer bundle ChatGPT Project Instructions must be generated directly from AI-project-settings.md.');
+    errors.push('Consumer bundle Project Instructions must be generated directly from the canonical installation artifact.');
   }
   if (generatedInstructions.includes('docs/implementation-workflow/AGENTS-instructions.md')) {
     errors.push('Consumer Project Instructions must not require a vendored workflow bootstrap.');
@@ -105,5 +109,5 @@ if (errors.length > 0) {
   errors.forEach((error) => console.error(`- ${error}`));
   process.exitCode = 1;
 } else {
-  console.log('Consumer bundle test passed (thin bootstrap, repository-owned project configuration template, canonical Project Instructions, and immutable toolkit pin).');
+  console.log('Consumer bundle test passed (canonical Project Instructions name, thin bootstrap, repository-owned project configuration template, and immutable toolkit pin).');
 }

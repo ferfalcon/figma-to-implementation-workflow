@@ -22,7 +22,7 @@ assert.deepEqual(
   [],
   'semantic contract structure and repository references must be valid',
 );
-assert.equal(contract.contractVersion, 2, 'repository-first onboarding must be represented by semantic contract v2');
+assert.equal(contract.contractVersion, 3, 'canonical Project Instructions installation authority must be represented by semantic contract v3');
 
 function byId(items) {
   return new Map(items.map((item) => [item.id, item]));
@@ -66,10 +66,10 @@ assert.deepEqual(
   productModel.bootstrap.requiredInitialInputs,
   [{
     id: 'repository-url',
-    host: 'AI-project-settings.md',
+    host: 'Project-settings--Instructions.md',
     placeholder: '<REPOSITORY_URL>',
   }],
-  'repository URL must be the single human-provided bootstrap input',
+  'repository URL must be the single human-provided bootstrap input in the canonical installation artifact',
 );
 
 const progressiveInputs = byId(productModel.progressiveInputs);
@@ -124,12 +124,16 @@ for (const required of [
 }
 assert.equal(entrypoints.get('readme').role, 'human product overview and zero-to-start instructions');
 assert.ok(entrypoints.get('readme').owns.includes('repository-url-first start'));
+assert.ok(entrypoints.get('readme').delegatesTo.includes('Project-settings--Instructions.md'));
 assert.equal(entrypoints.get('quickstart').role, 'detailed first-run and resume guide');
 assert.ok(entrypoints.get('quickstart').owns.includes('progressive setup and capability resolution'));
 assert(!entrypoints.get('quickstart').owns.includes('one-time plugin and starter setup'));
 assert(!entrypoints.get('quickstart').owns.includes('Figma-first start and review preference choice'));
 assert.equal(entrypoints.get('consumer-agent-bootstrap').path, 'AGENTS-instructions.md');
 assert.ok(entrypoints.get('consumer-agent-bootstrap').delegatesTo.includes('workflow/Agent-Orchestration.md'));
+assert.equal(entrypoints.get('chatgpt-project-settings').path, 'Project-settings--Instructions.md');
+assert.equal(entrypoints.get('chatgpt-project-settings').role, 'canonical ChatGPT installation artifact and host bootstrap contract');
+assert.ok(entrypoints.get('chatgpt-project-settings').owns.includes('canonical Project Instructions installation artifact'));
 assert.deepEqual(entrypoints.get('chatgpt-project-settings').delegatesTo, ['AGENTS-instructions.md', 'workflow/Project-Configuration.md', 'workflow/ChatGPT-Experience.md']);
 assert(entrypoints.get('quickstart').delegatesTo.includes('workflow/ChatGPT-Experience.md'));
 assert(!entrypoints.get('quickstart').owns.includes('profile-selection onboarding'));
@@ -234,4 +238,4 @@ assert.deepEqual(
   'semantic compatibility coverage must track every canonical compatibility contract without duplicating versions',
 );
 
-console.log('Semantic contract tests passed (product onboarding, entrypoint ownership, control modes, architecture rules, and compatibility coverage agree with executable behavior).');
+console.log('Semantic contract tests passed (canonical installation artifact, product onboarding, entrypoint ownership, control modes, architecture rules, and compatibility coverage agree with executable behavior).');

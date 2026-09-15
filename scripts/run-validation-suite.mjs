@@ -19,6 +19,7 @@ export const validationSteps = [
   { name: 'Figma preparation authority', script: 'scripts/test-figma-preparation-authority.mjs' },
   { name: 'agent bootstrap authority', script: 'scripts/test-agent-bootstrap-authority.mjs' },
   { name: 'entrypoint authority', script: 'scripts/test-entrypoint-authority.mjs' },
+  { name: 'installation artifact', script: 'scripts/test-installation-artifact.mjs' },
   { name: 'project configuration', script: 'scripts/test-project-configuration.mjs' },
   { name: 'consumer bundle', script: 'scripts/test-consumer-bundle.mjs' },
   { name: 'Astro starter packaging', script: 'scripts/test-astro-starter.mjs' },
