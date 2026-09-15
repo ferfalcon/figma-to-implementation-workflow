@@ -79,7 +79,7 @@ If you want to understand, audit, or extend the system, the detailed contracts l
 
 ## For maintainers
 
-The workflow engine, immutable toolkit binding, profiles, schemas, generated artifacts, release machinery, and compatibility rules are implementation concerns rather than onboarding requirements. Their detailed contracts remain in the workflow documentation and source tree.
+The workflow engine, immutable toolkit binding, profiles, schemas, generated artifacts, maintainer packaging, and compatibility rules are implementation concerns rather than onboarding requirements. Their detailed contracts remain in the workflow documentation and source tree.
 
 The canonical consumer-facing installation artifact is [`Project-settings--Instructions.md`](Project-settings--Instructions.md). It contains the repository bootstrap locator and host/bootstrap rules; durable project values remain repository-owned.
 

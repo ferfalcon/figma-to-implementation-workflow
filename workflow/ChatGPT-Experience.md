@@ -100,6 +100,6 @@ For failed builds, inspect the exact failing job, fix only affected approved wor
 
 When the human requests a correction, follow the existing stage rewind, artifact reopening, snapshot supersession, and task mechanisms. Reassess the scope; upgrade the profile if necessary, including a second independent task in Express. Retest the corrected output and request final acceptance again. Old evidence and approvals remain historical, not proof of the new output.
 
-## Acceptance and release
+## Product acceptance
 
-Use [Product-Acceptance.md](Product-Acceptance.md) for ordinary personal ChatGPT acceptance sessions and publication evidence. Synthetic fixtures and repository CI do not substitute for two real testers or a verified external preview.
+Use [Product-Acceptance.md](Product-Acceptance.md) for ordinary personal ChatGPT acceptance sessions and maintainer QA evidence. Product acceptance is not a distribution or release gate. Synthetic fixtures and repository CI do not substitute for two real testers or a verified external preview.

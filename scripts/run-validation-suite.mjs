@@ -24,7 +24,6 @@ export const validationSteps = [
   { name: 'consumer bundle', script: 'scripts/test-consumer-bundle.mjs' },
   { name: 'Astro starter packaging', script: 'scripts/test-astro-starter.mjs' },
   { name: 'ChatGPT product experience', script: 'scripts/test-product-experience.mjs' },
-  { name: 'starter publication', script: 'scripts/test-publish-astro-starter.mjs' },
   { name: 'semantic contract behavior', script: 'scripts/test-semantic-contract.mjs' },
   { name: 'CLI layering', script: 'scripts/test-cli-layering.mjs' },
   { name: 'workflow validation architecture', script: 'scripts/test-workflow-validation-architecture.mjs' },

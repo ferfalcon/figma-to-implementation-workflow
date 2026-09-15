@@ -1,17 +1,14 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
-import { mkdtempSync, readFileSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
-import { tmpdir } from 'node:os';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { REQUIRED_CAPABILITIES, assessCapabilities, assessPreviewEvidence, validateAcceptanceReport } from '../cli/lib/product-evidence.mjs';
-import { checkReleaseReadiness } from './check-release-readiness.mjs';
 import { resolveProjectSession } from '../cli/lib/project-configuration.mjs';
 import { deriveNextAction } from '../cli/lib/workflow-actions.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-// Synthetic contract fixtures only. Never copy these into release/acceptance.json.
+// Synthetic contract fixtures only. They validate evidence shape, not real-user acceptance.
 const commit = 'a'.repeat(40);
 const capabilityEvidence = {
   surface: 'ordinary-chatgpt',
@@ -119,25 +116,19 @@ assert.equal(resolveProjectSession(config).initialMode, 'Gated');
 const contract = readFileSync(join(root, 'workflow/ChatGPT-Experience.md'), 'utf8');
 for (const phrase of ['Only after explicit approval', 'rerun preflight/review', 'approved tasks sequentially', 'explicit human final acceptance', 'Do not fall back to default-branch workflow state']) assert(contract.includes(phrase), phrase);
 
-const temp = mkdtempSync(join(tmpdir(), 'release-readiness-'));
-const git = (...args) => execFileSync('git', args, { cwd: temp, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
-try {
-  git('init'); git('config', 'user.name', 'Fixture'); git('config', 'user.email', 'fixture@example.com');
-  writeFileSync(join(temp, 'source.txt'), 'tested source\n');
-  git('add', '.'); git('commit', '-m', 'Tested source');
-  const tested = git('rev-parse', 'HEAD');
-  report.testedRevision = tested;
-  assert(checkReleaseReadiness(report, tested, { cwd: temp }).ready);
-  mkdirSync(join(temp, 'release'));
-  writeFileSync(join(temp, 'release/acceptance.json'), JSON.stringify(report));
-  git('add', '.'); git('commit', '-m', 'Record acceptance only');
-  assert(checkReleaseReadiness(report, git('rev-parse', 'HEAD'), { cwd: temp }).ready, 'Evidence-only commits avoid a recursive commit hash requirement.');
-  writeFileSync(join(temp, 'source.txt'), 'changed source\n');
-  git('add', '.'); git('commit', '-m', 'Change product');
-  const changed = checkReleaseReadiness(report, git('rev-parse', 'HEAD'), { cwd: temp });
-  assert(!changed.ready);
-  assert(changed.findings[0].includes('Source changed'));
-} finally {
-  rmSync(temp, { recursive: true, force: true });
+const retiredPublicationPaths = [
+  '.github/workflows/release-consumer-bundle.yml',
+  'release/acceptance.json',
+  'scripts/check-release-readiness.mjs',
+  'scripts/publish-astro-starter.mjs',
+  'scripts/test-publish-astro-starter.mjs',
+];
+for (const path of retiredPublicationPaths) {
+  assert(!existsSync(join(root, path)), `Retired public publication artifact must stay deleted: ${path}`);
 }
-console.log('Product contracts passed: plugin gaps, approval modes, resume rules, stale previews, failures, corrections, and release evidence.');
+const acceptanceContract = readFileSync(join(root, 'workflow/Product-Acceptance.md'), 'utf8');
+for (const phrase of ['STARTER_PUBLISH_TOKEN', 'STARTER_TEMPLATE_REPOSITORY', 'release/acceptance.json', 'Publish after acceptance']) {
+  assert(!acceptanceContract.includes(phrase), `Product acceptance must not restore release publication coupling: ${phrase}`);
+}
+
+console.log('Product contracts passed: plugin gaps, approval modes, resume rules, stale previews, failures, corrections, product acceptance evidence, and retired publication surfaces.');
