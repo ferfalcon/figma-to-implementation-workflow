@@ -101,16 +101,24 @@ try {
   assert(context.resources?.stagePrompt?.resolution === 'embedded', 'Installed package did not trust its matching embedded provenance.');
 
   const installedRoot = resolve(dirname(cli), '..');
-  const bundleOutput = join(temporary, 'generated-astro');
+  const scaffoldOutput = join(temporary, 'generated-astro');
   run(process.execPath, [
-    join(installedRoot, 'scripts/build-consumer-bundle.mjs'),
-    '--starter', 'astro', '--revision', runtime.revision, '--output', bundleOutput,
+    join(installedRoot, 'scripts/build-astro-scaffold.mjs'),
+    '--output', scaffoldOutput,
   ], consumer);
-  for (const path of ['package-lock.json', '.gitignore', '.github/workflows/validate-ui.yml', '.starter-source.json']) {
-    assert(existsSync(join(bundleOutput, 'repository', path)), 'Packed starter generation lost ' + path);
+  for (const path of ['package.json', 'package-lock.json', '.gitignore', '.github/workflows/validate-ui.yml']) {
+    assert(existsSync(join(scaffoldOutput, path)), 'Packed Astro implementation adapter lost ' + path);
+  }
+  for (const path of [
+    '.starter-source.json',
+    'Project-settings--Instructions.md',
+    'design-workflow.config.template.json',
+    '.github/workflows/design-workflow-command.yml',
+  ]) {
+    assert(!existsSync(join(scaffoldOutput, path)), 'Packed internal Astro scaffold must not embed ' + path);
   }
 
-  console.log(`Packed install preserved toolkit provenance ${runtime.repository}#${runtime.revision} inside unrelated consumer ${basename(consumer)}.`);
+  console.log(`Packed install preserved toolkit provenance ${runtime.repository}#${runtime.revision} inside unrelated consumer ${basename(consumer)} and retained the internal Astro adapter boundary.`);
 } finally {
   rmSync(temporary, { recursive: true, force: true });
 }
