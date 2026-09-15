@@ -16,6 +16,7 @@ assert(existsSync(contractPath), 'Toolkit distribution contract must exist.');
 const workflow = readFileSync(workflowPath, 'utf8');
 const contract = readFileSync(contractPath, 'utf8');
 const readme = readFileSync(join(root, 'README.md'), 'utf8');
+const projectInstructions = readFileSync(join(root, 'Project-settings--Instructions.md'), 'utf8');
 
 const triggerBlock = workflow.slice(workflow.indexOf('on:'), workflow.indexOf('\nconcurrency:'));
 assert.match(triggerBlock, /workflow_dispatch:/, 'Stable releases must be explicitly dispatched.');
@@ -66,8 +67,15 @@ assert.match(contract, /GitHub Release[\s\S]*?\*\*stable channel\*\*/, 'Distribu
 assert.match(contract, /exact commit SHA/, 'Distribution contract must require exact-SHA runtime identity.');
 assert.match(contract, /should enable GitHub \*\*immutable releases\*\*/, 'Distribution contract should document native immutable-release hardening.');
 assert.match(contract, /does not require a separate administrator token/, 'Distribution contract must avoid requiring an admin token in the release workflow.');
-assert.match(contract, /does not by itself change `Project-settings--Instructions\.md`/, 'Distribution contract must keep bootstrap migration separate.');
+assert.match(contract, /new consumer bootstrap[\s\S]*latest non-draft, non-prerelease GitHub Release/i, 'Distribution contract must bind missing consumer pins to the stable release channel.');
+assert.match(contract, /Existing repositories remain bound to their exact revision until intentionally upgraded/i, 'Distribution contract must preserve existing exact consumer pins.');
+assert.match(contract, /must \*\*never\*\* fall back to `main`/i, 'Distribution contract must reject implicit main fallback.');
 assert(readme.includes('workflow/Toolkit-Distribution.md'), 'README reference map must expose the toolkit distribution contract.');
+
+assert.match(projectInstructions, /latest non-draft, non-prerelease GitHub Release/i, 'Canonical Project Instructions must resolve missing pins from the stable release channel.');
+assert.match(projectInstructions, /dereference that tag to its exact 40-character commit SHA/i, 'Canonical Project Instructions must dereference the stable tag to immutable runtime identity.');
+assert.match(projectInstructions, /never fall back to `main`/i, 'Canonical Project Instructions must reject implicit main fallback.');
+assert(!/current default-branch HEAD/i.test(projectInstructions), 'Canonical Project Instructions must not bootstrap from moving default-branch HEAD.');
 
 const readyChangelog = `# Changelog\n\n## [Unreleased]\n\n## [1.2.3] — 2026-09-15\n\n### Added\n\n- Stable release fixture.\n`;
 const ready = inspectToolkitRelease({
@@ -110,4 +118,4 @@ const missingHeading = inspectToolkitRelease({
 assert.equal(missingHeading.ready, false);
 assert(missingHeading.findings.some(finding => finding.includes('dated release heading')));
 
-console.log('Toolkit distribution tests passed: manual stable channel, release metadata preflight, validation matrix, exact-SHA release targeting, native immutability guidance, and retired starter-publication separation.');
+console.log('Toolkit distribution tests passed: manual stable publication, exact-SHA release targeting, stable-channel consumer bootstrap, existing-pin preservation, no implicit main fallback, native immutability guidance, and retired starter-publication separation.');
