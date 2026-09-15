@@ -5,20 +5,19 @@ import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { stageResources } from '../cli/lib/orchestration-resources.mjs';
+import { assessImplementationEvidence } from '../cli/lib/evidence.mjs';
 import {
   BASE_REQUIRED_CAPABILITIES,
   MAINTAINED_ASTRO_CHECKS,
   assessCapabilities,
-  assessImplementationEvidence,
   assessPreviewEvidence,
-} from '../cli/lib/product-evidence.mjs';
+} from './lib/product-acceptance.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (path) => readFileSync(join(root, path), 'utf8');
 
 const record = {
-  schemaVersion: 2,
-  project: { name: 'Adapter fixture', profile: 'Standard', executionMode: 'Gated' },
+  schemaVersion: 2, project: { name: 'Adapter fixture', profile: 'Standard', executionMode: 'Gated' },
   state: {
     stage: 0,
     status: 'In progress',
