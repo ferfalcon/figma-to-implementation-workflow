@@ -1,19 +1,68 @@
 {
-  "contractVersion": 1,
+  "contractVersion": 2,
   "authority": {
     "machineReadable": "workflow/semantic-contract.json",
     "humanProjection": "workflow/Semantic-Contract.md",
     "projectionGenerated": true
   },
+  "productModel": {
+    "surface": "ordinary-chatgpt",
+    "bootstrap": {
+      "requiredInitialInputs": [
+        {
+          "id": "repository-url",
+          "host": "AI-project-settings.md",
+          "placeholder": "<REPOSITORY_URL>"
+        }
+      ],
+      "startCommand": "Start the implementation workflow.",
+      "localDevelopmentRequired": false
+    },
+    "progressiveInputs": [
+      {
+        "id": "figma-design",
+        "requirement": "required",
+        "neededBy": "design-inspection",
+        "resolution": "discover-or-ask"
+      },
+      {
+        "id": "figma-scope",
+        "requirement": "required",
+        "neededBy": "design-mutation",
+        "resolution": "discover-or-ask"
+      },
+      {
+        "id": "review-style",
+        "requirement": "required",
+        "neededBy": "workflow-initialization",
+        "resolution": "ask-once"
+      },
+      {
+        "id": "deployment",
+        "requirement": "optional",
+        "neededBy": "preview",
+        "resolution": "discover-when-relevant"
+      }
+    ],
+    "interactionPolicy": {
+      "inferWhenSafe": true,
+      "askOnlyFor": [
+        "consequential-decisions",
+        "missing-required-information",
+        "missing-required-capabilities",
+        "real-blockers"
+      ]
+    }
+  },
   "entrypoints": [
     {
       "id": "readme",
       "path": "README.md",
-      "role": "human product overview and single onboarding discovery",
+      "role": "human product overview and zero-to-start instructions",
       "owns": [
         "product promise and both personas",
-        "one Get started link",
-        "high-level reference map"
+        "repository-url-first start",
+        "maintained product scope and high-level reference map"
       ],
       "delegatesTo": [
         "QUICKSTART.md",
@@ -25,10 +74,10 @@
     {
       "id": "quickstart",
       "path": "QUICKSTART.md",
-      "role": "human onboarding and first-run guide",
+      "role": "detailed first-run and resume guide",
       "owns": [
-        "one-time plugin and starter setup",
-        "Figma-first start and review preference choice"
+        "progressive setup and capability resolution",
+        "first-run discovery and continuation behavior"
       ],
       "delegatesTo": [
         "workflow/ChatGPT-Experience.md",
