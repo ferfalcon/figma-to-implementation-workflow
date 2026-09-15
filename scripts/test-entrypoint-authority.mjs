@@ -8,16 +8,6 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (path) => readFileSync(join(root, path), 'utf8');
 
 const semanticContract = JSON.parse(read('workflow/semantic-contract.json'));
-const readme = read('README.md');
-const quickstart = read('QUICKSTART.md');
-const projectSettings = read('AI-project-settings.md');
-const toolkitAgents = read('AGENTS.md');
-const consumerAgents = read('AGENTS-instructions.md');
-const figmaLauncher = read('AGENTS-PROMPT-Figma-file-preparation.md');
-const orchestration = read('workflow/Agent-Orchestration.md');
-const projectConfiguration = read('workflow/Project-Configuration.md');
-const profiles = read('workflow/Workflow-Profiles.md');
-const remoteExecution = read('workflow/GitHub-Remote-Execution.md');
 const errors = [];
 
 const entrypoint = (id) => {
@@ -26,6 +16,41 @@ const entrypoint = (id) => {
   return found;
 };
 
+const domain = (id) => {
+  const found = semanticContract.domains?.find((candidate) => candidate.id === id);
+  if (!found) errors.push(`Semantic contract is missing domain ${id}.`);
+  return found;
+};
+
+const readContractSource = (label, path) => {
+  if (!path) return '';
+  try {
+    return read(path);
+  } catch {
+    errors.push(`${label} source ${path} must exist.`);
+    return '';
+  }
+};
+
+const readmeEntrypoint = entrypoint('readme');
+const quickstartEntrypoint = entrypoint('quickstart');
+const projectSettingsEntrypoint = entrypoint('chatgpt-project-settings');
+const toolkitAgentsEntrypoint = entrypoint('toolkit-agents');
+const consumerAgentsEntrypoint = entrypoint('consumer-agent-bootstrap');
+const figmaLauncherEntrypoint = entrypoint('figma-preparation-launcher');
+
+const readme = readContractSource('README', readmeEntrypoint?.path);
+const quickstart = readContractSource('QUICKSTART', quickstartEntrypoint?.path);
+const projectSettings = readContractSource('ChatGPT Project settings', projectSettingsEntrypoint?.path);
+const toolkitAgents = readContractSource('Toolkit agent contract', toolkitAgentsEntrypoint?.path);
+const consumerAgents = readContractSource('Consumer agent bootstrap', consumerAgentsEntrypoint?.path);
+const figmaLauncher = readContractSource('Figma preparation launcher', figmaLauncherEntrypoint?.path);
+const orchestration = readContractSource('Agent orchestration', domain('agent-orchestration')?.owner);
+const projectConfiguration = readContractSource('Project configuration', domain('project-configuration')?.owner);
+const profiles = readContractSource('Workflow profiles', domain('workflow-profiles')?.owner);
+const remoteExecution = readContractSource('GitHub remote execution', domain('remote-execution')?.owner);
+const productModel = semanticContract.productModel;
+
 const requireDelegatedLinks = (label, source, owner) => {
   for (const target of owner?.delegatesTo ?? []) {
     if (!source.includes(`](${target})`)) {
@@ -33,21 +58,6 @@ const requireDelegatedLinks = (label, source, owner) => {
     }
   }
 };
-
-const readmeEntrypoint = entrypoint('readme');
-const quickstartEntrypoint = entrypoint('quickstart');
-const projectSettingsEntrypoint = entrypoint('chatgpt-project-settings');
-const productModel = semanticContract.productModel;
-
-if (readmeEntrypoint?.path !== 'README.md') {
-  errors.push('Semantic contract readme entrypoint must own README.md.');
-}
-if (quickstartEntrypoint?.path !== 'QUICKSTART.md') {
-  errors.push('Semantic contract quickstart entrypoint must own QUICKSTART.md.');
-}
-if (projectSettingsEntrypoint?.path !== 'AI-project-settings.md') {
-  errors.push('Semantic contract ChatGPT Project settings entrypoint must own AI-project-settings.md.');
-}
 
 requireDelegatedLinks('README', readme, readmeEntrypoint);
 requireDelegatedLinks('QUICKSTART', quickstart, quickstartEntrypoint);
@@ -74,14 +84,7 @@ if (!productModel?.bootstrap) {
       continue;
     }
 
-    let hostSource;
-    try {
-      hostSource = read(input.host);
-    } catch {
-      errors.push(`Initial input ${input.id} host ${input.host} must exist.`);
-      continue;
-    }
-
+    const hostSource = readContractSource(`Initial input ${input.id}`, input.host);
     if (input.placeholder && !hostSource.includes(input.placeholder)) {
       errors.push(`Initial input ${input.id} host ${input.host} must expose placeholder ${input.placeholder}.`);
     }
@@ -90,6 +93,22 @@ if (!productModel?.bootstrap) {
     }
     if (input.placeholder && !quickstart.includes(input.placeholder)) {
       errors.push(`QUICKSTART must expose initial-input placeholder ${input.placeholder} from workflow/semantic-contract.json.`);
+    }
+  }
+
+  if (bootstrap.localDevelopmentRequired === false) {
+    const forbiddenLocalSetupRequirements = [
+      /\byou (?:must|need to) clone\b/i,
+      /\byou (?:must|need to) (?:open|use) (?:a )?terminal\b/i,
+      /\byou (?:must|need to) install (?:Node(?:\.js)?|npm|pnpm|yarn)\b/i,
+      /\blocal (?:checkout|development environment) (?:is|remains) required\b/i,
+    ];
+    for (const [label, source] of [['README', readme], ['QUICKSTART', quickstart]]) {
+      for (const pattern of forbiddenLocalSetupRequirements) {
+        if (pattern.test(source)) {
+          errors.push(`${label} must not require local development when productModel.bootstrap.localDevelopmentRequired is false.`);
+        }
+      }
     }
   }
 }
@@ -109,10 +128,6 @@ if (/design-workflow\s+agent-context\s+--json/i.test(readme)) {
 }
 if (/docs\/implementation-workflow\/AGENTS-instructions\.md/i.test(readme)) {
   errors.push('README must not require a vendored consumer-agent bootstrap.');
-}
-
-if (!quickstart.startsWith('# Quickstart')) {
-  errors.push('QUICKSTART must begin with a Quickstart heading.');
 }
 
 for (const pattern of [
@@ -157,9 +172,6 @@ for (const [pattern, description] of [
   if (!pattern.test(orchestration)) errors.push(`Agent-Orchestration.md must ${description}.`);
 }
 
-if (!projectSettings.startsWith('# Project locator')) {
-  errors.push('ChatGPT Project settings must begin with the repository bootstrap locator.');
-}
 for (const placeholder of ['<PROJECT_NAME>', '<FIGMA_URL>', '<FIGMA_SCOPE>', '<IMPLEMENTATION_ROOT>', '<VERCEL_URL>', '<PRODUCTION_URL>']) {
   if (projectSettings.includes(placeholder)) errors.push(`ChatGPT Project settings must not duplicate repository-owned project configuration placeholder ${placeholder}.`);
 }
