@@ -1,15 +1,15 @@
 # Toolkit Distribution
 
-This document owns how a validated workflow toolkit revision becomes a stable version that other repositories can pin.
+This document owns how a validated workflow toolkit revision becomes a stable version that other repositories can pin, and which distribution channel new consumer bootstrap must resolve.
 
-It does **not** define application starter publication, product acceptance, or consumer bootstrap behavior. Those remain separate concerns.
+It does **not** define application starter publication or product acceptance. Those remain separate concerns. The canonical ChatGPT installation artifact owns the host-facing bootstrap instructions and delegates stable-channel semantics to this contract.
 
 ## Channels
 
 The toolkit has two distribution channels:
 
-- `main` is the **development channel**. It contains the latest merged toolkit work and may move at any time.
-- A non-draft, non-prerelease **GitHub Release** created by the canonical release workflow is the **stable channel**.
+- `main` is the **development channel**. It contains the latest merged toolkit work and may move at any time. Normal consumer bootstrap must not use it implicitly.
+- A non-draft, non-prerelease **GitHub Release** created by the canonical release workflow is the **stable channel** used by new consumer bootstrap when no valid exact toolkit pin already exists.
 
 A stable release uses tag `v<package-version>`. The tag must resolve to the exact commit that passed the release workflow validation. Consumers and automation that use a stable release must resolve that tag to its exact commit SHA before executing toolkit code; the mutable channel name or tag is not the runtime identity.
 
@@ -75,12 +75,24 @@ These signals are intentionally separate. Product acceptance may attest to a rel
 
 ## Bootstrap boundary
 
-This contract establishes the stable distribution channel. It does not by itself change `Project-settings--Instructions.md` or existing consumer repositories.
+`Project-settings--Instructions.md` owns host-facing bootstrap behavior. This distribution contract owns the channel semantics it must follow.
 
-A separate bootstrap change may resolve the latest stable GitHub Release and pin its exact commit SHA for new consumers. Existing repositories with an exact toolkit pin remain bound to that revision until intentionally upgraded.
+For a new or uninitialized consumer repository:
+
+1. Inspect `.github/workflows/design-workflow-command.yml` on the implementation repository's default branch.
+2. When that caller already pins the canonical toolkit to one valid exact 40-character commit SHA, preserve that pin. Existing repositories remain bound to their exact revision until intentionally upgraded.
+3. When the caller is absent, resolve the canonical toolkit's latest non-draft, non-prerelease GitHub Release.
+4. Resolve that release's tag and dereference it to the exact commit SHA that becomes the bootstrap runtime identity.
+5. Load bootstrap resources and install any thin caller from exactly that revision.
+
+A mutable, malformed, or conflicting existing caller pin is a blocker rather than permission to replace it silently. If no stable GitHub Release can be resolved, bootstrap is blocked until the stable channel is available. Normal consumer bootstrap must **never** fall back to `main`, another moving branch, or a mutable tag as runtime identity.
+
+Maintainers may explicitly test an exact development SHA, but that is an intentional development-channel operation rather than the default consumer bootstrap path.
 
 ## Failure and recovery
 
 If validation fails, correct the repository and dispatch the workflow again after merging the fix.
 
 If a release attempt fails before GitHub creates the tag/release, it is safe to retry after correcting the cause. If the version tag or release already exists, the workflow fails rather than mutating it; inspect the existing release and prepare a new version if changes are required.
+
+If consumer bootstrap cannot resolve a stable release, report the stable-toolkit bootstrap blocker precisely. Do not silently switch to the development channel. Existing consumers with an exact valid pin continue to use that pinned revision independently of the current stable-channel availability.
