@@ -180,6 +180,10 @@
       "owner": "workflow/Implementation-Adapters.md"
     },
     {
+      "id": "deployment-adapters",
+      "owner": "workflow/Deployment-Adapters.md"
+    },
+    {
       "id": "remote-execution",
       "owner": "workflow/GitHub-Remote-Execution.md"
     },
