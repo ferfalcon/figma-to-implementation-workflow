@@ -1,0 +1,145 @@
+name: Release stable toolkit
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Toolkit version from package.json, without a leading v
+        required: true
+        type: string
+
+concurrency:
+  group: toolkit-stable-release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.metadata.outputs.version }}
+      tag: ${{ steps.metadata.outputs.tag }}
+    steps:
+      - name: Require the main development channel
+        run: |
+          set -euo pipefail
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "Stable toolkit releases must be dispatched from main; got $GITHUB_REF." >&2
+            exit 1
+          fi
+
+      - name: Check out the exact release candidate
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+
+      - name: Validate release metadata
+        id: metadata
+        env:
+          REQUESTED_VERSION: ${{ inputs.version }}
+        run: >-
+          node scripts/check-toolkit-release.mjs
+          --version "$REQUESTED_VERSION"
+          --github-output "$GITHUB_OUTPUT"
+
+  validate:
+    needs: preflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version:
+          - 22
+          - 24
+    steps:
+      - name: Check out the exact release candidate
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Run the repository validation contract
+        run: npm run validate
+
+      - name: Verify package contents
+        run: npm pack --dry-run
+
+      - name: Verify packaging leaves no generated provenance or repository drift
+        run: |
+          test ! -e cli/toolkit-provenance.json
+          git diff --exit-code
+
+  release:
+    needs:
+      - preflight
+      - validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Check out the exact validated commit
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Refuse an existing version tag or release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.preflight.outputs.tag }}
+        run: |
+          set -euo pipefail
+          if git ls-remote --exit-code --tags "https://github.com/${GITHUB_REPOSITORY}.git" "refs/tags/${TAG}" >/dev/null 2>&1; then
+            echo "Tag ${TAG} already exists; stable version tags are never moved or reused." >&2
+            exit 1
+          fi
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release ${TAG} already exists; prepare a new version instead." >&2
+            exit 1
+          fi
+
+      - name: Create stable GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.preflight.outputs.tag }}
+        run: |
+          set -euo pipefail
+          gh release create "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "$TAG" \
+            --generate-notes \
+            --latest
+
+      - name: Verify released tag and release state
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.preflight.outputs.tag }}
+        run: |
+          set -euo pipefail
+          TAG_SHA="$(git ls-remote --tags "https://github.com/${GITHUB_REPOSITORY}.git" "refs/tags/${TAG}" | awk '{print $1}')"
+          if [ -z "$TAG_SHA" ] || [ "$TAG_SHA" != "$GITHUB_SHA" ]; then
+            echo "Released tag ${TAG} resolved to ${TAG_SHA:-<missing>} instead of validated commit ${GITHUB_SHA}." >&2
+            exit 1
+          fi
+
+          RELEASE_JSON="$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json isDraft,isPrerelease,tagName)"
+          node -e 'const release = JSON.parse(process.argv[1]); if (release.isDraft || release.isPrerelease || release.tagName !== process.argv[2]) process.exit(1);' "$RELEASE_JSON" "$TAG"
