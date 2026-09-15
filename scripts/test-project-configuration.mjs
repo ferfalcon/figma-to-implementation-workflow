@@ -15,9 +15,9 @@ const errors = [];
 
 const schema = JSON.parse(read('schemas/design-workflow-config.schema.json'));
 const template = JSON.parse(read('templates/design-workflow.config.template.json'));
+const semanticContract = JSON.parse(read('workflow/semantic-contract.json'));
 const contract = read('workflow/Project-Configuration.md');
 const projectSettings = read('AI-project-settings.md');
-const quickstart = read('QUICKSTART.md');
 const bootstrap = read('AGENTS-instructions.md');
 const orchestration = read('workflow/Agent-Orchestration.md');
 
@@ -69,7 +69,10 @@ for (const placeholder of ['<PROJECT_NAME>', '<FIGMA_URL>', '<FIGMA_SCOPE>', '<I
   expect(!projectSettings.includes(placeholder), `ChatGPT Project Instructions must not duplicate ${placeholder}.`);
 }
 
-expect(quickstart.includes('ChatGPT reads or creates design-workflow.config.json'), 'Quickstart must include persistent project configuration in the setup test.');
+const requiredInitialInputs = semanticContract.productModel?.bootstrap?.requiredInitialInputs ?? [];
+expect(requiredInitialInputs.length === 1 && requiredInitialInputs[0]?.id === 'repository-url', 'Semantic product model must define repository URL as the sole required initial input.');
+expect(requiredInitialInputs[0]?.host === 'AI-project-settings.md', 'Semantic product model must bind repository bootstrap to ChatGPT Project Instructions.');
+expect(requiredInitialInputs[0]?.placeholder === '<REPOSITORY_URL>', 'Semantic product model must bind repository bootstrap to the repository locator placeholder.');
 expect(bootstrap.includes('design-workflow.config.json'), 'Consumer agent bootstrap must read project configuration.');
 expect(orchestration.includes('design-workflow.config.json'), 'Agent orchestration must read project configuration before intake.');
 
