@@ -14,7 +14,7 @@ Start command: `Start the implementation workflow.`
 
 | Input | Host | Placeholder |
 |---|---|---|
-| `repository-url` | [`AI-project-settings.md`](../AI-project-settings.md) | `<REPOSITORY_URL>` |
+| `repository-url` | [`Project-settings--Instructions.md`](../Project-settings--Instructions.md) | `<REPOSITORY_URL>` |
 
 ### Acquired progressively
 
@@ -40,11 +40,11 @@ Ask only for:
 
 | ID | Path | Role | Owns | Delegates to |
 |---|---|---|---|---|
-| `readme` | [`README.md`](../README.md) | human product overview and zero-to-start instructions | `product promise and both personas`<br>`repository-url-first start`<br>`maintained product scope and high-level reference map` | [`QUICKSTART.md`](../QUICKSTART.md)<br>[`workflow/Design-Implementation-Workflow.md`](Design-Implementation-Workflow.md)<br>[`AGENTS-instructions.md`](../AGENTS-instructions.md)<br>[`AGENTS.md`](../AGENTS.md) |
+| `readme` | [`README.md`](../README.md) | human product overview and zero-to-start instructions | `product promise and both personas`<br>`repository-url-first start`<br>`maintained product scope and high-level reference map` | [`Project-settings--Instructions.md`](../Project-settings--Instructions.md)<br>[`QUICKSTART.md`](../QUICKSTART.md)<br>[`workflow/Design-Implementation-Workflow.md`](Design-Implementation-Workflow.md)<br>[`AGENTS-instructions.md`](../AGENTS-instructions.md)<br>[`AGENTS.md`](../AGENTS.md) |
 | `quickstart` | [`QUICKSTART.md`](../QUICKSTART.md) | detailed first-run and resume guide | `progressive setup and capability resolution`<br>`first-run discovery and continuation behavior` | [`workflow/ChatGPT-Experience.md`](ChatGPT-Experience.md)<br>[`workflow/Project-Configuration.md`](Project-Configuration.md)<br>[`workflow/GitHub-Remote-Execution.md`](GitHub-Remote-Execution.md) |
 | `toolkit-agents` | [`AGENTS.md`](../AGENTS.md) | toolkit repository agent contract | `toolkit-maintainer agent behavior`<br>`repository development and validation expectations` | [`workflow/Design-Implementation-Workflow.md`](Design-Implementation-Workflow.md)<br>[`workflow/Validation-Rules.md`](Validation-Rules.md) |
 | `consumer-agent-bootstrap` | [`AGENTS-instructions.md`](../AGENTS-instructions.md) | implementation-project consumer agent bootstrap | `minimal workflow bootstrap`<br>`safety-critical agent guardrails` | [`workflow/Agent-Orchestration.md`](Agent-Orchestration.md)<br>[`workflow/State-Ownership.md`](State-Ownership.md)<br>[`workflow/GitHub-Remote-Execution.md`](GitHub-Remote-Execution.md)<br>[`workflow/ChatGPT-Experience.md`](ChatGPT-Experience.md) |
-| `chatgpt-project-settings` | [`AI-project-settings.md`](../AI-project-settings.md) | ChatGPT host and tool-behavior template | `repository bootstrap locator`<br>`host boundary and immutable bootstrap loading` | [`AGENTS-instructions.md`](../AGENTS-instructions.md)<br>[`workflow/Project-Configuration.md`](Project-Configuration.md)<br>[`workflow/ChatGPT-Experience.md`](ChatGPT-Experience.md) |
+| `chatgpt-project-settings` | [`Project-settings--Instructions.md`](../Project-settings--Instructions.md) | canonical ChatGPT installation artifact and host bootstrap contract | `canonical Project Instructions installation artifact`<br>`repository bootstrap locator`<br>`host boundary and immutable bootstrap loading`<br>`progressive setup delegation` | [`AGENTS-instructions.md`](../AGENTS-instructions.md)<br>[`workflow/Project-Configuration.md`](Project-Configuration.md)<br>[`workflow/ChatGPT-Experience.md`](ChatGPT-Experience.md) |
 | `figma-preparation-launcher` | [`AGENTS-PROMPT-Figma-file-preparation.md`](../AGENTS-PROMPT-Figma-file-preparation.md) | Figma preparation-only launcher | `preparation-only launch boundary` | [`source-adapters/FIGMA-PREPARATION.md`](../source-adapters/FIGMA-PREPARATION.md) |
 | `contributing` | [`CONTRIBUTING.md`](../CONTRIBUTING.md) | contributor guide | `repository contribution workflow`<br>`change verification expectations` | [`AGENTS.md`](../AGENTS.md)<br>[`workflow/Validation-Rules.md`](Validation-Rules.md) |
 

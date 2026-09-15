@@ -8,7 +8,7 @@ The only project information you need to configure before the first chat is the 
 
 Choose the GitHub repository that will own the implementation.
 
-Create a ChatGPT Project, copy the Project Instructions template from [`Project-settings--Instructions.md`](AI-project-settings.md) into the Project Instructions, and replace only:
+Create a ChatGPT Project, copy [`Project-settings--Instructions.md`](Project-settings--Instructions.md) into the Project Instructions, and replace only:
 
 ```text
 <REPOSITORY_URL>
@@ -124,6 +124,6 @@ The maintained Astro starter and release bundle remain useful to maintainers, re
 
 ### Manual fallback: thin consumer bundle
 
-Maintainers can still generate the thin caller and instructions for an existing repository. It does not include application scaffolding or vendor the toolkit. See the [CLI reference](cli/README.md) for direct installation and bundle generation.
+Maintainers can still generate the thin caller and canonical Project Instructions for an existing repository. It does not include application scaffolding or vendor the toolkit. See the [CLI reference](cli/README.md) for direct installation and bundle generation.
 
 Detailed agent behavior for capability checks, review styles, assets, recovery, and preview evidence is owned by [ChatGPT Experience](workflow/ChatGPT-Experience.md).

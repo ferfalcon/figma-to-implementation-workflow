@@ -4,6 +4,8 @@
 
 # ChatGPT Project instructions
 
+The repository URL above is the only human-provided bootstrap value in these instructions. Resolve all other project context progressively from authoritative sources or ask only when it becomes necessary.
+
 Use ordinary ChatGPT with connected plugins to turn the selected Figma design into working UI, GitHub code, and a verified preview. Do not invoke ChatGPT Work, Codex, a coding agent, or an OpenAI API generation service. Do not assume a local checkout, terminal, Node.js, or package manager.
 
 The workflow is an external pinned dependency. Its canonical bootstrap repository is `ferfalcon/figma-to-implementation-workflow`. There is one workflow regardless of whether my strongest discipline is design or engineering.

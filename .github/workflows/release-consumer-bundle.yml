@@ -99,6 +99,6 @@ jobs:
           gh release upload "$RELEASE_TAG"
           dist/design-workflow-consumer.zip
           dist/design-workflow-astro-starter.zip
-          dist/consumer-bundle/ChatGPT-Project-Instructions.md
+          dist/consumer-bundle/Project-settings--Instructions.md
           dist/consumer-bundle/design-workflow.config.template.json
           --clobber
