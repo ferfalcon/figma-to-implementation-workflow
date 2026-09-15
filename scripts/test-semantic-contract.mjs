@@ -22,10 +22,93 @@ assert.deepEqual(
   [],
   'semantic contract structure and repository references must be valid',
 );
+assert.equal(contract.contractVersion, 2, 'repository-first onboarding must be represented by semantic contract v2');
 
 function byId(items) {
   return new Map(items.map((item) => [item.id, item]));
 }
+
+function clone(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+const missingProductModel = clone(contract);
+delete missingProductModel.productModel;
+assert.ok(
+  semanticContractFindings(missingProductModel).includes('productModel must be an object'),
+  'semantic validator must reject contracts without a product model',
+);
+
+const missingProgressiveInputs = clone(contract);
+delete missingProgressiveInputs.productModel.progressiveInputs;
+assert.ok(
+  semanticContractFindings(missingProgressiveInputs).includes('productModel.progressiveInputs must be an array'),
+  'semantic validator must reject product models without progressive input classification',
+);
+
+const overlappingInputLifecycle = clone(contract);
+overlappingInputLifecycle.productModel.progressiveInputs.push({
+  id: 'repository-url',
+  requirement: 'required',
+  neededBy: 'workflow-initialization',
+  resolution: 'discover-or-ask',
+});
+assert.ok(
+  semanticContractFindings(overlappingInputLifecycle).includes('input id cannot be both initial and progressive: repository-url'),
+  'semantic validator must keep initial and progressive input lifecycles disjoint',
+);
+
+const productModel = contract.productModel;
+assert.equal(productModel.surface, 'ordinary-chatgpt');
+assert.equal(productModel.bootstrap.localDevelopmentRequired, false);
+assert.equal(productModel.bootstrap.startCommand, 'Start the implementation workflow.');
+assert.deepEqual(
+  productModel.bootstrap.requiredInitialInputs,
+  [{
+    id: 'repository-url',
+    host: 'AI-project-settings.md',
+    placeholder: '<REPOSITORY_URL>',
+  }],
+  'repository URL must be the single human-provided bootstrap input',
+);
+
+const progressiveInputs = byId(productModel.progressiveInputs);
+assert.deepEqual(
+  [...progressiveInputs.keys()].sort(),
+  ['deployment', 'figma-design', 'figma-scope', 'review-style'],
+  'progressive inputs must cover design context, review preference, and optional deployment context',
+);
+assert.deepEqual(progressiveInputs.get('figma-design'), {
+  id: 'figma-design',
+  requirement: 'required',
+  neededBy: 'design-inspection',
+  resolution: 'discover-or-ask',
+});
+assert.deepEqual(progressiveInputs.get('figma-scope'), {
+  id: 'figma-scope',
+  requirement: 'required',
+  neededBy: 'design-mutation',
+  resolution: 'discover-or-ask',
+});
+assert.deepEqual(progressiveInputs.get('review-style'), {
+  id: 'review-style',
+  requirement: 'required',
+  neededBy: 'workflow-initialization',
+  resolution: 'ask-once',
+});
+assert.deepEqual(progressiveInputs.get('deployment'), {
+  id: 'deployment',
+  requirement: 'optional',
+  neededBy: 'preview',
+  resolution: 'discover-when-relevant',
+});
+assert.equal(productModel.interactionPolicy.inferWhenSafe, true);
+assert.deepEqual(productModel.interactionPolicy.askOnlyFor, [
+  'consequential-decisions',
+  'missing-required-information',
+  'missing-required-capabilities',
+  'real-blockers',
+]);
 
 const entrypoints = byId(contract.entrypoints);
 for (const required of [
@@ -39,6 +122,12 @@ for (const required of [
 ]) {
   assert.ok(entrypoints.has(required), `semantic contract must register ${required}`);
 }
+assert.equal(entrypoints.get('readme').role, 'human product overview and zero-to-start instructions');
+assert.ok(entrypoints.get('readme').owns.includes('repository-url-first start'));
+assert.equal(entrypoints.get('quickstart').role, 'detailed first-run and resume guide');
+assert.ok(entrypoints.get('quickstart').owns.includes('progressive setup and capability resolution'));
+assert(!entrypoints.get('quickstart').owns.includes('one-time plugin and starter setup'));
+assert(!entrypoints.get('quickstart').owns.includes('Figma-first start and review preference choice'));
 assert.equal(entrypoints.get('consumer-agent-bootstrap').path, 'AGENTS-instructions.md');
 assert.ok(entrypoints.get('consumer-agent-bootstrap').delegatesTo.includes('workflow/Agent-Orchestration.md'));
 assert.deepEqual(entrypoints.get('chatgpt-project-settings').delegatesTo, ['AGENTS-instructions.md', 'workflow/Project-Configuration.md', 'workflow/ChatGPT-Experience.md']);
@@ -145,4 +234,4 @@ assert.deepEqual(
   'semantic compatibility coverage must track every canonical compatibility contract without duplicating versions',
 );
 
-console.log('Semantic contract tests passed (entrypoint ownership, control modes, architecture rules, and compatibility coverage agree with executable behavior).');
+console.log('Semantic contract tests passed (product onboarding, entrypoint ownership, control modes, architecture rules, and compatibility coverage agree with executable behavior).');

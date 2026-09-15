@@ -42,6 +42,8 @@ That value is only a bootstrap pointer, not a second project-configuration autho
 
 The configuration's `repository.url` must identify the same repository as the locator/current repository context. A mismatch is a configuration error; report it and do not silently switch repositories.
 
+Project configuration does not need to exist before the conversation starts. When it is absent, begin from the repository locator and resolve required project context progressively. The configuration must be complete and valid before executable workflow initialization.
+
 ## First setup
 
 Before first workflow initialization:
@@ -60,7 +62,7 @@ For an initialized legacy project with no configuration, create and commit it be
 
 ## Session startup
 
-At every new agent session, resolve project configuration before substantive design/repository/deployment work.
+At every new agent session, inspect for project configuration before substantive design, implementation, or deployment work. When configuration is absent, repository inspection needed to establish it is allowed; follow **First setup** and do not commit partial configuration.
 
 When it exists:
 
@@ -130,7 +132,7 @@ A configuration change after planning baseline is a real project change. Do not 
 
 ## Review style and working branch
 
-Configuration v2 requires repository.workingBranch and workflow.reviewStyle. The accepted review-style values are brief-and-preview and every-stage. Ask the user once; recommend Brief and final preview but never treat the unresolved template placeholder as a selection.
+Configuration v2 requires repository.workingBranch and workflow.reviewStyle. The accepted review-style values are brief-and-preview and every-stage. When no review style is already saved, ask the user once during progressive setup before first workflow initialization; it is not a prerequisite for starting the conversation. Recommend Brief and final preview but never treat the unresolved template placeholder as a selection.
 
 The preference maps to the existing modes under [ChatGPT Experience](ChatGPT-Experience.md). It does not itself authorize implementation, change an active mode, or record stage/task progress. A new brief-and-preview run initializes in Continuous documentation; every-stage initializes in Gated. The canonical mode can change only through the CLI under the documented approval policy.
 

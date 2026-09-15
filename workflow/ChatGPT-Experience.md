@@ -8,29 +8,47 @@ New Astro + TypeScript projects produce a GitHub pull request and a working Verc
 
 All reasoning and code generation happen in ordinary ChatGPT. GitHub plugins write files; GitHub Actions run the canonical CLI and consumer checks; Vercel's Git integration builds previews. Do not invoke Work, Codex, coding agents, or an API-backed generation service, including as a fallback. The product avoids those execution surfaces, not ordinary ChatGPT or provider usage.
 
-## One-time setup and capability checks
+A Vercel preview is part of the maintained Astro result, but it is not a prerequisite for starting the conversation or establishing the project. Deployment capability is resolved when preview evidence becomes relevant; if the maintained result requires a preview and that capability is still unavailable, report that specific blocker at that point rather than blocking earlier repository inspection or planning.
 
-Follow the single human [QUICKSTART.md](../QUICKSTART.md). The generated starter contains application scaffolding and a thin pinned caller, not a vendored toolkit. Browser authorization, template creation, Vercel import, and otherwise unavailable asset uploads are allowed during setup.
+## Progressive setup and capability checks
 
-Before substantive work, inspect the actual connected capabilities:
+Follow the single human [QUICKSTART.md](../QUICKSTART.md). Begin from the repository locator in the ChatGPT Project instructions. Do not require the Figma design, review style, deployment provider, a generated starter, or every downstream capability before the first conversation. Existing project configuration and repository evidence should be reused before asking the human for anything already known.
 
-| Capability | Required evidence |
-|---|---|
-| Figma Design | Successfully read the supplied file/frame, design context, and a screenshot; FigJam-only access is insufficient. |
-| GitHub reads and writes | Read the repository and verify an authorized setup/configuration commit on the intended repository. |
-| Command issues | Create an authorized canonical request and read its terminal result; merely seeing an issue tool is insufficient. |
-| Actions | Read a workflow run and its job logs for the intended repository and commit. |
-| Preview | Inspect the connected Vercel project, deployment status/commit, and the resulting URL. |
+Progressively establish the project in this order:
 
-Use real setup operations as evidence, not dummy production mutations. Before an operation is needed, mark it available-but-unverified rather than passed. A plugin listing in Codex does not prove availability in ordinary ChatGPT. The owner's successful normal-chat tests establish initial feasibility only, not universal account compatibility.
+1. verify the intended implementation repository and read access;
+2. read and preserve existing project configuration when present, otherwise inspect the repository and resolve required stable values from authoritative sources or explicit user intent;
+3. verify Figma access when design inspection becomes necessary, and establish authorized edit scope before any design mutation;
+4. ask once for review style before first workflow initialization when no saved choice exists;
+5. verify repository write access, the canonical command bridge, and Actions only when their corresponding mutation, remote execution, or validation operation becomes necessary;
+6. discover and verify deployment capability when preview evidence becomes relevant;
+7. create or update project configuration only after the required stable values have been resolved, and commit a complete valid configuration before first workflow initialization.
 
-Keep a concise capability table with evidence links in the current profile's owning context/workpack. These are observations, not permission grants or executable state. If a capability fails, report the specific provider/account/permission requirement and pause affected work. Do not silently change products, assume broader access, or claim a browser/manual step ran.
+Browser authorization, provider connection, controlled scaffolding, and otherwise unavailable asset uploads are allowed when the corresponding operation becomes necessary. A maintained starter may still be used for controlled scaffolding or release acceptance, but downloading or preparing it is not part of normal consumer onboarding.
+
+Verify capabilities at the point of use:
+
+| Capability | Verify when | Required evidence |
+|---|---|---|
+| GitHub read | Initial repository inspection | Successfully read the intended repository, its default branch, and existing project configuration or its confirmed absence. |
+| GitHub write | At the first required repository mutation | A successful authorized commit or equivalent write on the intended repository/ref. Do not perform a dummy production mutation solely to prove access. |
+| Figma read | Before design inspection | Successfully read the supplied/discovered file or frame, design context, and a screenshot; FigJam-only access is insufficient. |
+| Figma edit | At the first authorized design-preparation mutation | A successful permitted edit and readback within configured/explicitly authorized scope. Read access alone does not prove edit permission. |
+| Command bridge | At the first canonical CLI mutation when direct execution is unavailable | Create an authorized canonical request and read its terminal result; merely seeing an issue tool is insufficient. |
+| Actions | Before relying on remote command or automated validation evidence | Read the relevant workflow run and its job logs for the intended repository and commit. |
+| Preview provider | When configured preview evidence is required | Inspect the connected deployment project, deployment status/commit, and resulting URL. |
+
+Use real required operations as evidence, not dummy production mutations. Before an operation is needed, mark it available-but-unverified rather than passed. A plugin listing in Codex does not prove availability in ordinary ChatGPT. The owner's successful normal-chat tests establish initial feasibility only, not universal account compatibility.
+
+Keep a concise capability table with evidence links in the current profile's owning context/workpack. These are observations, not permission grants or executable state. A missing capability blocks only work that actually depends on it: report the specific provider/account/permission requirement and pause the affected operation without pretending unrelated setup failed. Do not silently change products, assume broader access, or claim a browser/manual step ran.
 
 ## Configuration and resuming
 
 Read default-branch configuration first, then the saved working branch in v2. Verify repository identity, branch existence, and configuration consistency before reading that branch's record/projection. Do not fall back to default-branch workflow state when the saved branch is missing or inaccessible.
 
-On first setup, ask once for review style, recommend Brief and final preview, and persist the user's actual choice. Create configuration on the default branch before initializing the feature branch. Preserve an existing valid caller. Create the working branch from the resulting setup commit, then initialize there with fresh HEAD. Never reuse an unrelated existing branch silently.
+On first setup, start from the repository locator and reuse authoritative repository/configuration evidence before asking for missing context. When configuration is absent, resolve required values progressively in conversation; do not commit a partially filled configuration. Ask once for review style before initialization when it is not already saved, recommend Brief and final preview, and persist the user's actual choice. Create the complete valid configuration on the default branch before initializing the feature branch. Preserve an existing valid caller. Create the working branch from the resulting setup commit, then initialize there with fresh HEAD. Never reuse an unrelated existing branch silently.
+
+Deployment URLs may remain null when no deployment identity is configured; that does not block initial repository setup or workflow planning. If the maintained Astro result later requires preview evidence, resolve the deployment capability then and report a precise blocker if it cannot be established.
 
 Version 1 configurations retain the established ref and mode until the user chooses adoption. Version 2 adoption adds the chosen reviewStyle and the existing working branch; it must not move work or silently switch an active mode. A configuration change after planning is subject to the ordinary lineage/impact checks. Updates to stable configuration must agree on the default and working branches before further work.
 
@@ -60,7 +78,7 @@ The selected style is fixed for the active run unless the human explicitly reque
 
 Adapt Figma reference code into Astro components, TypeScript, shared CSS variables, and native browser interactions. Do not introduce React, Tailwind, a backend, or a new dependency just because the design-context reference uses it.
 
-Save required images, icons, and fonts inside the implementation repository with meaningful names. Reuse existing project assets first. Transfer export bytes through available plugin capabilities; if an asset cannot be transferred, request a browser upload during setup and verify its committed path. Never use expiring Figma export URLs or localhost asset-server URLs as runtime dependencies. Do not invent a successful asset transfer or substitute an unapproved placeholder.
+Save required images, icons, and fonts inside the implementation repository with meaningful names. Reuse existing project assets first. Transfer export bytes through available plugin capabilities; if an asset cannot be transferred, request a browser upload when that asset becomes necessary and verify its committed path. Never use expiring Figma export URLs or localhost asset-server URLs as runtime dependencies. Do not invent a successful asset transfer or substitute an unapproved placeholder.
 
 Keep Figma inspection separate from design mutation. Material preparation is allowed only within explicitly authorized editing scope under [FIGMA-PREPARATION.md](../source-adapters/FIGMA-PREPARATION.md). Design ambiguity may require clarification; a code-generation request alone does not authorize destructive source cleanup.
 

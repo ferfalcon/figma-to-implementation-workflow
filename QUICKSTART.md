@@ -1,72 +1,129 @@
 # Quickstart: Start the Implementation Workflow
 
-Use ChatGPT with plugins to turn a Figma design into an Astro + TypeScript project, a GitHub pull request, and a verified preview.
+Use ordinary ChatGPT with connected plugins to turn a Figma design into working frontend code, a GitHub pull request, and verified implementation evidence. No local development environment is required to get started.
 
-## 1. Connect your plugins
+The only project information you need to configure before the first chat is the repository URL. Figma context, review style, deployment details, and other required information are established progressively when they become relevant.
 
-In ChatGPT, connect:
+## 1. Create a ChatGPT Project
 
-- GitHub for the implementation repository.
-- Figma for design inspection and authorized design changes.
-- Vercel for preview status and inspection.
+Choose the GitHub repository that will own the implementation.
 
-## 2. Create your project
+Create a ChatGPT Project, copy the Project Instructions template from [`Project-settings--Instructions.md`](AI-project-settings.md) into the Project Instructions, and replace only:
 
-Use the Astro template linked from a [validated release](https://github.com/ferfalcon/figma-to-implementation-workflow/releases). It contains the application scaffold, a lockfile, browser tests, a validation workflow, and the pinned workflow caller.
+```text
+<REPOSITORY_URL>
+```
 
-During release-candidate testing, use the generated starter bundle from repository CI instead. Create an empty GitHub repository in the browser and upload the contents of its repository/ directory, including .github/. Do not upload the outer bundle directory.
+with the repository URL.
 
-Import the new repository into Vercel once and connect the same project to the Vercel plugin. Branch pushes will receive preview deployments. Connecting the initial sample does not mean your Figma design has been implemented.
+That repository locator is the bootstrap pointer for future chats. Stable project context belongs in `design-workflow.config.json`; you do not need to prepare or edit that JSON manually before starting.
 
-The starter contains sample pages to verify the setup. ChatGPT will replace those pages and their sample-specific tests with the approved design.
+You do not need to clone the repository, open a terminal, install Node.js, download a starter bundle, create a Vercel project, or provide a Figma link before the first conversation.
 
-## 3. Set the repository locator once
+## 2. Start the workflow
 
-Copy the generated ChatGPT-Project-Instructions.md into an ordinary ChatGPT Project's instructions. Alternatively use [AI-project-settings.md](AI-project-settings.md). Replace only the repository locator with your implementation repository URL.
+Start a new chat in the Project and say:
 
-ChatGPT reads or creates design-workflow.config.json. This file holds the design source/scope, implementation root, review preference, working branch, and deployment target across chats. You do not need to edit JSON or repeat these values.
+> **Start the implementation workflow.**
 
-## 4. Start with your Figma link
+That is the single user-facing workflow entry point.
 
-Tell ChatGPT:
+You do **not** need to choose a workflow profile, and you do **not** need to decide whether the workflow should run through a local terminal or GitHub Actions. ChatGPT resolves those internal choices from the project and workflow state.
 
-> Start the implementation workflow for this Figma design: [your selected frame or page link].
+## 3. Let ChatGPT establish the project
 
-ChatGPT verifies the project connections and asks for:
+ChatGPT starts from the repository locator and progressively establishes the context required to initialize the workflow safely.
 
-- The intended scope or behavior that cannot be established from the design.
-- Your preferred review style, once.
-- Any required asset that plugins cannot transfer; upload that export through the GitHub browser interface during setup.
+It will:
 
-Choose the review style that fits your work:
+- verify access to the implementation repository;
+- read and preserve `design-workflow.config.json` when it already exists;
+- inspect the repository and infer non-consequential values when safe;
+- discover or ask for the Figma design when design inspection becomes necessary;
+- establish the authorized Figma scope before any design mutation;
+- ask for your review style once before workflow initialization when it has not already been saved;
+- discover deployment information only when preview evidence becomes relevant;
+- install or verify the pinned remote workflow caller when executable work requires it and no local execution path is available;
+- create and commit a complete, valid project configuration before first workflow initialization when configuration does not already exist.
+
+During first setup, ChatGPT reads or creates design-workflow.config.json. Creation happens only after the required values have been resolved, so the committed configuration is complete and valid rather than a partially filled setup file.
+
+ChatGPT asks only for missing required information, missing required capabilities, consequential decisions, or real blockers. It does not ask you to choose internal workflow mechanics that it can determine itself.
+
+### Capabilities are connected when needed
+
+You do not need to connect every provider before starting.
+
+- **GitHub for the implementation repository** is required to inspect the repository and perform repository work. If access is missing, ChatGPT asks you to connect it.
+- **Figma for design inspection and authorized design changes** becomes required when the workflow needs to inspect the design or perform an approved design-preparation change.
+- **Vercel or another configured deployment provider** is relevant when the project has preview deployment available and preview evidence is needed. Deployment is not required to start the workflow.
+
+Native provider permission prompts still follow your account settings.
+
+## 4. Provide information progressively
+
+The workflow distinguishes between information that must eventually exist and information that must exist before the first conversation.
+
+| Information | When it becomes necessary | What happens |
+|---|---|---|
+| Repository URL | Before the first chat | You set it once in the Project Instructions. |
+| Figma design | Before design inspection | ChatGPT discovers it from authoritative project context or asks you for it. |
+| Figma scope | Before an authorized design mutation | ChatGPT preserves existing scope or asks when edit authority is ambiguous. |
+| Review style | Before first workflow initialization | ChatGPT asks once if no saved choice exists. |
+| Deployment | When preview evidence is relevant | ChatGPT discovers configured deployment context; absence does not block initial setup. |
+| Assets or product decisions | When the implementation genuinely depends on them | ChatGPT asks only for what cannot be transferred or inferred safely. |
+
+When ChatGPT asks for review style, choose one of the existing product behaviors:
 
 | Style | Your involvement |
 |---|---|
 | Brief and final preview | Approve the implementation brief, then review the working result. |
 | Every stage | Review and explicitly approve each workflow stage. |
 
-Both preserve final human acceptance. Material scope changes can require another decision. Native plugin permission prompts follow your account settings.
+Both preserve final human acceptance. Material scope changes can require another decision.
 
-ChatGPT creates and remembers a working branch, inspects the design, classifies the smallest valid workflow profile, and starts the canonical workflow. Figma preparation is not a separate user workflow route and requires authorized design changes when needed.
+Figma preparation is not a separate user workflow route. When preparation is required, it remains part of the same implementation workflow and any design mutation stays inside the authorized Figma scope.
 
-## 5. Review or continue
+## 5. Review the implementation
 
-ChatGPT returns the PR, implementation commit, matching Vercel preview, actual verification results, and remaining deviations. Check the visual result against Figma and ask for corrections or accept it.
+After the required planning and approval gates, ChatGPT performs the authorized implementation work through the available execution path and inspects the actual results.
 
-A new chat in the same Project can say “Continue the implementation workflow” or “Show the current preview.” The repository owns the working branch and progress. Final acceptance does not automatically merge or publish production.
+It returns the available evidence, including:
 
-If a plugin, build, asset, or preview is unavailable, ChatGPT reports that specific blocker. It does not claim success or switch to Work or Codex.
+- the GitHub pull request;
+- the implementation commit;
+- automated verification results actually produced by the project;
+- a matching preview when a configured deployment provider is available;
+- remaining deviations or blockers that still require human attention.
+
+Review the implementation against the Figma design and ask for corrections or accept the result. Final acceptance remains human and does not automatically merge the pull request or publish to production.
+
+If a plugin, build, asset, capability, or preview is unavailable, ChatGPT reports that specific limitation rather than claiming success.
+
+## 6. Continue later
+
+The repository owns the durable project configuration and workflow state, so a later conversation in the same ChatGPT Project can say:
+
+> **Continue the implementation workflow.**
+
+or, when a preview exists:
+
+> **Show the current preview.**
+
+ChatGPT reads the saved project configuration, follows the established working branch, and resumes from repository-owned state instead of asking you to reconstruct the workflow from conversation memory.
 
 ## Existing projects and advanced reference
 
-“Install the Design-to-Implementation Workflow in this repository” remains a setup action, not a second workflow route. Existing v1 configurations retain their established ref and execution mode until you intentionally adopt the new preferences.
+“Install the Design-to-Implementation Workflow in this repository” remains a setup action, not a second workflow route. Existing v1 configurations retain their established ref and execution mode until you intentionally adopt the newer project preferences.
 
-Installation, immutable toolkit pins, the canonical CLI, and remote execution mechanics are owned by [GitHub Remote Execution](workflow/GitHub-Remote-Execution.md) and [Agent Orchestration](workflow/Agent-Orchestration.md). [Project Configuration](workflow/Project-Configuration.md) owns setup and v1 adoption.
+Installation, immutable toolkit pins, the canonical CLI, and remote execution mechanics are owned by [GitHub Remote Execution](workflow/GitHub-Remote-Execution.md) and [Agent Orchestration](workflow/Agent-Orchestration.md). [Project Configuration](workflow/Project-Configuration.md) owns repository configuration and v1 adoption.
 
 Markdown-only is a manual/scaffold mode without executable workflow state, generated routing, or agent orchestration. The ChatGPT product uses CLI-managed state.
+
+The maintained Astro starter and release bundle remain useful to maintainers, release acceptance, and controlled scaffolding, but downloading a starter is not part of the normal consumer onboarding path.
 
 ### Manual fallback: thin consumer bundle
 
 Maintainers can still generate the thin caller and instructions for an existing repository. It does not include application scaffolding or vendor the toolkit. See the [CLI reference](cli/README.md) for direct installation and bundle generation.
 
-Detailed agent behavior for both review styles, capability checks, assets, recovery, and preview evidence is owned by [ChatGPT Experience](workflow/ChatGPT-Experience.md).
+Detailed agent behavior for capability checks, review styles, assets, recovery, and preview evidence is owned by [ChatGPT Experience](workflow/ChatGPT-Experience.md).

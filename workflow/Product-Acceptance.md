@@ -6,22 +6,25 @@ A validated engine or generated starter is not proof that the product works in o
 
 Run the full toolkit validator on Node 22 and 24. Build the generated Astro starter from an exact commit and run locked installation, astro check, build, and desktop/mobile Playwright on both Node versions through the Validate Astro starter workflow. Its candidate ZIP is a test artifact, not a public release.
 
-Create a test implementation repository from that generated bundle and connect it to Vercel. Keep the toolkit commit fixed during acceptance.
+Create a test implementation repository from that generated bundle and connect it to Vercel. Keep the toolkit commit fixed during acceptance. The generated starter and Vercel project are maintainer-controlled acceptance fixtures; they are not consumer onboarding prerequisites.
 
 ## Two real sessions
 
-Use one designer comfortable with code and one engineer comfortable with Figma, on personal ChatGPT Plus or Pro accounts. Exercise Brief and final preview in one session and Every stage in the other. Use ordinary ChatGPT and its existing Figma, GitHub, and Vercel plugins. Do not substitute coding agents, synthetic fixtures, Work, Codex, or a local terminal.
+Use one designer comfortable with code and one engineer comfortable with Figma, on personal ChatGPT Plus or Pro accounts. Exercise Brief and final preview in one session and Every stage in the other. Use ordinary ChatGPT and the existing Figma, GitHub, and Vercel plugins when the workflow requires them. Do not substitute coding agents, synthetic fixtures, Work, Codex, or a local terminal.
+
+Each tester must begin from the actual v2 product entry point rather than a preconfigured design handoff. Create a fresh ChatGPT Project from [AI-project-settings.md](../AI-project-settings.md), replace only `<REPOSITORY_URL>` with the test implementation repository URL, and do not preload project-specific Figma, review-style, deployment, implementation-root, or working-branch values. Existing provider connections may remain connected; missing connections must be resolved only when the workflow asks for the capability that needs them.
 
 Each tester must:
 
-1. Complete browser setup and start with a Figma Design link.
-2. Verify actual design, repository-write, command-issue, Actions-log, and preview capabilities.
-3. Reach working Astro UI, a PR, and a preview matching the tested implementation commit.
-4. Review responsiveness, asset loading, navigation, interactions, keyboard use, and visual fidelity against Figma.
-5. Resume from a new chat using the saved branch and review style.
-6. Request a correction, verify the replacement commit and preview, and explicitly accept the result.
+1. Start a new chat in that Project with `Start the implementation workflow.`
+2. Let ChatGPT inspect the repository and establish project context progressively. Provide the Figma design, any required authorized Figma scope, and the review style only when requested; allow deployment context to be discovered from the prepared test repository rather than supplied as an initial input.
+3. Verify actual design, repository-write, command-issue, Actions-log, and preview capabilities at the point where the workflow needs each one. If a required capability is unavailable, follow the product's normal connection or blocker path rather than bypassing it.
+4. Reach working Astro UI, a PR, and a preview matching the tested implementation commit.
+5. Review responsiveness, asset loading, navigation, interactions, keyboard use, and visual fidelity against Figma.
+6. Resume from a new chat using repository-owned project configuration, workflow state, the saved branch, and the saved review style without reconstructing the workflow from conversation memory.
+7. Request a correction, verify the replacement commit and preview, and explicitly accept the result.
 
-Record setup-step count, clarification count, and seconds to first verified preview. Record failed attempts honestly. Permission, stale-commit, unavailable-asset, and failed-build paths also have automated regression coverage; investigate any additional observed failures before publication.
+Record setup-step count, clarification count, and seconds to first verified preview from the first workflow command. Include capability-connection prompts and progressive-information requests in those observations rather than excluding them as setup outside the product journey. Record failed attempts honestly. Permission, stale-commit, unavailable-asset, and failed-build paths also have automated regression coverage; investigate any additional observed failures before publication.
 
 ## Record evidence
 
