@@ -2,7 +2,7 @@
 
 Turn a Figma design into working frontend code through ChatGPT — entirely online.
 
-No local development environment is required. You do not need to clone the repository, open a terminal, install Node.js, or run a package manager to get your first working implementation.
+You can start without a local development environment. You do not need to clone the repository, open a terminal, install Node.js, or run a package manager to get your first working implementation.
 
 The workflow uses ChatGPT as the interface between your design, your GitHub repository, and the services needed to build, verify, and preview the result.
 

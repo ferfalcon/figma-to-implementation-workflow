@@ -1,6 +1,6 @@
 # Quickstart: Start the Implementation Workflow
 
-Use ordinary ChatGPT with connected plugins to turn a Figma design into working frontend code, a GitHub pull request, and verified implementation evidence. No local development environment is required to get started.
+Use ordinary ChatGPT with connected plugins to turn a Figma design into working frontend code, a GitHub pull request, and verified implementation evidence. You can get started without a local development environment.
 
 The only project information you need to configure before the first chat is the repository URL. Figma context, review style, deployment details, and other required information are established progressively when they become relevant.
 
