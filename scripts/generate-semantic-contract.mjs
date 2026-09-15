@@ -217,6 +217,8 @@ function listCell(values) {
 }
 
 export function renderSemanticContractMarkdown(contract) {
+  const { productModel } = contract;
+  const { bootstrap, interactionPolicy } = productModel;
   const lines = [
     '# Cross-document Semantic Contract',
     '',
@@ -224,11 +226,51 @@ export function renderSemanticContractMarkdown(contract) {
     '',
     'This projection makes cross-document ownership and executable compatibility visible to humans while the JSON registry remains the canonical machine-readable contract.',
     '',
+    '## Product onboarding model',
+    '',
+    `Surface: \`${cell(productModel.surface)}\`  `,
+    `Local development required: **${bootstrap.localDevelopmentRequired ? 'Yes' : 'No'}**  `,
+    `Start command: \`${cell(bootstrap.startCommand)}\``,
+    '',
+    '### Required before starting',
+    '',
+    '| Input | Host | Placeholder |',
+    '|---|---|---|',
+  ];
+
+  for (const input of bootstrap.requiredInitialInputs) {
+    lines.push(`| \`${cell(input.id)}\` | ${markdownLink(input.host)} | \`${cell(input.placeholder)}\` |`);
+  }
+
+  lines.push(
+    '',
+    '### Acquired progressively',
+    '',
+    '| Input | Requirement | Needed by | Resolution |',
+    '|---|---|---|---|',
+  );
+  for (const input of productModel.progressiveInputs) {
+    lines.push(`| \`${cell(input.id)}\` | \`${cell(input.requirement)}\` | \`${cell(input.neededBy)}\` | \`${cell(input.resolution)}\` |`);
+  }
+
+  lines.push(
+    '',
+    '### Interaction policy',
+    '',
+    `Infer when safe: **${interactionPolicy.inferWhenSafe ? 'Yes' : 'No'}**`,
+    '',
+    'Ask only for:',
+    '',
+  );
+  for (const reason of interactionPolicy.askOnlyFor) lines.push(`- \`${cell(reason)}\``);
+
+  lines.push(
+    '',
     '## Entrypoint responsibilities',
     '',
     '| ID | Path | Role | Owns | Delegates to |',
     '|---|---|---|---|---|',
-  ];
+  );
 
   for (const entry of contract.entrypoints) {
     lines.push(`| \`${cell(entry.id)}\` | ${markdownLink(entry.path)} | ${cell(entry.role)} | ${listCell(entry.owns)} | ${entry.delegatesTo.length > 0 ? entry.delegatesTo.map(markdownLink).join('<br>') : '—'} |`);
