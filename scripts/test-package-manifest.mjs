@@ -8,6 +8,11 @@ import { isPathWithin } from './lib/path-safety.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const provenancePath = join(root, 'cli', 'toolkit-provenance.json');
+const obsoleteBootstrapPath = join(root, 'AGENTS-INIT.md');
+if (existsSync(obsoleteBootstrapPath)) {
+  throw new Error('AGENTS-INIT.md is an obsolete duplicate bootstrap and must not exist in the source repository.');
+}
+
 const result = spawnSync('npm', ['pack', '--dry-run', '--json', '--silent'], {
   cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'],
 });
