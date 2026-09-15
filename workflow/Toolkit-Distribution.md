@@ -32,7 +32,7 @@ The release workflow never moves or reuses an existing version tag. GitHub immut
 
 ## Canonical release workflow
 
-The only repository-owned stable-release path is [`.github/workflows/release-toolkit.yml`](../.github/workflows/release-toolkit.yml).
+The only repository-owned stable-release path is `.github/workflows/release-toolkit.yml`.
 
 The workflow is manually dispatched and requires the intended package version as an explicit input. It performs release metadata preflight, runs the repository validation matrix, verifies package generation, verifies repository-level immutable-release protection, then creates the stable GitHub Release only after every validation job succeeds.
 
