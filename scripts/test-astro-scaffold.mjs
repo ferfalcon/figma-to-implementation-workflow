@@ -5,24 +5,22 @@ import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildConsumerBundle } from './build-consumer-bundle.mjs';
+import { buildAstroScaffold } from './build-astro-scaffold.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const temp = mkdtempSync(join(tmpdir(), 'astro-starter-test-'));
-const revision = 'a'.repeat(40);
-const projectInstructionsFilename = 'Project-settings--Instructions.md';
+const temp = mkdtempSync(join(tmpdir(), 'astro-scaffold-test-'));
 function read(path) { return readFileSync(path, 'utf8'); }
 try {
-  const result = buildConsumerBundle({ output: join(temp, 'bundle'), revision, starter: 'astro' });
-  const repo = result.repositoryRoot;
+  const result = buildAstroScaffold({ output: join(temp, 'repository') });
+  const repo = result.outputRoot;
   for (const path of [
     'package.json', 'package-lock.json', 'astro.config.mjs', 'tsconfig.json', '.gitignore',
-    '.github/workflows/design-workflow-command.yml', '.github/workflows/validate-ui.yml',
-    '.starter-source.json', projectInstructionsFilename, 'design-workflow.config.template.json',
+    '.github/workflows/validate-ui.yml',
     'src/pages/index.astro', 'src/pages/about.astro', 'src/layouts/Page.astro',
     'src/styles/global.css', 'public/mark.svg', 'public/horizon.svg',
     'playwright.config.ts', 'tests/site.spec.ts', 'scripts/validation-report.mjs',
   ]) assert(existsSync(join(repo, path)), path);
+
   const pkg = JSON.parse(read(join(repo, 'package.json')));
   const lock = JSON.parse(read(join(repo, 'package-lock.json')));
   assert.deepEqual(pkg.dependencies, lock.packages[''].dependencies);
@@ -35,20 +33,22 @@ try {
   assert.equal(pkg.scripts.build, 'astro build');
   assert.equal(JSON.parse(read(join(repo, 'tsconfig.json'))).extends, 'astro/tsconfigs/strict');
   assert.deepEqual(JSON.parse(read(join(root, 'package.json'))).dependencies ?? {}, {}, 'The workflow CLI must stay dependency-free.');
-  assert.deepEqual(JSON.parse(read(join(root, 'package.json'))).devDependencies ?? {}, {}, 'Starter tooling must stay separate.');
+  assert.deepEqual(JSON.parse(read(join(root, 'package.json'))).devDependencies ?? {}, {}, 'Implementation-adapter tooling must stay separate.');
   assert(!Object.keys(pkg.dependencies).some(name => /react|tailwind/.test(name)));
-  assert.equal(JSON.parse(read(join(repo, '.starter-source.json'))).toolkitRevision, revision);
-  assert(read(join(repo, '.github/workflows/design-workflow-command.yml')).includes('@' + revision));
-  assert(!read(join(repo, 'README.md')).includes('<TOOLKIT_REVISION>'));
-  assert.equal(read(join(repo, projectInstructionsFilename)), read(join(root, projectInstructionsFilename)));
-  assert.equal(JSON.parse(read(join(repo, 'design-workflow.config.template.json'))).schemaVersion, 2);
-  for (const absent of ['node_modules', 'dist', '.astro', 'docs/implementation-workflow', '.workflow']) assert(!existsSync(join(repo, absent)), absent);
-  assert.throws(() => buildConsumerBundle({ output: root, revision, starter: 'astro' }), /toolkit sources/);
-  assert.throws(() => buildConsumerBundle({ output: dirname(root), revision }), /toolkit sources/);
-  assert.throws(() => buildConsumerBundle({ output: join(root, 'workflow'), revision }), /under dist/);
-  assert.throws(() => buildConsumerBundle({ output: join(temp, 'bad'), revision, starter: 'react' }), /Only the astro/);
-  assert.throws(() => buildConsumerBundle({ output: join(temp, 'bad'), revision: 'main' }), /exact 40-character/);
+  assert(!/\bstarter\b/i.test(read(join(repo, 'README.md'))), 'The internal Astro scaffold must not present itself as a consumer starter.');
 
+  for (const absent of [
+    'node_modules', 'dist', '.astro', 'docs/implementation-workflow', '.workflow',
+    '.starter-source.json', 'Project-settings--Instructions.md', 'design-workflow.config.template.json',
+    '.github/workflows/design-workflow-command.yml', 'LICENSE',
+  ]) assert(!existsSync(join(repo, absent)), absent);
+
+  assert.throws(() => buildAstroScaffold({ output: root }), /toolkit or adapter sources/);
+  assert.throws(() => buildAstroScaffold({ output: dirname(root) }), /toolkit or adapter sources/);
+  assert.throws(() => buildAstroScaffold({ output: join(root, 'workflow') }), /under dist/);
+  assert.throws(() => buildAstroScaffold({ output: join(root, 'implementation-adapters/astro/scaffold/generated') }), /toolkit or adapter sources/);
+
+  const revision = 'a'.repeat(40);
   const env = {
     ...process.env, TESTED_COMMIT: revision, GITHUB_REPOSITORY: 'example/product', GITHUB_RUN_ID: '123',
     DEPENDENCIES: 'success', TYPECHECK: 'success', BUILD: 'success', BROWSERS: 'success', TESTS: 'success',
@@ -69,6 +69,7 @@ try {
     assert.equal(failure.result.status, 1);
     assert.equal(failure.evidence.passed, false);
   }
+
   const workflow = read(join(repo, '.github/workflows/validate-ui.yml'));
   assert(workflow.includes('github.event.pull_request.head.sha || github.sha'), 'Validate the implementation commit, including PR heads.');
   assert(workflow.includes('VALIDATION_RESULT') || workflow.includes('scripts/validation-report.mjs'));
@@ -79,4 +80,4 @@ try {
 } finally {
   rmSync(temp, { recursive: true, force: true });
 }
-console.log('Astro starter generation, canonical Project Instructions naming, locked dependencies, immutable pins, output safety, and failing/stale check evidence passed.');
+console.log('Astro implementation scaffold generation, locked dependencies, output isolation, and failing/stale validation evidence passed.');

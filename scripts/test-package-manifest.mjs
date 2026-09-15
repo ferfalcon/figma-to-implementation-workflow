@@ -23,9 +23,12 @@ const requiredAreas = [
   'workflow/Project-Configuration.md', 'schemas/design-workflow-config.schema.json',
   'templates/design-workflow.config.template.json',
   'cli/', 'cli/toolkit-provenance.json', 'workflow/', 'guidelines/', 'prompts/', 'source-adapters/',
+  'implementation-adapters/astro/README.md',
+  'implementation-adapters/astro/scaffold/package.json',
+  'implementation-adapters/astro/scaffold/package-lock.template.json',
+  'implementation-adapters/astro/scaffold/gitignore.template',
+  'implementation-adapters/astro/scaffold/.github/workflows/validate-ui.yml',
   'templates/', 'examples/', 'schemas/', 'scripts/', 'tests/',
-  'starters/astro/package.json', 'starters/astro/package-lock.template.json',
-  'starters/astro/gitignore.template', 'starters/astro/.github/workflows/validate-ui.yml',
   'release/acceptance.json', 'workflow/ChatGPT-Experience.md', 'workflow/Product-Acceptance.md',
 ];
 const missingAreas = requiredAreas.filter((area) => (
@@ -72,4 +75,4 @@ for (const file of [...files].filter((path) => extname(path).toLowerCase() === '
 }
 if (broken.length > 0) throw new Error(`Packaged relative Markdown links do not resolve:\n${broken.map((item) => `- ${item}`).join('\n')}`);
 
-console.log(`Package manifest tests passed (${files.size} packaged files, canonical Project Instructions included, immutable toolkit provenance included, all relative Markdown links resolved).`);
+console.log(`Package manifest tests passed (${files.size} packaged files, canonical Project Instructions included, internal implementation adapters included, immutable toolkit provenance included, all relative Markdown links resolved).`);

@@ -22,7 +22,7 @@ export const validationSteps = [
   { name: 'installation artifact', script: 'scripts/test-installation-artifact.mjs' },
   { name: 'project configuration', script: 'scripts/test-project-configuration.mjs' },
   { name: 'consumer bundle', script: 'scripts/test-consumer-bundle.mjs' },
-  { name: 'Astro starter packaging', script: 'scripts/test-astro-starter.mjs' },
+  { name: 'Astro implementation scaffold', script: 'scripts/test-astro-scaffold.mjs' },
   { name: 'ChatGPT product experience', script: 'scripts/test-product-experience.mjs' },
   { name: 'starter publication', script: 'scripts/test-publish-astro-starter.mjs' },
   { name: 'semantic contract behavior', script: 'scripts/test-semantic-contract.mjs' },

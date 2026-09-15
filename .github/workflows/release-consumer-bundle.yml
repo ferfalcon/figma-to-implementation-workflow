@@ -34,22 +34,22 @@ jobs:
         run: npm run check:release-readiness
       - name: Validate repository and package contracts
         run: npm run validate
-      - name: Generate exact released starter
-        run: node scripts/build-consumer-bundle.mjs --starter astro --revision "$(git rev-parse HEAD)"
-      - name: Install starter dependencies
-        working-directory: dist/consumer-bundle/repository
+      - name: Generate exact Astro implementation scaffold
+        run: node scripts/build-astro-scaffold.mjs --output dist/astro-scaffold
+      - name: Install scaffold dependencies
+        working-directory: dist/astro-scaffold
         run: npm ci
       - name: Check Astro and TypeScript
-        working-directory: dist/consumer-bundle/repository
+        working-directory: dist/astro-scaffold
         run: npm run check
       - name: Build static output
-        working-directory: dist/consumer-bundle/repository
+        working-directory: dist/astro-scaffold
         run: npm run build
       - name: Install browser
-        working-directory: dist/consumer-bundle/repository
+        working-directory: dist/astro-scaffold
         run: npx playwright install --with-deps chromium
       - name: Verify production pages
-        working-directory: dist/consumer-bundle/repository
+        working-directory: dist/astro-scaffold
         run: npm run test:e2e
 
   bundle:
@@ -74,12 +74,12 @@ jobs:
         run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
       - name: Recheck publication evidence
         run: npm run check:release-readiness
-      - name: Build consumer bundles
+      - name: Build release artifacts
         env:
           TOOLKIT_REVISION: ${{ steps.revision.outputs.sha }}
         run: |
           node scripts/build-consumer-bundle.mjs --revision "$TOOLKIT_REVISION" --output dist/consumer-bundle
-          node scripts/build-consumer-bundle.mjs --starter astro --revision "$TOOLKIT_REVISION" --output dist/astro-starter
+          node scripts/lib/build-legacy-astro-release-bundle.mjs --revision "$TOOLKIT_REVISION" --output dist/astro-starter
       - name: Package release downloads
         working-directory: dist
         run: |

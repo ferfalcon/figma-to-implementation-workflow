@@ -37,6 +37,9 @@ try {
   if (existsSync(join(output, 'repository/docs/implementation-workflow'))) {
     errors.push('Consumer bundle must not vendor the workflow toolkit into the implementation repository.');
   }
+  if (existsSync(join(output, 'repository/package.json'))) {
+    errors.push('Consumer bundle must not contain application scaffolding.');
+  }
 
   const caller = readFileSync(
     join(output, 'repository/.github/workflows/design-workflow-command.yml'),
@@ -50,8 +53,11 @@ try {
   }
 
   const manifest = JSON.parse(readFileSync(join(output, 'consumer-bundle-manifest.json'), 'utf8'));
-  if (manifest.bundleFormatVersion !== 5) {
-    errors.push('Consumer bundle manifest must use bundleFormatVersion 5.');
+  if (manifest.bundleFormatVersion !== 6) {
+    errors.push('Consumer bundle manifest must use bundleFormatVersion 6.');
+  }
+  if ('starter' in manifest) {
+    errors.push('Thin consumer bundle manifest must not expose application starter selection.');
   }
   if (manifest.installationModel !== 'external-pinned-toolkit') {
     errors.push('Consumer bundle manifest must identify the external pinned toolkit installation model.');
@@ -61,6 +67,9 @@ try {
   }
   if (manifest.toolkitRevision !== revision) {
     errors.push('Consumer bundle manifest must identify the exact toolkit revision.');
+  }
+  if (manifest.repositorySetupRoot !== 'repository/') {
+    errors.push('Consumer bundle manifest must identify the repository setup root.');
   }
   if (manifest.remoteCaller !== 'repository/.github/workflows/design-workflow-command.yml') {
     errors.push('Consumer bundle manifest must identify the thin GitHub remote caller.');
@@ -109,5 +118,5 @@ if (errors.length > 0) {
   errors.forEach((error) => console.error(`- ${error}`));
   process.exitCode = 1;
 } else {
-  console.log('Consumer bundle test passed (canonical Project Instructions name, thin bootstrap, repository-owned project configuration template, and immutable toolkit pin).');
+  console.log('Consumer bundle test passed (thin bootstrap only, canonical Project Instructions, repository-owned project configuration template, and immutable toolkit pin).');
 }
