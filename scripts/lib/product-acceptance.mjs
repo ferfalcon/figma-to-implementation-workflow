@@ -1,9 +1,15 @@
+import {
+  assessDeploymentEvidence,
+  assessImplementationEvidence,
+  assessReviewEvidence,
+} from '../../cli/lib/evidence.mjs';
+
 export const BASE_REQUIRED_CAPABILITIES = [
   'figmaDesign', 'githubWrites', 'commandIssues', 'actionsLogs',
 ];
 
-// Core product capabilities. Deployment inspection is conditional and must not be
-// treated as a global prerequisite for implementation readiness.
+// Product capability observations belong to maintainer acceptance, not the runtime CLI.
+// Deployment inspection is conditional and must not be treated as a global prerequisite.
 export const REQUIRED_CAPABILITIES = [...BASE_REQUIRED_CAPABILITIES];
 export const DEPLOYMENT_INSPECTION_CAPABILITY = 'deploymentInspection';
 export const LEGACY_PREVIEW_INSPECTION_CAPABILITY = 'previewInspection';
@@ -20,7 +26,9 @@ function https(value, host) {
     const url = new URL(value);
     return url.protocol === 'https:' && !url.username && !url.password
       && (!host || url.hostname === host);
-  } catch { return false; }
+  } catch {
+    return false;
+  }
 }
 
 function verifiedCapability(evidence, name) {
@@ -28,10 +36,9 @@ function verifiedCapability(evidence, name) {
   return capability?.status === 'verified' && https(capability?.evidenceUrl);
 }
 
-// Checks the shape and completeness of observed capabilities. This does not call
-// providers or grant permissions; observations must come from actual connected tools.
-// Deployment inspection is conditional. `previewRequired` remains as a compatibility
-// option for callers that have not yet adopted the provider-neutral name.
+// Checks observed ChatGPT product capabilities. This does not call providers or grant
+// permissions; observations must come from actual connected tools.
+// `previewRequired` remains as a compatibility option for older acceptance fixtures.
 export function assessCapabilities(evidence, {
   deploymentRequired = false,
   previewRequired,
@@ -57,113 +64,8 @@ export function assessCapabilities(evidence, {
   return { ready: findings.length === 0, findings };
 }
 
-// Implementation evidence is provider-neutral. It proves the repository output and
-// applicable automated validation independently from any deployment/runtime layer.
-export function assessImplementationEvidence(evidence, {
-  requiredChecks = [],
-  assetsRequired = false,
-} = {}) {
-  const findings = [];
-  const commit = evidence?.implementationCommit;
-  if (!SHA.test(commit || '')) findings.push('An exact implementation commit is required.');
-
-  const validation = evidence?.validation;
-  if (validation?.testedCommit !== commit) findings.push('Validation is for a different implementation commit.');
-  if (!https(validation?.runUrl)) findings.push('A validation evidence URL is required.');
-  if (typeof evidence?.repository !== 'string' || !/^[\w.-]+\/[\w.-]+$/.test(evidence.repository)
-    || validation?.repository !== evidence.repository) findings.push('Validation repository identity does not match.');
-  if (evidence?.repository && typeof validation?.runUrl === 'string' && validation.runUrl.startsWith('https://github.com/')
-    && !validation.runUrl.startsWith('https://github.com/' + evidence.repository + '/')) {
-    findings.push('Validation run belongs to another repository.');
-  }
-  for (const name of requiredChecks) {
-    if (validation?.checks?.[name] !== 'success') findings.push('Required check is not successful: ' + name);
-  }
-  if (validation?.passed !== true) findings.push('Validation has not passed.');
-  if (assetsRequired && evidence?.assetsCommitted !== true) findings.push('Required design assets have not been committed.');
-
-  return { readyForHumanReview: findings.length === 0, findings };
-}
-
-// Provider adapters normalize deployment/runtime observations before this assessment.
-// Missing optional deployment evidence is Not configured, not a failed implementation.
-export function assessDeploymentEvidence(evidence, {
-  required = false,
-  implementationCommit = evidence?.implementationCommit ?? null,
-} = {}) {
-  if (evidence === null || evidence === undefined) {
-    const findings = required ? ['Deployment evidence is required but was not provided.'] : [];
-    return {
-      status: required ? 'blocked' : 'not-configured',
-      ready: !required,
-      findings,
-    };
-  }
-
-  const findings = [];
-  if (!object(evidence)) {
-    return { status: 'blocked', ready: false, findings: ['Deployment evidence must be an object.'] };
-  }
-  if (!SHA.test(implementationCommit || '')) findings.push('Deployment evidence requires an exact implementation commit.');
-  if (evidence.implementationCommit !== implementationCommit) {
-    findings.push('Deployment evidence is for a different implementation commit.');
-  }
-  if (typeof evidence.provider !== 'string' || !evidence.provider.trim()) {
-    findings.push('Deployment evidence requires a provider identifier.');
-  }
-
-  const deployment = evidence.deployment;
-  if (!object(deployment)) {
-    findings.push('Deployment evidence requires an inspected deployment.');
-  } else {
-    if (deployment.commit !== implementationCommit) findings.push('Deployment is for a different implementation commit.');
-    if (deployment.status !== 'ready') findings.push('Deployment is not in normalized ready state.');
-    if (deployment.inspected !== true || !https(deployment.url)) {
-      findings.push('The matching deployment must be actually inspected at an HTTPS URL.');
-    }
-  }
-
-  return {
-    status: findings.length === 0 ? 'verified' : 'blocked',
-    ready: findings.length === 0,
-    findings,
-  };
-}
-
-// Combines evidence without allowing an optional deployment failure to erase valid
-// implementation evidence. Deployment findings remain visible on the nested result.
-export function assessReviewEvidence({
-  implementationEvidence,
-  deploymentEvidence = null,
-} = {}, {
-  requiredChecks = [],
-  assetsRequired = false,
-  deploymentRequired = false,
-} = {}) {
-  const implementation = assessImplementationEvidence(implementationEvidence, {
-    requiredChecks,
-    assetsRequired,
-  });
-  const deployment = assessDeploymentEvidence(deploymentEvidence, {
-    required: deploymentRequired,
-    implementationCommit: implementationEvidence?.implementationCommit ?? null,
-  });
-
-  const findings = [
-    ...implementation.findings,
-    ...(deploymentRequired ? deployment.findings : []),
-  ];
-  return {
-    readyForHumanReview: implementation.readyForHumanReview && (!deploymentRequired || deployment.ready),
-    findings,
-    implementation,
-    deployment,
-  };
-}
-
-// Compatibility adapter for older preview-shaped evidence. It preserves strict
-// maintained-Astro preview verification while new product code uses the deployment
-// evidence contract above.
+// Compatibility adapter for older preview-shaped product acceptance evidence. Generic
+// runtime evidence assessment stays in cli/lib/evidence.mjs.
 export function assessPreviewEvidence(evidence) {
   const preview = evidence?.preview;
   const deploymentEvidence = preview === undefined || preview === null ? null : {
@@ -202,7 +104,10 @@ export function validateAcceptanceReport(report) {
 
   for (const [index, session] of sessions.entries()) {
     const prefix = 'Session ' + (index + 1) + ': ';
-    if (!object(session)) { findings.push(prefix + 'must be an object.'); continue; }
+    if (!object(session)) {
+      findings.push(prefix + 'must be an object.');
+      continue;
+    }
     if (typeof session.tester !== 'string' || !session.tester.trim() || /[<>]/.test(session.tester)) findings.push(prefix + 'a real tester identifier is required.');
     else testers.add(session.tester.trim().toLowerCase());
     if (!['designer-code', 'engineer-figma'].includes(session.persona)) findings.push(prefix + 'unsupported persona.');
@@ -232,13 +137,13 @@ export function validateAcceptanceReport(report) {
 
     const deploymentRequired = session.deploymentRequired === true;
     const capability = assessCapabilities(session.capabilityEvidence, { deploymentRequired });
-    findings.push(...capability.findings.map(finding => prefix + finding));
+    findings.push(...capability.findings.map((finding) => prefix + finding));
 
     const implementation = assessImplementationEvidence(implementationEvidence, {
       requiredChecks: MAINTAINED_ASTRO_CHECKS,
       assetsRequired: true,
     });
-    findings.push(...implementation.findings.map(finding => prefix + finding));
+    findings.push(...implementation.findings.map((finding) => prefix + finding));
 
     const deployment = assessDeploymentEvidence(session.deploymentEvidence, {
       required: deploymentRequired,
@@ -246,7 +151,7 @@ export function validateAcceptanceReport(report) {
     });
     if (deploymentRequired) {
       deploymentScenario = true;
-      findings.push(...deployment.findings.map(finding => prefix + finding));
+      findings.push(...deployment.findings.map((finding) => prefix + finding));
       if (!Number.isFinite(session.timeToFirstPreviewSeconds) || session.timeToFirstPreviewSeconds <= 0) {
         findings.push(prefix + 'timeToFirstPreviewSeconds must be recorded when deployment evidence is required.');
       }

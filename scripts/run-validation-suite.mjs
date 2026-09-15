@@ -23,6 +23,7 @@ export const validationSteps = [
   { name: 'consumer bundle', script: 'scripts/test-consumer-bundle.mjs' },
   { name: 'Astro implementation scaffold', script: 'scripts/test-astro-scaffold.mjs' },
   { name: 'Astro development fixture', script: 'scripts/test-astro-fixture.mjs' },
+  { name: 'evidence boundary', script: 'scripts/test-evidence-boundary.mjs' },
   { name: 'ChatGPT product experience', script: 'scripts/test-product-experience.mjs' },
   { name: 'adapter catalog', script: 'scripts/test-adapter-catalog.mjs' },
   { name: 'source adapters', script: 'scripts/test-source-adapters.mjs' },
