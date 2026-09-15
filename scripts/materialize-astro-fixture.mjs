@@ -7,6 +7,7 @@ import {
   readFileSync,
   readdirSync,
   renameSync,
+  rmSync,
   writeFileSync,
 } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -50,11 +51,19 @@ function parseArgs(argv) {
 
 export function materializeAstroFixture({ output, revision }) {
   const result = buildConsumerBundle({ output, revision });
-  const { repositoryRoot } = result;
+  const { outputRoot, repositoryRoot } = result;
+
+  for (const path of [
+    'consumer-bundle-manifest.json',
+    projectInstructionsFilename,
+    'design-workflow.config.template.json',
+  ]) {
+    rmSync(join(outputRoot, path), { force: true });
+  }
+
   const ignored = new Set([
     'node_modules', 'dist', '.astro', '.vercel', 'playwright-report', 'test-results', 'validation-result.json',
   ]);
-
   cpSync(starterRoot, repositoryRoot, {
     recursive: true,
     filter: (path) => !path.slice(starterRoot.length).split(/[\\/]/).some((part) => ignored.has(part)),
