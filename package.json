@@ -18,23 +18,22 @@
     "QUICKSTART.md",
     "README.md",
     "cli",
-    "examples",
+    "deployment-adapters",
     "guidelines",
-    "implementation-adapters",
+    "implementation-adapters/ASTRO.md",
+    "implementation-adapters/EXISTING-FRAMEWORK.md",
     "prompts",
     "schemas",
-    "scripts",
     "source-adapters",
     "templates",
-    "tests",
-    "workflow",
-    "release"
+    "workflow"
   ],
   "scripts": {
     "prepack": "node scripts/package-toolkit-provenance.mjs write",
     "postpack": "node scripts/package-toolkit-provenance.mjs clean",
     "build:consumer-bundle": "node scripts/build-consumer-bundle.mjs",
     "build:astro-scaffold": "node scripts/build-astro-scaffold.mjs",
+    "materialize:astro-fixture": "node scripts/materialize-astro-fixture.mjs",
     "validate": "node scripts/run-validation-suite.mjs",
     "generate:semantic-contract": "node scripts/generate-semantic-contract.mjs",
     "test:semantic-contract": "node scripts/test-semantic-contract.mjs",
@@ -43,10 +42,12 @@
     "test:release": "node scripts/test-release-metadata.mjs",
     "test:figma-preparation": "node scripts/test-figma-preparation-authority.mjs",
     "test:agent-bootstrap": "node scripts/test-agent-bootstrap-authority.mjs",
-    "test:entrypoints": "node scripts/test-entrypoint-authority.mjs",
     "test:installation-artifact": "node scripts/test-installation-artifact.mjs",
     "test:project-config": "node scripts/test-project-configuration.mjs",
     "test:consumer-bundle": "node scripts/test-consumer-bundle.mjs",
+    "test:source-adapters": "node scripts/test-source-adapters.mjs",
+    "test:implementation-adapters": "node scripts/test-implementation-adapters.mjs",
+    "test:execution-transports": "node scripts/test-execution-transports.mjs",
     "test:layering": "node scripts/test-cli-layering.mjs",
     "test:validation-architecture": "node scripts/test-workflow-validation-architecture.mjs",
     "test:records": "node scripts/test-workflow-record.mjs",
@@ -75,7 +76,7 @@
     "test:package": "node scripts/test-package-manifest.mjs",
     "test:product": "node scripts/test-product-experience.mjs",
     "test:astro-scaffold": "node scripts/test-astro-scaffold.mjs",
-    "check:release-readiness": "node scripts/check-release-readiness.mjs"
+    "test:astro-fixture": "node scripts/test-astro-fixture.mjs"
   },
   "engines": {
     "node": ">=22"

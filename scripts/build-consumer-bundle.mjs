@@ -9,7 +9,6 @@ import {
 } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildLegacyAstroReleaseBundle } from './lib/build-legacy-astro-release-bundle.mjs';
 import { isPathWithin } from './lib/path-safety.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -28,7 +27,6 @@ function parseArgs(argv) {
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
     if (arg === '--output') {
-      if (!argv[index + 1]) throw new Error('--output requires a path.');
       options.output = resolve(argv[index + 1]);
       index += 1;
       continue;
@@ -48,14 +46,7 @@ function parseArgs(argv) {
   return options;
 }
 
-export function buildConsumerBundle({ output, revision, starter = null }) {
-  // Temporary programmatic compatibility for the legacy release publisher.
-  // Normal callers and the CLI no longer expose application scaffolding here.
-  if (starter !== null) {
-    if (starter !== 'astro') throw new Error('Only the legacy astro release bundle is supported.');
-    return buildLegacyAstroReleaseBundle({ output, revision });
-  }
-
+export function buildConsumerBundle({ output, revision }) {
   if (!/^[0-9a-f]{40}$/i.test(revision ?? '')) {
     throw new Error('Consumer bundle revision must be an exact 40-character Git commit SHA.');
   }
@@ -70,7 +61,6 @@ export function buildConsumerBundle({ output, revision, starter = null }) {
   if (isPathWithin(root, outputRoot) && (outputRoot === join(root, 'dist') || !isPathWithin(join(root, 'dist'), outputRoot))) {
     throw new Error('In-repository bundle output must be under dist/.');
   }
-
   rmSync(outputRoot, { recursive: true, force: true });
   mkdirSync(workflowRoot, { recursive: true });
 
@@ -85,18 +75,27 @@ export function buildConsumerBundle({ output, revision, starter = null }) {
   copyFileSync(projectConfigTemplatePath, join(outputRoot, 'design-workflow.config.template.json'));
 
   const manifest = {
-    bundleFormatVersion: 6,
+    bundleFormatVersion: 5,
+    starter: null,
     installationModel: 'external-pinned-toolkit',
     toolkitRepository,
     toolkitRevision: revision,
-    repositorySetupRoot: 'repository/',
+    repositoryUploadRoot: 'repository/',
     remoteCaller: 'repository/.github/workflows/design-workflow-command.yml',
     projectInstructions: projectInstructionsFilename,
     projectConfigTemplate: 'design-workflow.config.template.json',
   };
-  writeFileSync(join(outputRoot, 'consumer-bundle-manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
+  writeFileSync(
+    join(outputRoot, 'consumer-bundle-manifest.json'),
+    `${JSON.stringify(manifest, null, 2)}\n`,
+  );
 
-  return { outputRoot, repositoryRoot, workflowRoot, revision };
+  return {
+    outputRoot,
+    repositoryRoot,
+    workflowRoot,
+    revision,
+  };
 }
 
 const directInvocation = process.argv[1]

@@ -85,6 +85,33 @@ try {
     consumer, 'node_modules', '@ferfalcon', 'design-workflow', 'cli', 'design-workflow.mjs',
   );
   assert(existsSync(cli), 'Packed toolkit CLI was not installed in the consumer project.');
+  const installedRoot = resolve(dirname(cli), '..');
+
+  for (const path of [
+    'AGENTS-instructions.md',
+    'Project-settings--Instructions.md',
+    'workflow/Agent-Orchestration.md',
+    'workflow/Implementation-Adapters.md',
+    'workflow/Execution-Transports.md',
+    'prompts/00-intake.md',
+    'templates/WORKPACK.template.md',
+    'source-adapters/FIGMA.md',
+    'implementation-adapters/ASTRO.md',
+    'deployment-adapters/VERCEL.md',
+    'schemas/workflow-record.schema.json',
+  ]) {
+    assert(existsSync(join(installedRoot, path)), `Packed runtime is missing ${path}.`);
+  }
+  for (const path of [
+    'AGENTS-INIT.md',
+    'examples',
+    'scripts',
+    'starters',
+    'tests',
+    'implementation-adapters/astro/scaffold',
+  ]) {
+    assert(!existsSync(join(installedRoot, path)), `Packed runtime must exclude source-only ${path}.`);
+  }
 
   run(process.execPath, [cli, 'init', '--name', 'Packed consumer', '--profile', 'Express'], consumer);
   const record = JSON.parse(readFileSync(join(consumer, '.workflow', 'workflow-record.json'), 'utf8'));
@@ -99,26 +126,20 @@ try {
   assert(context.toolkit.revision === runtime.revision, 'Installed package context changed toolkit revision identity.');
   assert(context.workflow?.valid === true, `Installed package context is invalid: ${(context.workflow?.findings ?? []).join('; ')}`);
   assert(context.resources?.stagePrompt?.resolution === 'embedded', 'Installed package did not trust its matching embedded provenance.');
+  assert(
+    typeof context.resources?.stagePrompt?.content === 'string' && context.resources.stagePrompt.content.length > 0,
+    'Installed package could not embed the active stage prompt.',
+  );
+  const implementationGuidance = context.resources?.guidance?.find(
+    (resource) => resource.path === 'workflow/Implementation-Adapters.md',
+  );
+  assert(
+    implementationGuidance?.resolution === 'embedded' && typeof implementationGuidance.content === 'string'
+      && implementationGuidance.content.length > 0,
+    'Installed package could not embed required implementation-adapter guidance.',
+  );
 
-  const installedRoot = resolve(dirname(cli), '..');
-  const scaffoldOutput = join(temporary, 'generated-astro');
-  run(process.execPath, [
-    join(installedRoot, 'scripts/build-astro-scaffold.mjs'),
-    '--output', scaffoldOutput,
-  ], consumer);
-  for (const path of ['package.json', 'package-lock.json', '.gitignore', '.github/workflows/validate-ui.yml']) {
-    assert(existsSync(join(scaffoldOutput, path)), 'Packed Astro implementation adapter lost ' + path);
-  }
-  for (const path of [
-    '.starter-source.json',
-    'Project-settings--Instructions.md',
-    'design-workflow.config.template.json',
-    '.github/workflows/design-workflow-command.yml',
-  ]) {
-    assert(!existsSync(join(scaffoldOutput, path)), 'Packed internal Astro scaffold must not embed ' + path);
-  }
-
-  console.log(`Packed install preserved toolkit provenance ${runtime.repository}#${runtime.revision} inside unrelated consumer ${basename(consumer)} and retained the internal Astro adapter boundary.`);
+  console.log(`Packed runtime preserved toolkit provenance ${runtime.repository}#${runtime.revision} and canonical resources inside unrelated consumer ${basename(consumer)}.`);
 } finally {
   rmSync(temporary, { recursive: true, force: true });
 }

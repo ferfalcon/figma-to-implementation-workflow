@@ -22,11 +22,11 @@ The configuration owns stable project-level identity and boundaries:
 - implementation repository identity;
 - repository-relative implementation root;
 - Figma source and authorized editing scope;
-- optional Vercel project URL;
+- optional Vercel project URL in configuration v2;
 - optional production URL;
 - in configuration v2, the working branch and the user's chosen review style.
 
-Connected tools remain authoritative for the **current state** of configured resources. The configuration answers “which resource belongs to this project”; GitHub, Figma, and runtime tools answer “what is its current state”.
+Connected tools remain authoritative for the **current state** of configured resources. The configuration answers “which resource belongs to this project”; GitHub, Figma, and runtime tools answer “what is its current state”. Deployment evidence and provider state are owned by [Deployment-Adapters.md](Deployment-Adapters.md), not by this configuration file.
 
 The file is normal version-controlled repository content. Humans and authorized agents may update it when project configuration intentionally changes. It is never mutated through workflow-record commands.
 
@@ -109,7 +109,11 @@ Scope app-code inspection, edits, app-specific commands, architecture, and valid
 
 ### Deployment
 
-`deployment.vercelProjectUrl` and `deployment.productionUrl` may be `null`. Do not invent deployment identity; resolve runtime state through authoritative tools when needed.
+`deployment.vercelProjectUrl` and `deployment.productionUrl` may be `null`. In configuration v2, `vercelProjectUrl` is a provider-specific stable locator retained for compatibility; it is not proof that a deployment exists, is healthy, or matches the implementation under review.
+
+Do not invent deployment identity. When runtime evidence becomes relevant, follow [Deployment-Adapters.md](Deployment-Adapters.md) and resolve current provider state through authoritative tools. A `null` deployment locator means deployment is not configured unless an approved requirement establishes another runtime source; it does not block implementation validation by itself.
+
+A future provider-neutral configuration shape should be introduced only through an explicit configuration-schema migration. Do not silently reinterpret or rewrite existing v2 deployment fields as part of ordinary project work.
 
 ## Relationship to workflow state
 
@@ -132,7 +136,7 @@ A configuration change after planning baseline is a real project change. Do not 
 
 ## Review style and working branch
 
-Configuration v2 requires repository.workingBranch and workflow.reviewStyle. The accepted review-style values are brief-and-preview and every-stage. When no review style is already saved, ask the user once during progressive setup before first workflow initialization; it is not a prerequisite for starting the conversation. Recommend Brief and final preview but never treat the unresolved template placeholder as a selection.
+Configuration v2 requires repository.workingBranch and workflow.reviewStyle. The accepted review-style values are brief-and-preview and every-stage. When no review style is already saved, ask the user once during progressive setup before first workflow initialization; it is not a prerequisite for starting the conversation. Recommend **Brief and final review** but never treat the unresolved template placeholder as a selection. The stored identifier remains `brief-and-preview` for compatibility until a separately planned schema migration changes it.
 
 The preference maps to the existing modes under [ChatGPT Experience](ChatGPT-Experience.md). It does not itself authorize implementation, change an active mode, or record stage/task progress. A new brief-and-preview run initializes in Continuous documentation; every-stage initializes in Gated. The canonical mode can change only through the CLI under the documented approval policy.
 

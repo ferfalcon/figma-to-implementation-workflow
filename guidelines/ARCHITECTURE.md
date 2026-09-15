@@ -96,11 +96,7 @@ Technology names, directory structures, hosting providers, and architectural pat
 
 Do not adopt them unless supported by repository evidence, project constraints, requirements, specifications, or an approved architectural decision.
 
-See:
-
-- [`../templates/ARCHITECTURE.template.md`](../templates/ARCHITECTURE.template.md)
-- [`../examples/full-application/ARCHITECTURE-full-stack-example.md`](../examples/full-application/ARCHITECTURE-full-stack-example.md)
-- [`../examples/standard-site/ARCHITECTURE-component-example.md`](../examples/standard-site/ARCHITECTURE-component-example.md)
+Use [`../templates/ARCHITECTURE.template.md`](../templates/ARCHITECTURE.template.md) as the reusable runtime template. Toolkit maintainers can also inspect the source-repository examples at `examples/full-application/ARCHITECTURE-full-stack-example.md` and `examples/standard-site/ARCHITECTURE-component-example.md`; those examples are development/reference material and are intentionally not part of the packaged runtime.
 
 ## Required content
 

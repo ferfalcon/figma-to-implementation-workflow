@@ -4,7 +4,7 @@ Turn a Figma design into working frontend code through ChatGPT — entirely onli
 
 You can start without a local development environment. You do not need to clone the repository, open a terminal, install Node.js, or run a package manager to get your first working implementation.
 
-The workflow uses ChatGPT as the interface between your design, your GitHub repository, and the services needed to build, verify, and preview the result.
+The workflow uses ChatGPT as the interface between your design, your GitHub repository, and the services needed to build and verify the result. Deployment is an optional evidence layer unless the approved project scope explicitly requires a runtime.
 
 ## Just want to use it? Do this.
 
@@ -20,15 +20,17 @@ That's it.
 
 The repository URL is the only project information you need to configure up front.
 
-ChatGPT will inspect the repository, determine what information or permissions are missing, and ask you only for what it needs to continue. You do not need to prepare all of the workflow inputs in advance or configure its internal state manually.
+ChatGPT will inspect the repository, determine what information or permissions are missing, resolve the implementation environment, and ask you only for what it needs to continue. You do not need to prepare all of the workflow inputs in advance, choose an internal framework route, or configure workflow state manually.
 
-If GitHub, Figma, Vercel, an asset, or a project decision is required, ChatGPT will ask for it when it becomes relevant.
+If GitHub, Figma, a deployment provider, an asset, or a project decision is required, ChatGPT will ask for it when it becomes relevant.
 
 ## What happens next
 
-Once ChatGPT knows which repository owns the implementation, it can progressively establish the rest of the project context.
+Once ChatGPT knows which repository owns the implementation, it progressively establishes the rest of the project context.
 
-Depending on the project, it may ask for the Figma design or scope, a decision that cannot be inferred safely, a required service connection, or an asset that is not available through the connected tools.
+It inspects the configured implementation root before planning code. A safely scaffoldable root or an existing Astro + TypeScript application uses the maintained Astro adapter. An existing application using another framework is preserved and handled through the best-effort existing-framework adapter rather than being silently replaced with Astro.
+
+Depending on the project, ChatGPT may ask for the Figma design or scope, a decision that cannot be inferred safely, a required service connection, or an asset that is not available through the connected tools.
 
 From there the workflow inspects the actual sources, prepares the implementation plan, works through the required review gates, writes the code through GitHub, runs the available verification, and returns the result for human review.
 
@@ -40,22 +42,23 @@ You can leave and continue later. The repository owns the durable workflow state
 - Code committed to your GitHub repository.
 - A pull request you can inspect, review, and continue developing from.
 - Automated type, build, browser, responsive, and accessibility checks where supported by the project.
-- A matching preview when the configured deployment provider is available.
-- A clear separation between automated verification and final human visual acceptance.
+- Matching deployment/runtime evidence when a configured provider is available and relevant.
+- A clear `Not applicable` runtime status when no deployment is configured or required.
+- A clear separation between automated verification, runtime evidence, and final human acceptance.
 
-The maintained frontend path currently targets Astro + TypeScript. Existing-framework adaptation, persistence, authentication, backend work, and production publishing are supported only when explicitly in scope.
+Astro + TypeScript is the **maintained implementation adapter** for new scaffoldable frontends and existing Astro + TypeScript projects. Existing frameworks are preserved on a best-effort path. Persistence, authentication, backend work, framework migration, server rendering, and production publishing are supported only when explicitly in scope and subject to the normal architecture/profile rules.
 
 ## Fully online by design
 
 One of the main goals of this project is to make the first implementation accessible without requiring a traditional local development setup.
 
-You can run the workflow from any device that gives you access to ChatGPT and the required connected services. The code still lives in GitHub, the design still lives in Figma, and deployment still happens through the deployment provider — ChatGPT coordinates the work between them.
+You can run the workflow from any device that gives you access to ChatGPT and the required connected services. The code still lives in GitHub, the design still lives in Figma, and deployment happens through a deployment provider only when one is used — ChatGPT coordinates the work between them.
 
 A local checkout remains useful when an engineer wants to take over or extend the result, but it is not a prerequisite for using the workflow.
 
 ## How the workflow works
 
-The human-facing interaction is intentionally simple. Behind it, the workflow keeps a stricter engineering process: it establishes source authority, inspects the design and repository, records project state, determines the appropriate workflow profile, creates implementation artifacts, requires the necessary approvals, validates the result, and preserves enough evidence for the work to be continued safely.
+The human-facing interaction is intentionally simple. Behind it, the workflow keeps a stricter engineering process: it establishes source authority, inspects the design and repository, resolves implementation capability, records project state, determines the appropriate workflow profile, creates implementation artifacts, requires the necessary approvals, validates the result, resolves runtime evidence when applicable, and preserves enough evidence for the work to be continued safely.
 
 You do not need to understand those mechanics to use the workflow.
 
@@ -64,8 +67,10 @@ You do not need to understand those mechanics to use the workflow.
 If you want to understand, audit, or extend the system, the detailed contracts live outside this README:
 
 - [Quickstart](QUICKSTART.md) — the detailed first-run and resume guide.
-- [ChatGPT experience](workflow/ChatGPT-Experience.md) — capability checks, conversational setup, review behavior, assets, previews, and recovery.
+- [ChatGPT experience](workflow/ChatGPT-Experience.md) — capability checks, conversational setup, review behavior, assets, runtime evidence, and recovery.
 - [Workflow stages](workflow/Design-Implementation-Workflow.md) — the canonical implementation process.
+- [Implementation adapters](workflow/Implementation-Adapters.md) — repository-driven implementation-environment resolution and maintained/best-effort adapter rules.
+- [Deployment adapters](workflow/Deployment-Adapters.md) — optional provider-neutral runtime evidence and commit-binding rules.
 - [Project configuration](workflow/Project-Configuration.md) — repository-owned project configuration and migration rules.
 - [GitHub remote execution](workflow/GitHub-Remote-Execution.md) — how executable work runs without requiring a local checkout.
 - [State ownership](workflow/State-Ownership.md) — canonical workflow state and generated views.
@@ -79,7 +84,7 @@ If you want to understand, audit, or extend the system, the detailed contracts l
 
 ## For maintainers
 
-The workflow engine, immutable toolkit binding, profiles, schemas, generated artifacts, release machinery, and compatibility rules are implementation concerns rather than onboarding requirements. Their detailed contracts remain in the workflow documentation and source tree.
+The workflow engine, immutable toolkit binding, profiles, schemas, generated artifacts, maintainer packaging, and compatibility rules are implementation concerns rather than onboarding requirements. Their detailed contracts remain in the workflow documentation and source tree.
 
 The canonical consumer-facing installation artifact is [`Project-settings--Instructions.md`](Project-settings--Instructions.md). It contains the repository bootstrap locator and host/bootstrap rules; durable project values remain repository-owned.
 

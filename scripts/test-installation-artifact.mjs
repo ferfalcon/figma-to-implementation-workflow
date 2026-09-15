@@ -28,6 +28,26 @@ assert.deepEqual(
   'Repository URL must be the only setup placeholder in the canonical Project Instructions.',
 );
 
+const operationalRequirements = [
+  [/external pinned dependency/i, 'define the workflow toolkit as an external pinned dependency'],
+  [/canonical bootstrap repository is `ferfalcon\/figma-to-implementation-workflow`/i, 'identify the canonical bootstrap repository'],
+  [/do not look for a vendored `docs\/implementation-workflow\/` toolkit/i, 'reject the legacy vendored-toolkit path'],
+  [/\.github\/workflows\/design-workflow-command\.yml/i, 'inspect the thin remote caller before initialization'],
+  [/current default-branch HEAD once to an exact 40-character SHA/i, 'resolve a missing bootstrap pin immutably'],
+  [/Load `AGENTS-instructions\.md`[^\n]*exactly that bootstrap revision/i, 'load consumer bootstrap instructions from the pinned toolkit revision'],
+  [/design-workflow\.config\.json` exists and is verified before initialization/i, 'require verified repository configuration before workflow initialization'],
+  [/repository\.implementationRoot/i, 'read the implementation boundary from repository configuration'],
+  [/scope app code inspection, edits, app-specific commands, architecture, and validation to it/i, 'keep implementation work inside the configured implementation root'],
+  [/Go outside it only for required repo-wide integration/i, 'limit work outside the implementation root'],
+  [/Instruction files may be read outside it without expanding the edit boundary/i, 'allow instruction reads without expanding edit scope'],
+  [/configuration `design\.scope`/i, 'treat configured design scope as the Figma boundary'],
+  [/do not redefine them in these Project instructions/i, 'delegate detailed workflow mechanics instead of duplicating them'],
+];
+for (const [pattern, description] of operationalRequirements) {
+  assert(pattern.test(instructions), `Canonical Project Instructions must ${description}.`);
+}
+assert(!/docs\/implementation-workflow\/AGENTS-instructions\.md/i.test(instructions), 'Canonical Project Instructions must not delegate to a vendored bootstrap path.');
+
 const semantic = JSON.parse(read('workflow/semantic-contract.json'));
 const settingsEntrypoint = semantic.entrypoints.find((entry) => entry.id === 'chatgpt-project-settings');
 assert.equal(settingsEntrypoint?.path, canonical, 'Semantic entrypoint must point to the canonical Project Instructions artifact.');
@@ -46,24 +66,13 @@ const pkg = JSON.parse(read('package.json'));
 assert(pkg.files.includes(canonical), 'Published package must include the canonical Project Instructions artifact.');
 for (const path of deprecated) assert(!pkg.files.includes(path), `Published package must not include deprecated installation artifact ${path}.`);
 
-const activeDistributionSources = [
+const generatedProjectSources = [
   'scripts/build-consumer-bundle.mjs',
-  'scripts/lib/build-legacy-astro-release-bundle.mjs',
-  '.github/workflows/release-consumer-bundle.yml',
+  'starters/astro/README.md',
 ];
-for (const path of activeDistributionSources) {
+for (const path of generatedProjectSources) {
   assert(read(path).includes(canonical), `${path} must use the canonical Project Instructions filename.`);
 }
-
-const astroAdapter = read('implementation-adapters/astro/README.md');
-assert(
-  astroAdapter.includes('does **not** own') && astroAdapter.includes('ChatGPT Project instructions'),
-  'Internal implementation adapters must explicitly keep Project Instructions outside their ownership boundary.',
-);
-assert(
-  !read('implementation-adapters/astro/scaffold/README.md').includes(canonical),
-  'Generated application scaffolds must not embed the canonical Project Instructions installation artifact.',
-);
 
 function walk(directory) {
   const paths = [];
@@ -88,4 +97,4 @@ for (const absolute of walk(root)) {
 }
 assert.deepEqual(aliasFindings, [], `Deprecated installation aliases remain in active contracts:\n${aliasFindings.join('\n')}`);
 
-console.log('Installation artifact contract passed (one canonical Project Instructions filename, one repository locator, internal adapters remain separate, and no active legacy aliases).');
+console.log('Installation artifact contract passed (one canonical Project Instructions filename, one repository locator, immutable external bootstrap, scoped implementation boundaries, and no active legacy aliases).');
