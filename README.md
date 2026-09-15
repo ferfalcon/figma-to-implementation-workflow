@@ -72,6 +72,7 @@ If you want to understand, audit, or extend the system, the detailed contracts l
 - [Implementation adapters](workflow/Implementation-Adapters.md) — repository-driven implementation-environment resolution and maintained/best-effort adapter rules.
 - [Deployment adapters](workflow/Deployment-Adapters.md) — optional provider-neutral runtime evidence and commit-binding rules.
 - [Project configuration](workflow/Project-Configuration.md) — repository-owned project configuration and migration rules.
+- [Toolkit distribution](workflow/Toolkit-Distribution.md) — stable GitHub Release channel, validation gates, version tags, and exact-SHA release identity.
 - [GitHub remote execution](workflow/GitHub-Remote-Execution.md) — how executable work runs without requiring a local checkout.
 - [State ownership](workflow/State-Ownership.md) — canonical workflow state and generated views.
 - [Agent orchestration](workflow/Agent-Orchestration.md) — executable workflow behavior and gates.

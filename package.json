@@ -40,6 +40,7 @@
     "test:runner": "node scripts/test-validation-runner.mjs",
     "test:path-safety": "node scripts/test-path-safety.mjs",
     "test:release": "node scripts/test-release-metadata.mjs",
+    "test:toolkit-distribution": "node scripts/test-toolkit-distribution.mjs",
     "test:figma-preparation": "node scripts/test-figma-preparation-authority.mjs",
     "test:agent-bootstrap": "node scripts/test-agent-bootstrap-authority.mjs",
     "test:installation-artifact": "node scripts/test-installation-artifact.mjs",

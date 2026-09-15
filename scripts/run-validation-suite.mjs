@@ -16,6 +16,7 @@ export const validationSteps = [
   { name: 'validation runner', script: 'scripts/test-validation-runner.mjs' },
   { name: 'path safety', script: 'scripts/test-path-safety.mjs' },
   { name: 'release metadata', script: 'scripts/test-release-metadata.mjs' },
+  { name: 'toolkit distribution', script: 'scripts/test-toolkit-distribution.mjs' },
   { name: 'Figma preparation authority', script: 'scripts/test-figma-preparation-authority.mjs' },
   { name: 'agent bootstrap authority', script: 'scripts/test-agent-bootstrap-authority.mjs' },
   { name: 'installation artifact', script: 'scripts/test-installation-artifact.mjs' },
