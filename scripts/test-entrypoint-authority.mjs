@@ -49,6 +49,7 @@ const orchestration = readContractSource('Agent orchestration', domain('agent-or
 const projectConfiguration = readContractSource('Project configuration', domain('project-configuration')?.owner);
 const profiles = readContractSource('Workflow profiles', domain('workflow-profiles')?.owner);
 const remoteExecution = readContractSource('GitHub remote execution', domain('remote-execution')?.owner);
+const chatgptExperience = readContractSource('ChatGPT experience', domain('chatgpt-experience')?.owner);
 const productModel = semanticContract.productModel;
 
 const requireDelegatedLinks = (label, source, owner) => {
@@ -66,6 +67,14 @@ if (!productModel?.bootstrap) {
   errors.push('Semantic contract must define productModel.bootstrap for entrypoint validation.');
 } else {
   const { bootstrap } = productModel;
+  const requiredInitialInputs = Array.isArray(bootstrap.requiredInitialInputs)
+    ? bootstrap.requiredInitialInputs
+    : [];
+
+  if (requiredInitialInputs.length !== 1 || requiredInitialInputs[0]?.id !== 'repository-url') {
+    errors.push('Repository-first onboarding requires repository-url to be the single initial human input.');
+  }
+
   if (typeof bootstrap.startCommand !== 'string' || bootstrap.startCommand.length === 0) {
     errors.push('Semantic contract productModel.bootstrap.startCommand must be non-empty.');
   } else {
@@ -77,7 +86,7 @@ if (!productModel?.bootstrap) {
     }
   }
 
-  for (const input of bootstrap.requiredInitialInputs ?? []) {
+  for (const input of requiredInitialInputs) {
     const registeredHost = semanticContract.entrypoints?.find((candidate) => candidate.path === input.host);
     if (!registeredHost) {
       errors.push(`Initial input ${input.id} host ${input.host} must be a registered semantic entrypoint.`);
@@ -110,6 +119,33 @@ if (!productModel?.bootstrap) {
         }
       }
     }
+  }
+}
+
+const progressiveInputIds = new Set((productModel?.progressiveInputs ?? []).map((input) => input?.id));
+for (const requiredProgressiveInput of ['figma-design', 'figma-scope', 'review-style', 'deployment']) {
+  if (!progressiveInputIds.has(requiredProgressiveInput)) {
+    errors.push(`Repository-first onboarding must keep ${requiredProgressiveInput} as a progressive input.`);
+  }
+}
+
+const consumerOnboardingSurfaces = [
+  ['README', readme],
+  ['QUICKSTART', quickstart],
+  ['ChatGPT Project settings', projectSettings],
+  ['ChatGPT Experience', chatgptExperience],
+];
+const forbiddenLegacyOnboarding = [
+  [/\bstarter\b/i, 'expose starter-based onboarding'],
+  [/\bvalidated release\b/i, 'require a validated release before project setup'],
+  [/\bstarter candidate\b/i, 'expose candidate artifacts to consumers'],
+  [/\btemplate repository\b/i, 'route consumers through a template repository'],
+  [/\bextract\b[^\n.]*\bbundle\b/i, 'require bundle extraction'],
+  [/\bupload\b[^\n.]*\brepository\//i, 'require uploading a packaged repository directory'],
+];
+for (const [label, source] of consumerOnboardingSurfaces) {
+  for (const [pattern, description] of forbiddenLegacyOnboarding) {
+    if (pattern.test(source)) errors.push(`${label} must not ${description}.`);
   }
 }
 
@@ -245,5 +281,5 @@ if (errors.length > 0) {
   errors.forEach((error) => console.error(`- ${error}`));
   process.exitCode = 1;
 } else {
-  console.log('Entrypoint authority test passed (semantic entrypoint delegation, product bootstrap, repository-owned project configuration, and agent-owned safety contracts).');
+  console.log('Entrypoint authority test passed (repository-first bootstrap, progressive inputs, semantic entrypoint delegation, repository-owned project configuration, and agent-owned safety contracts).');
 }

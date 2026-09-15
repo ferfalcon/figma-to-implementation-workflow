@@ -18,7 +18,7 @@ with the repository URL.
 
 That repository locator is the bootstrap pointer for future chats. Stable project context belongs in `design-workflow.config.json`; you do not need to prepare or edit that JSON manually before starting.
 
-You do not need to clone the repository, open a terminal, install Node.js, download a starter bundle, create a Vercel project, or provide a Figma link before the first conversation.
+You do not need to clone the repository, open a terminal, install Node.js, prepare application scaffolding, configure deployment, or provide a Figma link before the first conversation.
 
 ## 2. Start the workflow
 
@@ -119,8 +119,6 @@ ChatGPT reads the saved project configuration, follows the established working b
 Installation, immutable toolkit pins, the canonical CLI, and remote execution mechanics are owned by [GitHub Remote Execution](workflow/GitHub-Remote-Execution.md) and [Agent Orchestration](workflow/Agent-Orchestration.md). [Project Configuration](workflow/Project-Configuration.md) owns repository configuration and v1 adoption.
 
 Markdown-only is a manual/scaffold mode without executable workflow state, generated routing, or agent orchestration. The ChatGPT product uses CLI-managed state.
-
-The maintained Astro starter and release bundle remain useful to maintainers, release acceptance, and controlled scaffolding, but downloading a starter is not part of the normal consumer onboarding path.
 
 ### Manual fallback: thin consumer bundle
 

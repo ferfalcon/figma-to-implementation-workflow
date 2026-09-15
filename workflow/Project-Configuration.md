@@ -136,7 +136,7 @@ Configuration v2 requires repository.workingBranch and workflow.reviewStyle. The
 
 The preference maps to the existing modes under [ChatGPT Experience](ChatGPT-Experience.md). It does not itself authorize implementation, change an active mode, or record stage/task progress. A new brief-and-preview run initializes in Continuous documentation; every-stage initializes in Gated. The canonical mode can change only through the CLI under the documented approval policy.
 
-For a new starter, default the proposed working branch to design/initial-ui. Commit configuration and the caller on the default branch before creating the working branch from that setup commit. Preserve an established branch during adoption. Do not recreate a missing branch or reuse an unrelated existing branch without resolving the conflict.
+For a newly configured project, default the proposed working branch to design/initial-ui. Commit configuration and the caller on the default branch before creating the working branch from that setup commit. Preserve an established branch during adoption. Do not recreate a missing branch or reuse an unrelated existing branch without resolving the conflict.
 
 ## Version compatibility and adoption
 
