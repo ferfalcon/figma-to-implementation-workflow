@@ -24,16 +24,17 @@ A stable toolkit release is valid only when all of the following are true:
 5. The `## [Unreleased]` section is empty, so no merged work is silently omitted from the released version.
 6. The full repository validation contract passes on Node.js 22 and 24.
 7. `npm pack --dry-run` succeeds on Node.js 22 and 24 and packaging leaves no repository drift.
-8. Neither the version tag nor a GitHub Release with that tag already exists.
-9. The release is created against the exact validated `GITHUB_SHA` and the resulting tag resolves back to that commit.
+8. GitHub immutable releases are enabled for the repository before publication.
+9. Neither the version tag nor a GitHub Release with that tag already exists.
+10. The release is created against the exact validated `GITHUB_SHA` and the resulting tag resolves back to that commit.
 
-The release workflow never moves or reuses an existing version tag. Fixes after a release require a new version.
+The release workflow never moves or reuses an existing version tag. GitHub immutable-release protection locks the published release tag against later movement while that release exists. Fixes after a release require a new version.
 
 ## Canonical release workflow
 
 The only repository-owned stable-release path is [`.github/workflows/release-toolkit.yml`](../.github/workflows/release-toolkit.yml).
 
-The workflow is manually dispatched and requires the intended package version as an explicit input. It performs release metadata preflight, runs the repository validation matrix, verifies package generation, then creates the stable GitHub Release only after every validation job succeeds.
+The workflow is manually dispatched and requires the intended package version as an explicit input. It performs release metadata preflight, runs the repository validation matrix, verifies package generation, verifies repository-level immutable-release protection, then creates the stable GitHub Release only after every validation job succeeds.
 
 External GitHub Actions used by this write-capable workflow are pinned to full commit SHAs. The release job receives only `contents: write`; validation jobs remain read-only.
 
@@ -45,8 +46,9 @@ Before running the release workflow:
 2. Move the completed entries from `## [Unreleased]` into a dated `## [x.y.z] — YYYY-MM-DD` section.
 3. Leave `## [Unreleased]` empty for new work after the release.
 4. Update `package.json` and `package-lock.json` to the same version.
-5. Merge those changes to `main` and make sure normal repository CI is green.
-6. Manually dispatch **Release stable toolkit** from `main`, entering that exact version without a leading `v`.
+5. Enable **immutable releases** in the repository's GitHub Releases settings if they are not already enabled.
+6. Merge the release-preparation changes to `main` and make sure normal repository CI is green.
+7. Manually dispatch **Release stable toolkit** from `main`, entering that exact version without a leading `v`.
 
 The release workflow fails closed when the repository is not in this state.
 
