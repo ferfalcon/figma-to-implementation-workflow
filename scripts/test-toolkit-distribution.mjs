@@ -31,7 +31,7 @@ assert.match(workflow, /npm run validate/, 'Release workflow must run the full r
 assert.match(workflow, /npm pack --dry-run/, 'Release workflow must verify package generation.');
 assert.match(workflow, /git diff --exit-code/, 'Release workflow must reject packaging drift.');
 assert.match(workflow, /release:[\s\S]*?permissions:\s*\n\s*contents:\s*write/, 'Only the release job should need contents write permission.');
-assert.match(workflow, /repos\/\$\{GITHUB_REPOSITORY\}\/immutable-releases/, 'Stable publication must require GitHub immutable-release protection.');
+assert(!workflow.includes('/immutable-releases'), 'Release workflow must not require a repository-administrator token just to inspect immutable-release settings.');
 assert.match(workflow, /gh release create "\$TAG"/, 'Stable publication must create a GitHub Release.');
 assert.match(workflow, /--target "\$GITHUB_SHA"/, 'Release tag must target the exact validated workflow commit.');
 assert.match(workflow, /Tag \$\{TAG\} already exists/, 'Existing version tags must fail closed.');
@@ -64,7 +64,8 @@ for (const heading of ['## Channels', '## Stable release invariants', '## Canoni
 assert.match(contract, /`main` is the \*\*development channel\*\*/, 'Distribution contract must distinguish main from stable releases.');
 assert.match(contract, /GitHub Release[\s\S]*?\*\*stable channel\*\*/, 'Distribution contract must define GitHub Releases as the stable channel.');
 assert.match(contract, /exact commit SHA/, 'Distribution contract must require exact-SHA runtime identity.');
-assert.match(contract, /immutable releases are enabled/, 'Distribution contract must require immutable-release protection.');
+assert.match(contract, /should enable GitHub \*\*immutable releases\*\*/, 'Distribution contract should document native immutable-release hardening.');
+assert.match(contract, /does not require a separate administrator token/, 'Distribution contract must avoid requiring an admin token in the release workflow.');
 assert.match(contract, /does not by itself change `Project-settings--Instructions\.md`/, 'Distribution contract must keep bootstrap migration separate.');
 assert(readme.includes('workflow/Toolkit-Distribution.md'), 'README reference map must expose the toolkit distribution contract.');
 
@@ -109,4 +110,4 @@ const missingHeading = inspectToolkitRelease({
 assert.equal(missingHeading.ready, false);
 assert(missingHeading.findings.some(finding => finding.includes('dated release heading')));
 
-console.log('Toolkit distribution tests passed: manual stable channel, release metadata preflight, validation matrix, immutable releases, exact-SHA release targeting, and retired starter-publication separation.');
+console.log('Toolkit distribution tests passed: manual stable channel, release metadata preflight, validation matrix, exact-SHA release targeting, native immutability guidance, and retired starter-publication separation.');
