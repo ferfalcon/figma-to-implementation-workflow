@@ -21,7 +21,6 @@ const requiredPaths = [
   'AGENTS-PROMPT-Figma-file-preparation.md',
   'Project-settings--Instructions.md',
   'package.json',
-  '.github/workflows/release-consumer-bundle.yml',
   'workflow/Design-Implementation-Workflow.md',
   'workflow/Project-Configuration.md',
   'workflow/Workflow-Profiles.md',
