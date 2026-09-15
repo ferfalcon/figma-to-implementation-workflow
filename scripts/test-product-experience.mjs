@@ -4,16 +4,18 @@ import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+  assessImplementationEvidence,
+  assessDeploymentEvidence,
+  assessReviewEvidence,
+} from '../cli/lib/evidence.mjs';
+import {
   REQUIRED_CAPABILITIES,
   DEPLOYMENT_INSPECTION_CAPABILITY,
   MAINTAINED_ASTRO_CHECKS,
   assessCapabilities,
-  assessImplementationEvidence,
-  assessDeploymentEvidence,
-  assessReviewEvidence,
   assessPreviewEvidence,
   validateAcceptanceReport,
-} from '../cli/lib/product-evidence.mjs';
+} from './lib/product-acceptance.mjs';
 import { resolveProjectSession } from '../cli/lib/project-configuration.mjs';
 import { deriveNextAction } from '../cli/lib/workflow-actions.mjs';
 

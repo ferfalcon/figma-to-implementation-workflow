@@ -40,7 +40,7 @@ const requiredAreas = [
   'workflow/adapter-catalog.json',
   'schemas/design-workflow-config.schema.json', 'templates/design-workflow.config.template.json',
   'templates/PRODUCT-ACCEPTANCE.v2.template.json',
-  'cli/', 'cli/toolkit-provenance.json', 'workflow/', 'guidelines/', 'prompts/', 'source-adapters/',
+  'cli/', 'cli/lib/evidence.mjs', 'cli/toolkit-provenance.json', 'workflow/', 'guidelines/', 'prompts/', 'source-adapters/',
   'implementation-adapters/', 'deployment-adapters/', 'templates/', 'schemas/',
 ];
 const missingAreas = requiredAreas.filter((area) => (
@@ -56,7 +56,7 @@ const forbiddenPrefixes = [
   'tests/',
   'implementation-adapters/astro/scaffold/',
 ];
-const forbiddenExact = new Set(['AGENTS-INIT.md']);
+const forbiddenExact = new Set(['AGENTS-INIT.md', 'cli/lib/product-evidence.mjs']);
 const forbidden = [...files].filter((path) => (
   path.startsWith('node_modules/')
   || path.endsWith('.tgz')
@@ -102,4 +102,4 @@ for (const file of [...files].filter((path) => extname(path).toLowerCase() === '
 }
 if (broken.length > 0) throw new Error(`Packaged relative Markdown links do not resolve:\n${broken.map((item) => `- ${item}`).join('\n')}`);
 
-console.log(`Package manifest tests passed (${files.size} runtime files, ${report.unpackedSize} unpacked bytes; development examples, scripts, tests, Astro scaffold fixture, and obsolete bootstrap alias excluded; all relative Markdown links resolved).`);
+console.log(`Package manifest tests passed (${files.size} runtime files, ${report.unpackedSize} unpacked bytes; development examples, scripts, tests, Astro scaffold fixture, obsolete bootstrap alias, and product-acceptance implementation excluded; generic evidence runtime retained; all relative Markdown links resolved).`);

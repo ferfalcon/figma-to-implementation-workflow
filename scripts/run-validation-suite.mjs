@@ -23,6 +23,7 @@ export const validationSteps = [
   { name: 'consumer bundle', script: 'scripts/test-consumer-bundle.mjs' },
   { name: 'Astro implementation scaffold', script: 'scripts/test-astro-scaffold.mjs' },
   { name: 'Astro development fixture', script: 'scripts/test-astro-fixture.mjs' },
+  { name: 'evidence boundary', script: 'scripts/test-evidence-boundary.mjs' },
   { name: 'ChatGPT product experience', script: 'scripts/test-product-experience.mjs' },
   { name: 'adapter catalog', script: 'scripts/test-adapter-catalog.mjs' },
   { name: 'source adapters', script: 'scripts/test-source-adapters.mjs' },
@@ -45,91 +46,42 @@ export const validationSteps = [
   { name: 'packed install', script: 'scripts/test-packed-install.mjs' },
   { name: 'subject integrity', script: 'scripts/test-subject-integrity.mjs' },
   { name: 'agent context', script: 'scripts/test-agent-context.mjs' },
-  { name: 'command ownership', script: 'scripts/test-command-ownership.mjs' },
-  { name: 'Git worktree policy', script: 'scripts/test-git-worktree-policy.mjs' },
-  { name: 'repository portability', script: 'scripts/test-repository-portability.mjs' },
-  { name: 'workspace resolution', script: 'scripts/test-workspace-resolution.mjs' },
-  { name: 'task start checkpoints', script: 'scripts/test-task-start-checkpoints.mjs' },
-  { name: 'replanning transitions', script: 'scripts/test-replanning-transitions.mjs' },
-  { name: 'CLI', script: 'scripts/test-cli.mjs' },
-  { name: 'sequential task lineage', script: 'scripts/test-sequential-task-lineage.mjs' },
-  { name: 'GitHub remote command bridge', script: 'scripts/test-github-remote-command.mjs' },
-  { name: 'GitHub remote authorization', script: 'scripts/test-github-remote-authorization.mjs' },
-  { name: 'GitHub remote filesystem containment', script: 'scripts/test-github-remote-paths.mjs' },
-  { name: 'GitHub Actions pinning', script: 'scripts/test-github-actions-pinning.mjs' },
-  { name: 'package manifest', script: 'scripts/test-package-manifest.mjs' },
-];
-
-function formatDuration(durationMs) {
-  if (durationMs < 1000) return `${Math.round(durationMs)} ms`;
-  return `${(durationMs / 1000).toFixed(2)} s`;
-}
-
-function runStep(step, { cwd = root, stdio = 'inherit', log = console.log } = {}) {
-  const startedAt = performance.now();
-  log(`\nâ†’ ${step.name}`);
-
-  const result = spawnSync(process.execPath, [step.script, ...(step.args ?? [])], {
-    cwd,
-    stdio,
-  });
-  const durationMs = performance.now() - startedAt;
-  const passed = result.status === 0 && !result.error;
-
-  if (result.error) {
-    log(`  ${result.error.message}`);
-  } else if (result.signal) {
-    log(`  terminated by signal ${result.signal}`);
-  }
-
-  log(`${passed ? 'PASS' : 'FAIL'} ${step.name} (${formatDuration(durationMs)})`);
-
-  return {
-    name: step.name,
-    passed,
-    status: result.status,
-    signal: result.signal ?? null,
-    error: result.error?.message ?? null,
-    durationMs,
-  };
-}
-
-export function runValidationSuite(steps = validationSteps, options = {}) {
-  const log = options.log ?? console.log;
-  const results = [];
-  const startedAt = performance.now();
-
-  for (const step of steps) {
-    results.push(runStep(step, { ...options, log }));
-  }
-
-  const durationMs = performance.now() - startedAt;
-  const failures = results.filter((result) => !result.passed);
-
-  log('\nValidation summary');
-  for (const result of results) {
-    log(`${result.passed ? 'PASS' : 'FAIL'} ${result.name} (${formatDuration(result.durationMs)})`);
-  }
-  log(`\n${results.length - failures.length} passed, ${failures.length} failed in ${formatDuration(durationMs)}.`);
-
-  if (failures.length > 0) {
-    log('Failed checks:');
-    for (const failure of failures) log(`- ${failure.name}`);
-  }
-
-  return {
-    passed: failures.length === 0,
-    results,
-    failures,
-    durationMs,
-  };
-}
-
-const directInvocation = process.argv[1]
-  ? resolve(process.argv[1]) === fileURLToPath(import.meta.url)
-  : false;
-
-if (directInvocation) {
-  const report = runValidationSuite();
-  if (!report.passed) process.exitCode = 1;
-}
+  { namYNˆ	ØÛÛ[X[™İÛ™\œÚ\	ËØÜš\ˆ	ÜØÜš\Ëİ\İXÛÛ[X[™[İÛ™\œÚ\›ZœÉÈKˆÈ˜[YNˆ	ÑÚ]ÛÜšİ™YHÛXŞIËØÜš\ˆ	ÜØÜš\Ëİ\İYÚ]]ÛÜšİ™YK\ÛXŞK›ZœÉÈKˆÈ˜[YNˆ	Ü™\ÜÚ]ÜHÜXš[]IËØÜš\ˆ	ÜØÜš\Ëİ\İ\™\ÜÚ]ÜK\ÜXš[]K›ZœÉÈKˆÈ˜[YNˆ	İÛÜšÜÜXÙH™\ÛÛ][Û‰ËØÜš\ˆ	ÜØÜš\Ëİ\İ]ÛÜšÜÜXÙK\™\ÛÛ][Û‹›ZœÉÈKˆÈ˜[YNˆ	İ\ÚÈİ\ÚXÚÜÚ[ÉËØÜš\ˆ	ÜØÜš\Ëİ\İ]\ÚË\İ\XÚXÚÜÚ[Ë›ZœÉÈKˆÈ˜[YNˆ	Ü™\[›š[™È˜[œÚ][ÛœÉËØÜš\ˆ	ÜØÜš\Ëİ\İ\™\[›š[™Ë]˜[œÚ][ÛœË›ZœÉÈKˆÈ˜[YNˆ	ĞÓIËØÜš\ˆ	ÜØÜš\Ëİ\İXÛK›ZœÉÈKˆÈ˜[YNˆ	ÜÙ\]Y[X[\ÚÈ[™XYÙIËØÜš\ˆ	ÜØÜš\Ëİ\İ\Ù\]Y[X[]\ÚË[[™XYÙK›ZœÉÈKˆÈ˜[YNˆ	ÑÚ]Xˆ™[[İHÛÛ[X[™œšYÙIËØÜš\ˆ	ÜØÜš\Ëİ\İYÚ]X‹\™[[İKXÛÛ[X[™›ZœÉÈKˆÈ˜[YNˆ	ÑÚ]Xˆ™[[İH]]Üš^˜][Û‰ËØÜš\ˆ	ÜØÜš\Ëİ\İYÚ]X‹\™[[İKX]]Üš^˜][Û‹›ZœÉÈKˆÈ˜[YNˆ	ÑÚ]Xˆ™[[İHš[\Ş\İ[HÛÛZ[›Y[	ËØÜš\ˆ	ÜØÜš\Ëİ\İYÚ]X‹\™[[İK\]Ë›ZœÉÈKˆÈ˜[YNˆ	ÑÚ]XˆXİ[ÛœÈ[›š[™ÉËØÜš\ˆ	ÜØÜš\Ëİ\İYÚ]X‹XXİ[ÛœË\[›š[™Ë›ZœÉÈKˆÈ˜[YNˆ	ÜXÚØYÙHX[šY™\İ	ËØÜš\ˆ	ÜØÜš\Ëİ\İ\XÚØYÙK[X[šY™\İ›ZœÉÈK—NÂ‚™[˜İ[Ûˆ›Ü›X]\˜][ÛŠ\˜][Û“\ÊHÂˆYˆ
+\˜][Û“\ÈL
+H™]\›ˆ	ÓX]œ›İ[™
+\˜][Û“\Ê_H\ØÂˆ™]\›ˆ	Ê\˜][Û“\ÈÈL
+KÑš^Y
+Š_HØÂŸB‚™[˜İ[Ûˆ[”İ\
+İ\ÈİÙH›Ûİİ[ÈH	Ú[š\š]	ËÙÈHÛÛœÛÛK›ÙÈHHßJHÂˆÛÛœİİ\Y]H\™›Ü›X[˜ÙK››İÊ
+NÂˆÙÊ¸¡¤ˆ	Üİ\›˜[Y_X
+NÂ‚ˆÛÛœİ™\İ[HÜ]Û”Ş[˜Ê›ØÙ\ÜË™^XÔ]Üİ\œØÜš\‹‹Šİ\˜\™ÜÈÏÈ×JWKÂˆİÙˆİ[ËˆJNÂˆÛÛœİ\˜][Û“\ÈH\™›Ü›X[˜ÙK››İÊ
+HHİ\Y]ÂˆÛÛœİ\ÜÙYH™\İ[œİ]\ÈOOH	‰ˆ\™\İ[™\œ›ÜÂ‚ˆYˆ
+™\İ[™\œ›ÜŠHÂˆÙÊ	Ü™\İ[™\œ›Ü‹›Y\ÜØYÙ_X
+NÂˆH[ÙHYˆ
+™\İ[œÚYÛ˜[
+HÂˆÙÊ\›Z[˜]YHÚYÛ˜[	Ü™\İ[œÚYÛ˜[X
+NÂˆB‚ˆÙÊ	Ü\ÜÙYÈ	ÔTÔÉÈˆ	ÑRS	ßH	Üİ\›˜[Y_H
+	Ù›Ü›X]\˜][ÛŠ\˜][Û“\Ê_JX
+NÂ‚ˆ™]\›ˆÂˆ˜[YNˆİ\›˜[YKˆ\ÜÙYˆİ]\Îˆ™\İ[œİ]\ËˆÚYÛ˜[ˆ™\İ[œÚYÛ˜[ÏÈ[ˆ\œ›Üˆ™\İ[™\œ›ÜË›Y\ÜØYÙHÏÈ[ˆ\˜][Û“\ËˆNÂŸB‚™^Ü[˜İ[Ûˆ[•˜[Y][Û”İZ]Jİ\ÈH˜[Y][Û”İ\ËÜ[ÛœÈHßJHÂˆÛÛœİÙÈHÜ[ÛœË›ÙÈÏÈÛÛœÛÛK›ÙÎÂˆÛÛœİ™\İ[ÈH×NÂˆÛÛœİİ\Y]H\™›Ü›X[˜ÙK››İÊ
+NÂ‚ˆ›Üˆ
+ÛÛœİİ\Ùˆİ\ÊHÂˆ™\İ[Ëœ\Ú
+[”İ\
+İ\È‹‹›Ü[ÛœËÙÈJJNÂˆB‚ˆÛÛœİ\˜][Û“\ÈH\™›Ü›X[˜ÙK››İÊ
+HHİ\Y]ÂˆÛÛœİ˜Z[\™\ÈH™\İ[Ë™š[\Š
+™\İ[
+HOˆ\™\İ[œ\ÜÙY
+NÂ‚ˆÙÊ	×•˜[Y][Ûˆİ[[X\IÊNÂˆ›Üˆ
+ÛÛœİ™\İ[Ùˆ™\İ[ÊHÂˆÙÊ	Ü™\İ[œ\ÜÙYÈ	ÔTÔÉÈˆ	ÑRS	ßH	Ü™\İ[›˜[Y_H
+	Ù›Ü›X]\˜][ÛŠ™\İ[™\˜][Û“\Ê_JX
+NÂˆBˆÙÊ‰Ü™\İ[Ë›[™İH˜Z[\™\Ë›[™İH\ÜÙY	Ù˜Z[\™\Ë›[™İH˜Z[Y[ˆ	Ù›Ü›X]\˜][ÛŠ\˜][Û“\Ê_K˜
+NÂ‚ˆYˆ
+˜Z[\™\Ë›[™İˆ
+HÂˆÙÊ	Ñ˜Z[YÚXÚÜÎ‰ÊNÂˆ›Üˆ
+ÛÛœİ˜Z[\™HÙˆ˜Z[\™\ÊHÙÊH	Ù˜Z[\™K›˜[Y_X
+NÂˆB‚ˆ™]\›ˆÂˆ\ÜÙYˆ˜Z[\™\Ë›[™İOOHˆ™\İ[Ëˆ˜Z[\™\Ëˆ\˜][Û“\ËˆNÂŸB‚˜ÛÛœİ\™Xİ[›ØØ][ÛˆH›ØÙ\ÜË˜\™İ–ÌWBˆÈ™\ÛÛ™J›ØÙ\ÜË˜\™İ–ÌWJHOOHš[UT“Ô]
+[\Ü›Y]K\›
+Bˆˆ˜[ÙNÂ‚šYˆ
+\™Xİ[›ØØ][ÛŠHÂˆÛÛœİ™\ÜH[•˜[Y][Û”İZ]J
+NÂˆYˆ
+\™\Üœ\ÜÙY
+H›ØÙ\ÜË™^]ÛÙHHNÂŸB
