@@ -9,6 +9,8 @@ import { fileURLToPath } from 'node:url';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const sourcePath = join(root, 'workflow', 'semantic-contract.json');
 const projectionPath = join(root, 'workflow', 'Semantic-Contract.md');
+const progressiveInputRequirements = new Set(['required', 'optional']);
+const progressiveInputResolutions = new Set(['discover-or-ask', 'ask-once', 'discover-when-relevant']);
 
 export function loadSemanticContract(path = sourcePath) {
   return JSON.parse(readFileSync(path, 'utf8'));
@@ -50,6 +52,80 @@ export function semanticContractFindings(contract, { rootDir = root } = {}) {
   }
   if (authority.projectionGenerated !== true) {
     push('authority.projectionGenerated must be true');
+  }
+
+  const productModel = contract.productModel ?? {};
+  if (!productModel || typeof productModel !== 'object' || Array.isArray(productModel)) {
+    push('productModel must be an object');
+  }
+  if (typeof productModel.surface !== 'string' || !productModel.surface) {
+    push('productModel.surface must be a non-empty string');
+  }
+
+  const bootstrap = productModel.bootstrap ?? {};
+  const requiredInitialInputs = Array.isArray(bootstrap.requiredInitialInputs)
+    ? bootstrap.requiredInitialInputs
+    : [];
+  if (requiredInitialInputs.length === 0) {
+    push('productModel.bootstrap.requiredInitialInputs must contain at least one input');
+  }
+  for (const id of duplicates(requiredInitialInputs.map((input) => input?.id))) {
+    push(`duplicate required initial input id: ${id}`);
+  }
+  for (const input of requiredInitialInputs) {
+    if (typeof input?.id !== 'string' || !input.id) {
+      push('every required initial input requires a non-empty id');
+    }
+    if (!repositoryPathExists(input?.host, rootDir)) {
+      push(`required initial input ${input?.id ?? '<missing>'} host does not exist: ${input?.host ?? '<missing>'}`);
+    }
+    if (typeof input?.placeholder !== 'string' || !input.placeholder) {
+      push(`required initial input ${input?.id ?? '<missing>'} requires a placeholder`);
+    }
+  }
+  if (typeof bootstrap.startCommand !== 'string' || !bootstrap.startCommand) {
+    push('productModel.bootstrap.startCommand must be a non-empty string');
+  }
+  if (typeof bootstrap.localDevelopmentRequired !== 'boolean') {
+    push('productModel.bootstrap.localDevelopmentRequired must be boolean');
+  }
+
+  const progressiveInputs = Array.isArray(productModel.progressiveInputs)
+    ? productModel.progressiveInputs
+    : [];
+  for (const id of duplicates(progressiveInputs.map((input) => input?.id))) {
+    push(`duplicate progressive input id: ${id}`);
+  }
+  const initialInputIds = new Set(requiredInitialInputs.map((input) => input?.id).filter(Boolean));
+  for (const input of progressiveInputs) {
+    if (typeof input?.id !== 'string' || !input.id) {
+      push('every progressive input requires a non-empty id');
+    }
+    if (initialInputIds.has(input?.id)) {
+      push(`input id cannot be both initial and progressive: ${input.id}`);
+    }
+    if (!progressiveInputRequirements.has(input?.requirement)) {
+      push(`progressive input ${input?.id ?? '<missing>'} requirement must be one of: ${[...progressiveInputRequirements].join(', ')}`);
+    }
+    if (typeof input?.neededBy !== 'string' || !input.neededBy) {
+      push(`progressive input ${input?.id ?? '<missing>'} requires neededBy`);
+    }
+    if (!progressiveInputResolutions.has(input?.resolution)) {
+      push(`progressive input ${input?.id ?? '<missing>'} resolution must be one of: ${[...progressiveInputResolutions].join(', ')}`);
+    }
+  }
+
+  const interactionPolicy = productModel.interactionPolicy ?? {};
+  if (typeof interactionPolicy.inferWhenSafe !== 'boolean') {
+    push('productModel.interactionPolicy.inferWhenSafe must be boolean');
+  }
+  const askOnlyFor = Array.isArray(interactionPolicy.askOnlyFor) ? interactionPolicy.askOnlyFor : [];
+  if (askOnlyFor.length === 0) {
+    push('productModel.interactionPolicy.askOnlyFor must contain at least one reason');
+  }
+  for (const reason of duplicates(askOnlyFor)) push(`duplicate interaction ask reason: ${reason}`);
+  for (const reason of askOnlyFor) {
+    if (typeof reason !== 'string' || !reason) push('every interaction ask reason must be a non-empty string');
   }
 
   const entrypoints = Array.isArray(contract.entrypoints) ? contract.entrypoints : [];
