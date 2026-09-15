@@ -1,5 +1,13 @@
+export const BASE_REQUIRED_CAPABILITIES = [
+  'figmaDesign', 'githubWrites', 'commandIssues', 'actionsLogs',
+];
+
 export const REQUIRED_CAPABILITIES = [
-  'figmaDesign', 'githubWrites', 'commandIssues', 'actionsLogs', 'previewInspection',
+  ...BASE_REQUIRED_CAPABILITIES, 'previewInspection',
+];
+
+export const MAINTAINED_ASTRO_CHECKS = [
+  'dependencies', 'types', 'build', 'browserInstallation', 'browserTests',
 ];
 
 const SHA = /^[0-9a-f]{40}$/i;
@@ -15,10 +23,13 @@ function https(value, host) {
 
 // Checks the shape and completeness of observed evidence. This does not call providers
 // or grant permissions; observations must come from the actual connected tools.
-export function assessCapabilities(evidence) {
+// Product acceptance keeps previewRequired=true by default for the maintained Astro QA path,
+// while project execution can assess capabilities progressively with previewRequired=false.
+export function assessCapabilities(evidence, { previewRequired = true } = {}) {
   const findings = [];
   if (evidence?.surface !== 'ordinary-chatgpt') findings.push('Required surface is ordinary ChatGPT.');
-  for (const name of REQUIRED_CAPABILITIES) {
+  const required = previewRequired ? REQUIRED_CAPABILITIES : BASE_REQUIRED_CAPABILITIES;
+  for (const name of required) {
     const capability = evidence?.capabilities?.[name];
     if (capability?.status !== 'verified' || !https(capability?.evidenceUrl)) {
       findings.push(name + ' has not been verified with provider evidence.');
@@ -27,25 +38,50 @@ export function assessCapabilities(evidence) {
   return { ready: findings.length === 0, findings };
 }
 
-export function assessPreviewEvidence(evidence) {
+export function assessImplementationEvidence(evidence, {
+  requiredChecks = [],
+  previewRequired = false,
+  assetsRequired = false,
+} = {}) {
   const findings = [];
   const commit = evidence?.implementationCommit;
   if (!SHA.test(commit || '')) findings.push('An exact implementation commit is required.');
+
   const validation = evidence?.validation;
   if (validation?.testedCommit !== commit) findings.push('Validation is for a different implementation commit.');
-  if (!https(validation?.runUrl, 'github.com')) findings.push('A GitHub validation run URL is required.');
+  if (!https(validation?.runUrl)) findings.push('A validation evidence URL is required.');
   if (typeof evidence?.repository !== 'string' || !/^[\w.-]+\/[\w.-]+$/.test(evidence.repository)
     || validation?.repository !== evidence.repository) findings.push('Validation repository identity does not match.');
-  if (evidence?.repository && (typeof validation?.runUrl !== 'string' || !validation.runUrl.startsWith('https://github.com/' + evidence.repository + '/actions/runs/'))) findings.push('Validation run belongs to another repository.');
-  for (const name of ['dependencies', 'types', 'build', 'browserInstallation', 'browserTests']) {
+  if (evidence?.repository && typeof validation?.runUrl === 'string' && validation.runUrl.startsWith('https://github.com/')
+    && !validation.runUrl.startsWith('https://github.com/' + evidence.repository + '/')) {
+    findings.push('Validation run belongs to another repository.');
+  }
+  for (const name of requiredChecks) {
     if (validation?.checks?.[name] !== 'success') findings.push('Required check is not successful: ' + name);
   }
   if (validation?.passed !== true) findings.push('Validation has not passed.');
+
   const preview = evidence?.preview;
-  if (preview?.commit !== commit) findings.push('Preview is for a different implementation commit.');
-  if (preview?.status !== 'READY' || preview?.inspected !== true || !https(preview?.url)) findings.push('The matching preview must be READY and actually inspected.');
-  if (evidence?.assetsCommitted !== true) findings.push('Required design assets have not been committed.');
+  if (previewRequired) {
+    if (preview?.commit !== commit) findings.push('Preview is for a different implementation commit.');
+    if (preview?.status !== 'READY' || preview?.inspected !== true || !https(preview?.url)) findings.push('The matching preview must be READY and actually inspected.');
+  } else if (preview !== undefined && preview !== null) {
+    if (preview?.commit !== commit) findings.push('Provided preview is for a different implementation commit.');
+    if (preview?.inspected === true && !https(preview?.url)) findings.push('An inspected preview requires a valid HTTPS URL.');
+  }
+
+  if (assetsRequired && evidence?.assetsCommitted !== true) findings.push('Required design assets have not been committed.');
   return { readyForHumanReview: findings.length === 0, findings };
+}
+
+// Backwards-compatible maintained-product assessment used by real-user product acceptance.
+// This intentionally qualifies the maintained Astro + preview path, not every best-effort adapter.
+export function assessPreviewEvidence(evidence) {
+  return assessImplementationEvidence(evidence, {
+    requiredChecks: MAINTAINED_ASTRO_CHECKS,
+    previewRequired: true,
+    assetsRequired: true,
+  });
 }
 
 export function validateAcceptanceReport(report) {

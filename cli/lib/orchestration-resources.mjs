@@ -16,6 +16,7 @@ export const STAGE_PROMPTS = [
 ];
 
 const GUIDELINES_BY_STAGE = new Map([
+  [0, ['workflow/Implementation-Adapters.md']],
   [2, ['guidelines/REQUIREMENTS.md']],
   [3, ['guidelines/DESIGN.md']],
   [4, ['guidelines/SPEC.md']],
@@ -49,6 +50,19 @@ const SOURCE_ADAPTER_CHOICES = [
   { format: 'pdf', path: 'source-adapters/PDF.md' },
   { format: 'existing-website', path: 'source-adapters/EXISTING-WEBSITE.md' },
   { format: 'mixed-sources', path: 'source-adapters/MIXED-SOURCES.md' },
+];
+
+const IMPLEMENTATION_ADAPTER_CHOICES = [
+  {
+    adapter: 'astro-typescript',
+    support: 'maintained',
+    path: 'implementation-adapters/ASTRO.md',
+  },
+  {
+    adapter: 'existing-framework',
+    support: 'best-effort',
+    path: 'implementation-adapters/EXISTING-FRAMEWORK.md',
+  },
 ];
 
 export function stageTargets(record) {
@@ -112,14 +126,25 @@ export function stageResources(record, toolkit = toolkitBindingFromRecord(record
   return {
     required,
     onDemand,
-    conditional: [{
-      kind: 'source-adapter',
-      when: 'source-inspection-requires-format-specific-guidance',
-      rule: 'Select only the adapter matching the actual source; do not browse or load the other adapters.',
-      selectOneOf: SOURCE_ADAPTER_CHOICES.map((choice) => ({
-        ...choice,
-        location: resourceLocation(toolkit, choice.path),
-      })),
-    }],
+    conditional: [
+      {
+        kind: 'source-adapter',
+        when: 'source-inspection-requires-format-specific-guidance',
+        rule: 'Select only the adapter matching the actual source; do not browse or load the other adapters.',
+        selectOneOf: SOURCE_ADAPTER_CHOICES.map((choice) => ({
+          ...choice,
+          location: resourceLocation(toolkit, choice.path),
+        })),
+      },
+      {
+        kind: 'implementation-adapter',
+        when: 'repository-planning-or-implementation-requires-environment-specific-guidance',
+        rule: 'Resolve the implementation environment from the configured implementation root and active repository evidence. Select the maintained Astro adapter only for a safely scaffoldable root or an existing Astro + TypeScript application; otherwise preserve an existing framework with the best-effort adapter. Do not ask the human to choose an internal adapter.',
+        selectOneOf: IMPLEMENTATION_ADAPTER_CHOICES.map((choice) => ({
+          ...choice,
+          location: resourceLocation(toolkit, choice.path),
+        })),
+      },
+    ],
   };
 }
