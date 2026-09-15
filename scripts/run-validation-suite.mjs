@@ -24,6 +24,7 @@ export const validationSteps = [
   { name: 'Astro implementation scaffold', script: 'scripts/test-astro-scaffold.mjs' },
   { name: 'Astro development fixture', script: 'scripts/test-astro-fixture.mjs' },
   { name: 'ChatGPT product experience', script: 'scripts/test-product-experience.mjs' },
+  { name: 'adapter catalog', script: 'scripts/test-adapter-catalog.mjs' },
   { name: 'source adapters', script: 'scripts/test-source-adapters.mjs' },
   { name: 'implementation adapters', script: 'scripts/test-implementation-adapters.mjs' },
   { name: 'execution transports', script: 'scripts/test-execution-transports.mjs' },

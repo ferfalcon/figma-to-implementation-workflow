@@ -37,6 +37,7 @@ const requiredAreas = [
   'workflow/Project-Configuration.md', 'workflow/Source-Adapters.md',
   'workflow/Implementation-Adapters.md', 'workflow/Deployment-Adapters.md',
   'workflow/Execution-Transports.md', 'workflow/ChatGPT-Experience.md', 'workflow/Product-Acceptance.md',
+  'workflow/adapter-catalog.json',
   'schemas/design-workflow-config.schema.json', 'templates/design-workflow.config.template.json',
   'templates/PRODUCT-ACCEPTANCE.v2.template.json',
   'cli/', 'cli/toolkit-provenance.json', 'workflow/', 'guidelines/', 'prompts/', 'source-adapters/',

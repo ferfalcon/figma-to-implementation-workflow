@@ -1,0 +1,46 @@
+{
+  "catalogVersion": 1,
+  "source": [
+    {
+      "id": "figma",
+      "resource": "source-adapters/FIGMA.md"
+    },
+    {
+      "id": "screenshots",
+      "resource": "source-adapters/SCREENSHOTS.md"
+    },
+    {
+      "id": "pdf",
+      "resource": "source-adapters/PDF.md"
+    },
+    {
+      "id": "existing-website",
+      "resource": "source-adapters/EXISTING-WEBSITE.md"
+    },
+    {
+      "id": "mixed-sources",
+      "resource": "source-adapters/MIXED-SOURCES.md"
+    }
+  ],
+  "implementation": [
+    {
+      "id": "astro-typescript",
+      "support": "maintained",
+      "modes": ["scaffold", "adapt"],
+      "resource": "implementation-adapters/ASTRO.md"
+    },
+    {
+      "id": "existing-framework",
+      "support": "best-effort",
+      "modes": ["adapt"],
+      "resource": "implementation-adapters/EXISTING-FRAMEWORK.md"
+    }
+  ],
+  "deployment": [
+    {
+      "id": "vercel",
+      "support": "maintained",
+      "resource": "deployment-adapters/VERCEL.md"
+    }
+  ]
+}
