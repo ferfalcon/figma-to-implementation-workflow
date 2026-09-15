@@ -12,7 +12,7 @@ Create a test implementation repository from that generated bundle and connect i
 
 Use one designer comfortable with code and one engineer comfortable with Figma, on personal ChatGPT Plus or Pro accounts. Exercise Brief and final preview in one session and Every stage in the other. Use ordinary ChatGPT and the existing Figma, GitHub, and Vercel plugins when the workflow requires them. Do not substitute coding agents, synthetic fixtures, Work, Codex, or a local terminal.
 
-Each tester must begin from the actual v2 product entry point rather than a preconfigured design handoff. Create a fresh ChatGPT Project from [AI-project-settings.md](../AI-project-settings.md), replace only `<REPOSITORY_URL>` with the test implementation repository URL, and do not preload project-specific Figma, review-style, deployment, implementation-root, or working-branch values. Existing provider connections may remain connected; missing connections must be resolved only when the workflow asks for the capability that needs them.
+Each tester must begin from the actual product entry point rather than a preconfigured design handoff. Create a fresh ChatGPT Project from [Project-settings--Instructions.md](../Project-settings--Instructions.md), replace only `<REPOSITORY_URL>` with the test implementation repository URL, and do not preload project-specific Figma, review-style, deployment, implementation-root, or working-branch values. Existing provider connections may remain connected; missing connections must be resolved only when the workflow asks for the capability that needs them.
 
 Each tester must:
 
@@ -46,4 +46,4 @@ If repository creation succeeds but publication stops before the first generated
 
 The release workflow checks acceptance, runs toolkit and starter verification, generates bundles, updates the companion template, and uploads the public release assets. Without valid acceptance or publisher configuration, it stops before publishing assets. Preview acceptance never authorizes merging an implementation PR or promoting a production deployment.
 
-The source of the product instructions remains [AI-project-settings.md](../AI-project-settings.md); [QUICKSTART.md](../QUICKSTART.md) remains the single user onboarding guide.
+The source of the product instructions is [Project-settings--Instructions.md](../Project-settings--Instructions.md); [README.md](../README.md) owns zero-to-start discovery, and [QUICKSTART.md](../QUICKSTART.md) provides detailed first-run and resume guidance.

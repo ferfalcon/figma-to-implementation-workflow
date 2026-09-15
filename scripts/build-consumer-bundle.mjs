@@ -18,7 +18,8 @@ import { isPathWithin } from './lib/path-safety.mjs';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const toolkitRepository = 'ferfalcon/figma-to-implementation-workflow';
 const callerTemplatePath = join(root, 'templates', 'github', 'design-workflow-command.yml.template');
-const projectInstructionsPath = join(root, 'AI-project-settings.md');
+const projectInstructionsFilename = 'Project-settings--Instructions.md';
+const projectInstructionsPath = join(root, projectInstructionsFilename);
 const starterRoot = join(root, 'starters', 'astro');
 const projectConfigTemplatePath = join(root, 'templates', 'design-workflow.config.template.json');
 
@@ -87,9 +88,8 @@ export function buildConsumerBundle({ output, revision, starter = null }) {
     copyFileSync(join(root, 'LICENSE'), join(repositoryRoot, 'LICENSE'));
     const readmePath = join(repositoryRoot, 'README.md');
     writeFileSync(readmePath, readFileSync(readmePath, 'utf8').replaceAll('<TOOLKIT_REVISION>', revision));
-    copyFileSync(projectInstructionsPath, join(repositoryRoot, 'ChatGPT-Project-Instructions.md'));
+    copyFileSync(projectInstructionsPath, join(repositoryRoot, projectInstructionsFilename));
     copyFileSync(projectConfigTemplatePath, join(repositoryRoot, 'design-workflow.config.template.json'));
-
   }
 
   const callerTemplate = readFileSync(callerTemplatePath, 'utf8');
@@ -99,7 +99,7 @@ export function buildConsumerBundle({ output, revision, starter = null }) {
   }
   writeFileSync(join(workflowRoot, 'design-workflow-command.yml'), caller);
 
-  copyFileSync(projectInstructionsPath, join(outputRoot, 'ChatGPT-Project-Instructions.md'));
+  copyFileSync(projectInstructionsPath, join(outputRoot, projectInstructionsFilename));
   copyFileSync(projectConfigTemplatePath, join(outputRoot, 'design-workflow.config.template.json'));
 
   if (starter === 'astro') {
@@ -121,14 +121,14 @@ export function buildConsumerBundle({ output, revision, starter = null }) {
   }
 
   const manifest = {
-    bundleFormatVersion: 4,
+    bundleFormatVersion: 5,
     starter,
     installationModel: 'external-pinned-toolkit',
     toolkitRepository,
     toolkitRevision: revision,
     repositoryUploadRoot: 'repository/',
     remoteCaller: 'repository/.github/workflows/design-workflow-command.yml',
-    projectInstructions: 'ChatGPT-Project-Instructions.md',
+    projectInstructions: projectInstructionsFilename,
     projectConfigTemplate: 'design-workflow.config.template.json',
   };
   writeFileSync(

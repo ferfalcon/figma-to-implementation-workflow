@@ -2,7 +2,7 @@
 
 Turn a Figma design into working frontend code through ChatGPT — entirely online.
 
-No local development environment is required. You do not need to clone the repository, open a terminal, install Node.js, or run a package manager to get your first working implementation.
+You can start without a local development environment. You do not need to clone the repository, open a terminal, install Node.js, or run a package manager to get your first working implementation.
 
 The workflow uses ChatGPT as the interface between your design, your GitHub repository, and the services needed to build, verify, and preview the result.
 
@@ -10,7 +10,7 @@ The workflow uses ChatGPT as the interface between your design, your GitHub repo
 
 1. **Choose the GitHub repository you want to use.**
 2. **Create a ChatGPT Project.**
-3. **Copy the project instructions into the Project Instructions.** Use [`Project-settings--Instructions.md`](AI-project-settings.md).
+3. **Copy the project instructions into the Project Instructions.** Use [`Project-settings--Instructions.md`](Project-settings--Instructions.md).
 4. **Replace `<REPOSITORY_URL>` with your repository URL.**
 5. Start a chat and say:
 
@@ -81,7 +81,7 @@ If you want to understand, audit, or extend the system, the detailed contracts l
 
 The workflow engine, immutable toolkit binding, profiles, schemas, generated artifacts, release machinery, and compatibility rules are implementation concerns rather than onboarding requirements. Their detailed contracts remain in the workflow documentation and source tree.
 
-The consumer-facing Project Instructions are currently stored in [`AI-project-settings.md`](AI-project-settings.md) and are intended to become `Project-settings--Instructions.md`.
+The canonical consumer-facing installation artifact is [`Project-settings--Instructions.md`](Project-settings--Instructions.md). It contains the repository bootstrap locator and host/bootstrap rules; durable project values remain repository-owned.
 
 ## License
 

@@ -10,6 +10,7 @@ import { buildConsumerBundle } from './build-consumer-bundle.mjs';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const temp = mkdtempSync(join(tmpdir(), 'astro-starter-test-'));
 const revision = 'a'.repeat(40);
+const projectInstructionsFilename = 'Project-settings--Instructions.md';
 function read(path) { return readFileSync(path, 'utf8'); }
 try {
   const result = buildConsumerBundle({ output: join(temp, 'bundle'), revision, starter: 'astro' });
@@ -17,7 +18,7 @@ try {
   for (const path of [
     'package.json', 'package-lock.json', 'astro.config.mjs', 'tsconfig.json', '.gitignore',
     '.github/workflows/design-workflow-command.yml', '.github/workflows/validate-ui.yml',
-    '.starter-source.json', 'ChatGPT-Project-Instructions.md', 'design-workflow.config.template.json',
+    '.starter-source.json', projectInstructionsFilename, 'design-workflow.config.template.json',
     'src/pages/index.astro', 'src/pages/about.astro', 'src/layouts/Page.astro',
     'src/styles/global.css', 'public/mark.svg', 'public/horizon.svg',
     'playwright.config.ts', 'tests/site.spec.ts', 'scripts/validation-report.mjs',
@@ -39,7 +40,7 @@ try {
   assert.equal(JSON.parse(read(join(repo, '.starter-source.json'))).toolkitRevision, revision);
   assert(read(join(repo, '.github/workflows/design-workflow-command.yml')).includes('@' + revision));
   assert(!read(join(repo, 'README.md')).includes('<TOOLKIT_REVISION>'));
-  assert.equal(read(join(repo, 'ChatGPT-Project-Instructions.md')), read(join(root, 'AI-project-settings.md')));
+  assert.equal(read(join(repo, projectInstructionsFilename)), read(join(root, projectInstructionsFilename)));
   assert.equal(JSON.parse(read(join(repo, 'design-workflow.config.template.json'))).schemaVersion, 2);
   for (const absent of ['node_modules', 'dist', '.astro', 'docs/implementation-workflow', '.workflow']) assert(!existsSync(join(repo, absent)), absent);
   assert.throws(() => buildConsumerBundle({ output: root, revision, starter: 'astro' }), /toolkit sources/);
@@ -78,4 +79,4 @@ try {
 } finally {
   rmSync(temp, { recursive: true, force: true });
 }
-console.log('Astro starter generation, locked dependencies, immutable pins, output safety, and failing/stale check evidence passed.');
+console.log('Astro starter generation, canonical Project Instructions naming, locked dependencies, immutable pins, output safety, and failing/stale check evidence passed.');

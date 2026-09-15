@@ -1,6 +1,6 @@
 # Quickstart: Start the Implementation Workflow
 
-Use ordinary ChatGPT with connected plugins to turn a Figma design into working frontend code, a GitHub pull request, and verified implementation evidence. No local development environment is required to get started.
+Use ordinary ChatGPT with connected plugins to turn a Figma design into working frontend code, a GitHub pull request, and verified implementation evidence. You can get started without a local development environment.
 
 The only project information you need to configure before the first chat is the repository URL. Figma context, review style, deployment details, and other required information are established progressively when they become relevant.
 
@@ -8,7 +8,7 @@ The only project information you need to configure before the first chat is the 
 
 Choose the GitHub repository that will own the implementation.
 
-Create a ChatGPT Project, copy the Project Instructions template from [`Project-settings--Instructions.md`](AI-project-settings.md) into the Project Instructions, and replace only:
+Create a ChatGPT Project, copy [`Project-settings--Instructions.md`](Project-settings--Instructions.md) into the Project Instructions, and replace only:
 
 ```text
 <REPOSITORY_URL>
@@ -124,6 +124,6 @@ The maintained Astro starter and release bundle remain useful to maintainers, re
 
 ### Manual fallback: thin consumer bundle
 
-Maintainers can still generate the thin caller and instructions for an existing repository. It does not include application scaffolding or vendor the toolkit. See the [CLI reference](cli/README.md) for direct installation and bundle generation.
+Maintainers can still generate the thin caller and canonical Project Instructions for an existing repository. It does not include application scaffolding or vendor the toolkit. See the [CLI reference](cli/README.md) for direct installation and bundle generation.
 
 Detailed agent behavior for capability checks, review styles, assets, recovery, and preview evidence is owned by [ChatGPT Experience](workflow/ChatGPT-Experience.md).
