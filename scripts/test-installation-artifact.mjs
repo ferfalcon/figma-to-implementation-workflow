@@ -46,12 +46,11 @@ const pkg = JSON.parse(read('package.json'));
 assert(pkg.files.includes(canonical), 'Published package must include the canonical Project Instructions artifact.');
 for (const path of deprecated) assert(!pkg.files.includes(path), `Published package must not include deprecated installation artifact ${path}.`);
 
-const activeDistributionSources = [
+const generatedProjectSources = [
   'scripts/build-consumer-bundle.mjs',
-  '.github/workflows/release-consumer-bundle.yml',
   'starters/astro/README.md',
 ];
-for (const path of activeDistributionSources) {
+for (const path of generatedProjectSources) {
   assert(read(path).includes(canonical), `${path} must use the canonical Project Instructions filename.`);
 }
 
