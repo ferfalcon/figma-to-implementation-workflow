@@ -27,8 +27,7 @@
     "templates",
     "tests",
     "workflow",
-    "starters",
-    "release"
+    "starters"
   ],
   "scripts": {
     "prepack": "node scripts/package-toolkit-provenance.mjs write",
@@ -74,8 +73,7 @@
     "test:package": "node scripts/test-package-manifest.mjs",
     "build:astro-starter": "node scripts/build-consumer-bundle.mjs --starter astro",
     "test:product": "node scripts/test-product-experience.mjs",
-    "test:starter": "node scripts/test-astro-starter.mjs",
-    "check:release-readiness": "node scripts/check-release-readiness.mjs"
+    "test:starter": "node scripts/test-astro-starter.mjs"
   },
   "engines": {
     "node": ">=22"
