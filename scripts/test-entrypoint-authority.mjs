@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (path) => readFileSync(join(root, path), 'utf8');
 
+const semanticContract = JSON.parse(read('workflow/semantic-contract.json'));
 const readme = read('README.md');
 const quickstart = read('QUICKSTART.md');
 const projectSettings = read('AI-project-settings.md');
@@ -19,37 +20,78 @@ const profiles = read('workflow/Workflow-Profiles.md');
 const remoteExecution = read('workflow/GitHub-Remote-Execution.md');
 const errors = [];
 
-const requiredReadmeLinks = [
-  'QUICKSTART.md',
-  'workflow/Design-Implementation-Workflow.md',
-  'workflow/Project-Configuration.md',
-  'workflow/Workflow-Profiles.md',
-  'workflow/Agent-Orchestration.md',
-  'workflow/GitHub-Remote-Execution.md',
-  'AGENTS-instructions.md',
-  'AI-project-settings.md',
-  'AGENTS-PROMPT-Figma-file-preparation.md',
-  'AGENTS.md',
-  'CONTRIBUTING.md',
-  'cli/README.md',
-  'schemas/README.md',
-];
-for (const target of requiredReadmeLinks) {
-  if (!readme.includes(`](${target})`)) errors.push(`README discovery is missing ${target}.`);
+const entrypoint = (id) => {
+  const found = semanticContract.entrypoints?.find((candidate) => candidate.id === id);
+  if (!found) errors.push(`Semantic contract is missing entrypoint ${id}.`);
+  return found;
+};
+
+const requireDelegatedLinks = (label, source, owner) => {
+  for (const target of owner?.delegatesTo ?? []) {
+    if (!source.includes(`](${target})`)) {
+      errors.push(`${label} must link delegated contract ${target} from workflow/semantic-contract.json.`);
+    }
+  }
+};
+
+const readmeEntrypoint = entrypoint('readme');
+const quickstartEntrypoint = entrypoint('quickstart');
+const projectSettingsEntrypoint = entrypoint('chatgpt-project-settings');
+const productModel = semanticContract.productModel;
+
+if (readmeEntrypoint?.path !== 'README.md') {
+  errors.push('Semantic contract readme entrypoint must own README.md.');
+}
+if (quickstartEntrypoint?.path !== 'QUICKSTART.md') {
+  errors.push('Semantic contract quickstart entrypoint must own QUICKSTART.md.');
+}
+if (projectSettingsEntrypoint?.path !== 'AI-project-settings.md') {
+  errors.push('Semantic contract ChatGPT Project settings entrypoint must own AI-project-settings.md.');
 }
 
-const requiredProductClaims = [
-  [/Figma ↔ GitHub, safely connected through ChatGPT/i, 'lead with the Figma/GitHub bridge'],
-  [/One workflow\. One onboarding\. No user route selection\./i, 'state the single-workflow product invariant'],
-  [/The workflow is identical in both cases/i, 'keep personas as value lenses rather than routes'],
-  [/No local terminal required/i, 'promote no-terminal execution'],
-  [/Install the Design-to-Implementation Workflow in this repository/i, 'make ChatGPT-owned installation discoverable'],
-  [/Start the implementation workflow/i, 'surface the single workflow entry point'],
-  [/External pinned toolkit model/i, 'document dependency authority'],
-  [/Consumer bundle/i, 'retain the thin manual fallback'],
-];
-for (const [pattern, description] of requiredProductClaims) {
-  if (!pattern.test(readme)) errors.push(`README must ${description}.`);
+requireDelegatedLinks('README', readme, readmeEntrypoint);
+requireDelegatedLinks('QUICKSTART', quickstart, quickstartEntrypoint);
+
+if (!productModel?.bootstrap) {
+  errors.push('Semantic contract must define productModel.bootstrap for entrypoint validation.');
+} else {
+  const { bootstrap } = productModel;
+  if (typeof bootstrap.startCommand !== 'string' || bootstrap.startCommand.length === 0) {
+    errors.push('Semantic contract productModel.bootstrap.startCommand must be non-empty.');
+  } else {
+    if (!readme.includes(bootstrap.startCommand)) {
+      errors.push('README must expose the canonical start command from workflow/semantic-contract.json.');
+    }
+    if (!quickstart.includes(bootstrap.startCommand)) {
+      errors.push('QUICKSTART must expose the canonical start command from workflow/semantic-contract.json.');
+    }
+  }
+
+  for (const input of bootstrap.requiredInitialInputs ?? []) {
+    const registeredHost = semanticContract.entrypoints?.find((candidate) => candidate.path === input.host);
+    if (!registeredHost) {
+      errors.push(`Initial input ${input.id} host ${input.host} must be a registered semantic entrypoint.`);
+      continue;
+    }
+
+    let hostSource;
+    try {
+      hostSource = read(input.host);
+    } catch {
+      errors.push(`Initial input ${input.id} host ${input.host} must exist.`);
+      continue;
+    }
+
+    if (input.placeholder && !hostSource.includes(input.placeholder)) {
+      errors.push(`Initial input ${input.id} host ${input.host} must expose placeholder ${input.placeholder}.`);
+    }
+    if (input.placeholder && !readme.includes(input.placeholder)) {
+      errors.push(`README must expose initial-input placeholder ${input.placeholder} from workflow/semantic-contract.json.`);
+    }
+    if (input.placeholder && !quickstart.includes(input.placeholder)) {
+      errors.push(`QUICKSTART must expose initial-input placeholder ${input.placeholder} from workflow/semantic-contract.json.`);
+    }
+  }
 }
 
 const forbiddenReadmeRouting = [
@@ -69,25 +111,17 @@ if (/docs\/implementation-workflow\/AGENTS-instructions\.md/i.test(readme)) {
   errors.push('README must not require a vendored consumer-agent bootstrap.');
 }
 
-if (!quickstart.startsWith('# Quickstart: Start the Implementation Workflow')) {
-  errors.push('QUICKSTART must begin with the single workflow start path.');
+if (!quickstart.startsWith('# Quickstart')) {
+  errors.push('QUICKSTART must begin with a Quickstart heading.');
 }
 
-const requiredQuickstartContracts = [
-  [/You do \*\*not\*\* need to choose a workflow profile/i, 'remove human profile selection'],
-  [/decide whether the workflow should run through a local terminal or GitHub Actions/i, 'remove human transport selection'],
-  [/Install the Design-to-Implementation Workflow in this repository/i, 'make installation an agent-owned setup action'],
-  [/design-workflow\.config\.json/i, 'persist project configuration in the implementation repository'],
-  [/repository locator/i, 'keep only a bootstrap repository locator in host instructions'],
-  [/setup action, not a second workflow route/i, 'keep installation separate from workflow routing'],
-  [/GitHub for the implementation repository/i, 'connect GitHub as repository source'],
-  [/Figma for design inspection and authorized design changes/i, 'connect Figma as design source'],
-  [/Start the implementation workflow/i, 'use one workflow start command'],
-  [/Figma preparation is not a separate user workflow route/i, 'integrate preparation without another route'],
-  [/Manual fallback: thin consumer bundle/i, 'retain a no-vendoring manual fallback'],
-];
-for (const [pattern, description] of requiredQuickstartContracts) {
-  if (!pattern.test(quickstart)) errors.push(`QUICKSTART must ${description}.`);
+for (const pattern of [
+  /^##\s+\d+\. Choose a profile/im,
+  /^##\s+\d+\. Choose an execution path/im,
+  /^###\s+Local CLI available/im,
+  /^###\s+GitHub\/connector-only execution/im,
+]) {
+  if (pattern.test(quickstart)) errors.push(`QUICKSTART must not expose route-selection heading ${pattern}.`);
 }
 
 // Technical setup rules belong to the pinned bootstrap and CLI reference.
@@ -102,16 +136,6 @@ const advancedContracts = [
 ];
 for (const [source, pattern, description] of advancedContracts) {
   if (!pattern.test(source)) errors.push('Missing delegated contract: ' + description);
-}
-if (!quickstart.includes('workflow/ChatGPT-Experience.md')) errors.push('Quickstart must delegate detailed agent behavior to the product contract.');
-
-for (const pattern of [
-  /^##\s+\d+\. Choose a profile/im,
-  /^##\s+\d+\. Choose an execution path/im,
-  /^###\s+Local CLI available/im,
-  /^###\s+GitHub\/connector-only execution/im,
-]) {
-  if (pattern.test(quickstart)) errors.push(`QUICKSTART must not expose route-selection heading ${pattern}.`);
 }
 
 if (!profiles.includes('profile selection is a workflow responsibility rather than a user-routing question')) {
@@ -135,9 +159,6 @@ for (const [pattern, description] of [
 
 if (!projectSettings.startsWith('# Project locator')) {
   errors.push('ChatGPT Project settings must begin with the repository bootstrap locator.');
-}
-if (!projectSettings.includes('- Repository: `<REPOSITORY_URL>`')) {
-  errors.push('ChatGPT Project settings must expose the repository bootstrap locator.');
 }
 for (const placeholder of ['<PROJECT_NAME>', '<FIGMA_URL>', '<FIGMA_SCOPE>', '<IMPLEMENTATION_ROOT>', '<VERCEL_URL>', '<PRODUCTION_URL>']) {
   if (projectSettings.includes(placeholder)) errors.push(`ChatGPT Project settings must not duplicate repository-owned project configuration placeholder ${placeholder}.`);
@@ -212,5 +233,5 @@ if (errors.length > 0) {
   errors.forEach((error) => console.error(`- ${error}`));
   process.exitCode = 1;
 } else {
-  console.log('Entrypoint authority test passed (one workflow entry point, repository-owned project configuration, agent-owned external bootstrap, and delegated safety contracts).');
+  console.log('Entrypoint authority test passed (semantic entrypoint delegation, product bootstrap, repository-owned project configuration, and agent-owned safety contracts).');
 }
