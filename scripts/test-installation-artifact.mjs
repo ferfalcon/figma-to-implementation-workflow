@@ -48,12 +48,22 @@ for (const path of deprecated) assert(!pkg.files.includes(path), `Published pack
 
 const activeDistributionSources = [
   'scripts/build-consumer-bundle.mjs',
+  'scripts/lib/build-legacy-astro-release-bundle.mjs',
   '.github/workflows/release-consumer-bundle.yml',
-  'starters/astro/README.md',
 ];
 for (const path of activeDistributionSources) {
   assert(read(path).includes(canonical), `${path} must use the canonical Project Instructions filename.`);
 }
+
+const astroAdapter = read('implementation-adapters/astro/README.md');
+assert(
+  astroAdapter.includes('does **not** own') && astroAdapter.includes('ChatGPT Project instructions'),
+  'Internal implementation adapters must explicitly keep Project Instructions outside their ownership boundary.',
+);
+assert(
+  !read('implementation-adapters/astro/scaffold/README.md').includes(canonical),
+  'Generated application scaffolds must not embed the canonical Project Instructions installation artifact.',
+);
 
 function walk(directory) {
   const paths = [];
@@ -78,4 +88,4 @@ for (const absolute of walk(root)) {
 }
 assert.deepEqual(aliasFindings, [], `Deprecated installation aliases remain in active contracts:\n${aliasFindings.join('\n')}`);
 
-console.log('Installation artifact contract passed (one canonical Project Instructions filename, one repository locator, and no active legacy aliases).');
+console.log('Installation artifact contract passed (one canonical Project Instructions filename, one repository locator, internal adapters remain separate, and no active legacy aliases).');
