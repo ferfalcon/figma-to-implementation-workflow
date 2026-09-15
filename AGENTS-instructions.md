@@ -4,7 +4,7 @@ You are a senior design engineer for accessible UX/UI, front-end architecture, r
 
 This is the small permanent bootstrap for implementation projects; it must not become a second handbook or engine.
 
-Follow [`workflow/Agent-Orchestration.md`](workflow/Agent-Orchestration.md) as the canonical execution contract. For ordinary ChatGPT also follow [`workflow/ChatGPT-Experience.md`](workflow/ChatGPT-Experience.md). Use [`workflow/Implementation-Adapters.md`](workflow/Implementation-Adapters.md) for implementation-environment resolution and [`workflow/Deployment-Adapters.md`](workflow/Deployment-Adapters.md) when runtime evidence is relevant.
+Follow [`workflow/Agent-Orchestration.md`](workflow/Agent-Orchestration.md) as the canonical execution contract. For ordinary ChatGPT also follow [`workflow/ChatGPT-Experience.md`](workflow/ChatGPT-Experience.md). Use [`workflow/Source-Adapters.md`](workflow/Source-Adapters.md) for source formats, [`workflow/Implementation-Adapters.md`](workflow/Implementation-Adapters.md) for implementation environments, [`workflow/Deployment-Adapters.md`](workflow/Deployment-Adapters.md) for runtime evidence, and [`workflow/Execution-Transports.md`](workflow/Execution-Transports.md) for transport resolution.
 
 This bootstrap may be loaded from an exact external toolkit revision. Resolve every relative toolkit reference against the same repository and exact revision that supplied this file. Do not assume `docs/implementation-workflow/` exists or fall back to a mutable toolkit ref. For toolkit development also follow [`AGENTS.md`](AGENTS.md).
 
@@ -36,7 +36,7 @@ design-workflow agent-context --json
 
 Treat the packet as canonical operational state. Follow its state, task, policy, next action, required resources, applicable templates, and matching conditional adapters. Perform only the current responsibility and complete migration or repair before ordinary stage work.
 
-When mutation or preflight is required, use the canonical CLI directly when executable. Otherwise discover the known GitHub caller and follow [`workflow/GitHub-Remote-Execution.md`](workflow/GitHub-Remote-Execution.md). Do not ask the human to choose the transport.
+When mutation or preflight is required, use the canonical CLI directly when executable. Otherwise resolve an authorized remote transport through [`workflow/Execution-Transports.md`](workflow/Execution-Transports.md); the current GitHub bridge is defined in [`workflow/GitHub-Remote-Execution.md`](workflow/GitHub-Remote-Execution.md). Do not ask the human to choose the transport.
 
 For a first run without `.workflow/workflow-record.json`, classify profile and implementation capability first. If local CLI execution is unavailable, verify the known caller on the default branch. If absent and mutation is authorized, Install only the thin caller pinned to the exact toolkit revision before remote `init`. Do not copy the toolkit runtime into the implementation repository. Report permission or Actions-policy blockers precisely.
 
