@@ -19,22 +19,19 @@
     "README.md",
     "cli",
     "deployment-adapters",
-    "examples",
     "guidelines",
     "implementation-adapters",
     "prompts",
     "schemas",
-    "scripts",
     "source-adapters",
     "templates",
-    "tests",
-    "workflow",
-    "starters"
+    "workflow"
   ],
   "scripts": {
     "prepack": "node scripts/package-toolkit-provenance.mjs write",
     "postpack": "node scripts/package-toolkit-provenance.mjs clean",
     "build:consumer-bundle": "node scripts/build-consumer-bundle.mjs",
+    "materialize:astro-fixture": "node scripts/materialize-astro-fixture.mjs",
     "validate": "node scripts/run-validation-suite.mjs",
     "generate:semantic-contract": "node scripts/generate-semantic-contract.mjs",
     "test:semantic-contract": "node scripts/test-semantic-contract.mjs",
@@ -75,9 +72,8 @@
     "test:github-remote": "node scripts/test-github-remote-command.mjs && node scripts/test-github-remote-authorization.mjs && node scripts/test-github-remote-paths.mjs",
     "test:action-pinning": "node scripts/test-github-actions-pinning.mjs",
     "test:package": "node scripts/test-package-manifest.mjs",
-    "build:astro-starter": "node scripts/build-consumer-bundle.mjs --starter astro",
     "test:product": "node scripts/test-product-experience.mjs",
-    "test:starter": "node scripts/test-astro-starter.mjs"
+    "test:astro-fixture": "node scripts/test-astro-starter.mjs"
   },
   "engines": {
     "node": ">=22"
