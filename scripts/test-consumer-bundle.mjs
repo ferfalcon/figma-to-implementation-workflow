@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { spawnSync } from 'node:child_process';
 import {
   existsSync,
   mkdtempSync,
@@ -20,6 +21,16 @@ const errors = [];
 
 try {
   buildConsumerBundle({ output, revision });
+
+  const legacyCli = spawnSync(process.execPath, [
+    join(root, 'scripts/build-consumer-bundle.mjs'),
+    '--starter', 'astro',
+    '--revision', revision,
+    '--output', join(tempRoot, 'legacy-cli'),
+  ], { encoding: 'utf8' });
+  if (legacyCli.status === 0 || !`${legacyCli.stderr}${legacyCli.stdout}`.includes('Unknown argument: --starter')) {
+    errors.push('Consumer bundle CLI must not expose application starter selection.');
+  }
 
   const requiredFiles = [
     projectInstructionsFilename,
