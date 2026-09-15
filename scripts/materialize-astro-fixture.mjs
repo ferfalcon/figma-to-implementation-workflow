@@ -6,17 +6,16 @@ import {
   cpSync,
   readFileSync,
   readdirSync,
-  renameSync,
   rmSync,
   writeFileSync,
 } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { buildAstroScaffold } from './build-astro-scaffold.mjs';
 import { buildConsumerBundle } from './build-consumer-bundle.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const toolkitRepository = 'ferfalcon/figma-to-implementation-workflow';
-const starterRoot = join(root, 'starters', 'astro');
 const projectInstructionsFilename = 'Project-settings--Instructions.md';
 const projectInstructionsPath = join(root, projectInstructionsFilename);
 const projectConfigTemplatePath = join(root, 'templates', 'design-workflow.config.template.json');
@@ -61,15 +60,11 @@ export function materializeAstroFixture({ output, revision }) {
     rmSync(join(outputRoot, path), { force: true });
   }
 
-  const ignored = new Set([
-    'node_modules', 'dist', '.astro', '.vercel', 'playwright-report', 'test-results', 'validation-result.json',
-  ]);
-  cpSync(starterRoot, repositoryRoot, {
-    recursive: true,
-    filter: (path) => !path.slice(starterRoot.length).split(/[\\/]/).some((part) => ignored.has(part)),
-  });
-  renameSync(join(repositoryRoot, 'package-lock.template.json'), join(repositoryRoot, 'package-lock.json'));
-  renameSync(join(repositoryRoot, 'gitignore.template'), join(repositoryRoot, '.gitignore'));
+  const scaffoldOutput = join(outputRoot, '.astro-scaffold');
+  buildAstroScaffold({ output: scaffoldOutput });
+  cpSync(scaffoldOutput, repositoryRoot, { recursive: true });
+  rmSync(scaffoldOutput, { recursive: true, force: true });
+
   copyFileSync(join(root, 'LICENSE'), join(repositoryRoot, 'LICENSE'));
 
   const readmePath = join(repositoryRoot, 'README.md');

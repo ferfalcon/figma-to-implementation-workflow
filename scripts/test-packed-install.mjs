@@ -102,7 +102,14 @@ try {
   ]) {
     assert(existsSync(join(installedRoot, path)), `Packed runtime is missing ${path}.`);
   }
-  for (const path of ['AGENTS-INIT.md', 'examples', 'scripts', 'starters', 'tests']) {
+  for (const path of [
+    'AGENTS-INIT.md',
+    'examples',
+    'scripts',
+    'starters',
+    'tests',
+    'implementation-adapters/astro/scaffold',
+  ]) {
     assert(!existsSync(join(installedRoot, path)), `Packed runtime must exclude source-only ${path}.`);
   }
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { stageResources } from '../cli/lib/orchestration-resources.mjs';
@@ -66,6 +66,16 @@ assert(astro.includes('Adapter ID: `astro-typescript`'));
 assert(astro.includes('Support level: `maintained`'));
 assert(astro.includes('Do not use this adapter to replace an existing non-Astro application'));
 assert(astro.includes('creating application files is Stage 10 implementation work'));
+assert(astro.includes('implementation-adapters/astro/scaffold/'));
+assert(astro.includes('intentionally excluded from the packaged workflow runtime'));
+assert(
+  existsSync(join(root, 'implementation-adapters', 'astro', 'scaffold', 'package.json')),
+  'Maintained Astro scaffold source must live under the Astro adapter boundary.',
+);
+assert(
+  !existsSync(join(root, 'starters', 'astro')),
+  'The obsolete public-starter source path must not return.',
+);
 
 const existing = read('implementation-adapters/EXISTING-FRAMEWORK.md');
 assert(existing.includes('Adapter ID: `existing-framework`'));
@@ -147,4 +157,4 @@ assert(
   'Semantic contract must register implementation adapters as a canonical domain.',
 );
 
-console.log('Implementation adapter tests passed (repository-driven selection, maintained/best-effort boundaries, Stage 10 scaffolding, optional deployment, and adapter-aware validation).');
+console.log('Implementation adapter tests passed (repository-driven selection, maintained/best-effort boundaries, internal Astro scaffold ownership, optional deployment, and adapter-aware validation).');

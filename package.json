@@ -20,7 +20,8 @@
     "cli",
     "deployment-adapters",
     "guidelines",
-    "implementation-adapters",
+    "implementation-adapters/ASTRO.md",
+    "implementation-adapters/EXISTING-FRAMEWORK.md",
     "prompts",
     "schemas",
     "source-adapters",
@@ -31,6 +32,7 @@
     "prepack": "node scripts/package-toolkit-provenance.mjs write",
     "postpack": "node scripts/package-toolkit-provenance.mjs clean",
     "build:consumer-bundle": "node scripts/build-consumer-bundle.mjs",
+    "build:astro-scaffold": "node scripts/build-astro-scaffold.mjs",
     "materialize:astro-fixture": "node scripts/materialize-astro-fixture.mjs",
     "validate": "node scripts/run-validation-suite.mjs",
     "generate:semantic-contract": "node scripts/generate-semantic-contract.mjs",
@@ -73,7 +75,8 @@
     "test:action-pinning": "node scripts/test-github-actions-pinning.mjs",
     "test:package": "node scripts/test-package-manifest.mjs",
     "test:product": "node scripts/test-product-experience.mjs",
-    "test:astro-fixture": "node scripts/test-astro-starter.mjs"
+    "test:astro-scaffold": "node scripts/test-astro-scaffold.mjs",
+    "test:astro-fixture": "node scripts/test-astro-fixture.mjs"
   },
   "engines": {
     "node": ">=22"

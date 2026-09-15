@@ -48,7 +48,13 @@ const missingAreas = requiredAreas.filter((area) => (
 if (missingAreas.length > 0) throw new Error(`Package is missing required runtime areas: ${missingAreas.join(', ')}`);
 if (existsSync(provenancePath)) throw new Error('npm postpack must remove the transient source-tree toolkit provenance file.');
 
-const forbiddenPrefixes = ['examples/', 'scripts/', 'starters/', 'tests/'];
+const forbiddenPrefixes = [
+  'examples/',
+  'scripts/',
+  'starters/',
+  'tests/',
+  'implementation-adapters/astro/scaffold/',
+];
 const forbiddenExact = new Set(['AGENTS-INIT.md']);
 const forbidden = [...files].filter((path) => (
   path.startsWith('node_modules/')
@@ -95,4 +101,4 @@ for (const file of [...files].filter((path) => extname(path).toLowerCase() === '
 }
 if (broken.length > 0) throw new Error(`Packaged relative Markdown links do not resolve:\n${broken.map((item) => `- ${item}`).join('\n')}`);
 
-console.log(`Package manifest tests passed (${files.size} runtime files, ${report.unpackedSize} unpacked bytes; development examples, scripts, tests, Astro fixture, and obsolete bootstrap alias excluded; all relative Markdown links resolved).`);
+console.log(`Package manifest tests passed (${files.size} runtime files, ${report.unpackedSize} unpacked bytes; development examples, scripts, tests, Astro scaffold fixture, and obsolete bootstrap alias excluded; all relative Markdown links resolved).`);

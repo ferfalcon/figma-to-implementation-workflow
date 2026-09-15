@@ -1,4 +1,4 @@
-name: Validate Astro fixture
+name: Validate Astro implementation scaffold
 on:
   pull_request:
   push:
@@ -6,10 +6,10 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: astro-fixture-${{ github.event.pull_request.number || github.ref }}
+  group: astro-scaffold-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 jobs:
-  fixture:
+  scaffold:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -27,32 +27,30 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
-          cache-dependency-path: starters/astro/package-lock.template.json
-      - name: Materialize the Astro development fixture
-        env:
-          TOOLKIT_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: node scripts/materialize-astro-fixture.mjs --revision "$TOOLKIT_REVISION"
-      - name: Validate generated package
-        working-directory: dist/astro-fixture/repository
+          cache-dependency-path: implementation-adapters/astro/scaffold/package-lock.template.json
+      - name: Generate the implementation scaffold
+        run: node scripts/build-astro-scaffold.mjs --output dist/astro-scaffold
+      - name: Install scaffold dependencies
+        working-directory: dist/astro-scaffold
         run: npm ci
       - name: Check types
-        working-directory: dist/astro-fixture/repository
+        working-directory: dist/astro-scaffold
         run: npm run check
       - name: Build production output
-        working-directory: dist/astro-fixture/repository
+        working-directory: dist/astro-scaffold
         run: npm run build
       - name: Install browser
-        working-directory: dist/astro-fixture/repository
+        working-directory: dist/astro-scaffold
         run: npx --no-install playwright install --with-deps chromium
       - name: Verify built pages
-        working-directory: dist/astro-fixture/repository
+        working-directory: dist/astro-scaffold
         run: npm run test:e2e
       - name: Save browser evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: astro-fixture-browser-node-${{ matrix.node-version }}
+          name: astro-scaffold-browser-node-${{ matrix.node-version }}
           path: |
-            dist/astro-fixture/repository/playwright-report/
-            dist/astro-fixture/repository/test-results/
+            dist/astro-scaffold/playwright-report/
+            dist/astro-scaffold/test-results/
           if-no-files-found: ignore
