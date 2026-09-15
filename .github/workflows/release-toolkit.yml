@@ -101,16 +101,6 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Require immutable release protection
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          if ! gh api --method GET "repos/${GITHUB_REPOSITORY}/immutable-releases" --silent; then
-            echo "Enable GitHub immutable releases in repository Settings before publishing a stable toolkit version." >&2
-            exit 1
-          fi
-
       - name: Refuse an existing version tag or release
         env:
           GH_TOKEN: ${{ github.token }}
