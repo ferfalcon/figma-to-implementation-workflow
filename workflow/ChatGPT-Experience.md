@@ -31,10 +31,10 @@ Verify capabilities at the point of use:
 | Capability | Verify when | Required evidence |
 |---|---|---|
 | GitHub read | Initial repository inspection | Successfully read the intended repository, its default branch, and existing project configuration or its confirmed absence. |
-| GitHub write | Before the first required repository mutation | Verify an authorized commit or equivalent write on the intended repository/ref. Do not perform a dummy production mutation solely to prove access. |
+| GitHub write | At the first required repository mutation | A successful authorized commit or equivalent write on the intended repository/ref. Do not perform a dummy production mutation solely to prove access. |
 | Figma read | Before design inspection | Successfully read the supplied/discovered file or frame, design context, and a screenshot; FigJam-only access is insufficient. |
-| Figma edit | Before the first authorized design-preparation mutation | Verify the actual edit operation within configured/explicitly authorized scope. Read access alone does not prove edit permission. |
-| Command bridge | Before the first canonical CLI mutation when direct execution is unavailable | Create an authorized canonical request and read its terminal result; merely seeing an issue tool is insufficient. |
+| Figma edit | At the first authorized design-preparation mutation | A successful permitted edit and readback within configured/explicitly authorized scope. Read access alone does not prove edit permission. |
+| Command bridge | At the first canonical CLI mutation when direct execution is unavailable | Create an authorized canonical request and read its terminal result; merely seeing an issue tool is insufficient. |
 | Actions | Before relying on remote command or automated validation evidence | Read the relevant workflow run and its job logs for the intended repository and commit. |
 | Preview provider | When configured preview evidence is required | Inspect the connected deployment project, deployment status/commit, and resulting URL. |
 
