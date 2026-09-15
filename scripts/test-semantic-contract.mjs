@@ -28,6 +28,36 @@ function byId(items) {
   return new Map(items.map((item) => [item.id, item]));
 }
 
+function clone(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+const missingProductModel = clone(contract);
+delete missingProductModel.productModel;
+assert.ok(
+  semanticContractFindings(missingProductModel).includes('productModel must be an object'),
+  'semantic validator must reject contracts without a product model',
+);
+
+const missingProgressiveInputs = clone(contract);
+delete missingProgressiveInputs.productModel.progressiveInputs;
+assert.ok(
+  semanticContractFindings(missingProgressiveInputs).includes('productModel.progressiveInputs must be an array'),
+  'semantic validator must reject product models without progressive input classification',
+);
+
+const overlappingInputLifecycle = clone(contract);
+overlappingInputLifecycle.productModel.progressiveInputs.push({
+  id: 'repository-url',
+  requirement: 'required',
+  neededBy: 'workflow-initialization',
+  resolution: 'discover-or-ask',
+});
+assert.ok(
+  semanticContractFindings(overlappingInputLifecycle).includes('input id cannot be both initial and progressive: repository-url'),
+  'semantic validator must keep initial and progressive input lifecycles disjoint',
+);
+
 const productModel = contract.productModel;
 assert.equal(productModel.surface, 'ordinary-chatgpt');
 assert.equal(productModel.bootstrap.localDevelopmentRequired, false);
