@@ -8,16 +8,14 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 
 ### Added
 
-- Maintained Astro + strict TypeScript starter with native CSS/interactions, committed assets, locked dependencies, desktop/mobile Playwright and accessibility checks, exact-commit validation reports, and generated template/release packaging.
+- Maintained Astro + strict TypeScript starter with native CSS/interactions, committed assets, locked dependencies, desktop/mobile Playwright and accessibility checks, and exact-commit validation reports.
 - Configuration v2 with saved review style and working branch, v1 compatibility, and read-only local/remote `project check --json`.
 - Ordinary-ChatGPT capability checks, concise onboarding, both review preferences using existing execution modes, and recovery/asset/preview guidance.
-- Acceptance evidence for both personas and review styles, recorded setup metrics, and a publication gate that requires real personal-ChatGPT sessions on unchanged source.
-- Companion-template publisher with generated-file provenance, non-force updates, and rejection of unexpected or concurrent template edits.
+- Acceptance evidence for both personas and review styles, recorded setup metrics, and real personal-ChatGPT sessions tied to exact toolkit and preview evidence.
 
 - Repository-root `design-workflow.config.json` as canonical persistent project configuration shared across chats/users/agents, with schema, template, authority contract, and regression coverage.
-- `Project-settings--Instructions.md` as the single canonical ChatGPT installation artifact, with regression coverage that rejects active legacy instruction aliases across product, package, starter, bundle, and release surfaces.
+- `Project-settings--Instructions.md` as the single canonical ChatGPT installation artifact, with regression coverage that rejects active legacy instruction aliases across product, package, starter, and bundle surfaces.
 - Generated consumer bundle tooling that produces an upload-ready repository payload, canonical Project Instructions, the project-configuration template, a bundle manifest, and an exact immutable GitHub remote-executor pin.
-- Release automation that publishes the consumer bundle, canonical Project Instructions, and project-configuration template as release assets from the exact released toolkit commit.
 - Regression coverage that enforces one human workflow entry point, agent-owned profile/transport resolution, and consumer-bundle integrity.
 - GitHub Issue command transport plus a pinned reusable Actions executor for connector-first preflight and canonical CLI-owned workflow mutations against exact expected heads and pinned toolkit revisions.
 - Remote-execution regression coverage for requester permissions, command allowlisting, stale heads, rollback, runtime resolution, read-only preflight, shell/path injection boundaries, filesystem containment, and non-force mutation.
@@ -45,7 +43,7 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 
 - Brief and final preview uses Continuous documentation through planning, then Task-by-task only after explicit approval of the implementation scope; Every stage retains Gated mode.
 - Task completion can retain the tested implementation commit after later workflow bookkeeping, only when every intervening commit touches workflow-managed paths. Later application changes, including reverted edits, reject stale completion.
-- Consumer bundle format advances to v5, uses the canonical `Project-settings--Instructions.md` filename throughout generated outputs and release assets, and includes an optional maintained Astro starter; CLI dependencies remain unchanged.
+- Consumer bundle format advances to v5, uses the canonical `Project-settings--Instructions.md` filename throughout generated outputs, and includes an optional maintained Astro starter; CLI dependencies remain unchanged.
 - Root toolkit-development instructions are restored and README onboarding/license contracts are reconciled.
 
 - ChatGPT Project Instructions now keep only a repository bootstrap locator; project name, Figma source/scope, implementation root, and optional deployment targets move to repository-owned project configuration.
@@ -84,6 +82,10 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 - Recorded Implementation output commits reject workflow-managed files and parent the exact repository snapshot from which the task actually started.
 - `workflow/Agent-Orchestration.md` remains discoverable through the README reference map and is required by repository-contract validation.
 - Repository snapshots persist repository identity instead of machine-specific checkout paths. CLI-managed mutations and Git working-tree checks resolve local workspaces at runtime and canonicalize repository references before serialization.
+
+### Removed
+
+- Public starter/template publication through GitHub releases, including the release-readiness gate, companion-template publisher, repository acceptance gate file, release asset workflow, and Astro candidate ZIP artifact. Product acceptance remains maintainer QA and Astro build/browser validation remains internal.
 
 ## [0.3.0] — 2026-08-18
 
