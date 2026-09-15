@@ -6,7 +6,7 @@ This is the small permanent bootstrap for agents using the workflow in an implem
 
 Follow [`workflow/Agent-Orchestration.md`](workflow/Agent-Orchestration.md) as the canonical execution contract. Detailed execution rules belong to canonical resources.
 
-For ordinary ChatGPT, follow [the product experience](workflow/ChatGPT-Experience.md), including the saved review preference and working branch.
+For ordinary ChatGPT, follow [the product experience](workflow/ChatGPT-Experience.md), including the saved review preference and working branch. Follow [`workflow/Implementation-Adapters.md`](workflow/Implementation-Adapters.md) when resolving the implementation environment from repository evidence.
 
 This bootstrap may be loaded from an exact external toolkit revision instead of files copied into the implementation repository. Resolve every relative toolkit reference against the same repository and exact revision that supplied this file. Do not assume `docs/implementation-workflow/` exists, and never continue from a mutable ref after an exact bootstrap revision is resolved.
 
@@ -24,9 +24,13 @@ Read root `design-workflow.config.json` before substantive project work; it owns
 
 This contract governs CLI-managed execution. Markdown-only is a manual/scaffold mode, not an executable agent-orchestration mode. When Markdown-only is explicitly selected, agents may draft or review artifacts when asked but must not infer or claim current stage/task state, approvals, routing, or transitions. Its missing workflow record is intentional.
 
-For normal AI-assisted use, the human has one workflow entry point. Do not ask whether they are a designer or engineer, which workflow profile they prefer, or whether the workflow should use a local CLI versus GitHub Actions. Resolve those concerns from project evidence and available capabilities according to [`workflow/Agent-Orchestration.md`](workflow/Agent-Orchestration.md). User profession or tooling comfort must never change the canonical workflow.
+For normal AI-assisted use, the human has one workflow entry point. Do not ask whether they are a designer or engineer, which workflow profile they prefer, which implementation adapter they prefer, or whether the workflow should use a local CLI versus GitHub Actions. Resolve those concerns from project evidence and available capabilities according to [`workflow/Agent-Orchestration.md`](workflow/Agent-Orchestration.md) and [`workflow/Implementation-Adapters.md`](workflow/Implementation-Adapters.md). User profession or tooling comfort must never change the canonical workflow.
 
-Before first initialization, verify project configuration, then inspect enough of its design scope and implementation repository to classify the smallest valid profile under [`workflow/Workflow-Profiles.md`](workflow/Workflow-Profiles.md). If design-source preparation is materially required and safely authorized, use the canonical preparation procedure before the formal audit; preparation remains outside executable workflow state. Ask the user only when a genuine consequential decision or real capability blocker prevents safe progress.
+Before first initialization, verify project configuration, then inspect enough of its design scope and implementation repository to classify the smallest valid profile under [`workflow/Workflow-Profiles.md`](workflow/Workflow-Profiles.md) and resolve the implementation capability from the configured `repository.implementationRoot`. Record the adapter observation against the repository snapshot in the Stage 0 narrative owner; do not store adapter choice as executable workflow state or duplicate it into project configuration.
+
+Select the maintained `astro-typescript` adapter only when the implementation root is safely scaffoldable or already contains an Astro + TypeScript application. Preserve other existing frameworks with the best-effort `existing-framework` adapter. Unknown non-empty roots and multiple plausible application roots require further inspection or the consequential scope decision that cannot be inferred; never overwrite them merely to reach the maintained path. Resolving a scaffold adapter does not authorize application scaffolding before approved Stage 10 implementation work.
+
+If design-source preparation is materially required and safely authorized, use the canonical preparation procedure before the formal audit; preparation remains outside executable workflow state. Ask the user only when a genuine consequential decision or real capability blocker prevents safe progress.
 
 For an initialized CLI-managed project, prefer:
 
@@ -34,11 +38,11 @@ For an initialized CLI-managed project, prefer:
 design-workflow agent-context --json
 ```
 
-Treat the packet as canonical operational state. Follow its state/task/policy/next action, load only its required resources plus applicable missing-artifact templates and one matching conditional source adapter, resolve exact pinned toolkit locations, and perform only the current responsibility. Complete migration or repair before ordinary stage work.
+Treat the packet as canonical operational state. Follow its state/task/policy/next action, load only its required resources plus applicable missing-artifact templates, one matching conditional source adapter, and one matching conditional implementation adapter when repository-specific implementation guidance is needed. Resolve exact pinned toolkit locations and perform only the current responsibility. Complete migration or repair before ordinary stage work.
 
 When workflow mutation or preflight is needed, use the canonical CLI directly when executable. Otherwise discover only the known GitHub remote caller on the implementation repository's default branch and use [`workflow/GitHub-Remote-Execution.md`](workflow/GitHub-Remote-Execution.md). Do not ask the human to choose the transport.
 
-For a first-run project with no `.workflow/workflow-record.json`, classify the profile first. If local CLI execution is unavailable, do not wait for `AGENT-CONTEXT.json`; it does not exist yet. Verify the known caller on the default branch. When absent and repository mutation is authorized, follow **One-time repository installation** and **Remote-only first run** in [`workflow/GitHub-Remote-Execution.md`](workflow/GitHub-Remote-Execution.md). Install only the thin caller, pinned to the same exact toolkit revision that supplied this bootstrap, before remote `init`. Do not copy the toolkit runtime into the implementation repository. If permissions or Actions policy prevent installation, report the blocker.
+For a first-run project with no `.workflow/workflow-record.json`, classify the profile and implementation capability first. If local CLI execution is unavailable, do not wait for `AGENT-CONTEXT.json`; it does not exist yet. Verify the known caller on the default branch. When absent and repository mutation is authorized, follow **One-time repository installation** and **Remote-only first run** in [`workflow/GitHub-Remote-Execution.md`](workflow/GitHub-Remote-Execution.md). Install only the thin caller, pinned to the same exact toolkit revision that supplied this bootstrap, before remote `init`. Do not copy the toolkit runtime into the implementation repository. If permissions or Actions policy prevent installation, report the blocker.
 
 When a workflow record exists but the CLI cannot execute locally and GitHub files are available, use `.workflow/generated/AGENT-CONTEXT.json` as the read-only routing bootstrap. Before trusting it, compare `generated.recordGitBlobSha` with GitHub's `sha` for `.workflow/workflow-record.json` at the same ref. A missing/mismatched identity is stale or unverifiable; never parse the record to reconstruct workflow state. The installed remote transport may repair a stale projection through canonical `sync`.
 
@@ -49,6 +53,7 @@ Broader toolkit inspection is appropriate only for configuration setup, pre-init
 - Mutate executable workflow state only through `design-workflow` commands. Never manually edit `.workflow/workflow-record.json`.
 - Never manually edit `.workflow/generated/*`.
 - Never edit implementation code unless the current CLI packet or generated GitHub projection explicitly allows code edits for the current task scope.
+- Never scaffold or migrate an implementation environment merely because an adapter was resolved; scaffolding/migration must be inside approved task scope.
 - In Gated mode, never self-approve a gate or invent an approval actor; stop for explicit human approval.
 - In Continuous documentation mode, stop before Stage 10.
 - In Task-by-task mode, implement only the current unblocked task unless the workflow/user explicitly continues.
@@ -59,4 +64,4 @@ Broader toolkit inspection is appropriate only for configuration setup, pre-init
 
 ## Completion reporting
 
-For task-oriented responses, report what changed, relevant input/output identity when applicable, validation actually executed, deviations/blockers/risks, generated-state status when relevant, and the next action permitted by the packet/projection.
+For task-oriented responses, report what changed, relevant input/output identity when applicable, resolved implementation adapter/environment when material, validation actually executed, deviations/blockers/risks, generated-state status when relevant, and the next action permitted by the packet/projection.
