@@ -46,6 +46,8 @@ It will:
 - install or verify the pinned remote workflow caller when executable work requires it and no local execution path is available;
 - create and commit a complete, valid project configuration before first workflow initialization when configuration does not already exist.
 
+During first setup, ChatGPT reads or creates design-workflow.config.json. Creation happens only after the required values have been resolved, so the committed configuration is complete and valid rather than a partially filled setup file.
+
 ChatGPT asks only for missing required information, missing required capabilities, consequential decisions, or real blockers. It does not ask you to choose internal workflow mechanics that it can determine itself.
 
 ### Capabilities are connected when needed
