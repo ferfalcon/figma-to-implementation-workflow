@@ -1,3 +1,4 @@
+import { adapterEntries } from './adapter-catalog.mjs';
 import { toolkitBindingFromRecord, toolkitPromptSource } from './toolkit-binding.mjs';
 
 export const STAGE_PROMPTS = [
@@ -44,26 +45,20 @@ const TEMPLATE_BY_ARTIFACT_TYPE = new Map([
   ['IMPLEMENTATION-REVIEW', 'templates/IMPLEMENTATION-REVIEW.template.md'],
 ]);
 
-const SOURCE_ADAPTER_CHOICES = [
-  { format: 'figma', path: 'source-adapters/FIGMA.md' },
-  { format: 'screenshots', path: 'source-adapters/SCREENSHOTS.md' },
-  { format: 'pdf', path: 'source-adapters/PDF.md' },
-  { format: 'existing-website', path: 'source-adapters/EXISTING-WEBSITE.md' },
-  { format: 'mixed-sources', path: 'source-adapters/MIXED-SOURCES.md' },
-];
+const SOURCE_ADAPTER_CHOICES = adapterEntries('source').map(({ id, resource }) => ({
+  format: id,
+  path: resource,
+}));
 
-const IMPLEMENTATION_ADAPTER_CHOICES = [
-  {
-    adapter: 'astro-typescript',
-    support: 'maintained',
-    path: 'implementation-adapters/ASTRO.md',
-  },
-  {
-    adapter: 'existing-framework',
-    support: 'best-effort',
-    path: 'implementation-adapters/EXISTING-FRAMEWORK.md',
-  },
-];
+const IMPLEMENTATION_ADAPTER_CHOICES = adapterEntries('implementation').map(({
+  id,
+  support,
+  resource,
+}) => ({
+  adapter: id,
+  support,
+  path: resource,
+}));
 
 export function stageTargets(record) {
   const profile = record.project.profile;
