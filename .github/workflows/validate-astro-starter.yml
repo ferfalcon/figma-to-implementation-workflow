@@ -1,4 +1,4 @@
-name: Validate Astro starter
+name: Validate Astro fixture
 on:
   pull_request:
   push:
@@ -6,10 +6,10 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: starter-${{ github.event.pull_request.number || github.ref }}
+  group: astro-fixture-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 jobs:
-  starter:
+  fixture:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -28,31 +28,31 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: npm
           cache-dependency-path: starters/astro/package-lock.template.json
-      - name: Generate the consumer project
+      - name: Materialize the Astro development fixture
         env:
           TOOLKIT_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: node scripts/build-consumer-bundle.mjs --starter astro --revision "$TOOLKIT_REVISION"
+        run: node scripts/materialize-astro-fixture.mjs --revision "$TOOLKIT_REVISION"
       - name: Validate generated package
-        working-directory: dist/consumer-bundle/repository
+        working-directory: dist/astro-fixture/repository
         run: npm ci
       - name: Check types
-        working-directory: dist/consumer-bundle/repository
+        working-directory: dist/astro-fixture/repository
         run: npm run check
       - name: Build production output
-        working-directory: dist/consumer-bundle/repository
+        working-directory: dist/astro-fixture/repository
         run: npm run build
       - name: Install browser
-        working-directory: dist/consumer-bundle/repository
+        working-directory: dist/astro-fixture/repository
         run: npx --no-install playwright install --with-deps chromium
       - name: Verify built pages
-        working-directory: dist/consumer-bundle/repository
+        working-directory: dist/astro-fixture/repository
         run: npm run test:e2e
       - name: Save browser evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: starter-browser-node-${{ matrix.node-version }}
+          name: astro-fixture-browser-node-${{ matrix.node-version }}
           path: |
-            dist/consumer-bundle/repository/playwright-report/
-            dist/consumer-bundle/repository/test-results/
+            dist/astro-fixture/repository/playwright-report/
+            dist/astro-fixture/repository/test-results/
           if-no-files-found: ignore

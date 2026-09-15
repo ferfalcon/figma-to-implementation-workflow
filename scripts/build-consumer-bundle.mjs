@@ -2,15 +2,11 @@
 
 import {
   copyFileSync,
-  cpSync,
   mkdirSync,
   readFileSync,
-  readdirSync,
-  renameSync,
   rmSync,
   writeFileSync,
 } from 'node:fs';
-import { createHash } from 'node:crypto';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isPathWithin } from './lib/path-safety.mjs';
@@ -20,26 +16,18 @@ const toolkitRepository = 'ferfalcon/figma-to-implementation-workflow';
 const callerTemplatePath = join(root, 'templates', 'github', 'design-workflow-command.yml.template');
 const projectInstructionsFilename = 'Project-settings--Instructions.md';
 const projectInstructionsPath = join(root, projectInstructionsFilename);
-const starterRoot = join(root, 'starters', 'astro');
 const projectConfigTemplatePath = join(root, 'templates', 'design-workflow.config.template.json');
 
 function parseArgs(argv) {
   const options = {
     output: join(root, 'dist', 'consumer-bundle'),
     revision: process.env.GITHUB_SHA ?? null,
-    starter: null,
   };
 
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
     if (arg === '--output') {
       options.output = resolve(argv[index + 1]);
-      index += 1;
-      continue;
-    }
-    if (arg === '--starter') {
-      options.starter = argv[index + 1];
-      if (options.starter !== 'astro') throw new Error('Only the astro starter is supported.');
       index += 1;
       continue;
     }
@@ -58,8 +46,7 @@ function parseArgs(argv) {
   return options;
 }
 
-export function buildConsumerBundle({ output, revision, starter = null }) {
-  if (starter !== null && starter !== 'astro') throw new Error('Only the astro starter is supported.');
+export function buildConsumerBundle({ output, revision }) {
   if (!/^[0-9a-f]{40}$/i.test(revision ?? '')) {
     throw new Error('Consumer bundle revision must be an exact 40-character Git commit SHA.');
   }
@@ -68,7 +55,7 @@ export function buildConsumerBundle({ output, revision, starter = null }) {
   const repositoryRoot = join(outputRoot, 'repository');
   const workflowRoot = join(repositoryRoot, '.github', 'workflows');
 
-  if (isPathWithin(outputRoot, root) || isPathWithin(starterRoot, outputRoot)) {
+  if (isPathWithin(outputRoot, root)) {
     throw new Error('Bundle output must not replace toolkit sources.');
   }
   if (isPathWithin(root, outputRoot) && (outputRoot === join(root, 'dist') || !isPathWithin(join(root, 'dist'), outputRoot))) {
@@ -76,21 +63,6 @@ export function buildConsumerBundle({ output, revision, starter = null }) {
   }
   rmSync(outputRoot, { recursive: true, force: true });
   mkdirSync(workflowRoot, { recursive: true });
-
-  if (starter === 'astro') {
-    const ignored = new Set(['node_modules', 'dist', '.astro', '.vercel', 'playwright-report', 'test-results', 'validation-result.json']);
-    cpSync(starterRoot, repositoryRoot, {
-      recursive: true,
-      filter: (path) => !path.slice(starterRoot.length).split(/[\\/]/).some((part) => ignored.has(part)),
-    });
-    renameSync(join(repositoryRoot, 'package-lock.template.json'), join(repositoryRoot, 'package-lock.json'));
-    renameSync(join(repositoryRoot, 'gitignore.template'), join(repositoryRoot, '.gitignore'));
-    copyFileSync(join(root, 'LICENSE'), join(repositoryRoot, 'LICENSE'));
-    const readmePath = join(repositoryRoot, 'README.md');
-    writeFileSync(readmePath, readFileSync(readmePath, 'utf8').replaceAll('<TOOLKIT_REVISION>', revision));
-    copyFileSync(projectInstructionsPath, join(repositoryRoot, projectInstructionsFilename));
-    copyFileSync(projectConfigTemplatePath, join(repositoryRoot, 'design-workflow.config.template.json'));
-  }
 
   const callerTemplate = readFileSync(callerTemplatePath, 'utf8');
   const caller = callerTemplate.replaceAll('<REMOTE_EXECUTOR_REVISION>', revision);
@@ -102,27 +74,9 @@ export function buildConsumerBundle({ output, revision, starter = null }) {
   copyFileSync(projectInstructionsPath, join(outputRoot, projectInstructionsFilename));
   copyFileSync(projectConfigTemplatePath, join(outputRoot, 'design-workflow.config.template.json'));
 
-  if (starter === 'astro') {
-    const files = {};
-    const walk = (directory, prefix = '') => {
-      for (const item of readdirSync(directory, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
-        const path = prefix + item.name;
-        if (item.isDirectory()) walk(join(directory, item.name), path + '/');
-        else if (item.isFile()) {
-          const bytes = readFileSync(join(directory, item.name));
-          files[path] = createHash('sha1').update('blob ' + bytes.length + '\0').update(bytes).digest('hex');
-        } else throw new Error('Starter sources must contain regular files only.');
-      }
-    };
-    walk(repositoryRoot);
-    writeFileSync(join(repositoryRoot, '.starter-source.json'), JSON.stringify({
-      schemaVersion: 1, toolkitRepository, toolkitRevision: revision, starter: 'astro', files,
-    }, null, 2) + '\n');
-  }
-
   const manifest = {
     bundleFormatVersion: 5,
-    starter,
+    starter: null,
     installationModel: 'external-pinned-toolkit',
     toolkitRepository,
     toolkitRevision: revision,

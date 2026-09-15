@@ -166,4 +166,4 @@ npm run test:cli
 npm run test:package
 ```
 
-Golden migration fixtures live in [`../tests/fixtures/workflow-record.migration.v1.json`](../tests/fixtures/workflow-record.migration.v1.json) and [`../tests/fixtures/workflow-record.migration.v2.json`](../tests/fixtures/workflow-record.migration.v2.json).
+Golden migration fixtures are source-repository test assets under `tests/fixtures/` and are intentionally not part of the packaged runtime. Maintainers use `workflow-record.migration.v1.json` and `workflow-record.migration.v2.json` there to verify deterministic compatibility behavior.

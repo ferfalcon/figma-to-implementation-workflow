@@ -8,6 +8,11 @@ import { isPathWithin } from './lib/path-safety.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const provenancePath = join(root, 'cli', 'toolkit-provenance.json');
+const obsoleteBootstrapPath = join(root, 'AGENTS-INIT.md');
+if (existsSync(obsoleteBootstrapPath)) {
+  throw new Error('AGENTS-INIT.md is an obsolete duplicate bootstrap and must not exist in the source repository.');
+}
+
 const result = spawnSync('npm', ['pack', '--dry-run', '--json', '--silent'], {
   cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'],
 });
@@ -17,28 +22,43 @@ if (result.status !== 0) {
 
 const report = JSON.parse(result.stdout)[0];
 const files = new Set(report.files.map((item) => item.path.split('\\').join('/')));
+const maxRuntimeFiles = 175;
+const maxUnpackedBytes = 1_250_000;
+if (files.size > maxRuntimeFiles) {
+  throw new Error(`Runtime package contains ${files.size} files; review the distribution boundary before exceeding ${maxRuntimeFiles}.`);
+}
+if (report.unpackedSize > maxUnpackedBytes) {
+  throw new Error(`Runtime package unpacks to ${report.unpackedSize} bytes; review the distribution boundary before exceeding ${maxUnpackedBytes}.`);
+}
+
 const requiredAreas = [
   'AGENTS.md', 'AGENTS-instructions.md', 'AGENTS-PROMPT-Figma-file-preparation.md',
   'Project-settings--Instructions.md', 'CONTRIBUTING.md', 'CHANGELOG.md',
   'workflow/Project-Configuration.md', 'workflow/Source-Adapters.md',
   'workflow/Implementation-Adapters.md', 'workflow/Deployment-Adapters.md',
-  'workflow/Execution-Transports.md',
+  'workflow/Execution-Transports.md', 'workflow/ChatGPT-Experience.md', 'workflow/Product-Acceptance.md',
   'schemas/design-workflow-config.schema.json', 'templates/design-workflow.config.template.json',
   'templates/PRODUCT-ACCEPTANCE.v2.template.json',
   'cli/', 'cli/toolkit-provenance.json', 'workflow/', 'guidelines/', 'prompts/', 'source-adapters/',
-  'implementation-adapters/', 'deployment-adapters/', 'templates/', 'examples/', 'schemas/', 'scripts/', 'tests/',
-  'starters/astro/package.json', 'starters/astro/package-lock.template.json',
-  'starters/astro/gitignore.template', 'starters/astro/.github/workflows/validate-ui.yml',
-  'workflow/ChatGPT-Experience.md', 'workflow/Product-Acceptance.md',
+  'implementation-adapters/', 'deployment-adapters/', 'templates/', 'schemas/',
 ];
 const missingAreas = requiredAreas.filter((area) => (
   area.endsWith('/') ? ![...files].some((path) => path.startsWith(area)) : !files.has(area)
 ));
-if (missingAreas.length > 0) throw new Error(`Package is missing required areas: ${missingAreas.join(', ')}`);
+if (missingAreas.length > 0) throw new Error(`Package is missing required runtime areas: ${missingAreas.join(', ')}`);
 if (existsSync(provenancePath)) throw new Error('npm postpack must remove the transient source-tree toolkit provenance file.');
 
-const forbidden = [...files].filter((path) => path.startsWith('node_modules/') || path.endsWith('.tgz'));
-if (forbidden.length > 0) throw new Error(`Package contains forbidden files: ${forbidden.join(', ')}`);
+const forbiddenPrefixes = ['examples/', 'scripts/', 'starters/', 'tests/'];
+const forbiddenExact = new Set(['AGENTS-INIT.md']);
+const forbidden = [...files].filter((path) => (
+  path.startsWith('node_modules/')
+  || path.endsWith('.tgz')
+  || forbiddenExact.has(path)
+  || forbiddenPrefixes.some((prefix) => path.startsWith(prefix))
+));
+if (forbidden.length > 0) {
+  throw new Error(`Package contains source-repository-only files:\n${forbidden.map((path) => `- ${path}`).join('\n')}`);
+}
 
 function stripCodeFences(markdown) {
   return markdown.replace(/```[\s\S]*?```/g, '');
@@ -75,4 +95,4 @@ for (const file of [...files].filter((path) => extname(path).toLowerCase() === '
 }
 if (broken.length > 0) throw new Error(`Packaged relative Markdown links do not resolve:\n${broken.map((item) => `- ${item}`).join('\n')}`);
 
-console.log(`Package manifest tests passed (${files.size} packaged files, canonical Project Instructions and adapter/transport contracts included, immutable toolkit provenance included, all relative Markdown links resolved).`);
+console.log(`Package manifest tests passed (${files.size} runtime files, ${report.unpackedSize} unpacked bytes; development examples, scripts, tests, Astro fixture, and obsolete bootstrap alias excluded; all relative Markdown links resolved).`);
