@@ -28,7 +28,7 @@ Start a new chat in the Project and say:
 
 That is the single user-facing workflow entry point.
 
-You do **not** need to choose a workflow profile, implementation adapter, or whether the workflow should run through a local terminal or GitHub Actions. ChatGPT resolves those internal choices from the project, repository, and workflow state.
+You do **not** need to choose a workflow profile, implementation adapter, deployment adapter, or whether the workflow should run through a local terminal or GitHub Actions. ChatGPT resolves those internal choices from the project, repository, and workflow state.
 
 ## 3. Let ChatGPT establish the project
 
@@ -45,7 +45,7 @@ It will:
 - discover or ask for the Figma design when design inspection becomes necessary;
 - establish the authorized Figma scope before any design mutation;
 - ask for your review style once before workflow initialization when it has not already been saved;
-- discover deployment information only when preview evidence becomes relevant;
+- discover deployment information only when runtime evidence becomes relevant;
 - install or verify the pinned remote workflow caller when executable work requires it and no local execution path is available;
 - create and commit a complete, valid project configuration before first workflow initialization when configuration does not already exist.
 
@@ -63,7 +63,7 @@ You do not need to connect every provider before starting.
 
 - **GitHub for the implementation repository** is required to inspect the repository and perform repository work. If access is missing, ChatGPT asks you to connect it.
 - **Figma for design inspection and authorized design changes** becomes required when the workflow needs to inspect the design or perform an approved design-preparation change.
-- **Vercel or another configured deployment provider** is relevant when the project has preview deployment available and preview evidence is needed. Deployment is not required to start the workflow.
+- **A deployment provider** is optional unless the approved project scope explicitly requires runtime evidence. When deployment is configured or relevant, ChatGPT follows the deployment adapter and verifies that any runtime evidence belongs to the tested implementation commit.
 
 Native provider permission prompts still follow your account settings.
 
@@ -78,17 +78,17 @@ The workflow distinguishes between information that must eventually exist and in
 | Figma design | Before design inspection | ChatGPT discovers it from authoritative project context or asks you for it. |
 | Figma scope | Before an authorized design mutation | ChatGPT preserves existing scope or asks when edit authority is ambiguous. |
 | Review style | Before first workflow initialization | ChatGPT asks once if no saved choice exists. |
-| Deployment | When preview evidence is relevant | ChatGPT discovers configured deployment context; absence does not block initial setup. |
+| Deployment | When runtime evidence is relevant | ChatGPT resolves it as not configured, available, or blocked. No configured deployment does not invalidate successful repository/CI evidence. |
 | Assets or product decisions | When the implementation genuinely depends on them | ChatGPT asks only for what cannot be transferred or inferred safely. |
 
 When ChatGPT asks for review style, choose one of the existing product behaviors:
 
 | Style | Your involvement |
 |---|---|
-| Brief and final preview | Approve the implementation brief, then review the working result. |
+| Brief and final review | Approve the implementation brief, then review the finished evidence/result. |
 | Every stage | Review and explicitly approve each workflow stage. |
 
-Both preserve final human acceptance. Material scope changes can require another decision.
+The internal configuration identifier for the first option remains `brief-and-preview` for compatibility. Both styles preserve final human acceptance. Material scope changes can require another decision.
 
 Figma preparation is not a separate user workflow route. When preparation is required, it remains part of the same implementation workflow and any design mutation stays inside the authorized Figma scope.
 
@@ -101,12 +101,13 @@ It returns the available evidence, including:
 - the GitHub pull request;
 - the implementation commit;
 - automated verification results actually produced by the project;
-- a matching preview when the approved review/result requires one and a configured deployment provider is available;
+- matching deployment/runtime evidence when configured and available;
+- a clear `Not applicable` runtime status when no deployment is configured or required;
 - remaining deviations or blockers that still require human attention.
 
-Review the implementation against the Figma design and ask for corrections or accept the result. Final acceptance remains human and does not automatically merge the pull request or publish to production.
+Review the implementation against the Figma design and ask for corrections or accept the result. If the approved scope requires a runtime and deployment is blocked, that runtime-dependent acceptance claim remains blocked. Final acceptance remains human and does not automatically merge the pull request or publish to production.
 
-If a plugin, build, asset, capability, or preview is unavailable, ChatGPT reports that specific limitation rather than claiming success.
+If a plugin, build, asset, capability, or deployment is unavailable, ChatGPT reports that specific limitation rather than claiming success.
 
 ## 6. Continue later
 
@@ -114,7 +115,7 @@ The repository owns the durable project configuration and workflow state, so a l
 
 > **Continue the implementation workflow.**
 
-or, when a preview exists:
+or, when a runtime exists:
 
 > **Show the current preview.**
 
@@ -124,7 +125,7 @@ ChatGPT reads the saved project configuration, follows the established working b
 
 “Install the Design-to-Implementation Workflow in this repository” remains a setup action, not a second workflow route. Existing v1 configurations retain their established ref and execution mode until you intentionally adopt the newer project preferences.
 
-Installation, immutable toolkit pins, the canonical CLI, and remote execution mechanics are owned by [GitHub Remote Execution](workflow/GitHub-Remote-Execution.md) and [Agent Orchestration](workflow/Agent-Orchestration.md). [Project Configuration](workflow/Project-Configuration.md) owns repository configuration and v1 adoption. [Implementation Adapters](workflow/Implementation-Adapters.md) owns implementation-environment resolution and maintained/best-effort adapter behavior.
+Installation, immutable toolkit pins, the canonical CLI, and remote execution mechanics are owned by [GitHub Remote Execution](workflow/GitHub-Remote-Execution.md) and [Agent Orchestration](workflow/Agent-Orchestration.md). [Project Configuration](workflow/Project-Configuration.md) owns repository configuration and v1 adoption. [Implementation Adapters](workflow/Implementation-Adapters.md) owns implementation-environment resolution and maintained/best-effort adapter behavior. [Deployment Adapters](workflow/Deployment-Adapters.md) owns optional runtime-evidence behavior and provider-specific delegation.
 
 Markdown-only is a manual/scaffold mode without executable workflow state, generated routing, or agent orchestration. The ChatGPT product uses CLI-managed state.
 
@@ -132,4 +133,4 @@ Markdown-only is a manual/scaffold mode without executable workflow state, gener
 
 Maintainers can still generate the thin caller and canonical Project Instructions for an existing repository. It does not include application scaffolding or vendor the toolkit. See the [CLI reference](cli/README.md) for direct installation and bundle generation.
 
-Detailed agent behavior for capability checks, review styles, assets, recovery, and preview evidence is owned by [ChatGPT Experience](workflow/ChatGPT-Experience.md).
+Detailed agent behavior for capability checks, review styles, assets, recovery, and deployment evidence is owned by [ChatGPT Experience](workflow/ChatGPT-Experience.md).
