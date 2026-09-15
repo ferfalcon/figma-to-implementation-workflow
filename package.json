@@ -18,6 +18,7 @@
     "QUICKSTART.md",
     "README.md",
     "cli",
+    "deployment-adapters",
     "examples",
     "guidelines",
     "implementation-adapters",
