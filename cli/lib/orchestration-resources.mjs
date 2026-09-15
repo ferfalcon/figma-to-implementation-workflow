@@ -16,7 +16,7 @@ export const STAGE_PROMPTS = [
 ];
 
 const GUIDELINES_BY_STAGE = new Map([
-  [0, ['workflow/Implementation-Adapters.md']],
+  [0, ['workflow/Source-Adapters.md', 'workflow/Implementation-Adapters.md']],
   [2, ['guidelines/REQUIREMENTS.md']],
   [3, ['guidelines/DESIGN.md']],
   [4, ['guidelines/SPEC.md']],
@@ -130,7 +130,7 @@ export function stageResources(record, toolkit = toolkitBindingFromRecord(record
       {
         kind: 'source-adapter',
         when: 'source-inspection-requires-format-specific-guidance',
-        rule: 'Select only the adapter matching the actual source; do not browse or load the other adapters.',
+        rule: 'Classify the actual source, then select only the matching source adapter under workflow/Source-Adapters.md. Do not browse or load unrelated adapters or ask the human to choose an internal adapter.',
         selectOneOf: SOURCE_ADAPTER_CHOICES.map((choice) => ({
           ...choice,
           location: resourceLocation(toolkit, choice.path),

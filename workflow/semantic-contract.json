@@ -84,8 +84,10 @@
       "delegatesTo": [
         "workflow/ChatGPT-Experience.md",
         "workflow/Project-Configuration.md",
+        "workflow/Source-Adapters.md",
         "workflow/Implementation-Adapters.md",
-        "workflow/GitHub-Remote-Execution.md"
+        "workflow/Deployment-Adapters.md",
+        "workflow/Execution-Transports.md"
       ]
     },
     {
@@ -112,9 +114,11 @@
       "delegatesTo": [
         "workflow/Agent-Orchestration.md",
         "workflow/State-Ownership.md",
-        "workflow/GitHub-Remote-Execution.md",
-        "workflow/ChatGPT-Experience.md",
-        "workflow/Implementation-Adapters.md"
+        "workflow/Source-Adapters.md",
+        "workflow/Implementation-Adapters.md",
+        "workflow/Deployment-Adapters.md",
+        "workflow/Execution-Transports.md",
+        "workflow/ChatGPT-Experience.md"
       ]
     },
     {
@@ -176,6 +180,10 @@
       "owner": "workflow/Agent-Orchestration.md"
     },
     {
+      "id": "source-adapters",
+      "owner": "workflow/Source-Adapters.md"
+    },
+    {
       "id": "implementation-adapters",
       "owner": "workflow/Implementation-Adapters.md"
     },
@@ -184,8 +192,8 @@
       "owner": "workflow/Deployment-Adapters.md"
     },
     {
-      "id": "remote-execution",
-      "owner": "workflow/GitHub-Remote-Execution.md"
+      "id": "execution-transports",
+      "owner": "workflow/Execution-Transports.md"
     },
     {
       "id": "validation",
