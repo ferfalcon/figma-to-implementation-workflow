@@ -102,4 +102,4 @@ When the human requests a correction, follow the existing stage rewind, artifact
 
 ## Product acceptance
 
-Use [Product-Acceptance.md](Product-Acceptance.md) for ordinary personal ChatGPT acceptance sessions and maintainer QA evidence. Product acceptance is not a starter-publication or release gate. Synthetic fixtures and repository CI do not substitute for two real testers or a verified external preview.
+Use [Product-Acceptance.md](Product-Acceptance.md) for ordinary personal ChatGPT acceptance sessions and maintainer QA evidence. Product acceptance is not a distribution or release gate. Synthetic fixtures and repository CI do not substitute for two real testers or a verified external preview.
