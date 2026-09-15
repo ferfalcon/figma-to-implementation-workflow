@@ -3,7 +3,17 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { REQUIRED_CAPABILITIES, assessCapabilities, assessPreviewEvidence, validateAcceptanceReport } from '../cli/lib/product-evidence.mjs';
+import {
+  REQUIRED_CAPABILITIES,
+  DEPLOYMENT_INSPECTION_CAPABILITY,
+  MAINTAINED_ASTRO_CHECKS,
+  assessCapabilities,
+  assessImplementationEvidence,
+  assessDeploymentEvidence,
+  assessReviewEvidence,
+  assessPreviewEvidence,
+  validateAcceptanceReport,
+} from '../cli/lib/product-evidence.mjs';
 import { resolveProjectSession } from '../cli/lib/project-configuration.mjs';
 import { deriveNextAction } from '../cli/lib/workflow-actions.mjs';
 
@@ -14,7 +24,12 @@ const capabilityEvidence = {
   surface: 'ordinary-chatgpt',
   capabilities: Object.fromEntries(REQUIRED_CAPABILITIES.map(name => [name, { status: 'verified', evidenceUrl: 'https://example.com/observed/' + name }])),
 };
-const previewEvidence = {
+const capabilityEvidenceWithDeployment = structuredClone(capabilityEvidence);
+capabilityEvidenceWithDeployment.capabilities[DEPLOYMENT_INSPECTION_CAPABILITY] = {
+  status: 'verified', evidenceUrl: 'https://example.com/observed/deployment',
+};
+
+const implementationEvidence = {
   repository: 'example/product', implementationCommit: commit, assetsCommitted: true,
   validation: {
     repository: 'example/product', testedCommit: commit,
@@ -22,57 +37,149 @@ const previewEvidence = {
     checks: { dependencies: 'success', types: 'success', build: 'success', browserInstallation: 'success', browserTests: 'success' },
     passed: true,
   },
-  preview: { commit, status: 'READY', inspected: true, url: 'https://product-preview.vercel.app' },
 };
-assert(assessCapabilities(capabilityEvidence).ready);
+const deploymentEvidence = {
+  provider: 'vercel', implementationCommit: commit,
+  deployment: { commit, status: 'ready', inspected: true, url: 'https://product-preview.vercel.app' },
+};
+
+assert(assessCapabilities(capabilityEvidence).ready, 'Deployment inspection must not be a global prerequisite.');
 for (const name of REQUIRED_CAPABILITIES) {
   const missing = structuredClone(capabilityEvidence);
   delete missing.capabilities[name];
   const result = assessCapabilities(missing);
   assert(!result.ready);
-  assert(result.findings.some(finding => finding.includes(name)), 'Report the specific missing capability.');
+  assert(result.findings.some(finding => finding.includes(name)), 'Report the specific missing core capability.');
 }
+assert(!assessCapabilities(capabilityEvidence, { deploymentRequired: true }).ready, 'Required deployment inspection must be enforced conditionally.');
+assert(assessCapabilities(capabilityEvidenceWithDeployment, { deploymentRequired: true }).ready);
 assert(!assessCapabilities({ ...capabilityEvidence, surface: 'codex' }).ready);
-assert(assessPreviewEvidence(previewEvidence).readyForHumanReview);
-assert(assessPreviewEvidence({ ...previewEvidence, bookkeepingCommit: 'b'.repeat(40) }).readyForHumanReview, 'Later bookkeeping must not invalidate matching implementation evidence.');
+
+assert(assessImplementationEvidence(implementationEvidence, {
+  requiredChecks: MAINTAINED_ASTRO_CHECKS,
+  assetsRequired: true,
+}).readyForHumanReview);
+assert.deepEqual(assessDeploymentEvidence(null), { status: 'not-configured', ready: true, findings: [] });
+assert.equal(assessDeploymentEvidence(null, { required: true, implementationCommit: commit }).status, 'blocked');
+
+const noDeploymentReview = assessReviewEvidence({ implementationEvidence, deploymentEvidence: null }, {
+  requiredChecks: MAINTAINED_ASTRO_CHECKS,
+  assetsRequired: true,
+});
+assert(noDeploymentReview.readyForHumanReview, 'Implementation evidence must be reviewable without deployment.');
+assert.equal(noDeploymentReview.deployment.status, 'not-configured');
+
+const optionalBrokenDeployment = structuredClone(deploymentEvidence);
+optionalBrokenDeployment.deployment.commit = 'b'.repeat(40);
+const optionalDeploymentReview = assessReviewEvidence({ implementationEvidence, deploymentEvidence: optionalBrokenDeployment }, {
+  requiredChecks: MAINTAINED_ASTRO_CHECKS,
+  assetsRequired: true,
+  deploymentRequired: false,
+});
+assert(optionalDeploymentReview.readyForHumanReview, 'Broken optional runtime evidence must not erase valid implementation evidence.');
+assert.equal(optionalDeploymentReview.deployment.status, 'blocked');
+assert(optionalDeploymentReview.deployment.findings.length > 0, 'Optional deployment limitations must remain visible.');
+
+const requiredDeploymentReview = assessReviewEvidence({ implementationEvidence, deploymentEvidence }, {
+  requiredChecks: MAINTAINED_ASTRO_CHECKS,
+  assetsRequired: true,
+  deploymentRequired: true,
+});
+assert(requiredDeploymentReview.readyForHumanReview);
+for (const alter of [
+  value => { value.implementationCommit = 'b'.repeat(40); },
+  value => { value.deployment.commit = 'b'.repeat(40); },
+  value => { value.deployment.status = 'building'; },
+  value => { value.deployment.inspected = false; },
+  value => { value.deployment.url = 'http://example.test'; },
+]) {
+  const invalid = structuredClone(deploymentEvidence); alter(invalid);
+  const result = assessReviewEvidence({ implementationEvidence, deploymentEvidence: invalid }, {
+    requiredChecks: MAINTAINED_ASTRO_CHECKS,
+    assetsRequired: true,
+    deploymentRequired: true,
+  });
+  assert(!result.readyForHumanReview);
+}
 for (const alter of [
   value => { value.implementationCommit = 'main'; },
   value => { value.validation.testedCommit = 'b'.repeat(40); },
-  value => { value.preview.commit = 'b'.repeat(40); },
   value => { value.validation.checks.types = 'failure'; },
   value => { value.validation.checks.browserTests = 'skipped'; },
   value => { value.validation.passed = false; },
   value => { value.validation.runUrl = 'https://github.com/other/product/actions/runs/123'; },
   value => { value.validation.runUrl = 123; },
   value => { value.assetsCommitted = false; },
-  value => { value.preview.inspected = false; },
-  value => { value.preview.status = 'BUILDING'; },
 ]) {
-  const invalid = structuredClone(previewEvidence); alter(invalid);
-  assert(!assessPreviewEvidence(invalid).readyForHumanReview);
+  const invalid = structuredClone(implementationEvidence); alter(invalid);
+  assert(!assessImplementationEvidence(invalid, {
+    requiredChecks: MAINTAINED_ASTRO_CHECKS,
+    assetsRequired: true,
+  }).readyForHumanReview);
 }
-const corrected = structuredClone(previewEvidence);
-corrected.implementationCommit = 'c'.repeat(40);
-assert(!assessPreviewEvidence(corrected).readyForHumanReview, 'A correction needs fresh validation and preview evidence.');
-corrected.validation.testedCommit = corrected.implementationCommit;
-corrected.preview.commit = corrected.implementationCommit;
-assert(assessPreviewEvidence(corrected).readyForHumanReview);
 
-function session(tester, persona, reviewStyle) {
+const legacyPreviewEvidence = {
+  ...structuredClone(implementationEvidence),
+  preview: { commit, status: 'READY', inspected: true, url: 'https://product-preview.vercel.app' },
+};
+assert(assessPreviewEvidence(legacyPreviewEvidence).readyForHumanReview, 'Legacy preview-shaped assessment must remain strict and compatible.');
+legacyPreviewEvidence.preview.commit = 'b'.repeat(40);
+assert(!assessPreviewEvidence(legacyPreviewEvidence).readyForHumanReview);
+
+const correctedImplementation = structuredClone(implementationEvidence);
+correctedImplementation.implementationCommit = 'c'.repeat(40);
+assert(!assessImplementationEvidence(correctedImplementation, {
+  requiredChecks: MAINTAINED_ASTRO_CHECKS,
+  assetsRequired: true,
+}).readyForHumanReview, 'A correction needs fresh implementation validation evidence.');
+correctedImplementation.validation.testedCommit = correctedImplementation.implementationCommit;
+assert(assessImplementationEvidence(correctedImplementation, {
+  requiredChecks: MAINTAINED_ASTRO_CHECKS,
+  assetsRequired: true,
+}).readyForHumanReview);
+assert(!assessReviewEvidence({ implementationEvidence: correctedImplementation, deploymentEvidence }, {
+  requiredChecks: MAINTAINED_ASTRO_CHECKS,
+  assetsRequired: true,
+  deploymentRequired: true,
+}).readyForHumanReview, 'A replacement implementation commit needs fresh required deployment evidence.');
+const correctedDeployment = structuredClone(deploymentEvidence);
+correctedDeployment.implementationCommit = correctedImplementation.implementationCommit;
+correctedDeployment.deployment.commit = correctedImplementation.implementationCommit;
+assert(assessReviewEvidence({ implementationEvidence: correctedImplementation, deploymentEvidence: correctedDeployment }, {
+  requiredChecks: MAINTAINED_ASTRO_CHECKS,
+  assetsRequired: true,
+  deploymentRequired: true,
+}).readyForHumanReview);
+
+function session(tester, persona, reviewStyle, deploymentRequired) {
+  const capabilities = structuredClone(capabilityEvidence);
+  if (deploymentRequired) {
+    capabilities.capabilities[DEPLOYMENT_INSPECTION_CAPABILITY] = {
+      status: 'verified', evidenceUrl: 'https://example.com/observed/deployment',
+    };
+  }
   return {
     tester, persona, reviewStyle, plan: 'Plus',
     conversationUrl: 'https://chatgpt.com/share/synthetic-test',
     pullRequestUrl: 'https://github.com/example/product/pull/1',
     usedWork: false, usedCodex: false, usedLocalTerminal: false,
-    result: 'passed', humanVisualAcceptance: true,
-    setupSteps: 4, clarificationCount: 2, timeToFirstPreviewSeconds: 600,
-    capabilityEvidence: structuredClone(capabilityEvidence), previewEvidence: structuredClone(previewEvidence),
+    result: 'passed', humanAcceptance: true,
+    setupSteps: 4, clarificationCount: 2, timeToFirstVerifiedResultSeconds: 450,
+    deploymentRequired,
+    timeToFirstPreviewSeconds: deploymentRequired ? 600 : null,
+    humanVisualAcceptance: deploymentRequired ? true : null,
+    capabilityEvidence: capabilities,
+    implementationEvidence: structuredClone(implementationEvidence),
+    deploymentEvidence: deploymentRequired ? structuredClone(deploymentEvidence) : null,
     resumedInNewChat: true, correctionVerified: true,
   };
 }
 const report = {
-  schemaVersion: 1, status: 'complete', testedRevision: commit,
-  sessions: [session('fixture-one', 'designer-code', 'brief-and-preview'), session('fixture-two', 'engineer-figma', 'every-stage')],
+  schemaVersion: 2, status: 'complete', testedRevision: commit,
+  sessions: [
+    session('fixture-one', 'designer-code', 'brief-and-preview', false),
+    session('fixture-two', 'engineer-figma', 'every-stage', true),
+  ],
 };
 assert(validateAcceptanceReport(report).ready);
 for (const alter of [
@@ -82,15 +189,26 @@ for (const alter of [
   value => { value.sessions[1].persona = 'designer-code'; },
   value => { value.sessions[1].reviewStyle = 'brief-and-preview'; },
   value => { value.sessions[0].usedCodex = true; },
-  value => { value.sessions[0].humanVisualAcceptance = false; },
-  value => { value.sessions[0].timeToFirstPreviewSeconds = null; },
+  value => { value.sessions[0].humanAcceptance = false; },
+  value => { value.sessions[0].timeToFirstVerifiedResultSeconds = null; },
   value => { value.sessions[0].resumedInNewChat = false; },
   value => { value.sessions[0].correctionVerified = false; },
   value => { value.sessions[0].pullRequestUrl = 123; },
+  value => { value.sessions[0].deploymentEvidence = structuredClone(deploymentEvidence); },
+  value => { value.sessions[0].humanVisualAcceptance = true; },
+  value => { value.sessions[1].deploymentEvidence.deployment.commit = 'b'.repeat(40); },
+  value => { value.sessions[1].timeToFirstPreviewSeconds = null; },
+  value => { value.sessions[1].humanVisualAcceptance = false; },
 ]) {
   const invalid = structuredClone(report); alter(invalid);
   assert(!validateAcceptanceReport(invalid).ready);
 }
+const onlyDeployment = structuredClone(report);
+onlyDeployment.sessions[0] = session('fixture-one', 'designer-code', 'brief-and-preview', true);
+assert(!validateAcceptanceReport(onlyDeployment).ready, 'Acceptance must prove the no-deployment path.');
+const noDeploymentOnly = structuredClone(report);
+noDeploymentOnly.sessions[1] = session('fixture-two', 'engineer-figma', 'every-stage', false);
+assert(!validateAcceptanceReport(noDeploymentOnly).ready, 'Acceptance must prove a deployment-required path.');
 assert(!validateAcceptanceReport(null).ready);
 assert(!validateAcceptanceReport(JSON.parse(readFileSync(join(root, 'templates/PRODUCT-ACCEPTANCE.template.json'), 'utf8'))).ready);
 
@@ -115,6 +233,8 @@ config.workflow.reviewStyle = 'every-stage';
 assert.equal(resolveProjectSession(config).initialMode, 'Gated');
 const contract = readFileSync(join(root, 'workflow/ChatGPT-Experience.md'), 'utf8');
 for (const phrase of ['Only after explicit approval', 'rerun preflight/review', 'approved tasks sequentially', 'explicit human final acceptance', 'Do not fall back to default-branch workflow state']) assert(contract.includes(phrase), phrase);
+const deploymentContract = readFileSync(join(root, 'workflow/Deployment-Adapters.md'), 'utf8');
+for (const phrase of ['An implementation does not require a deployment to be valid.', 'Not configured', 'Available', 'Blocked', 'exact tested implementation commit']) assert(deploymentContract.includes(phrase), phrase);
 
 const retiredPublicationPaths = [
   '.github/workflows/release-consumer-bundle.yml',
@@ -131,4 +251,4 @@ for (const phrase of ['STARTER_PUBLISH_TOKEN', 'STARTER_TEMPLATE_REPOSITORY', 'r
   assert(!acceptanceContract.includes(phrase), `Product acceptance must not restore release publication coupling: ${phrase}`);
 }
 
-console.log('Product contracts passed: plugin gaps, approval modes, resume rules, stale previews, failures, corrections, product acceptance evidence, and retired publication surfaces.');
+console.log('Product contracts passed: core capability gaps, optional deployment, required runtime evidence, approval modes, resume rules, corrections, product acceptance evidence, and retired publication surfaces.');
