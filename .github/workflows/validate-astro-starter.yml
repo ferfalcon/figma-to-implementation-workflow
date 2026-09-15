@@ -56,18 +56,3 @@ jobs:
             dist/consumer-bundle/repository/playwright-report/
             dist/consumer-bundle/repository/test-results/
           if-no-files-found: ignore
-      - name: Package clean release candidate
-        if: matrix.node-version == 24
-        env:
-          TOOLKIT_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: |
-          node scripts/build-consumer-bundle.mjs --starter astro --revision "$TOOLKIT_REVISION" --output dist/astro-candidate
-          cd dist
-          zip -qr design-workflow-astro-candidate.zip astro-candidate
-      - name: Save generated starter
-        if: matrix.node-version == 24
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: astro-starter-candidate
-          path: dist/design-workflow-astro-candidate.zip
-          if-no-files-found: error
