@@ -15,8 +15,9 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 - Companion-template publisher with generated-file provenance, non-force updates, and rejection of unexpected or concurrent template edits.
 
 - Repository-root `design-workflow.config.json` as canonical persistent project configuration shared across chats/users/agents, with schema, template, authority contract, and regression coverage.
-- Generated consumer bundle tooling that produces an upload-ready repository payload, ChatGPT Project Instructions, the project-configuration template, a bundle manifest, and an exact immutable GitHub remote-executor pin.
-- Release automation that publishes the consumer bundle, ChatGPT Project Instructions, and project-configuration template as release assets from the exact released toolkit commit.
+- `Project-settings--Instructions.md` as the single canonical ChatGPT installation artifact, with regression coverage that rejects active legacy instruction aliases across product, package, starter, bundle, and release surfaces.
+- Generated consumer bundle tooling that produces an upload-ready repository payload, canonical Project Instructions, the project-configuration template, a bundle manifest, and an exact immutable GitHub remote-executor pin.
+- Release automation that publishes the consumer bundle, canonical Project Instructions, and project-configuration template as release assets from the exact released toolkit commit.
 - Regression coverage that enforces one human workflow entry point, agent-owned profile/transport resolution, and consumer-bundle integrity.
 - GitHub Issue command transport plus a pinned reusable Actions executor for connector-first preflight and canonical CLI-owned workflow mutations against exact expected heads and pinned toolkit revisions.
 - Remote-execution regression coverage for requester permissions, command allowlisting, stale heads, rollback, runtime resolution, read-only preflight, shell/path injection boundaries, filesystem containment, and non-force mutation.
@@ -44,7 +45,7 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 
 - Brief and final preview uses Continuous documentation through planning, then Task-by-task only after explicit approval of the implementation scope; Every stage retains Gated mode.
 - Task completion can retain the tested implementation commit after later workflow bookkeeping, only when every intervening commit touches workflow-managed paths. Later application changes, including reverted edits, reject stale completion.
-- Consumer bundle format advances to v4 and includes an optional maintained Astro starter; CLI dependencies remain unchanged.
+- Consumer bundle format advances to v5, uses the canonical `Project-settings--Instructions.md` filename throughout generated outputs and release assets, and includes an optional maintained Astro starter; CLI dependencies remain unchanged.
 - Root toolkit-development instructions are restored and README onboarding/license contracts are reconciled.
 
 - ChatGPT Project Instructions now keep only a repository bootstrap locator; project name, Figma source/scope, implementation root, and optional deployment targets move to repository-owned project configuration.
@@ -53,7 +54,7 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 - Direct CLI versus GitHub Actions execution is now resolved by agent capability detection instead of presented as a normal user choice; both continue to execute the same canonical CLI.
 - Figma preparation can be invoked from the same agent intake when source readiness requires it while remaining outside executable workflow state and separate from the formal Stage 1 audit.
 - README now presents designers and engineers as two value perspectives on the same workflow rather than role-based routes and promotes no-terminal GitHub execution as a first-class capability.
-- `AI-project-settings.md` now keeps only the repository bootstrap locator at the top while repository-owned `design-workflow.config.json` carries persistent project values.
+- `Project-settings--Instructions.md` is now the canonical Project Instructions filename and keeps only the repository bootstrap locator at the top while repository-owned `design-workflow.config.json` carries persistent project values.
 - Markdown-only is now explicitly defined as a manual/scaffold mode rather than a peer executable control mode; AI orchestration requires CLI-managed state, while AI assistance in Markdown-only is limited to explicitly requested narrative drafting or review.
 - GitHub remote read-only execution now accepts exit code `1` only for `stage check --json` and `project check --json`; `validate` and `sync --check` require exit code `0` so failed checks cannot be reported as successful commands.
 - The write-capable remote executor now pins external GitHub Actions dependencies to full commit SHAs while retaining human-readable release versions in comments.
@@ -63,7 +64,7 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 - Portable GitHub projections now expose a Git-verifiable workflow-record blob identity for freshness checks, advancing the projection contract to v3.
 - Portable implementation policy now separates persisted current-task authorization from runtime/source integrity and makes GitHub-only code edits conditional on authoritative source verification, advancing the projection contract to v4.
 - CLI agent context and GitHub-only agent projection now share extracted stage-target, execution-kind, implementation-permission, and workflow-resource routing helpers instead of maintaining parallel routing maps.
-- The optional `AI-project-settings.md` ChatGPT Project host template is discoverable from README and included in the published package without making it a workflow-state authority.
+- The canonical `Project-settings--Instructions.md` ChatGPT Project host artifact is discoverable from README and included in the published package without becoming a workflow-state authority.
 - The root Figma preparation launcher delegates execution and reporting details directly to the canonical preparation procedure while preserving the preparation-only safety boundary.
 - Active profile-upgrade reconciliation now takes precedence over the generic Blocked-state message when deriving the canonical next action.
 - Core lifecycle commands now own canonical workflow diagnostics, task Git lineage, stage rewind, and profile-upgrade replanning directly; `workflow-cli.mjs` is limited to extension routing for toolkit, repository binding, orchestration context, stage preflight, initialization provenance, and task-ID convenience.
