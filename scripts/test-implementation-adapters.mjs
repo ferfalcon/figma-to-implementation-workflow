@@ -57,6 +57,7 @@ const contract = read('workflow/Implementation-Adapters.md');
 for (const phrase of [
   'does not belong in `design-workflow.config.json` or `.workflow/workflow-record.json`',
   'Application scaffolding itself is implementation work.',
+  '`design-workflow implementation scaffold astro-typescript`',
   'does not, by itself, make Stage 6 architecture required',
   'never treat it as empty merely because the framework is unfamiliar',
 ]) assert(contract.includes(phrase), `Implementation adapter contract must preserve: ${phrase}`);
@@ -66,11 +67,15 @@ assert(astro.includes('Adapter ID: `astro-typescript`'));
 assert(astro.includes('Support level: `maintained`'));
 assert(astro.includes('Do not use this adapter to replace an existing non-Astro application'));
 assert(astro.includes('creating application files is Stage 10 implementation work'));
-assert(astro.includes('implementation-adapters/astro/scaffold/'));
-assert(astro.includes('intentionally excluded from the packaged workflow runtime'));
+assert(astro.includes('design-workflow implementation scaffold astro-typescript'));
+assert(astro.includes('same resources'));
 assert(
-  existsSync(join(root, 'implementation-adapters', 'astro', 'scaffold', 'package.json')),
-  'Maintained Astro scaffold source must live under the Astro adapter boundary.',
+  existsSync(join(root, 'implementation-adapters', 'astro', 'scaffold', 'application', 'package.json')),
+  'Maintained Astro runtime scaffold must live under the Astro adapter boundary.',
+);
+assert(
+  existsSync(join(root, 'implementation-adapters', 'astro', 'scaffold', 'repository', 'validate-ui.yml.template')),
+  'Maintained Astro scaffold must own its repository-level validation template.',
 );
 assert(
   !existsSync(join(root, 'starters', 'astro')),
@@ -168,4 +173,4 @@ assert(
   'The architecture explainer must delegate implementation-adapter authority rather than owning it.',
 );
 
-console.log('Implementation adapter tests passed (repository-driven selection, maintained/best-effort boundaries, internal Astro scaffold ownership, optional deployment, adapter-aware validation, and product-surface delegation).');
+console.log('Implementation adapter tests passed (repository-driven selection, Stage-10 runtime Astro scaffolding, maintained/best-effort boundaries, optional deployment, adapter-aware validation, and product-surface delegation).');
