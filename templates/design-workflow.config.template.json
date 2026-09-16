@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "project": {
     "name": "<PROJECT_NAME>"
   },
@@ -14,7 +14,8 @@
     "scope": "<FIGMA_SCOPE>"
   },
   "deployment": {
-    "vercelProjectUrl": null,
+    "provider": null,
+    "projectUrl": null,
     "productionUrl": null
   },
   "workflow": {

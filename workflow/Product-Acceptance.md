@@ -17,7 +17,7 @@ Keep the toolkit commit fixed during each acceptance run so capability, validati
 
 ## Two real sessions
 
-Use one designer comfortable with code and one engineer comfortable with Figma, on personal ChatGPT Plus or Pro accounts. Exercise the human-facing **Brief and final review** behavior in one session and **Every stage** in the other. The stored configuration identifier remains `brief-and-preview` for compatibility; this QA label does not change configuration schema v2.
+Use one designer comfortable with code and one engineer comfortable with Figma, on personal ChatGPT Plus or Pro accounts. Exercise the human-facing **Brief and final review** behavior in one session and **Every stage** in the other. Configuration v3 stores those choices as `brief-and-final` and `every-stage`. Acceptance-report schema v2 also uses the current identifiers while continuing to recognize legacy `brief-and-preview` reports as the same first behavior.
 
 Use ordinary ChatGPT and the existing Figma and GitHub plugins when the workflow requires them. Use the Vercel plugin only in the deployment-required scenario. Do not substitute coding agents, synthetic fixtures, Work, Codex, or a local terminal.
 

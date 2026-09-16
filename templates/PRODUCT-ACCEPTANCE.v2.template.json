@@ -6,7 +6,7 @@
     {
       "tester": "<TESTER_HANDLE>",
       "persona": "designer-code",
-      "reviewStyle": "brief-and-preview",
+      "reviewStyle": "brief-and-final",
       "plan": "Plus",
       "conversationUrl": "<CHATGPT_CONVERSATION_URL>",
       "pullRequestUrl": "<PULL_REQUEST_URL>",

@@ -2,11 +2,33 @@
 
 ## Project configuration
 
-Implementation repositories use root `design-workflow.config.json` as the persistent project identity/boundary source of truth across chats and agents. Its shape is [`design-workflow-config.schema.json`](design-workflow-config.schema.json); creation template: [`../templates/design-workflow.config.template.json`](../templates/design-workflow.config.template.json).
+Implementation repositories use root `design-workflow.config.json` as the persistent project identity/boundary source of truth across chats and agents. The current shape is [`design-workflow-config.schema.json`](design-workflow-config.schema.json); creation template: [`../templates/design-workflow.config.template.json`](../templates/design-workflow.config.template.json).
 
-Configuration v2 adds required `repository.workingBranch` and `workflow.reviewStyle` (`brief-and-preview` or `every-stage`). [Configuration v1](design-workflow-config.v1.schema.json) remains readable and preserves the established ref and execution mode until explicit adoption. `design-workflow project check --json` checks either version without mutating state or verifying provider access.
+Configuration v3 keeps the saved `repository.workingBranch`, replaces the Vercel-specific deployment locator with provider-neutral `deployment.provider` + `deployment.projectUrl`, and stores `workflow.reviewStyle` as `brief-and-final` or `every-stage`. Provider ids are validated against the adapter catalog at runtime rather than enumerated in JSON Schema.
 
-This is normal version-controlled project content, not executable workflow state, and must not contain secrets. See [`../workflow/Project-Configuration.md`](../workflow/Project-Configuration.md).
+[`design-workflow-config.v2.schema.json`](design-workflow-config.v2.schema.json) and [`design-workflow-config.v1.schema.json`](design-workflow-config.v1.schema.json) preserve legacy shapes. V2 remains readable and migrates deterministically to v3. V1 remains readable but requires explicit working-branch and review-style adoption before migration.
+
+Read supported configuration without mutation:
+
+```bash
+design-workflow project check --json
+```
+
+Migrate v2 deterministically:
+
+```bash
+design-workflow project migrate --to 3
+```
+
+Adopt v1 explicitly:
+
+```bash
+design-workflow project migrate --to 3 \
+  --working-branch <established-branch> \
+  --review-style <brief-and-final|every-stage>
+```
+
+Migration is idempotent, failed migration leaves the source file unchanged, and the semantic configuration revision is derived rather than persisted. This is normal version-controlled project content, not executable workflow state, and must not contain secrets. See [`../workflow/Project-Configuration.md`](../workflow/Project-Configuration.md).
 
 ## Executable workflow records
 

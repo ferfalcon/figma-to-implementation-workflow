@@ -1,4 +1,4 @@
-export const PROJECT_CONFIGURATION_SCHEMA_VERSION = 2;
+export const PROJECT_CONFIGURATION_SCHEMA_VERSION = 3;
 export const WORKFLOW_RECORD_SCHEMA_VERSION = 2;
 export const LEGACY_WORKFLOW_RECORD_SCHEMA_VERSION = 1;
 export const ORCHESTRATION_CONTEXT_PROTOCOL_VERSION = 3;
@@ -32,12 +32,15 @@ export const CONTRACT_COMPATIBILITY = Object.freeze([
     currentVersion: PROJECT_CONFIGURATION_SCHEMA_VERSION,
     owner: 'cli/lib/project-configuration.mjs + schemas/design-workflow-config.schema.json',
     compatibility: [
-      { contract: 'project-configuration', versions: [2], mode: 'current-read-write' },
-      { contract: 'project-configuration', versions: [1], mode: 'legacy-read-preserve-execution' },
+      { contract: 'project-configuration', versions: [3], mode: 'current-read-write' },
+      { contract: 'project-configuration', versions: [2], mode: 'legacy-read-deterministic-migration' },
+      { contract: 'project-configuration', versions: [1], mode: 'legacy-read-explicit-adoption' },
     ],
     notes: [
-      'Schema v2 adds the saved working branch and chosen review style; it does not store executable progress.',
-      'Schema v1 remains readable and preserves its established execution mode and ref until explicit adoption.',
+      'Schema v3 replaces the Vercel-specific deployment locator with provider-neutral adapter identity and stores brief-and-final as the canonical review-style identifier.',
+      'Schema v2 remains readable and migrates deterministically to v3: vercelProjectUrl becomes provider/projectUrl and brief-and-preview becomes brief-and-final.',
+      'Schema v1 remains readable but requires an explicit working branch and review style before migration to v3.',
+      'Configuration revision identity remains derived from validated semantic content and is never persisted as a second authority.',
     ],
   }),
   entry({

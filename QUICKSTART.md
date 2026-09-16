@@ -38,6 +38,8 @@ It will:
 
 - verify access to the implementation repository;
 - read and preserve `design-workflow.config.json` when it already exists;
+- migrate a valid configuration v2 deterministically to v3 before treating it as the current writable format;
+- require explicit working-branch and review-style adoption before migrating configuration v1;
 - classify the actual design/reference source and load only the matching source adapter when source-specific guidance is needed;
 - inspect the configured/proposed implementation root and resolve the implementation adapter from repository evidence;
 - use the maintained Astro + TypeScript adapter for a safely scaffoldable root or existing Astro + TypeScript application;
@@ -91,7 +93,7 @@ When ChatGPT asks for review style, choose one of the existing product behaviors
 | Brief and final review | Approve the implementation brief, then review the finished evidence/result. |
 | Every stage | Review and explicitly approve each workflow stage. |
 
-The internal configuration identifier for the first option remains `brief-and-preview` for compatibility. Both styles preserve final human acceptance. Material scope changes can require another decision.
+Configuration v3 stores the first option as `brief-and-final`. Configuration v2 remains readable with the legacy `brief-and-preview` identifier and migrates it deterministically to `brief-and-final`. Both styles preserve final human acceptance. Material scope changes can require another decision.
 
 Figma preparation is not a separate user workflow route. When preparation is required, it remains part of the same implementation workflow and any design mutation stays inside the authorized Figma scope.
 
@@ -126,9 +128,9 @@ ChatGPT reads the saved project configuration, follows the established working b
 
 ## Existing projects and advanced reference
 
-“Install the Design-to-Implementation Workflow in this repository” remains a setup action, not a second workflow route. Existing v1 configurations retain their established ref and execution mode until you intentionally adopt the newer project preferences.
+“Install the Design-to-Implementation Workflow in this repository” remains a setup action, not a second workflow route. Existing configuration v2 migrates deterministically to v3. Existing configuration v1 retains its established ref and execution mode until you explicitly adopt the working branch and review style required by v3.
 
-Installation, immutable toolkit pins, the canonical CLI, and transport selection are owned by [Execution Transports](workflow/Execution-Transports.md) and [Agent Orchestration](workflow/Agent-Orchestration.md). The current GitHub remote provider is documented in [GitHub Remote Execution](workflow/GitHub-Remote-Execution.md). [Project Configuration](workflow/Project-Configuration.md) owns repository configuration and v1 adoption. [Source Adapters](workflow/Source-Adapters.md) owns source-format classification/delegation. [Implementation Adapters](workflow/Implementation-Adapters.md) owns implementation-environment resolution and maintained/best-effort adapter behavior. [Deployment Adapters](workflow/Deployment-Adapters.md) owns optional runtime-evidence behavior and provider-specific delegation.
+Installation, immutable toolkit pins, the canonical CLI, and transport selection are owned by [Execution Transports](workflow/Execution-Transports.md) and [Agent Orchestration](workflow/Agent-Orchestration.md). The current GitHub remote provider is documented in [GitHub Remote Execution](workflow/GitHub-Remote-Execution.md). [Project Configuration](workflow/Project-Configuration.md) owns current v3 configuration, deterministic v2 migration, and explicit v1 adoption. [Source Adapters](workflow/Source-Adapters.md) owns source-format classification/delegation. [Implementation Adapters](workflow/Implementation-Adapters.md) owns implementation-environment resolution and maintained/best-effort adapter behavior. [Deployment Adapters](workflow/Deployment-Adapters.md) owns optional runtime-evidence behavior and provider-specific delegation.
 
 Markdown-only is a manual/scaffold mode without executable workflow state, generated routing, or agent orchestration. The ChatGPT product uses CLI-managed state.
 

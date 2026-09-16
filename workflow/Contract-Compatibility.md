@@ -6,7 +6,7 @@ The toolkit versions independent external contracts separately. There is intenti
 
 | Contract | Kind | Current | Compatibility | Runtime owner |
 |---|---|---:|---|---|
-| Project configuration | schema | v2 | project-configuration v2 (current-read-write); project-configuration v1 (legacy-read-preserve-execution) | `cli/lib/project-configuration.mjs + schemas/design-workflow-config.schema.json` |
+| Project configuration | schema | v3 | project-configuration v3 (current-read-write); project-configuration v2 (legacy-read-deterministic-migration); project-configuration v1 (legacy-read-explicit-adoption) | `cli/lib/project-configuration.mjs + schemas/design-workflow-config.schema.json` |
 | Workflow record | schema | v2 | workflow-record v2 (canonical-read-write); workflow-record v1 (migration-only) | `cli/lib/workflow-model.mjs + schemas/workflow-record.schema.json` |
 | Orchestration context | protocol | v3 | workflow-record v2 (normal); workflow-record v1 (migration-or-repair-routing) | `cli/lib/orchestration-context.mjs` |
 | Agent packet | protocol | v4 | orchestration-context v3 (wrapped-context); workflow-record v2 (normal); workflow-record v1 (migration-or-repair-routing) | `cli/lib/agent-context.mjs` |
@@ -15,8 +15,10 @@ The toolkit versions independent external contracts separately. There is intenti
 
 ## Contract notes
 
-- **Project configuration:** Schema v2 adds the saved working branch and chosen review style; it does not store executable progress.
-- **Project configuration:** Schema v1 remains readable and preserves its established execution mode and ref until explicit adoption.
+- **Project configuration:** Schema v3 replaces the Vercel-specific deployment locator with provider-neutral adapter identity and stores brief-and-final as the canonical review-style identifier.
+- **Project configuration:** Schema v2 remains readable and migrates deterministically to v3: vercelProjectUrl becomes provider/projectUrl and brief-and-preview becomes brief-and-final.
+- **Project configuration:** Schema v1 remains readable but requires an explicit working branch and review style before migration to v3.
+- **Project configuration:** Configuration revision identity remains derived from validated semantic content and is never persisted as a second authority.
 - **Workflow record:** Schema v2 is the canonical writable workflow record.
 - **Workflow record:** Schema v1 is legacy input only and must migrate before ordinary workflow mutation.
 - **Orchestration context:** The current CLI emits context protocol v3 for initialized CLI-managed state.
