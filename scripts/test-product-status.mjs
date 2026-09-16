@@ -19,7 +19,7 @@ const pending = {
   status: 'pending',
   lastAcceptedRevision: null,
   acceptedAt: null,
-  acceptanceReportSchemaVersion: 2,
+  acceptanceReportSchemaVersion: null,
   scenarios: [],
 };
 assert.deepEqual(validateProductStatus(pending), { valid: true, findings: [] });
@@ -38,6 +38,7 @@ for (const alter of [
   value => { value.status = 'passed'; },
   value => { value.lastAcceptedRevision = 'main'; },
   value => { value.acceptedAt = '2026-09-15'; },
+  value => { value.acceptanceReportSchemaVersion = null; },
   value => { value.scenarios.pop(); },
   value => { value.scenarios.push(value.scenarios[0]); },
   value => { value.conversationUrl = 'https://chatgpt.com/share/private-evidence'; },
@@ -47,9 +48,14 @@ for (const alter of [
   assert.equal(validateProductStatus(invalid).valid, false);
 }
 
-const invalidPending = structuredClone(pending);
-invalidPending.lastAcceptedRevision = 'b'.repeat(40);
-assert.equal(validateProductStatus(invalidPending).valid, false);
+for (const alter of [
+  value => { value.lastAcceptedRevision = 'b'.repeat(40); },
+  value => { value.acceptanceReportSchemaVersion = 2; },
+]) {
+  const invalid = structuredClone(pending);
+  alter(invalid);
+  assert.equal(validateProductStatus(invalid).valid, false);
+}
 
 const readme = readFileSync(join(root, 'README.md'), 'utf8');
 assert.match(readme, /workflow\/product-status\.json/, 'README must expose the public product-status attestation.');
@@ -61,4 +67,4 @@ assert.match(quickstart, /Start the implementation workflow\./);
 assert.match(quickstart, /Continue the implementation workflow\./);
 assert.match(quickstart, /workflow\/How-It-Works\.md/);
 
-console.log('Product status tests passed (strict non-sensitive attestation shape, pending/accepted semantics, required real-session scenarios, and product-surface discovery).');
+console.log('Product status tests passed (strict non-sensitive attestation shape, evidence-free pending status, accepted revision semantics, required real-session scenarios, and product-surface discovery).');
