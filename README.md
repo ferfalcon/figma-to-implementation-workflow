@@ -10,7 +10,7 @@ The workflow uses ChatGPT as the interface between your design, your GitHub repo
 
 1. **Choose the GitHub repository you want to use.**
 2. **Create a ChatGPT Project.**
-3. **Copy the project instructions into the Project Instructions.** Use [`Project-settings--Instructions.md`](Project-settings--Instructions.md).
+3. **Copy the project instructions into the Project Settings Instructions.** Use [`Project-settings--Instructions.md`](Project-settings--Instructions.md).
 4. **Replace `<REPOSITORY_URL>` with your repository URL.**
 5. Start a chat and say:
 
