@@ -78,10 +78,10 @@ const generatedBootstrapSources = [
 for (const path of generatedBootstrapSources) {
   assert(read(path).includes(canonical), `${path} must use the canonical Project Instructions filename.`);
 }
-const astroScaffoldReadme = read('implementation-adapters/astro/scaffold/README.md');
+const astroScaffoldReadme = read('implementation-adapters/astro/scaffold/application/README.md');
 assert(
   !astroScaffoldReadme.includes(canonical),
-  'The pure Astro implementation scaffold must not embed the ChatGPT installation artifact.',
+  'The packaged Astro application scaffold must not embed the ChatGPT installation artifact.',
 );
 
 function walk(directory) {
@@ -107,4 +107,4 @@ for (const absolute of walk(root)) {
 }
 assert.deepEqual(aliasFindings, [], `Deprecated installation aliases remain in active contracts:\n${aliasFindings.join('\n')}`);
 
-console.log('Installation artifact contract passed (one canonical Project Instructions filename, one repository locator, stable-release bootstrap with exact immutable pins, scaffold/bootstrap separation, scoped implementation boundaries, and no active legacy aliases).');
+console.log('Installation artifact contract passed (one canonical Project Instructions filename, one repository locator, stable-release bootstrap with exact immutable pins, packaged scaffold/bootstrap separation, scoped implementation boundaries, and no active legacy aliases).');
