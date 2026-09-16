@@ -57,7 +57,6 @@ const contract = read('workflow/Implementation-Adapters.md');
 for (const phrase of [
   'does not belong in `design-workflow.config.json` or `.workflow/workflow-record.json`',
   'Application scaffolding itself is implementation work.',
-  '`design-workflow implementation scaffold astro-typescript`',
   'does not, by itself, make Stage 6 architecture required',
   'never treat it as empty merely because the framework is unfamiliar',
 ]) assert(contract.includes(phrase), `Implementation adapter contract must preserve: ${phrase}`);
@@ -67,15 +66,11 @@ assert(astro.includes('Adapter ID: `astro-typescript`'));
 assert(astro.includes('Support level: `maintained`'));
 assert(astro.includes('Do not use this adapter to replace an existing non-Astro application'));
 assert(astro.includes('creating application files is Stage 10 implementation work'));
-assert(astro.includes('design-workflow implementation scaffold astro-typescript'));
-assert(astro.includes('same resources'));
+assert(astro.includes('implementation-adapters/astro/scaffold/'));
+assert(astro.includes('intentionally excluded from the packaged workflow runtime'));
 assert(
-  existsSync(join(root, 'implementation-adapters', 'astro', 'scaffold', 'application', 'package.json')),
-  'Maintained Astro runtime scaffold must live under the Astro adapter boundary.',
-);
-assert(
-  existsSync(join(root, 'implementation-adapters', 'astro', 'scaffold', 'repository', 'validate-ui.yml.template')),
-  'Maintained Astro scaffold must own its repository-level validation template.',
+  existsSync(join(root, 'implementation-adapters', 'astro', 'scaffold', 'package.json')),
+  'Maintained Astro scaffold source must live under the Astro adapter boundary.',
 );
 assert(
   !existsSync(join(root, 'starters', 'astro')),
@@ -151,9 +146,15 @@ assert(experience.includes('implementation-environment resolution'));
 assert(experience.includes('preserved through the best-effort existing-framework adapter'));
 assert(experience.includes('Validation must reflect the actual repository'));
 
-const quickstart = read('QUICKSTART.md');
-assert(quickstart.includes('You do **not** need to choose a workflow profile, implementation adapter'));
-assert(quickstart.includes('scaffolding remains approved implementation work'));
+const howItWorks = read('workflow/How-It-Works.md');
+assert(
+  howItWorks.includes('[Implementation Adapters](Implementation-Adapters.md)'),
+  'The product architecture explainer must route implementation mechanics to the canonical adapter contract.',
+);
+assert(
+  howItWorks.includes('Adapters are capabilities underneath one product journey, not alternate workflows.'),
+  'The architecture explainer must keep adapter selection out of the human product route.',
+);
 
 const semantic = JSON.parse(read('workflow/semantic-contract.json'));
 assert(
@@ -161,5 +162,10 @@ assert(
     && domain.owner === 'workflow/Implementation-Adapters.md'),
   'Semantic contract must register implementation adapters as a canonical domain.',
 );
+const howItWorksEntry = semantic.entrypoints.find((entry) => entry.id === 'how-it-works');
+assert(
+  howItWorksEntry?.delegatesTo.includes('workflow/Implementation-Adapters.md'),
+  'The architecture explainer must delegate implementation-adapter authority rather than owning it.',
+);
 
-console.log('Implementation adapter tests passed (repository-driven selection, Stage-10 runtime Astro scaffolding, maintained/best-effort boundaries, optional deployment, and adapter-aware validation).');
+console.log('Implementation adapter tests passed (repository-driven selection, maintained/best-effort boundaries, internal Astro scaffold ownership, optional deployment, adapter-aware validation, and product-surface delegation).');

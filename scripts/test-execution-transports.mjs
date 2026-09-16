@@ -51,10 +51,14 @@ assert(
   'Consumer bootstrap must delegate provider-neutral execution transport rules.',
 );
 
-const quickstart = read('QUICKSTART.md');
+const howItWorks = read('workflow/How-It-Works.md');
 assert(
-  quickstart.includes('[Execution Transports](workflow/Execution-Transports.md)'),
-  'Quickstart advanced reference must route execution mechanics through the provider-neutral transport contract.',
+  howItWorks.includes('[Execution Transports](Execution-Transports.md)'),
+  'The product architecture explainer must route execution mechanics through the provider-neutral transport contract.',
+);
+assert(
+  howItWorks.includes('Execution transport is separate from workflow logic'),
+  'The architecture explainer must preserve the transport/engine separation without expanding Quickstart.',
 );
 
 const semantic = JSON.parse(read('workflow/semantic-contract.json'));
@@ -67,5 +71,10 @@ assert(
   !semantic.domains.some((domain) => domain.id === 'remote-execution'),
   'Provider-specific GitHub remote execution must no longer be the canonical semantic domain owner.',
 );
+const howItWorksEntry = semantic.entrypoints.find((entry) => entry.id === 'how-it-works');
+assert(
+  howItWorksEntry?.delegatesTo.includes('workflow/Execution-Transports.md'),
+  'The architecture explainer must delegate execution-transport authority rather than owning it.',
+);
 
-console.log('Execution transport tests passed (one canonical engine, internal transport resolution, provider delegation, and state/approval boundaries).');
+console.log('Execution transport tests passed (one canonical engine, internal transport resolution, provider delegation, state/approval boundaries, and product-surface delegation).');

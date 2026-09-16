@@ -36,6 +36,12 @@ function verifiedCapability(evidence, name) {
   return capability?.status === 'verified' && https(capability?.evidenceUrl);
 }
 
+function normalizeReviewStyle(value) {
+  if (value === 'brief-and-preview') return 'brief-and-final';
+  if (value === 'brief-and-final' || value === 'every-stage') return value;
+  return null;
+}
+
 // Checks observed ChatGPT product capabilities. This does not call providers or grant
 // permissions; observations must come from actual connected tools.
 // `previewRequired` remains as a compatibility option for older acceptance fixtures.
@@ -112,8 +118,9 @@ export function validateAcceptanceReport(report) {
     else testers.add(session.tester.trim().toLowerCase());
     if (!['designer-code', 'engineer-figma'].includes(session.persona)) findings.push(prefix + 'unsupported persona.');
     else personas.add(session.persona);
-    if (!['brief-and-preview', 'every-stage'].includes(session.reviewStyle)) findings.push(prefix + 'unsupported review style.');
-    else styles.add(session.reviewStyle);
+    const normalizedReviewStyle = normalizeReviewStyle(session.reviewStyle);
+    if (!normalizedReviewStyle) findings.push(prefix + 'unsupported review style.');
+    else styles.add(normalizedReviewStyle);
     if (!['Plus', 'Pro'].includes(session.plan)) findings.push(prefix + 'a personal Plus or Pro plan is required.');
     if (!https(session.conversationUrl, 'chatgpt.com')) findings.push(prefix + 'conversation evidence is required.');
     if (!https(session.pullRequestUrl, 'github.com') || !/\/pull\/\d+\/?$/.test(session.pullRequestUrl || '')) findings.push(prefix + 'a pull request is required.');

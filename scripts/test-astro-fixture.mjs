@@ -17,7 +17,7 @@ try {
   const repo = result.repositoryRoot;
   for (const path of [
     'package.json', 'package-lock.json', 'astro.config.mjs', 'tsconfig.json', '.gitignore',
-    '.github/workflows/design-workflow-command.yml', '.github/workflows/design-workflow-ui.yml',
+    '.github/workflows/design-workflow-command.yml', '.github/workflows/validate-ui.yml',
     '.starter-source.json', projectInstructionsFilename, 'design-workflow.config.template.json',
     'src/pages/index.astro', 'src/pages/about.astro', 'src/layouts/Page.astro',
     'src/styles/global.css', 'public/mark.svg', 'public/horizon.svg',
@@ -41,7 +41,7 @@ try {
   assert(read(join(repo, '.github/workflows/design-workflow-command.yml')).includes('@' + revision));
   assert(!read(join(repo, 'README.md')).includes('<TOOLKIT_REVISION>'));
   assert.equal(read(join(repo, projectInstructionsFilename)), read(join(root, projectInstructionsFilename)));
-  assert.equal(JSON.parse(read(join(repo, 'design-workflow.config.template.json'))).schemaVersion, 2);
+  assert.equal(JSON.parse(read(join(repo, 'design-workflow.config.template.json'))).schemaVersion, 3);
   for (const absent of ['node_modules', 'dist', '.astro', 'docs/implementation-workflow', '.workflow']) assert(!existsSync(join(repo, absent)), absent);
   assert.throws(() => materializeAstroFixture({ output: root, revision }), /toolkit sources/);
   assert.throws(() => materializeAstroFixture({ output: dirname(root), revision }), /toolkit sources/);
@@ -68,16 +68,14 @@ try {
     assert.equal(failure.result.status, 1);
     assert.equal(failure.evidence.passed, false);
   }
-  const workflow = read(join(repo, '.github/workflows/design-workflow-ui.yml'));
+  const workflow = read(join(repo, '.github/workflows/validate-ui.yml'));
   assert(workflow.includes('github.event.pull_request.head.sha || github.sha'), 'Validate the implementation commit, including PR heads.');
-  assert(workflow.includes("working-directory: '.'"));
   assert(workflow.includes('VALIDATION_RESULT') || workflow.includes('scripts/validation-report.mjs'));
   assert(workflow.includes('contents: read'));
-  assert(!workflow.includes('__IMPLEMENTATION_'));
   assert(!workflow.includes('pull_request_target'));
   assert(!workflow.includes('**.md'), 'Bookkeeping must not be presented as a UI validation trigger.');
   assert.deepEqual(readdirSync(repo).filter(name => name === 'node_modules'), []);
 } finally {
   rmSync(temp, { recursive: true, force: true });
 }
-console.log('Astro development fixture, canonical Project Instructions naming, deterministic runtime scaffold integration, locked dependencies, immutable pins, output safety, and failing/stale check evidence passed.');
+console.log('Astro development fixture, canonical Project Instructions naming, config v3 template, locked dependencies, immutable pins, output safety, and failing/stale check evidence passed.');

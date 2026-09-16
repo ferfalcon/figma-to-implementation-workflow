@@ -22,8 +22,6 @@
     "guidelines",
     "implementation-adapters/ASTRO.md",
     "implementation-adapters/EXISTING-FRAMEWORK.md",
-    "implementation-adapters/astro/scaffold/application",
-    "implementation-adapters/astro/scaffold/repository",
     "prompts",
     "schemas",
     "source-adapters",
@@ -79,6 +77,7 @@
     "test:action-pinning": "node scripts/test-github-actions-pinning.mjs",
     "test:package": "node scripts/test-package-manifest.mjs",
     "test:product": "node scripts/test-product-experience.mjs",
+    "test:product-status": "node scripts/test-product-status.mjs",
     "test:astro-scaffold": "node scripts/test-astro-scaffold.mjs",
     "test:astro-fixture": "node scripts/test-astro-fixture.mjs"
   },

@@ -22,7 +22,7 @@ assert.deepEqual(
   [],
   'semantic contract structure and repository references must be valid',
 );
-assert.equal(contract.contractVersion, 3, 'canonical Project Instructions installation authority must be represented by semantic contract v3');
+assert.equal(contract.contractVersion, 4, 'minimal onboarding and the separate architecture explainer must be represented by semantic contract v4');
 
 function byId(items) {
   return new Map(items.map((item) => [item.id, item]));
@@ -114,6 +114,7 @@ const entrypoints = byId(contract.entrypoints);
 for (const required of [
   'readme',
   'quickstart',
+  'how-it-works',
   'toolkit-agents',
   'consumer-agent-bootstrap',
   'chatgpt-project-settings',
@@ -125,18 +126,33 @@ for (const required of [
 assert.equal(entrypoints.get('readme').role, 'human product overview and zero-to-start instructions');
 assert.ok(entrypoints.get('readme').owns.includes('repository-url-first start'));
 assert.ok(entrypoints.get('readme').delegatesTo.includes('Project-settings--Instructions.md'));
-assert.equal(entrypoints.get('quickstart').role, 'detailed first-run and resume guide');
-assert.ok(entrypoints.get('quickstart').owns.includes('progressive setup and capability resolution'));
+assert.ok(entrypoints.get('readme').delegatesTo.includes('workflow/How-It-Works.md'));
+assert.equal(entrypoints.get('quickstart').role, 'minimal first-run and resume guide');
+assert.ok(entrypoints.get('quickstart').owns.includes('installation handoff'));
+assert.ok(entrypoints.get('quickstart').owns.includes('start and continuation commands'));
+assert.deepEqual(entrypoints.get('quickstart').delegatesTo, ['Project-settings--Instructions.md', 'workflow/How-It-Works.md']);
+assert(!entrypoints.get('quickstart').owns.includes('progressive setup and capability resolution'));
 assert(!entrypoints.get('quickstart').owns.includes('one-time plugin and starter setup'));
 assert(!entrypoints.get('quickstart').owns.includes('Figma-first start and review preference choice'));
+assert(!entrypoints.get('quickstart').owns.includes('profile-selection onboarding'));
+assert.equal(entrypoints.get('how-it-works').role, 'non-authoritative product architecture explainer');
+assert.ok(entrypoints.get('how-it-works').owns.includes('conceptual product journey and architecture map'));
+for (const owner of [
+  'workflow/Project-Configuration.md',
+  'workflow/State-Ownership.md',
+  'workflow/Implementation-Adapters.md',
+  'workflow/Deployment-Adapters.md',
+  'workflow/Execution-Transports.md',
+  'workflow/Product-Acceptance.md',
+]) {
+  assert.ok(entrypoints.get('how-it-works').delegatesTo.includes(owner), `How-It-Works must delegate to ${owner}`);
+}
 assert.equal(entrypoints.get('consumer-agent-bootstrap').path, 'AGENTS-instructions.md');
 assert.ok(entrypoints.get('consumer-agent-bootstrap').delegatesTo.includes('workflow/Agent-Orchestration.md'));
 assert.equal(entrypoints.get('chatgpt-project-settings').path, 'Project-settings--Instructions.md');
 assert.equal(entrypoints.get('chatgpt-project-settings').role, 'canonical ChatGPT installation artifact and host bootstrap contract');
 assert.ok(entrypoints.get('chatgpt-project-settings').owns.includes('canonical Project Instructions installation artifact'));
 assert.deepEqual(entrypoints.get('chatgpt-project-settings').delegatesTo, ['AGENTS-instructions.md', 'workflow/Project-Configuration.md', 'workflow/ChatGPT-Experience.md']);
-assert(entrypoints.get('quickstart').delegatesTo.includes('workflow/ChatGPT-Experience.md'));
-assert(!entrypoints.get('quickstart').owns.includes('profile-selection onboarding'));
 assert.deepEqual(entrypoints.get('figma-preparation-launcher').delegatesTo, ['source-adapters/FIGMA-PREPARATION.md']);
 
 const domains = byId(contract.domains);
@@ -245,4 +261,4 @@ assert.deepEqual(
   'semantic compatibility coverage must track every canonical compatibility contract without duplicating versions',
 );
 
-console.log('Semantic contract tests passed (canonical installation artifact, product onboarding, deployment-adapter ownership, entrypoint ownership, control modes, architecture rules, and compatibility coverage agree with executable behavior).');
+console.log('Semantic contract tests passed (minimal onboarding, architecture explainer delegation, canonical installation artifact, product onboarding, deployment-adapter ownership, control modes, architecture rules, and compatibility coverage agree with executable behavior).');

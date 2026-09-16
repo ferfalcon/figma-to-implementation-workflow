@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/ferfalcon/figma-to-implementation-workflow/schemas/design-workflow-config.schema.json",
-  "title": "Design Workflow Project Configuration",
-  "description": "Stable project identity and working boundaries shared across agents and chats.",
+  "$id": "https://github.com/ferfalcon/figma-to-implementation-workflow/schemas/design-workflow-config.v2.schema.json",
+  "title": "Design Workflow Project Configuration v2",
+  "description": "Legacy project configuration with saved working branch, Vercel-specific deployment locator, and review style.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -14,18 +14,13 @@
     "workflow"
   ],
   "properties": {
-    "schemaVersion": {
-      "const": 3
-    },
+    "schemaVersion": { "const": 2 },
     "project": {
       "type": "object",
       "additionalProperties": false,
       "required": ["name"],
       "properties": {
-        "name": {
-          "type": "string",
-          "minLength": 1
-        }
+        "name": { "type": "string", "minLength": 1 }
       }
     },
     "repository": {
@@ -42,9 +37,7 @@
           "type": "string",
           "minLength": 1,
           "pattern": "^(?:\\.|[^/\\\\][^\\\\]*)$",
-          "not": {
-            "pattern": "(^|/)\\.\\.(/|$)"
-          }
+          "not": { "pattern": "(^|/)\\.\\.(/|$)" }
         },
         "workingBranch": {
           "type": "string",
@@ -59,68 +52,29 @@
       "additionalProperties": false,
       "required": ["provider", "url", "scope"],
       "properties": {
-        "provider": {
-          "const": "figma"
-        },
+        "provider": { "const": "figma" },
         "url": {
           "type": "string",
           "format": "uri",
           "pattern": "^https://(www\\.)?figma\\.com/"
         },
-        "scope": {
-          "type": "string",
-          "minLength": 1
-        }
+        "scope": { "type": "string", "minLength": 1 }
       }
     },
     "deployment": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["provider", "projectUrl", "productionUrl"],
+      "required": ["vercelProjectUrl", "productionUrl"],
       "properties": {
-        "provider": {
+        "vercelProjectUrl": {
           "type": ["string", "null"],
-          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
-        },
-        "projectUrl": {
-          "type": ["string", "null"],
-          "format": "uri",
-          "pattern": "^https://"
+          "format": "uri"
         },
         "productionUrl": {
           "type": ["string", "null"],
-          "format": "uri",
-          "pattern": "^https://"
+          "format": "uri"
         }
-      },
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "provider": { "type": "null" }
-            },
-            "required": ["provider"]
-          },
-          "then": {
-            "properties": {
-              "projectUrl": { "type": "null" }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "projectUrl": { "type": "string" }
-            },
-            "required": ["projectUrl"]
-          },
-          "then": {
-            "properties": {
-              "provider": { "type": "string" }
-            }
-          }
-        }
-      ]
+      }
     },
     "workflow": {
       "type": "object",
@@ -129,7 +83,7 @@
       "properties": {
         "reviewStyle": {
           "type": "string",
-          "enum": ["brief-and-final", "every-stage"]
+          "enum": ["brief-and-preview", "every-stage"]
         }
       }
     }

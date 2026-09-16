@@ -6,15 +6,31 @@ See [`../workflow/State-Ownership.md`](../workflow/State-Ownership.md) for owner
 
 ## Project configuration
 
-New consumer projects use configuration v2 with a saved working branch and review style. The read-only command checks settings before initialization or after an update:
+New consumer projects use configuration v3 with a saved working branch, current review style, and provider-neutral deployment identity. Check supported settings without mutation:
 
 ```bash
 design-workflow project check --json
 ```
 
-Exit 0 means valid configuration; exit 1 returns findings. The result is configuration-only: provider capabilities, remote branch existence, and preview status still require observed plugin evidence. Existing v1 settings remain readable, with their established mode and working ref retained until adoption. This configuration version is independent of the workflow record version.
+Exit 0 means valid configuration; exit 1 returns findings. The result is configuration-only: provider capabilities, remote branch existence, and runtime status still require observed provider evidence.
 
-See [Project Configuration](../workflow/Project-Configuration.md) and [ChatGPT Experience](../workflow/ChatGPT-Experience.md). Ordinary ChatGPT uses the installed GitHub bridge for this check.
+Configuration v2 remains readable and migrates deterministically to v3:
+
+```bash
+design-workflow project migrate --to 3
+```
+
+Configuration v1 remains readable but does not contain a saved working branch or review style, so adoption must be explicit:
+
+```bash
+design-workflow project migrate --to 3 \
+  --working-branch <established-branch> \
+  --review-style <brief-and-final|every-stage>
+```
+
+Failed migration leaves the source configuration unchanged; migrating an already-current v3 configuration is a no-op. Configuration versioning is independent of workflow-record schema versioning, and the configuration revision remains derived rather than persisted.
+
+See [Project Configuration](../workflow/Project-Configuration.md) and [ChatGPT Experience](../workflow/ChatGPT-Experience.md). Ordinary ChatGPT resolves project configuration through repository access; canonical workflow-state mutations continue to use the installed GitHub bridge when direct CLI execution is unavailable.
 
 ## Run locally
 

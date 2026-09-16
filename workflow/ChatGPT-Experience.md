@@ -49,15 +49,15 @@ Keep a concise capability table with evidence links in the current profile's own
 
 ## Configuration and resuming
 
-Read default-branch configuration first, then the saved working branch in v2. Verify repository identity, branch existence, and configuration consistency before reading that branch's record/projection. Do not fall back to default-branch workflow state when the saved branch is missing or inaccessible.
+Read default-branch configuration first, then the saved working branch for configuration v2 or v3. Verify repository identity, branch existence, and derived configuration-revision consistency before reading that branch's record/projection. Do not fall back to default-branch workflow state when the saved branch is missing or inaccessible.
 
-On first setup, start from the repository locator and reuse authoritative repository/configuration evidence before asking for missing context. When configuration is absent, resolve required values progressively in conversation; do not commit a partially filled configuration. Ask once for review style before initialization when it is not already saved, recommend **Brief and final review**, and persist the user's actual choice. Configuration v2 keeps the existing internal `brief-and-preview` identifier for compatibility. Create the complete valid configuration on the default branch before initializing the feature branch. Preserve an existing valid caller. Create the working branch from the resulting setup commit, then initialize there with fresh HEAD. Never reuse an unrelated existing branch silently.
+On first setup, start from the repository locator and reuse authoritative repository/configuration evidence before asking for missing context. When configuration is absent, resolve required values progressively in conversation; do not commit a partially filled configuration. Ask once for review style before initialization when it is not already saved, recommend **Brief and final review**, and persist the user's actual choice in configuration v3. Create the complete valid configuration on the default branch before initializing the feature branch. Preserve an existing valid caller. Create the working branch from the resulting setup commit, then initialize there with fresh HEAD. Never reuse an unrelated existing branch silently.
+
+When configuration v2 is encountered, preserve its repository identity and saved working branch, normalize legacy `brief-and-preview` to the current `brief-and-final` behavior, and migrate the stored configuration deterministically to v3. When configuration v1 is encountered, preserve the established ref and execution mode until the human explicitly adopts the working branch and review style required for v3; neither value may be guessed. A configuration change after planning is subject to the ordinary lineage/impact checks. Updates to stable configuration must be committed canonically on the default branch and deliberately mirrored to the working branch before further substantive work; compare derived configuration revisions before trusting workflow state there.
 
 Implementation-adapter selection is not stored in project configuration. Re-resolve it from the configured implementation root and current repository evidence when material repository changes could invalidate the earlier observation, and record the observation against the relevant repository snapshot in Stage 0/planning artifacts.
 
-Deployment URLs may remain null when no deployment identity is configured. That does not block repository setup, workflow planning, implementation, or implementation-evidence reporting. If approved scope later requires runtime evidence, resolve the deployment capability then and report a precise blocker if it cannot be established.
-
-Version 1 configurations retain the established ref and mode until the user chooses adoption. Version 2 adoption adds the chosen reviewStyle and the existing working branch; it must not move work or silently switch an active mode. A configuration change after planning is subject to the ordinary lineage/impact checks. Updates to stable configuration must agree on the default and working branches before further work.
+Configuration v3 deployment identity may remain unconfigured with `deployment.provider: null` and `deployment.projectUrl: null`; `deployment.productionUrl` may also be null. That does not block repository setup, workflow planning, implementation, or implementation-evidence reporting. If approved scope later requires runtime evidence, resolve the deployment capability then and report a precise blocker if it cannot be established.
 
 A new chat reloads the saved branch, toolkit pin, and freshness-verified generated context. Resume in-progress tasks and pending review decisions; do not repeat installation or infer approvals from conversation summaries.
 
@@ -67,7 +67,7 @@ The preference controls human checkpoints, not profile selection, implementation
 
 ### Brief and final review
 
-This human-facing label maps to configuration value `brief-and-preview` until a separately planned configuration-schema migration changes that stored identifier.
+The human-facing **Brief and final review** label maps to configuration v3 value `brief-and-final`. Configuration v2's legacy `brief-and-preview` value is treated as the same behavior while it is being migrated and is not emitted by current configuration.
 
 Initialize with Continuous documentation. Continue through audit, documentation, required architecture, reviews, and Stage 9 while no consequential decision is unresolved. Agent-permitted internal artifact approvals must identify the agent honestly; they are not human approvals.
 

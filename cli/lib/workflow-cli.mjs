@@ -1,6 +1,13 @@
-import { readProjectConfiguration, resolveProjectSession } from './project-configuration.mjs';
-import { existsSync } from 'node:fs';
-import { runImplementationCli } from './implementation-cli.mjs';
+import { randomUUID } from 'node:crypto';
+import { existsSync, renameSync, unlinkSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import {
+  migrateProjectConfiguration,
+  PROJECT_CONFIGURATION_VERSION,
+  projectConfigurationRevision,
+  readProjectConfiguration,
+  resolveProjectSession,
+} from './project-configuration.mjs';
 import { runWorkflowCli } from './commands-v2.mjs';
 import { mutateRecord, readStoredRecord } from './record-store.mjs';
 import { bindRepositoryWorkspace } from './repository-binding.mjs';
@@ -57,6 +64,53 @@ function toolkitSummary(binding) {
   return `${binding.repository}#${binding.revision}`;
 }
 
+function projectConfigurationPath(projectRoot) {
+  return join(projectRoot, 'design-workflow.config.json');
+}
+
+function replaceProjectConfiguration(projectRoot, config) {
+  const target = projectConfigurationPath(projectRoot);
+  const temporary = join(projectRoot, `.design-workflow.config.${process.pid}.${randomUUID()}.tmp`);
+  try {
+    writeFileSync(temporary, `${JSON.stringify(config, null, 2)}\n`, { encoding: 'utf8', flag: 'wx' });
+    renameSync(temporary, target);
+  } catch (error) {
+    if (existsSync(temporary)) unlinkSync(temporary);
+    throw error;
+  }
+}
+
+function runProjectMigration(projectRoot, stdout, stderr, options) {
+  try {
+    const requestedVersion = Number(stringOption(options, 'to'));
+    if (requestedVersion !== PROJECT_CONFIGURATION_VERSION) {
+      return fail(stderr, `Usage: design-workflow project migrate --to ${PROJECT_CONFIGURATION_VERSION} [--working-branch <branch> --review-style <brief-and-final|every-stage>] [--json]`);
+    }
+    const current = readProjectConfiguration(projectRoot);
+    const outcome = migrateProjectConfiguration(current, {
+      targetVersion: requestedVersion,
+      workingBranch: stringOption(options, 'working-branch'),
+      reviewStyle: stringOption(options, 'review-style'),
+    });
+    if (outcome.changed) replaceProjectConfiguration(projectRoot, outcome.config);
+    const report = {
+      changed: outcome.changed,
+      fromVersion: outcome.fromVersion,
+      toVersion: outcome.toVersion,
+      configurationRevision: projectConfigurationRevision(outcome.config),
+    };
+    if (options.json) json(stdout, report);
+    else if (outcome.changed) write(stdout, `Migrated project configuration from v${outcome.fromVersion} to v${outcome.toVersion}.`);
+    else write(stdout, `Project configuration already uses schema v${outcome.toVersion}; no changes required.`);
+    return 0;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (options.json) json(stdout, { changed: false, valid: false, findings: [message] });
+    else fail(stderr, message);
+    return 1;
+  }
+}
+
 export async function runCli(args, environment) {
   const { cwd, stdout, stderr } = environment;
   const parsed = parseArgs(args);
@@ -71,9 +125,7 @@ export async function runCli(args, environment) {
     const result = await runWorkflowCli(workflowArgsBase, workflowEnvironment);
     write(stdout, '\nProject settings:');
     write(stdout, '  design-workflow project check [--json]');
-    write(stdout, '\nImplementation adapters:');
-    write(stdout, '  design-workflow implementation scaffold astro-typescript [--json]');
-    write(stdout, '  Scaffolding is allowed only inside an approved, in-progress Stage 10 task.');
+    write(stdout, `  design-workflow project migrate --to ${PROJECT_CONFIGURATION_VERSION} [--working-branch <branch> --review-style <brief-and-final|every-stage>] [--json]`);
     write(stdout, '\nTask phases:');
     write(stdout, '  design-workflow task create [--phase <0-99|P00-P99> | --id <Pxx-Txx>] ...');
     write(stdout, '  --phase and --id are mutually exclusive. Without either, numbering continues in the highest existing phase and defaults to Phase 01.');
@@ -106,8 +158,8 @@ export async function runCli(args, environment) {
     }
   }
 
-  if (command === 'implementation') {
-    return runImplementationCli({ positionals, options, projectRoot, recordPath, stdout, stderr });
+  if (command === 'project' && positionals[1] === 'migrate') {
+    return runProjectMigration(projectRoot, stdout, stderr, options);
   }
 
   if (command === 'repository' && positionals[1] === 'bind') {
