@@ -21,6 +21,7 @@ export const validationSteps = [
   { name: 'agent bootstrap authority', script: 'scripts/test-agent-bootstrap-authority.mjs' },
   { name: 'installation artifact', script: 'scripts/test-installation-artifact.mjs' },
   { name: 'project configuration', script: 'scripts/test-project-configuration.mjs' },
+  { name: 'project configuration revision', script: 'scripts/test-project-configuration-revision.mjs' },
   { name: 'consumer bundle', script: 'scripts/test-consumer-bundle.mjs' },
   { name: 'Astro implementation scaffold', script: 'scripts/test-astro-scaffold.mjs' },
   { name: 'Astro development fixture', script: 'scripts/test-astro-fixture.mjs' },
