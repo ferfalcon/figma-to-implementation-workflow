@@ -78,7 +78,7 @@ Treat the completed report as a maintainer QA record, not canonical workflow sta
 
 It is an attestation, not the evidence itself. It must not contain tester identity, conversation URLs, pull-request URLs, provider evidence locators, or other private acceptance material. It is also not executable workflow state and does not gate toolkit releases.
 
-Use `status: "pending"` when there is no current public attestation for an accepted toolkit revision. Pending status keeps `lastAcceptedRevision` and `acceptedAt` as `null` and has no accepted scenarios.
+Use `status: "pending"` when there is no current public attestation for an accepted toolkit revision. Pending status keeps `lastAcceptedRevision`, `acceptedAt`, and `acceptanceReportSchemaVersion` as `null` and has no accepted scenarios.
 
 Use `status: "accepted"` only after maintainers have completed and verified the real-session acceptance process for one exact toolkit commit. An accepted attestation records:
 
