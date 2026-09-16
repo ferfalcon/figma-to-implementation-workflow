@@ -90,12 +90,6 @@ If you want to understand, audit, or extend the system, start with these referen
 - [CLI reference](cli/README.md) — maintainer and direct CLI operations.
 - [Contribution guide](CONTRIBUTING.md) — development and contribution guidance.
 
-## For maintainers
-
-The workflow engine, immutable toolkit binding, profiles, schemas, generated artifacts, maintainer packaging, and compatibility rules are implementation concerns rather than onboarding requirements. Their detailed contracts remain in the workflow documentation and source tree.
-
-The canonical consumer-facing installation artifact is [`Project-settings--Instructions.md`](Project-settings--Instructions.md). It contains the repository bootstrap locator and host/bootstrap rules; durable project values remain repository-owned.
-
 ## License
 
 Licensed under the MIT License. See [LICENSE](LICENSE).
