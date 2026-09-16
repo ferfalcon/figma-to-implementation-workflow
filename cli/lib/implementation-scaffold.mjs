@@ -13,12 +13,12 @@ const IGNORED_SOURCE_PARTS = new Set([
 ]);
 const PRESERVABLE_APPLICATION_FILES = new Set(['README.md', '.gitignore']);
 const METADATA_FILES = new Set([
-  '.editorconfig', '.gitattributes', '.gitignore',
+  '.editorconfig', '.git', '.gitattributes', '.gitignore',
   'AGENTS.md', 'AGENTS-instructions.md', 'AGENTS-PROMPT-Figma-file-preparation.md',
   'CHANGELOG.md', 'CONTRIBUTING.md', 'Project-settings--Instructions.md',
   'README', 'README.md', 'SECURITY.md', 'design-workflow.config.json',
 ]);
-const METADATA_DIRECTORIES = ['.git/', '.github/', '.workflow/', 'docs/'];
+const METADATA_DIRECTORIES = new Set(['.git', '.github', '.workflow', 'docs']);
 
 function posix(value) {
   return value.split('\\').join('/');
@@ -32,7 +32,7 @@ function pathInside(root, candidate) {
 function normalizedImplementationRoot(value) {
   if (typeof value !== 'string' || !value.trim()) throw new Error('repository.implementationRoot must be a non-empty repository-relative path.');
   const normalized = posix(value.trim()).replace(/^\.\//, '').replace(/\/$/, '') || '.';
-  if (isAbsolute(normalized) || normalized.includes('\\') || normalized.split('/').some((part) => part === '..')) {
+  if (isAbsolute(normalized) || normalized.split('/').some((part) => part === '..')) {
     throw new Error('repository.implementationRoot must remain inside the project repository.');
   }
   return normalized;
@@ -78,14 +78,19 @@ function mappedApplicationPath(path) {
 function metadataPath(path) {
   if (METADATA_FILES.has(path)) return true;
   if (/^(?:LICENSE|README|CONTRIBUTING|CHANGELOG|SECURITY)(?:\..+)?$/i.test(path)) return true;
-  return METADATA_DIRECTORIES.some((prefix) => path.startsWith(prefix));
+  const topLevel = path.split('/')[0];
+  return METADATA_DIRECTORIES.has(topLevel);
+}
+
+function yamlSingleQuoted(value) {
+  return value.replaceAll("'", "''");
 }
 
 function renderRepositoryWorkflow(template, implementationRoot) {
   const prefix = implementationRoot === '.' ? '' : `${implementationRoot}/`;
   return template
-    .replaceAll('__IMPLEMENTATION_PATH_PREFIX__', prefix)
-    .replaceAll('__IMPLEMENTATION_WORKING_DIRECTORY__', implementationRoot);
+    .replaceAll('__IMPLEMENTATION_PATH_PREFIX__', yamlSingleQuoted(prefix))
+    .replaceAll('__IMPLEMENTATION_WORKING_DIRECTORY__', yamlSingleQuoted(implementationRoot));
 }
 
 function collectExistingFiles(root, current = root, prefix = '') {
@@ -95,8 +100,10 @@ function collectExistingFiles(root, current = root, prefix = '') {
     const absolute = join(current, item.name);
     const itemPath = prefix ? `${prefix}/${item.name}` : item.name;
     if (item.isSymbolicLink()) throw new Error(`Implementation root contains a symlink and is not safely scaffoldable: ${itemPath}`);
-    if (item.isDirectory()) files.push(...collectExistingFiles(root, absolute, itemPath));
-    else if (item.isFile()) files.push(posix(itemPath));
+    if (item.isDirectory()) {
+      if (!prefix && METADATA_DIRECTORIES.has(item.name)) continue;
+      files.push(...collectExistingFiles(root, absolute, itemPath));
+    } else if (item.isFile()) files.push(posix(itemPath));
     else throw new Error(`Implementation root contains an unsupported filesystem entry: ${itemPath}`);
   }
   return files;

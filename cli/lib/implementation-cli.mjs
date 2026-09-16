@@ -6,6 +6,10 @@ import { readStoredRecord } from './record-store.mjs';
 import { fail, write } from './utils.mjs';
 import { workflowDiagnostics } from './workflow-diagnostics.mjs';
 
+const SCAFFOLD_MATERIALIZERS = Object.freeze({
+  'astro-typescript': materializeAstroScaffold,
+});
+
 function json(stdout, value) {
   write(stdout, JSON.stringify(value, null, 2));
 }
@@ -26,6 +30,8 @@ export function runImplementationCli({ positionals, options, projectRoot, record
     if (!adapter.modes.includes('scaffold') || !adapter.scaffoldResource) {
       throw new Error(`Implementation adapter ${adapterId} does not provide a maintained scaffold capability.`);
     }
+    const materialize = SCAFFOLD_MATERIALIZERS[adapterId];
+    if (!materialize) throw new Error(`Implementation adapter ${adapterId} has no registered runtime scaffold materializer.`);
 
     const config = readProjectConfiguration(projectRoot);
     const { record } = readStoredRecord(recordPath);
@@ -35,7 +41,7 @@ export function runImplementationCli({ positionals, options, projectRoot, record
       throw new Error('Implementation scaffolding requires a valid schema-v2 workflow at Stage 10 with an in-progress current task and a non-Continuous-documentation execution mode.');
     }
 
-    const result = materializeAstroScaffold({
+    const result = materialize({
       projectRoot,
       implementationRoot: config.repository.implementationRoot,
     });
