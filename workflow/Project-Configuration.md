@@ -38,7 +38,7 @@ A repository manifest cannot locate itself in a brand-new host conversation. Cha
 Repository: <REPOSITORY_URL>
 ```
 
-That value is only a bootstrap pointer, not a second project-configuration authority. After locating the repository, read `design-workflow.config.json` on the default branch first. For configuration v2, follow `repository.workingBranch` before reading workflow state and verify that stable configuration agrees on both branches. An explicit conflicting working ref, missing saved branch, or inaccessible branch is a blocker. For v1, preserve the current authoritative ref or the default branch when none is established.
+That value is only a bootstrap pointer, not a second project-configuration authority. After locating the repository, read `design-workflow.config.json` on the default branch first. The default-branch configuration is the canonical project configuration. For configuration v2, follow `repository.workingBranch` before reading workflow state and verify that its configuration is a mirror of the canonical configuration by comparing the derived configuration revision. A revision mismatch is configuration drift and a blocker; do not silently choose the working-branch copy or rewrite either branch to make them agree. An explicit conflicting working ref, missing saved branch, or inaccessible branch is also a blocker. For v1, preserve the current authoritative ref or the default branch when none is established.
 
 The configuration's `repository.url` must identify the same repository as the locator/current repository context. A mismatch is a configuration error; report it and do not silently switch repositories.
 
@@ -66,12 +66,46 @@ At every new agent session, inspect for project configuration before substantive
 
 When it exists:
 
-- treat stable values as canonical project context;
-- do not replace them from conversational inference;
+- treat the default-branch configuration as canonical project context;
+- do not replace stable values from conversational inference;
+- for configuration v2, compare the derived configuration revision of the saved working-branch copy with the canonical default-branch revision before reading workflow state;
+- treat a revision mismatch as configuration drift that must be resolved explicitly rather than as permission to prefer either branch silently;
 - use connected tools to verify current state;
 - report material drift instead of silently rewriting the file.
 
-An explicit user request may change project configuration. Persist the approved change before treating it as shared truth.
+An explicit user request may change project configuration. Persist the approved change on the default branch before treating it as shared truth, then deliberately synchronize the working-branch mirror before substantive workflow work continues.
+
+## Derived configuration revision
+
+Every valid project configuration has a derived semantic revision. The revision identifies the configuration data rather than the file bytes, so harmless JSON formatting differences do not create false drift.
+
+Derivation is deterministic:
+
+1. validate the configuration under the supported configuration contract;
+2. recursively sort object keys while preserving array order;
+3. serialize the canonical value as compact JSON;
+4. compute SHA-256 over the UTF-8 serialization.
+
+The read-only command:
+
+```bash
+design-workflow project check --json
+```
+
+exposes the result as:
+
+```json
+{
+  "configurationRevision": {
+    "algorithm": "sha256",
+    "digest": "<64-character-lowercase-hex>"
+  }
+}
+```
+
+Whitespace, indentation, and object-property ordering therefore do not change configuration identity. A supported semantic value change, including a schema-version change, does change the revision. Invalid configuration receives no trusted revision.
+
+The revision is **derived, never persisted as another authority**. Do not add it to `design-workflow.config.json`, `.workflow/workflow-record.json`, or `.workflow/generated/*`. The default-branch configuration remains canonical; a working-branch copy is only a version-controlled mirror whose derived revision must match before executable workflow state on that branch is trusted.
 
 ## Configuration shape
 
@@ -120,6 +154,8 @@ A future provider-neutral configuration shape should be introduced only through 
 ```text
 design-workflow.config.json
     stable project identity + working boundaries
+    default-branch copy is canonical
+    working-branch copy is a revision-checked mirror
     normal version-controlled project content
 
 .workflow/workflow-record.json
@@ -140,15 +176,15 @@ Configuration v2 requires repository.workingBranch and workflow.reviewStyle. The
 
 The preference maps to the existing modes under [ChatGPT Experience](ChatGPT-Experience.md). It does not itself authorize implementation, change an active mode, or record stage/task progress. A new brief-and-preview run initializes in Continuous documentation; every-stage initializes in Gated. The canonical mode can change only through the CLI under the documented approval policy.
 
-For a newly configured project, default the proposed working branch to design/initial-ui. Commit configuration and the caller on the default branch before creating the working branch from that setup commit. Preserve an established branch during adoption. Do not recreate a missing branch or reuse an unrelated existing branch without resolving the conflict.
+For a newly configured project, default the proposed working branch to design/initial-ui. Commit configuration and the caller on the default branch before creating the working branch from that setup commit. Preserve an established branch during adoption. Do not recreate a missing branch or reuse an unrelated existing branch without resolving the conflict. Before trusting workflow state on the working branch, require its configuration mirror to produce the same derived revision as the canonical default-branch configuration.
 
 ## Version compatibility and adoption
 
-The current schema is [configuration v2](../schemas/design-workflow-config.schema.json); [configuration v1](../schemas/design-workflow-config.v1.schema.json) remains readable. The dependency-free project-configuration reader validates both. The read-only CLI command is design-workflow project check --json, including through the pinned remote bridge.
+The current schema is [configuration v2](../schemas/design-workflow-config.schema.json); [configuration v1](../schemas/design-workflow-config.v1.schema.json) remains readable. The dependency-free project-configuration reader validates both. The read-only CLI command `design-workflow project check --json`, including through the pinned remote bridge, reports the derived configuration revision for every valid supported configuration.
 
-A v1 configuration has no saved review style or working branch. Preserve its established ref and current execution mode; do not default it into the new experience. When the human chooses adoption, retain all existing fields, add the selected reviewStyle and the existing workingBranch, and write schemaVersion 2. Assess lineage impact and reconcile stable configuration on the default and working branches before continuing. Existing exact toolkit pins do not upgrade automatically.
+A v1 configuration has no saved review style or working branch. Preserve its established ref and current execution mode; do not default it into the new experience. When the human chooses adoption, retain all existing fields, add the selected reviewStyle and the existing workingBranch, and write schemaVersion 2. Assess lineage impact, persist the resulting canonical configuration on the default branch, and ensure the working-branch mirror resolves to the same derived revision before continuing. Existing exact toolkit pins do not upgrade automatically.
 
-Project configuration versioning is independent of workflow-record schema v2 and remote-command protocol v1. Configuration contains settings, never stage/task status, plugin credentials, capability observations, or approval evidence.
+Project configuration versioning is independent of workflow-record schema v2 and remote-command protocol v1. Configuration contains settings, never stage/task status, plugin credentials, capability observations, approval evidence, or a persisted configuration digest.
 
 ## Security
 

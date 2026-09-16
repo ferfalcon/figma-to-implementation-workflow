@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -34,6 +35,24 @@ function https(value, host) {
     return url.protocol === 'https:' && !url.username && !url.password
       && (!host || host.includes(url.hostname)) && !url.hash && !url.search;
   } catch { return false; }
+}
+
+function canonicalize(value) {
+  if (Array.isArray(value)) return value.map(canonicalize);
+  if (!object(value)) return value;
+  return Object.fromEntries(
+    Object.keys(value).sort().map((key) => [key, canonicalize(value[key])]),
+  );
+}
+
+export function projectConfigurationRevision(config) {
+  const report = validateProjectConfiguration(config);
+  if (!report.valid) throw new Error(report.findings.join('\n'));
+  const canonical = JSON.stringify(canonicalize(config));
+  return {
+    algorithm: 'sha256',
+    digest: createHash('sha256').update(canonical, 'utf8').digest('hex'),
+  };
 }
 
 export function validWorkingBranch(value) {
@@ -113,6 +132,7 @@ export function resolveProjectSession(config, {
   }
   return {
     schemaVersion: config.schemaVersion,
+    configurationRevision: projectConfigurationRevision(config),
     workingBranch,
     reviewStyle,
     initialMode: currentMode || (reviewStyle === 'brief-and-preview' ? 'Continuous documentation' : 'Gated'),
