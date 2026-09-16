@@ -41,7 +41,7 @@ try {
   assert(read(join(repo, '.github/workflows/design-workflow-command.yml')).includes('@' + revision));
   assert(!read(join(repo, 'README.md')).includes('<TOOLKIT_REVISION>'));
   assert.equal(read(join(repo, projectInstructionsFilename)), read(join(root, projectInstructionsFilename)));
-  assert.equal(JSON.parse(read(join(repo, 'design-workflow.config.template.json'))).schemaVersion, 2);
+  assert.equal(JSON.parse(read(join(repo, 'design-workflow.config.template.json'))).schemaVersion, 3);
   for (const absent of ['node_modules', 'dist', '.astro', 'docs/implementation-workflow', '.workflow']) assert(!existsSync(join(repo, absent)), absent);
   assert.throws(() => materializeAstroFixture({ output: root, revision }), /toolkit sources/);
   assert.throws(() => materializeAstroFixture({ output: dirname(root), revision }), /toolkit sources/);
@@ -78,4 +78,4 @@ try {
 } finally {
   rmSync(temp, { recursive: true, force: true });
 }
-console.log('Astro development fixture, canonical Project Instructions naming, locked dependencies, immutable pins, output safety, and failing/stale check evidence passed.');
+console.log('Astro development fixture, canonical Project Instructions naming, config v3 template, locked dependencies, immutable pins, output safety, and failing/stale check evidence passed.');

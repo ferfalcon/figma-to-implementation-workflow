@@ -12,7 +12,7 @@ Never infer executable state from narrative Markdown when `.workflow/workflow-re
 
 ## ChatGPT consumer preferences
 
-[ChatGPT-Experience.md](ChatGPT-Experience.md) owns the ordinary-ChatGPT product experience: plugin capability checks, configuration-v2 branch discovery, saved review styles, scoped implementation approval, durable assets, preview evidence, and recovery. Read the applicable section during setup or resuming; it does not replace the canonical packet/projection or introduce another execution mode. Configuration v1 keeps its established ref and mode until explicit adoption. An approved complete task scope in Brief and final preview permits sequential task continuation; all task integrity and final human acceptance requirements remain in force.
+[ChatGPT-Experience.md](ChatGPT-Experience.md) owns the ordinary-ChatGPT product experience: plugin capability checks, configuration-v3 branch discovery and v2/v1 migration/adoption behavior, saved review styles, scoped implementation approval, durable assets, runtime evidence, and recovery. Read the applicable section during setup or resuming; it does not replace the canonical packet/projection or introduce another execution mode. Configuration v2 migrates deterministically to v3; configuration v1 keeps its established ref and mode until its working branch and review style are explicitly adopted. An approved complete task scope in **Brief and final review** permits sequential task continuation; all task integrity and final human acceptance requirements remain in force.
 
 ## One workflow intake
 

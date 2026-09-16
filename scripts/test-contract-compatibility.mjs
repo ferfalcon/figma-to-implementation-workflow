@@ -32,8 +32,14 @@ for (const contract of CONTRACT_COMPATIBILITY) {
   }
 }
 
-assert.equal(contractCompatibility('project-configuration').currentVersion, PROJECT_CONFIGURATION_SCHEMA_VERSION);
-assert.deepEqual(contractCompatibility('project-configuration').compatibility.map(item => item.versions[0]), [2, 1]);
+const projectConfiguration = contractCompatibility('project-configuration');
+assert.equal(projectConfiguration.currentVersion, PROJECT_CONFIGURATION_SCHEMA_VERSION);
+assert.deepEqual(projectConfiguration.compatibility.map(item => item.versions[0]), [3, 2, 1]);
+assert.deepEqual(projectConfiguration.compatibility.map(item => item.mode), [
+  'current-read-write',
+  'legacy-read-deterministic-migration',
+  'legacy-read-explicit-adoption',
+]);
 assert.equal(contractCompatibility('workflow-record').currentVersion, WORKFLOW_RECORD_SCHEMA_VERSION);
 assert.equal(contractCompatibility('orchestration-context').currentVersion, ORCHESTRATION_CONTEXT_PROTOCOL_VERSION);
 assert.equal(contractCompatibility('agent-packet').currentVersion, AGENT_PACKET_PROTOCOL_VERSION);
@@ -108,4 +114,4 @@ assert.throws(
   'Remote command bridge must reject undeclared future protocol versions.',
 );
 
-console.log('Independent contract versions, compatibility relationships, runtime consumers, documented examples, and remote transport behavior are aligned.');
+console.log('Independent contract versions, project-configuration v3/v2/v1 compatibility, runtime consumers, documented examples, and remote transport behavior are aligned.');

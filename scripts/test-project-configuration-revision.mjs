@@ -6,13 +6,14 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import {
+  migrateProjectConfiguration,
   projectConfigurationRevision,
   resolveProjectSession,
 } from '../cli/lib/project-configuration.mjs';
 import { runCli } from '../cli/lib/workflow-cli.mjs';
 
 const config = {
-  schemaVersion: 2,
+  schemaVersion: 3,
   project: { name: 'Configuration fixture' },
   repository: {
     url: 'https://github.com/example/product',
@@ -24,13 +25,13 @@ const config = {
     url: 'https://www.figma.com/design/file?node-id=1-2',
     scope: 'Home and About',
   },
-  deployment: { vercelProjectUrl: null, productionUrl: null },
-  workflow: { reviewStyle: 'brief-and-preview' },
+  deployment: { provider: null, projectUrl: null, productionUrl: null },
+  workflow: { reviewStyle: 'brief-and-final' },
 };
 
 const reordered = {
-  workflow: { reviewStyle: 'brief-and-preview' },
-  deployment: { productionUrl: null, vercelProjectUrl: null },
+  workflow: { reviewStyle: 'brief-and-final' },
+  deployment: { productionUrl: null, projectUrl: null, provider: null },
   design: {
     scope: 'Home and About',
     url: 'https://www.figma.com/design/file?node-id=1-2',
@@ -42,13 +43,13 @@ const reordered = {
     url: 'https://github.com/example/product',
   },
   project: { name: 'Configuration fixture' },
-  schemaVersion: 2,
+  schemaVersion: 3,
 };
 
 const revision = projectConfigurationRevision(config);
 assert.deepEqual(revision, {
   algorithm: 'sha256',
-  digest: '17194f660f5c68046e369f9876a9020f08779e52d7a0f92dec6f652786d97f6b',
+  digest: '6c10767c98eebde4bcc1dfa9e7e05ae8e33da76424be440296eb23c3dca916ad',
 });
 assert.deepEqual(
   projectConfigurationRevision(reordered),
@@ -68,6 +69,23 @@ assert.notEqual(
   revision.digest,
   'A semantic configuration change must produce a different revision.',
 );
+
+const v2 = {
+  schemaVersion: 2,
+  project: structuredClone(config.project),
+  repository: structuredClone(config.repository),
+  design: structuredClone(config.design),
+  deployment: { vercelProjectUrl: null, productionUrl: null },
+  workflow: { reviewStyle: 'brief-and-preview' },
+};
+const legacyRevision = projectConfigurationRevision(v2);
+const migrated = migrateProjectConfiguration(v2).config;
+assert.notEqual(
+  projectConfigurationRevision(migrated).digest,
+  legacyRevision.digest,
+  'A schema migration must produce a new semantic revision because the canonical configuration shape changed.',
+);
+assert.deepEqual(migrated, config, 'Equivalent v2 semantics must migrate to the expected v3 representation.');
 
 const invalid = structuredClone(config);
 invalid.repository.implementationRoot = '../escape';
@@ -98,4 +116,4 @@ try {
   rmSync(directory, { recursive: true, force: true });
 }
 
-console.log('Project configuration revision tests passed: validated canonical JSON produces a stable SHA-256 identity, key ordering is ignored, semantic drift changes the digest, and project check exposes the read-only revision.');
+console.log('Project configuration revision tests passed: v3 canonical JSON produces a stable SHA-256 identity, key ordering is ignored, migration changes semantic identity, and project check remains read-only.');
