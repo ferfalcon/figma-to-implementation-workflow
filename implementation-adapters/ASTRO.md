@@ -41,7 +41,7 @@ The command reads `repository.implementationRoot` from `design-workflow.config.j
 
 The command also renders `.github/workflows/design-workflow-ui.yml` at repository level. Its path filters, npm cache path, command working directory, and evidence paths are bound to the configured implementation root, including nested roots such as `frontend/` or `apps/web/`.
 
-The source repository's `implementation-adapters/astro/scaffold/README.md` is maintainer guidance only. `scripts/build-astro-scaffold.mjs` uses the same runtime materializer to generate the CI fixture, while `scripts/materialize-astro-fixture.mjs` composes that generated application with repository bootstrap material for integration validation. Sample pages, sample tests, and fixture content are never product requirements.
+`scripts/build-astro-scaffold.mjs` uses the same runtime materializer to generate the CI fixture, while `scripts/materialize-astro-fixture.mjs` composes that generated application with repository bootstrap material for integration validation. Sample pages, sample tests, and fixture content are never product requirements.
 
 When scaffolding:
 
