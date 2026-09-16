@@ -3,6 +3,6 @@
   "status": "pending",
   "lastAcceptedRevision": null,
   "acceptedAt": null,
-  "acceptanceReportSchemaVersion": 2,
+  "acceptanceReportSchemaVersion": null,
   "scenarios": []
 }
