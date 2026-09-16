@@ -33,7 +33,11 @@ const operationalRequirements = [
   [/canonical bootstrap repository is `ferfalcon\/figma-to-implementation-workflow`/i, 'identify the canonical bootstrap repository'],
   [/do not look for a vendored `docs\/implementation-workflow\/` toolkit/i, 'reject the legacy vendored-toolkit path'],
   [/\.github\/workflows\/design-workflow-command\.yml/i, 'inspect the thin remote caller before initialization'],
-  [/current default-branch HEAD once to an exact 40-character SHA/i, 'resolve a missing bootstrap pin immutably'],
+  [/pins the canonical toolkit to one exact 40-character commit SHA[^\n]*preserve that pin/i, 'preserve an existing exact canonical toolkit pin'],
+  [/latest non-draft, non-prerelease GitHub Release/i, 'resolve a missing bootstrap pin from the stable release channel'],
+  [/dereference that tag to its exact 40-character commit SHA/i, 'convert the stable release tag to immutable runtime identity'],
+  [/stable-toolkit bootstrap blocker/i, 'report unavailable stable bootstrap precisely'],
+  [/never fall back to `main`[^\n]*moving branch[^\n]*mutable tag/i, 'reject implicit development-channel or mutable-ref fallback'],
   [/Load `AGENTS-instructions\.md`[^\n]*exactly that bootstrap revision/i, 'load consumer bootstrap instructions from the pinned toolkit revision'],
   [/design-workflow\.config\.json` exists and is verified before initialization/i, 'require verified repository configuration before workflow initialization'],
   [/repository\.implementationRoot/i, 'read the implementation boundary from repository configuration'],
@@ -46,6 +50,7 @@ const operationalRequirements = [
 for (const [pattern, description] of operationalRequirements) {
   assert(pattern.test(instructions), `Canonical Project Instructions must ${description}.`);
 }
+assert(!/current default-branch HEAD/i.test(instructions), 'Canonical Project Instructions must not bootstrap from the moving default-branch HEAD.');
 assert(!/docs\/implementation-workflow\/AGENTS-instructions\.md/i.test(instructions), 'Canonical Project Instructions must not delegate to a vendored bootstrap path.');
 
 const semantic = JSON.parse(read('workflow/semantic-contract.json'));
@@ -102,4 +107,4 @@ for (const absolute of walk(root)) {
 }
 assert.deepEqual(aliasFindings, [], `Deprecated installation aliases remain in active contracts:\n${aliasFindings.join('\n')}`);
 
-console.log('Installation artifact contract passed (one canonical Project Instructions filename, one repository locator, immutable external bootstrap, scaffold/bootstrap separation, scoped implementation boundaries, and no active legacy aliases).');
+console.log('Installation artifact contract passed (one canonical Project Instructions filename, one repository locator, stable-release bootstrap with exact immutable pins, scaffold/bootstrap separation, scoped implementation boundaries, and no active legacy aliases).');
