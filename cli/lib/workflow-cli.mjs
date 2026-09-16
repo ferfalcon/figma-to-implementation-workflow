@@ -9,6 +9,7 @@ import {
   resolveProjectSession,
 } from './project-configuration.mjs';
 import { runWorkflowCli } from './commands-v2.mjs';
+import { runImplementationCli } from './implementation-cli.mjs';
 import { mutateRecord, readStoredRecord } from './record-store.mjs';
 import { bindRepositoryWorkspace } from './repository-binding.mjs';
 import { buildOrchestrationContext } from './orchestration-context.mjs';
@@ -126,6 +127,9 @@ export async function runCli(args, environment) {
     write(stdout, '\nProject settings:');
     write(stdout, '  design-workflow project check [--json]');
     write(stdout, `  design-workflow project migrate --to ${PROJECT_CONFIGURATION_VERSION} [--working-branch <branch> --review-style <brief-and-final|every-stage>] [--json]`);
+    write(stdout, '\nImplementation adapters:');
+    write(stdout, '  design-workflow implementation scaffold astro-typescript [--json]');
+    write(stdout, '  Scaffolding is allowed only inside an approved, in-progress Stage 10 task.');
     write(stdout, '\nTask phases:');
     write(stdout, '  design-workflow task create [--phase <0-99|P00-P99> | --id <Pxx-Txx>] ...');
     write(stdout, '  --phase and --id are mutually exclusive. Without either, numbering continues in the highest existing phase and defaults to Phase 01.');
@@ -160,6 +164,10 @@ export async function runCli(args, environment) {
 
   if (command === 'project' && positionals[1] === 'migrate') {
     return runProjectMigration(projectRoot, stdout, stderr, options);
+  }
+
+  if (command === 'implementation') {
+    return runImplementationCli({ positionals, options, projectRoot, recordPath, stdout, stderr });
   }
 
   if (command === 'repository' && positionals[1] === 'bind') {
