@@ -27,7 +27,8 @@
       "id": "astro-typescript",
       "support": "maintained",
       "modes": ["scaffold", "adapt"],
-      "resource": "implementation-adapters/ASTRO.md"
+      "resource": "implementation-adapters/ASTRO.md",
+      "scaffoldResource": "implementation-adapters/astro/scaffold"
     },
     {
       "id": "existing-framework",

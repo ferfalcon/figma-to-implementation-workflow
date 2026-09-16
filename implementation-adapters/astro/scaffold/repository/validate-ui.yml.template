@@ -2,24 +2,24 @@ name: Validate UI
 on:
   push:
     paths:
-      - 'src/**'
-      - 'public/**'
-      - 'tests/**'
-      - 'scripts/**'
-      - 'package*.json'
-      - '*.config.*'
-      - 'tsconfig.json'
-      - '.github/workflows/validate-ui.yml'
+      - '__IMPLEMENTATION_PATH_PREFIX__src/**'
+      - '__IMPLEMENTATION_PATH_PREFIX__public/**'
+      - '__IMPLEMENTATION_PATH_PREFIX__tests/**'
+      - '__IMPLEMENTATION_PATH_PREFIX__scripts/**'
+      - '__IMPLEMENTATION_PATH_PREFIX__package*.json'
+      - '__IMPLEMENTATION_PATH_PREFIX__*.config.*'
+      - '__IMPLEMENTATION_PATH_PREFIX__tsconfig.json'
+      - '.github/workflows/design-workflow-ui.yml'
   pull_request:
     paths:
-      - 'src/**'
-      - 'public/**'
-      - 'tests/**'
-      - 'scripts/**'
-      - 'package*.json'
-      - '*.config.*'
-      - 'tsconfig.json'
-      - '.github/workflows/validate-ui.yml'
+      - '__IMPLEMENTATION_PATH_PREFIX__src/**'
+      - '__IMPLEMENTATION_PATH_PREFIX__public/**'
+      - '__IMPLEMENTATION_PATH_PREFIX__tests/**'
+      - '__IMPLEMENTATION_PATH_PREFIX__scripts/**'
+      - '__IMPLEMENTATION_PATH_PREFIX__package*.json'
+      - '__IMPLEMENTATION_PATH_PREFIX__*.config.*'
+      - '__IMPLEMENTATION_PATH_PREFIX__tsconfig.json'
+      - '.github/workflows/design-workflow-ui.yml'
   workflow_dispatch:
 permissions:
   contents: read
@@ -30,6 +30,9 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: '__IMPLEMENTATION_WORKING_DIRECTORY__'
     env:
       TESTED_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
@@ -43,6 +46,7 @@ jobs:
         with:
           node-version: 24
           cache: npm
+          cache-dependency-path: '__IMPLEMENTATION_PATH_PREFIX__package-lock.json'
       - name: Install locked dependencies
         id: dependencies
         continue-on-error: true
@@ -82,8 +86,8 @@ jobs:
         with:
           name: ui-validation-${{ github.run_id }}
           path: |
-            validation-result.json
-            playwright-report/
-            test-results/
+            __IMPLEMENTATION_PATH_PREFIX__validation-result.json
+            __IMPLEMENTATION_PATH_PREFIX__playwright-report/
+            __IMPLEMENTATION_PATH_PREFIX__test-results/
           if-no-files-found: error
           retention-days: 14

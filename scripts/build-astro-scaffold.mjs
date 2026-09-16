@@ -1,13 +1,9 @@
 #!/usr/bin/env node
 
-import {
-  cpSync,
-  mkdirSync,
-  renameSync,
-  rmSync,
-} from 'node:fs';
+import { mkdirSync, rmSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { materializeAstroScaffold } from '../cli/lib/implementation-scaffold.mjs';
 import { isPathWithin } from './lib/path-safety.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -44,23 +40,7 @@ export function buildAstroScaffold({ output }) {
 
   rmSync(outputRoot, { recursive: true, force: true });
   mkdirSync(outputRoot, { recursive: true });
-
-  const ignored = new Set([
-    'node_modules',
-    'dist',
-    '.astro',
-    '.vercel',
-    'playwright-report',
-    'test-results',
-    'validation-result.json',
-  ]);
-  cpSync(scaffoldRoot, outputRoot, {
-    recursive: true,
-    filter: (path) => !path.slice(scaffoldRoot.length).split(/[\\/]/).some((part) => ignored.has(part)),
-  });
-
-  renameSync(join(outputRoot, 'package-lock.template.json'), join(outputRoot, 'package-lock.json'));
-  renameSync(join(outputRoot, 'gitignore.template'), join(outputRoot, '.gitignore'));
+  materializeAstroScaffold({ projectRoot: outputRoot, implementationRoot: '.' });
 
   return { outputRoot };
 }

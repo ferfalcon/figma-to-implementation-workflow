@@ -93,12 +93,18 @@ try {
     'workflow/Agent-Orchestration.md',
     'workflow/Implementation-Adapters.md',
     'workflow/Execution-Transports.md',
+    'workflow/adapter-catalog.json',
     'prompts/00-intake.md',
     'templates/WORKPACK.template.md',
     'source-adapters/FIGMA.md',
     'implementation-adapters/ASTRO.md',
+    'implementation-adapters/astro/scaffold/application/package.json',
+    'implementation-adapters/astro/scaffold/application/package-lock.template.json',
+    'implementation-adapters/astro/scaffold/repository/validate-ui.yml.template',
     'deployment-adapters/VERCEL.md',
     'schemas/workflow-record.schema.json',
+    'cli/lib/implementation-cli.mjs',
+    'cli/lib/implementation-scaffold.mjs',
   ]) {
     assert(existsSync(join(installedRoot, path)), `Packed runtime is missing ${path}.`);
   }
@@ -108,16 +114,39 @@ try {
     'scripts',
     'starters',
     'tests',
-    'implementation-adapters/astro/scaffold',
+    'implementation-adapters/astro/scaffold/README.md',
   ]) {
     assert(!existsSync(join(installedRoot, path)), `Packed runtime must exclude source-only ${path}.`);
   }
+
+  const help = run(process.execPath, [cli, 'help'], consumer);
+  assert(help.stdout.includes('implementation scaffold astro-typescript'), 'Packed CLI help does not expose the Stage-10 Astro scaffold capability.');
 
   run(process.execPath, [cli, 'init', '--name', 'Packed consumer', '--profile', 'Express'], consumer);
   const record = JSON.parse(readFileSync(join(consumer, '.workflow', 'workflow-record.json'), 'utf8'));
   assert(record.toolkit?.repository === runtime.repository, 'Installed package inherited the consumer repository identity.');
   assert(record.toolkit?.revision === runtime.revision, 'Installed package inherited the consumer Git revision.');
   assert(record.toolkit.revision !== consumerCommit, 'Toolkit revision unexpectedly equals consumer HEAD.');
+
+  writeFileSync(join(consumer, 'design-workflow.config.json'), `${JSON.stringify({
+    schemaVersion: 2,
+    project: { name: 'Packed consumer' },
+    repository: {
+      url: 'https://github.com/example/consumer-application',
+      implementationRoot: 'frontend',
+      workingBranch: 'main',
+    },
+    design: {
+      provider: 'figma',
+      url: 'https://www.figma.com/design/example',
+      scope: 'Fixture',
+    },
+    deployment: { vercelProjectUrl: null, productionUrl: null },
+    workflow: { reviewStyle: 'every-stage' },
+  }, null, 2)}\n`);
+  const earlyScaffold = run(process.execPath, [cli, 'implementation', 'scaffold', 'astro-typescript'], consumer, { status: 1 });
+  assert(/Stage 10/i.test(earlyScaffold.stderr), 'Packed CLI did not fail closed when scaffolding outside Stage 10.');
+  assert(!existsSync(join(consumer, 'frontend', 'package.json')), 'Rejected scaffold command wrote application files before Stage 10.');
 
   const contextResult = run(process.execPath, [cli, 'agent-context', '--json'], consumer);
   const context = JSON.parse(contextResult.stdout);
@@ -139,7 +168,7 @@ try {
     'Installed package could not embed required implementation-adapter guidance.',
   );
 
-  console.log(`Packed runtime preserved toolkit provenance ${runtime.repository}#${runtime.revision} and canonical resources inside unrelated consumer ${basename(consumer)}.`);
+  console.log(`Packed runtime preserved toolkit provenance ${runtime.repository}#${runtime.revision}, packaged deterministic Astro scaffold resources, and enforced Stage-10 authorization inside unrelated consumer ${basename(consumer)}.`);
 } finally {
   rmSync(temporary, { recursive: true, force: true });
 }

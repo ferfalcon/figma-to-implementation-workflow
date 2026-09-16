@@ -91,8 +91,8 @@ When local CLI execution is unavailable:
 4. Load only the exact pinned workflow resources it identifies and perform the design/repository/narrative work required by the current stage or task.
 5. Verify `.github/workflows/design-workflow-command.yml` exists on the repository default branch before treating remote execution as available.
 6. If runtime preflight is required, submit a remote `stage check --json` request and use the reported CLI output before deciding the gate result.
-7. When a CLI-owned transition is permitted, read the current target branch HEAD from GitHub and submit a command issue using that SHA as `expectedHead`.
-8. Wait for the issue result before treating the transition as recorded. Re-read the branch and `.workflow/generated/AGENT-CONTEXT.json` after a successful mutating command.
+7. When a CLI-owned transition or supported Stage-10 implementation capability is permitted, read the current target branch HEAD from GitHub and submit a command issue using that SHA as `expectedHead`.
+8. Wait for the issue result before treating the transition or scaffold mutation as recorded. Re-read the branch and `.workflow/generated/AGENT-CONTEXT.json` after a successful mutating command.
 9. Continue only as allowed by the refreshed state and workflow execution mode.
 
 If `AGENT-CONTEXT.json` is missing or stale but the record exists, remote `sync` can regenerate it through the canonical CLI. If no workflow record exists, remote `init` is the bootstrap path after the caller installation above.
@@ -112,17 +112,18 @@ design-workflow validate
 design-workflow sync --check
 ```
 
-Project configuration check is also allowed before initialization after the caller is installed. It validates configuration v1/v2 without creating workflow state. A project check exit code of 1 is reported as executed with its findings, not a passing configuration result.
+Project configuration check is also allowed before initialization after the caller is installed. It validates supported project configuration without creating workflow state. A project check exit code of 1 is reported as executed with its findings, not a passing configuration result.
 
 The bridge reports their bounded CLI output on the issue and never commits repository changes. A `stage check` exit code of `1` is still reported as an executed preflight so the agent can inspect the CLI findings; it is not converted into a passing stage decision.
 
-Supported mutations are the canonical workflow transitions and registries needed by the normal process:
+Supported mutations are the canonical workflow transitions/registries plus narrowly defined implementation capabilities owned by the canonical CLI:
 
 ```text
 init
 migrate
 sync
 toolkit pin|migrate
+implementation scaffold <adapter-id>
 snapshot add|verify|supersede
 artifact adopt|scaffold|review|approve|reopen|supersede|baseline
 stage review|advance|rewind
@@ -134,6 +135,8 @@ task validation set
 review set-result
 mode set
 ```
+
+`implementation scaffold astro-typescript` is permitted only because the CLI itself reuses the canonical Stage-10 implementation authorization policy and deterministic scaffold resource from the pinned toolkit. The bridge does not infer adapter choice, accept an arbitrary destination, or relax scaffoldability checks.
 
 The bridge rejects arbitrary shell commands, unsupported/read-only CLI commands, `migrate --check`, explicit `--record`, all `--control` overrides, filesystem paths that escape the checked-out project lexically or through symlinks, and toolkit identity overrides. Remote initialization may use `--repository` only as `--repository .`, binding the project to the checked-out repository.
 
@@ -152,7 +155,7 @@ For every accepted issue, the reusable workflow:
 9. invokes the CLI with a process argument vector rather than shell interpolation;
 10. for mutations, runs `design-workflow validate` and `design-workflow sync --check` before committing;
 11. rolls back the local checkout when the command or post-mutation validation fails;
-12. creates one workflow-state/narrative commit only after the canonical CLI operation succeeds;
+12. creates one command-result commit only after the canonical CLI operation succeeds; this is normally workflow/narrative state, but an explicitly allowed implementation capability such as Stage-10 scaffolding may create implementation files;
 13. rechecks the remote branch still equals `expectedHead` immediately before push;
 14. pushes normally to the target branch and never uses force or force-with-lease;
 15. posts the result on the command issue and closes it.
@@ -166,26 +169,27 @@ The command issue lives outside Git history. This is deliberate.
 A transport file committed to the target branch before execution would change `HEAD` and could invalidate `task start` or `task complete` lineage. The issue transport avoids that contamination:
 
 - `task start` executes against the exact committed planning HEAD, then the bridge commits the resulting workflow-control update;
-- implementation work is committed normally by the implementation agent/user;
-- read the exact implementation commit's UI workflow logs and matching Vercel preview;
+- when the active task has resolved a maintained scaffold adapter, `implementation scaffold astro-typescript` may create the first implementation-output commit through the bridge; it must occur only after `task start`;
+- subsequent implementation work is committed normally by the implementation agent/user;
+- read the exact final implementation commit's UI workflow logs and matching deployment preview when required;
 - declare/record task validation through the canonical commands; these may create later workflow bookkeeping commits;
-- `task complete --commit <tested-implementation-sha>` binds the output to the implementation commit. It must equal `HEAD` or be its ancestor with every later commit touching only workflow-managed paths;
+- `task complete --commit <tested-implementation-sha>` binds the output to the tested implementation commit. It must equal `HEAD` or be its ancestor with every later commit touching only workflow-managed paths;
 - any later application change, including one subsequently reverted, blocks completion against earlier evidence;
 - after completion succeeds, the bridge adds a separate bookkeeping commit and preserves the implementation SHA.
 
-The bridge therefore preserves the CLI's distinction between implementation-output commits and workflow/documentation commits.
+The bridge therefore preserves the CLI's distinction between implementation-output commits and workflow/documentation commits while allowing the canonical toolkit to materialize its deterministic Stage-10 baseline remotely.
 
 ## GitHub Actions behavior and limitations
 
-The executor uses the caller repository's `GITHUB_TOKEN`. GitHub does not normally start new workflow runs for events caused by that token, including a push produced by this executor. This prevents recursive automation, but it also means the bridge's bookkeeping commit should not be expected to trigger ordinary `push` CI.
+The executor uses the caller repository's `GITHUB_TOKEN`. GitHub does not normally start new workflow runs for events caused by that token, including a push produced by this executor. This prevents recursive automation. A remote scaffold commit should therefore not be treated as validated merely because it created `.github/workflows/design-workflow-ui.yml`; normal subsequent implementation commits or an explicit permitted workflow run must produce validation evidence for the final tested implementation commit.
 
-That limitation is intentional for this transport: implementation code should already have been committed and validated through the project's normal implementation/CI path before `task complete`; the remote bridge commit is workflow control, generated state, or narrative scaffolding. If a project intentionally requires CI on workflow-generated commits, use a separately approved GitHub App/PAT design rather than weakening this bridge implicitly.
+For ordinary workflow bookkeeping, this limitation is intentional: implementation code should already have been committed and validated through the project's normal implementation/CI path before `task complete`. If a project intentionally requires CI on every workflow-generated commit, use a separately approved GitHub App/PAT design rather than weakening this bridge implicitly.
 
 The bridge does not bypass branch protection, environment protection, required human approvals, repository Actions policy, source-authority rules, or workflow validation rules. Any of those can still block execution.
 
 ## Failure semantics
 
-The bridge fails closed. A rejected or failed command does not push workflow state.
+The bridge fails closed. A rejected or failed command does not push workflow state or partial scaffold output.
 
 Typical failures include:
 
@@ -196,7 +200,7 @@ Typical failures include:
 - dirty checkout;
 - unsafe or symlink-escaping command path;
 - untrusted/malformed toolkit binding or unavailable pinned toolkit revision;
-- canonical CLI rejection;
+- canonical CLI rejection, including Stage-10/scaffoldability rejection;
 - failed post-mutation validation or generated-state check;
 - protected-branch or repository-policy denial;
 - concurrent remote branch movement before push.

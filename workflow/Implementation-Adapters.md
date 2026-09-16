@@ -60,10 +60,15 @@ For a new scaffoldable project:
 
 1. resolve and record the maintained adapter;
 2. complete the normal documentation, planning, review, and approval stages;
-3. scaffold the application only inside the approved Stage 10 task;
-4. validate the resulting implementation with the adapter-specific and project-specific checks.
+3. enter Stage 10 and start the approved implementation task;
+4. run `design-workflow implementation scaffold astro-typescript` through the available execution transport;
+5. validate the resulting implementation with the adapter-specific and project-specific checks.
 
-This preserves the workflow's authorization boundary.
+The scaffold command is a Stage-10 implementation capability of the canonical toolkit. It reads the configured `repository.implementationRoot`, reuses the canonical Stage-10 implementation authorization policy, and does not persist adapter selection into configuration or workflow state. The command must fail closed when workflow state is invalid, the current task is not in progress, execution is still Continuous documentation, existing application-significant content makes the root unsafe to scaffold, or a differing scaffold-owned runtime file would be overwritten.
+
+A maintained scaffold may also render narrowly defined repository-level integration outside the implementation root when the adapter contract requires it. The Astro adapter currently owns only `.github/workflows/design-workflow-ui.yml` for that purpose. Existing repository metadata is preserved and unknown application content is never reinterpreted as disposable merely to make scaffolding succeed.
+
+This preserves the workflow's authorization boundary while making the toolkit revision itself the deterministic source of scaffold bytes.
 
 ## Architecture interaction
 
