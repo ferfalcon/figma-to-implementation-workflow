@@ -146,9 +146,15 @@ assert(experience.includes('implementation-environment resolution'));
 assert(experience.includes('preserved through the best-effort existing-framework adapter'));
 assert(experience.includes('Validation must reflect the actual repository'));
 
-const quickstart = read('QUICKSTART.md');
-assert(quickstart.includes('You do **not** need to choose a workflow profile, implementation adapter'));
-assert(quickstart.includes('scaffolding remains approved implementation work'));
+const howItWorks = read('workflow/How-It-Works.md');
+assert(
+  howItWorks.includes('[Implementation Adapters](Implementation-Adapters.md)'),
+  'The product architecture explainer must route implementation mechanics to the canonical adapter contract.',
+);
+assert(
+  howItWorks.includes('Adapters are capabilities underneath one product journey, not alternate workflows.'),
+  'The architecture explainer must keep adapter selection out of the human product route.',
+);
 
 const semantic = JSON.parse(read('workflow/semantic-contract.json'));
 assert(
@@ -156,5 +162,10 @@ assert(
     && domain.owner === 'workflow/Implementation-Adapters.md'),
   'Semantic contract must register implementation adapters as a canonical domain.',
 );
+const howItWorksEntry = semantic.entrypoints.find((entry) => entry.id === 'how-it-works');
+assert(
+  howItWorksEntry?.delegatesTo.includes('workflow/Implementation-Adapters.md'),
+  'The architecture explainer must delegate implementation-adapter authority rather than owning it.',
+);
 
-console.log('Implementation adapter tests passed (repository-driven selection, maintained/best-effort boundaries, internal Astro scaffold ownership, optional deployment, and adapter-aware validation).');
+console.log('Implementation adapter tests passed (repository-driven selection, maintained/best-effort boundaries, internal Astro scaffold ownership, optional deployment, adapter-aware validation, and product-surface delegation).');

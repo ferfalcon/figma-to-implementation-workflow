@@ -72,6 +72,23 @@ Treat the completed report as a maintainer QA record, not canonical workflow sta
 
 `validateAcceptanceReport()` validates report shape and consistency; it does not call providers or establish authenticity. Maintainers must verify recorded evidence through the actual providers. Automated fixtures never constitute real-user acceptance.
 
+## Public status attestation
+
+[`product-status.json`](product-status.json) is the public, non-sensitive summary of the latest real-session acceptance state.
+
+It is an attestation, not the evidence itself. It must not contain tester identity, conversation URLs, pull-request URLs, provider evidence locators, or other private acceptance material. It is also not executable workflow state and does not gate toolkit releases.
+
+Use `status: "pending"` when there is no current public attestation for an accepted toolkit revision. Pending status keeps `lastAcceptedRevision`, `acceptedAt`, and `acceptanceReportSchemaVersion` as `null` and has no accepted scenarios.
+
+Use `status: "accepted"` only after maintainers have completed and verified the real-session acceptance process for one exact toolkit commit. An accepted attestation records:
+
+- the exact lowercase 40-character toolkit commit SHA;
+- the canonical UTC acceptance timestamp;
+- the acceptance-report schema version used for the maintainer evidence;
+- the required scenario coverage: no deployment, deployment required, new-chat resume, and correction verification.
+
+Updating the status file is a normal reviewed repository change after the evidence has been verified. Do not mark a revision accepted based only on CI, synthetic fixtures, an unverified report shape, or a previous revision's acceptance.
+
 ## Evaluate the result
 
 Acceptance evidence is meaningful only for the product behavior and toolkit revision actually exercised. If later changes materially affect onboarding, capability discovery, execution, generated implementation behavior, validation, deployment handling, resume behavior, or human review, rerun the affected real-session scenarios before describing those changes as accepted.
@@ -84,4 +101,4 @@ Toolkit and package releases are versioning/distribution decisions for the toolk
 
 Acceptance does not merge an implementation PR, create a deployment requirement, or promote a production deployment. Those remain separate human decisions.
 
-The source of the product instructions is [Project-settings--Instructions.md](../Project-settings--Instructions.md); [README.md](../README.md) owns zero-to-start discovery, [QUICKSTART.md](../QUICKSTART.md) provides detailed first-run and resume guidance, and [Deployment-Adapters.md](Deployment-Adapters.md) owns provider-neutral runtime-evidence behavior.
+The source of the product instructions is [Project-settings--Instructions.md](../Project-settings--Instructions.md); [README.md](../README.md) owns zero-to-start discovery, [QUICKSTART.md](../QUICKSTART.md) is the minimal first-run and resume guide, [How-It-Works.md](How-It-Works.md) explains the product architecture without owning its rules, and [Deployment-Adapters.md](Deployment-Adapters.md) owns provider-neutral runtime-evidence behavior.

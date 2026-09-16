@@ -34,6 +34,7 @@ if (report.unpackedSize > maxUnpackedBytes) {
 const requiredAreas = [
   'AGENTS.md', 'AGENTS-instructions.md', 'AGENTS-PROMPT-Figma-file-preparation.md',
   'Project-settings--Instructions.md', 'CONTRIBUTING.md', 'CHANGELOG.md',
+  'workflow/How-It-Works.md', 'workflow/product-status.json',
   'workflow/Project-Configuration.md', 'workflow/Source-Adapters.md',
   'workflow/Implementation-Adapters.md', 'workflow/Deployment-Adapters.md',
   'workflow/Execution-Transports.md', 'workflow/ChatGPT-Experience.md', 'workflow/Product-Acceptance.md',
@@ -102,4 +103,4 @@ for (const file of [...files].filter((path) => extname(path).toLowerCase() === '
 }
 if (broken.length > 0) throw new Error(`Packaged relative Markdown links do not resolve:\n${broken.map((item) => `- ${item}`).join('\n')}`);
 
-console.log(`Package manifest tests passed (${files.size} runtime files, ${report.unpackedSize} unpacked bytes; development examples, scripts, tests, Astro scaffold fixture, obsolete bootstrap alias, and product-acceptance implementation excluded; generic evidence runtime retained; all relative Markdown links resolved).`);
+console.log(`Package manifest tests passed (${files.size} runtime files, ${report.unpackedSize} unpacked bytes; development examples, scripts, tests, Astro scaffold fixture, obsolete bootstrap alias, and product-acceptance implementation excluded; generic evidence runtime retained; product architecture/status surfaces packaged; all relative Markdown links resolved).`);
