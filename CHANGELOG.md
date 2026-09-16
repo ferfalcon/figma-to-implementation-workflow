@@ -6,6 +6,8 @@ The format follows Keep a Changelog principles. Version numbers describe toolkit
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-09-15
+
 ### Added
 
 - Maintained Astro + strict TypeScript starter with native CSS/interactions, committed assets, locked dependencies, desktop/mobile Playwright and accessibility checks, and exact-commit validation reports.
