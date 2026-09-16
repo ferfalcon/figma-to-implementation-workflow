@@ -52,9 +52,6 @@ export function validateProductStatus(status) {
   if (!allowedStatuses.has(status.status)) {
     findings.push('status must be pending or accepted.');
   }
-  if (!Number.isInteger(status.acceptanceReportSchemaVersion) || status.acceptanceReportSchemaVersion < 1) {
-    findings.push('acceptanceReportSchemaVersion must be a positive integer.');
-  }
   if (!Array.isArray(status.scenarios)) {
     findings.push('scenarios must be an array.');
   } else {
@@ -69,6 +66,9 @@ export function validateProductStatus(status) {
   if (status.status === 'pending') {
     if (status.lastAcceptedRevision !== null) findings.push('pending status requires lastAcceptedRevision to be null.');
     if (status.acceptedAt !== null) findings.push('pending status requires acceptedAt to be null.');
+    if (status.acceptanceReportSchemaVersion !== null) {
+      findings.push('pending status requires acceptanceReportSchemaVersion to be null.');
+    }
     if (Array.isArray(status.scenarios) && status.scenarios.length !== 0) {
       findings.push('pending status requires scenarios to be empty.');
     }
@@ -80,6 +80,9 @@ export function validateProductStatus(status) {
     }
     if (!isoTimestamp(status.acceptedAt)) {
       findings.push('accepted status requires acceptedAt to be a canonical ISO-8601 UTC timestamp.');
+    }
+    if (!Number.isInteger(status.acceptanceReportSchemaVersion) || status.acceptanceReportSchemaVersion < 1) {
+      findings.push('accepted status requires acceptanceReportSchemaVersion to be a positive integer.');
     }
     if (Array.isArray(status.scenarios)) {
       for (const required of REQUIRED_ACCEPTED_SCENARIOS) {
