@@ -1,6 +1,6 @@
 # Figma to Implementation Workflow
 
-Turn a Figma design into working frontend code through ChatGPT — entirely online.
+Turn a Figma design into working frontend code through ChatGPT.
 
 You can start without a local development environment. You do not need to clone the repository, open a terminal, install Node.js, or run a package manager to get your first working implementation.
 
