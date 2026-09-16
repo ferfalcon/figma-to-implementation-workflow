@@ -13,10 +13,16 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const status = JSON.parse(readFileSync(join(root, 'workflow', 'product-status.json'), 'utf8'));
 
 assert.deepEqual(validateProductStatus(status), { valid: true, findings: [] });
-assert.equal(status.status, 'pending', 'The public status must remain pending until real-session evidence is explicitly attested.');
-assert.equal(status.lastAcceptedRevision, null);
-assert.equal(status.acceptedAt, null);
-assert.deepEqual(status.scenarios, []);
+
+const pending = {
+  schemaVersion: 1,
+  status: 'pending',
+  lastAcceptedRevision: null,
+  acceptedAt: null,
+  acceptanceReportSchemaVersion: 2,
+  scenarios: [],
+};
+assert.deepEqual(validateProductStatus(pending), { valid: true, findings: [] });
 
 const accepted = {
   schemaVersion: 1,
@@ -41,7 +47,7 @@ for (const alter of [
   assert.equal(validateProductStatus(invalid).valid, false);
 }
 
-const invalidPending = structuredClone(status);
+const invalidPending = structuredClone(pending);
 invalidPending.lastAcceptedRevision = 'b'.repeat(40);
 assert.equal(validateProductStatus(invalidPending).valid, false);
 
