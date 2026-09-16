@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { dirname, isAbsolute, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -16,7 +16,7 @@ const SUPPORT_LEVELS = new Set(['maintained', 'best-effort']);
 const IMPLEMENTATION_MODES = new Set(['scaffold', 'adapt']);
 const ENTRY_KEYS = Object.freeze({
   source: new Set(['id', 'resource']),
-  implementation: new Set(['id', 'resource', 'support', 'modes']),
+  implementation: new Set(['id', 'resource', 'support', 'modes', 'scaffoldResource']),
   deployment: new Set(['id', 'resource', 'support']),
 });
 
@@ -31,18 +31,38 @@ function deepFreeze(value) {
   return value;
 }
 
+function safeRepositoryPath(value, label) {
+  if (typeof value !== 'string' || value.length === 0 || value !== value.trim()) {
+    fail(`${label} must be a non-empty trimmed string.`);
+  }
+  if (isAbsolute(value) || value.includes('\\') || value.split('/').some((part) => part === '.' || part === '..')) {
+    fail(`${label} must be a repository-relative POSIX path without traversal.`);
+  }
+}
+
 function validateResource(kind, resource, entryId) {
-  if (typeof resource !== 'string' || resource.length === 0 || resource !== resource.trim()) {
-    fail(`${kind}.${entryId}.resource must be a non-empty trimmed string.`);
-  }
-  if (isAbsolute(resource) || resource.includes('\\') || resource.split('/').some((part) => part === '.' || part === '..')) {
-    fail(`${kind}.${entryId}.resource must be a repository-relative POSIX path without traversal.`);
-  }
+  safeRepositoryPath(resource, `${kind}.${entryId}.resource`);
   if (!resource.startsWith(RESOURCE_PREFIXES[kind]) || !resource.endsWith('.md')) {
     fail(`${kind}.${entryId}.resource must stay under ${RESOURCE_PREFIXES[kind]} and point to Markdown guidance.`);
   }
   if (!existsSync(resolve(root, resource))) {
     fail(`${kind}.${entryId}.resource does not exist: ${resource}`);
+  }
+}
+
+function validateScaffoldResource(entry) {
+  const label = `implementation.${entry.id}.scaffoldResource`;
+  if (!entry.modes.includes('scaffold')) {
+    if ('scaffoldResource' in entry) fail(`${label} is only valid when scaffold mode is declared.`);
+    return;
+  }
+  safeRepositoryPath(entry.scaffoldResource, label);
+  if (!entry.scaffoldResource.startsWith('implementation-adapters/')) {
+    fail(`${label} must stay under implementation-adapters/.`);
+  }
+  const scaffoldPath = resolve(root, entry.scaffoldResource);
+  if (!existsSync(scaffoldPath) || !statSync(scaffoldPath).isDirectory()) {
+    fail(`${label} must identify an existing scaffold resource directory.`);
   }
 }
 
@@ -80,6 +100,7 @@ function validateEntry(kind, entry, index) {
     if (invalidModes.length > 0) {
       fail(`implementation.${entry.id}.modes contains unsupported modes: ${invalidModes.join(', ')}.`);
     }
+    validateScaffoldResource(entry);
   }
 }
 

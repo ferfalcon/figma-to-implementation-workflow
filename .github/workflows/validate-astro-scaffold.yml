@@ -27,7 +27,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
-          cache-dependency-path: implementation-adapters/astro/scaffold/package-lock.template.json
+          cache-dependency-path: implementation-adapters/astro/scaffold/application/package-lock.template.json
       - name: Generate the implementation scaffold
         run: node scripts/build-astro-scaffold.mjs --output dist/astro-scaffold
       - name: Install scaffold dependencies

@@ -22,6 +22,8 @@
     "guidelines",
     "implementation-adapters/ASTRO.md",
     "implementation-adapters/EXISTING-FRAMEWORK.md",
+    "implementation-adapters/astro/scaffold/application",
+    "implementation-adapters/astro/scaffold/repository",
     "prompts",
     "schemas",
     "source-adapters",

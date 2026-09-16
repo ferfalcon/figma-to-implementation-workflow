@@ -18,6 +18,7 @@ const MUTATING_COMMANDS = [
   { prefix: ['sync'], positionals: 1 },
   { prefix: ['toolkit', 'pin'], positionals: 2 },
   { prefix: ['toolkit', 'migrate'], positionals: 2 },
+  { prefix: ['implementation', 'scaffold'], positionals: 3 },
   { prefix: ['snapshot', 'add'], positionals: 2 },
   { prefix: ['snapshot', 'verify'], positionals: 3 },
   { prefix: ['snapshot', 'supersede'], positionals: 3 },

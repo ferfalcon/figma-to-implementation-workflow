@@ -29,12 +29,24 @@ The maintained default for a new safely scaffoldable frontend is Astro + TypeScr
 
 Adapter resolution may happen before planning, but creating application files is Stage 10 implementation work. Do not scaffold during intake or use scaffolding to bypass required documentation, review, or approval gates.
 
-The source repository's `implementation-adapters/astro/scaffold/` directory is the development-only scaffold source and validation fixture for this adapter. It sits beside the runtime adapter contract for maintainers but is intentionally excluded from the packaged workflow runtime. `scripts/build-astro-scaffold.mjs` materializes the pure application scaffold, while `scripts/materialize-astro-fixture.mjs` composes it with the thin repository bootstrap for integration validation. Implementation agents should follow this adapter contract and the approved project scope rather than requiring an installed package or consumer repository to contain the fixture. Sample pages, sample tests, and fixture content are never product requirements.
+The pinned toolkit packages the maintained runtime scaffold resource under `implementation-adapters/astro/scaffold/application/` plus its repository-level validation template under `implementation-adapters/astro/scaffold/repository/`. Toolkit CI and the Stage-10 runtime command consume those same resources, so the scaffold a consumer receives is the scaffold validated at that exact toolkit revision.
+
+Inside an approved in-progress Stage 10 task, scaffold with:
+
+```text
+design-workflow implementation scaffold astro-typescript
+```
+
+The command reads `repository.implementationRoot` from `design-workflow.config.json`; it does not accept an arbitrary destination. It fails closed outside a valid Stage 10 task, when the implementation root contains unfamiliar application-significant content, or when it would overwrite a differing application/runtime file. Existing repository metadata such as a repository README or `.gitignore` is preserved rather than silently replaced.
+
+The command also renders `.github/workflows/design-workflow-ui.yml` at repository level. Its path filters, npm cache path, command working directory, and evidence paths are bound to the configured implementation root, including nested roots such as `frontend/` or `apps/web/`.
+
+The source repository's `implementation-adapters/astro/scaffold/README.md` is maintainer guidance only. `scripts/build-astro-scaffold.mjs` uses the same runtime materializer to generate the CI fixture, while `scripts/materialize-astro-fixture.mjs` composes that generated application with repository bootstrap material for integration validation. Sample pages, sample tests, and fixture content are never product requirements.
 
 When scaffolding:
 
 - preserve repository-level workflow/configuration files already present;
-- create application files only inside the configured implementation root except for required repo-wide integration;
+- create application files only inside the configured implementation root except for the named repository-level validation workflow;
 - keep dependencies minimal and justified by the approved implementation;
 - prefer Astro components, TypeScript, semantic HTML, and shared CSS over framework additions that are not required by the design or project;
 - remove or replace fixture-specific sample content and tests when they are not part of the approved result.
@@ -81,7 +93,7 @@ Apply [`../workflow/Validation-Rules.md`](../workflow/Validation-Rules.md) and t
 4. browser installation/setup required by the test runner;
 5. browser/end-to-end checks against the built result.
 
-Browser coverage should be extended to approved behavior, keyboard interaction, responsive behavior, durable assets, and accessibility rather than relying only on starter smoke tests.
+Browser coverage should be extended to approved behavior, keyboard interaction, responsive behavior, durable assets, and accessibility rather than relying only on scaffold smoke tests.
 
 If an existing Astro project uses different but equivalent native commands, use the repository's commands and record exactly what ran. Never claim a maintained check passed when it was skipped or unavailable.
 

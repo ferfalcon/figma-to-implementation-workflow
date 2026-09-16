@@ -1,5 +1,6 @@
 import { readProjectConfiguration, resolveProjectSession } from './project-configuration.mjs';
 import { existsSync } from 'node:fs';
+import { runImplementationCli } from './implementation-cli.mjs';
 import { runWorkflowCli } from './commands-v2.mjs';
 import { mutateRecord, readStoredRecord } from './record-store.mjs';
 import { bindRepositoryWorkspace } from './repository-binding.mjs';
@@ -70,6 +71,9 @@ export async function runCli(args, environment) {
     const result = await runWorkflowCli(workflowArgsBase, workflowEnvironment);
     write(stdout, '\nProject settings:');
     write(stdout, '  design-workflow project check [--json]');
+    write(stdout, '\nImplementation adapters:');
+    write(stdout, '  design-workflow implementation scaffold astro-typescript [--json]');
+    write(stdout, '  Scaffolding is allowed only inside an approved, in-progress Stage 10 task.');
     write(stdout, '\nTask phases:');
     write(stdout, '  design-workflow task create [--phase <0-99|P00-P99> | --id <Pxx-Txx>] ...');
     write(stdout, '  --phase and --id are mutually exclusive. Without either, numbering continues in the highest existing phase and defaults to Phase 01.');
@@ -100,6 +104,10 @@ export async function runCli(args, environment) {
       else fail(stderr, message);
       return 1;
     }
+  }
+
+  if (command === 'implementation') {
+    return runImplementationCli({ positionals, options, projectRoot, recordPath, stdout, stderr });
   }
 
   if (command === 'repository' && positionals[1] === 'bind') {
