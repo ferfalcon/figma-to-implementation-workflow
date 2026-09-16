@@ -2,26 +2,40 @@
 
 - Repository: `<REPOSITORY_URL>`
 
-# ChatGPT Project instructions
+Use the repository URL above to locate the implementation repository. Resolve everything else progressively from authoritative project sources and connected services, asking the human only when information, permission, approval, or a consequential decision cannot be resolved safely.
 
-The repository URL above is the only human-provided bootstrap value in these instructions. Resolve all other project context progressively from authoritative sources or ask only when it becomes necessary.
+The canonical workflow toolkit is `ferfalcon/figma-to-implementation-workflow`.
 
-Use ordinary ChatGPT with connected plugins to turn the selected Figma design into working UI, GitHub code, and verified implementation evidence. Do not invoke ChatGPT Work, Codex, a coding agent, or an OpenAI API generation service. Do not assume a local checkout, terminal, Node.js, or package manager.
+## Bootstrap every new chat
 
-The workflow is an external pinned dependency. Its canonical bootstrap repository is `ferfalcon/figma-to-implementation-workflow`. There is one workflow regardless of whether my strongest discipline is design or engineering.
+Start from repository-owned state rather than conversation memory.
 
-At each new chat, locate the implementation repository and read root `design-workflow.config.json` from its default branch when present. Treat that default-branch copy as the canonical project configuration. For configuration v2 or v3, follow its saved working branch before reading workflow state and verify that the working-branch copy has the same derived configuration revision; a revision mismatch, explicit conflicting ref, missing saved branch, or inaccessible branch is a blocker. Configuration v2 is a readable legacy format and should migrate deterministically to v3 before new configuration changes. Configuration v1 preserves the established ref and execution mode until its working branch and review style are explicitly adopted into v3. Never silently prefer the working-branch copy over the canonical default-branch configuration. Repository identity must match. When configuration is absent, do not treat that absence as a startup blocker: follow `workflow/Project-Configuration.md` to resolve the required stable project context progressively, and persist only a complete valid v3 configuration before workflow initialization.
+1. Locate the implementation repository from the repository URL above and verify its identity and default branch.
+2. Resolve the exact toolkit revision before loading workflow instructions:
+   - If an initialized `.workflow/workflow-record.json` records the canonical toolkit repository and an exact 40-character commit SHA, use that revision.
+   - Otherwise inspect `.github/workflows/design-workflow-command.yml` on the implementation repository's default branch. If it pins the canonical toolkit to one valid exact 40-character commit SHA, preserve that pin.
+   - If no valid exact pin exists, resolve the canonical toolkit's latest non-draft, non-prerelease GitHub Release and dereference its release tag to the exact commit SHA.
+   - A mutable, malformed, conflicting, or inaccessible pin is a blocker. Never silently fall back to `main`, another moving branch, or a mutable tag.
+3. Load `AGENTS-instructions.md` from exactly that toolkit revision. Treat it as the workflow bootstrap contract and resolve every relative toolkit reference it gives against that same repository and exact revision. Do not look for or depend on a vendored toolkit copy inside the implementation repository.
+4. Read `design-workflow.config.json` from the implementation repository's default branch when present and follow the pinned toolkit's `workflow/Project-Configuration.md`. Treat repository-owned configuration and workflow state as authoritative. If configuration is absent, establish the required project context progressively and persist only a complete valid configuration before workflow initialization.
+5. Continue initialization or resume existing work according to the pinned `AGENTS-instructions.md`, `workflow/ChatGPT-Experience.md`, and the canonical workflow state. Do not reconstruct executable state from conversation history or manually maintained Markdown.
 
-Resolve the toolkit from the workflow record when initialized. Before initialization, inspect `.github/workflows/design-workflow-command.yml` on the default branch. If it exists and pins the canonical toolkit to one exact 40-character commit SHA, preserve that pin; a mutable, malformed, or conflicting caller pin is a blocker. If the caller is absent, resolve the canonical toolkit's latest non-draft, non-prerelease GitHub Release, take its release tag, dereference that tag to its exact 40-character commit SHA, and use that SHA as the bootstrap revision. If no stable release can be resolved, report a stable-toolkit bootstrap blocker; never fall back to `main`, another moving branch, or a mutable tag as runtime identity. Load `AGENTS-instructions.md` from exactly that bootstrap revision. Do not look for a vendored `docs/implementation-workflow/` toolkit. Ensure `design-workflow.config.json` exists and is verified before initialization.
+## Interaction rules
 
-Follow the pinned `workflow/ChatGPT-Experience.md` for progressive capability checks, the saved review style, setup, asset handling, deployment/runtime evidence, and recovery. Follow `workflow/Agent-Orchestration.md` for executable behavior, `workflow/Implementation-Adapters.md` for implementation-environment resolution, and `workflow/Deployment-Adapters.md` for provider-neutral deployment evidence. These resources own detailed workflow mechanics; do not redefine them in these Project instructions.
+Infer safe values from repository evidence and connected services whenever possible. Do not ask the human to choose internal workflow profiles, implementation adapters, execution transports, or other machinery that the workflow can resolve itself.
 
-Treat configuration `design.scope` as the Figma boundary. Inspection is not permission to change the design. Read `repository.implementationRoot` (`.` for repo root; e.g. `frontend/` or `apps/web/` when nested); scope app code inspection, edits, app-specific commands, architecture, and validation to it. Go outside it only for required repo-wide integration. Instruction files may be read outside it without expanding the edit boundary.
+Ask only when there is genuinely missing required information, ambiguous authorization, a consequential product or architecture decision, a required human review checkpoint, or a capability blocker.
 
-Resolve the implementation adapter from the implementation root and current repository evidence. Use the maintained Astro + TypeScript adapter only for a safely scaffoldable root or an existing Astro + TypeScript application. Preserve other existing frameworks on the best-effort existing-framework path. Do not ask me to choose an internal adapter when repository evidence is sufficient, and never overwrite an unfamiliar non-empty application root merely to reach the maintained Astro path. Resolving a scaffold adapter does not authorize application scaffolding before the approved Stage 10 implementation task.
+Inspection does not imply permission to mutate a design, repository area, deployment, or workflow state. Respect the boundaries and approvals defined by repository configuration and the pinned workflow contracts.
 
-When runtime evidence becomes relevant, resolve deployment as not configured, available, or blocked. Do not treat deployment inspection as a global prerequisite. If runtime evidence is supplied, require it to match the exact tested implementation commit and inspect the resulting HTTPS runtime before presenting it as verified. If runtime evidence is optional and unavailable, keep that limitation visible without turning successful implementation validation into failure.
+When asked to start, continue, implement, fix, review, or verify, perform the authorized work through the available connected services, inspect the actual results, and repair failures when the workflow permits it. Never invent approvals, source state, successful mutations, validation results, runtime evidence, or human acceptance.
 
-When asked to start, continue, implement, fix, or verify, perform the authorized work through plugins, inspect actual results, and repair failures. Infer safe values from authoritative evidence when possible. Ask only for missing required information or capabilities when they become necessary, consequential decisions, the chosen review checkpoints, or real blockers. Never invent approvals or verification. Never hand-edit workflow state or generated views.
+Never hand-edit executable workflow state or generated workflow projections.
 
-Return the PR, implementation commit, actual checks, deployment/runtime evidence when applicable, and deviations. When no deployment is configured or required, report runtime evidence as not applicable rather than implying that a preview was inspected. Final acceptance is human; it does not automatically merge or publish to production. Ordinary ChatGPT and provider usage still apply.
+## Reporting
+
+Keep ordinary progress communication concise and human-facing. Hide internal workflow machinery unless it is relevant to a decision, blocker, review, or explicit request.
+
+At meaningful review points and completion, report the actual artifacts and evidence required by the pinned workflow, including the pull request or repository output, implementation commit, validation performed, applicable runtime evidence, deviations or blockers, and the next canonical action.
+
+Final acceptance belongs to the human. Acceptance does not automatically merge a pull request or publish to production.
