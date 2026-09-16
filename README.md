@@ -20,19 +20,17 @@ That's it.
 
 The repository URL is the only project information you need to configure up front.
 
-ChatGPT will inspect the repository, determine what information or permissions are missing, resolve the implementation environment, and ask you only for what it needs to continue. You do not need to prepare all of the workflow inputs in advance, choose an internal framework route, or configure workflow state manually.
+ChatGPT will inspect the repository, determine what information or permissions are missing, resolve the implementation environment, and ask you only for what it needs to continue. You do not need to prepare all workflow inputs in advance, choose an internal framework route, or configure workflow state manually.
 
-If GitHub, Figma, a deployment provider, an asset, or a project decision is required, ChatGPT will ask for it when it becomes relevant.
+If GitHub, Figma, a deployment provider, an asset, or a project decision is required, ChatGPT asks for it when it becomes relevant.
+
+For the shortest first-run and resume instructions, use the [Quickstart](QUICKSTART.md).
 
 ## What happens next
 
-Once ChatGPT knows which repository owns the implementation, it progressively establishes the rest of the project context.
+Once ChatGPT knows which repository owns the implementation, it progressively establishes the rest of the project context, inspects the actual sources, prepares the implementation plan, works through the required review gates, writes the code through GitHub, runs the available verification, and returns the result for human review.
 
-It inspects the configured implementation root before planning code. A safely scaffoldable root or an existing Astro + TypeScript application uses the maintained Astro adapter. An existing application using another framework is preserved and handled through the best-effort existing-framework adapter rather than being silently replaced with Astro.
-
-Depending on the project, ChatGPT may ask for the Figma design or scope, a decision that cannot be inferred safely, a required service connection, or an asset that is not available through the connected tools.
-
-From there the workflow inspects the actual sources, prepares the implementation plan, works through the required review gates, writes the code through GitHub, runs the available verification, and returns the result for human review.
+A safely scaffoldable root or an existing Astro + TypeScript application uses the maintained Astro adapter. An existing application using another framework is preserved and handled through the best-effort existing-framework adapter rather than being silently replaced with Astro.
 
 You can leave and continue later. The repository owns the durable workflow state needed for another conversation to continue the work.
 
@@ -58,21 +56,30 @@ A local checkout remains useful when an engineer wants to take over or extend th
 
 ## How the workflow works
 
-The human-facing interaction is intentionally simple. Behind it, the workflow keeps a stricter engineering process: it establishes source authority, inspects the design and repository, resolves implementation capability, records project state, determines the appropriate workflow profile, creates implementation artifacts, requires the necessary approvals, validates the result, resolves runtime evidence when applicable, and preserves enough evidence for the work to be continued safely.
+The human-facing interaction is intentionally simple. Behind it, repository-owned configuration and workflow state, pinned toolkit releases, capability adapters, execution transports, validation evidence, and human review keep the process reproducible.
 
-You do not need to understand those mechanics to use the workflow.
+You do not need to understand those mechanics to use the workflow. If you want the conceptual architecture, read [How it works](workflow/How-It-Works.md). That explainer links to the canonical contracts rather than duplicating their rules.
+
+## Product acceptance status
+
+Repository CI and real-user product acceptance are different signals. The public, non-sensitive attestation for the latest real-session product QA lives in [`workflow/product-status.json`](workflow/product-status.json).
+
+A `pending` status means there is no current public attestation for an accepted toolkit revision. An `accepted` status identifies the exact toolkit commit and scenario coverage that maintainers have attested after the real-session process defined by [Product Acceptance](workflow/Product-Acceptance.md). The status file is not private evidence, executable workflow state, or a release gate.
 
 ## Under the hood
 
-If you want to understand, audit, or extend the system, the detailed contracts live outside this README:
+If you want to understand, audit, or extend the system, start with these references:
 
-- [Quickstart](QUICKSTART.md) — the detailed first-run and resume guide.
+- [Quickstart](QUICKSTART.md) — the shortest first-run and resume guide.
+- [How it works](workflow/How-It-Works.md) — a non-authoritative map of the product architecture and its canonical owners.
 - [ChatGPT experience](workflow/ChatGPT-Experience.md) — capability checks, conversational setup, review behavior, assets, runtime evidence, and recovery.
 - [Workflow stages](workflow/Design-Implementation-Workflow.md) — the canonical implementation process.
 - [Implementation adapters](workflow/Implementation-Adapters.md) — repository-driven implementation-environment resolution and maintained/best-effort adapter rules.
 - [Deployment adapters](workflow/Deployment-Adapters.md) — optional provider-neutral runtime evidence and commit-binding rules.
 - [Project configuration](workflow/Project-Configuration.md) — repository-owned project configuration and migration rules.
 - [Toolkit distribution](workflow/Toolkit-Distribution.md) — stable GitHub Release channel, validation gates, version tags, and exact-SHA release identity.
+- [Product acceptance](workflow/Product-Acceptance.md) — the real-user QA process that can support a public status attestation.
+- [Product status](workflow/product-status.json) — the current non-sensitive product-QA attestation.
 - [GitHub remote execution](workflow/GitHub-Remote-Execution.md) — how executable work runs without requiring a local checkout.
 - [State ownership](workflow/State-Ownership.md) — canonical workflow state and generated views.
 - [Agent orchestration](workflow/Agent-Orchestration.md) — executable workflow behavior and gates.
