@@ -17,6 +17,28 @@ const workflow = readFileSync(workflowPath, 'utf8');
 const contract = readFileSync(contractPath, 'utf8');
 const readme = readFileSync(join(root, 'README.md'), 'utf8');
 const projectInstructions = readFileSync(join(root, 'Project-settings--Instructions.md'), 'utf8');
+const toolkitPackage = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
+const toolkitLock = JSON.parse(readFileSync(join(root, 'package-lock.json'), 'utf8'));
+const scaffoldPackage = JSON.parse(readFileSync(join(root, 'implementation-adapters', 'astro', 'scaffold', 'application', 'package.json'), 'utf8'));
+
+assert.equal(readFileSync(join(root, '.nvmrc'), 'utf8').trim(), '24', '.nvmrc must select Node.js 24.');
+assert.equal(toolkitPackage.engines.node, '>=24 <25', 'Toolkit package metadata must require Node.js 24.');
+assert.equal(toolkitLock.packages[''].engines.node, toolkitPackage.engines.node, 'Toolkit lockfile must match the package Node.js policy.');
+assert.equal(scaffoldPackage.engines.node, toolkitPackage.engines.node, 'Astro scaffold must match the toolkit Node.js policy.');
+assert.match(scaffoldPackage.devDependencies['@types/node'], /^24\./, 'Astro scaffold must use Node.js 24 type definitions.');
+
+for (const relativePath of [
+  '.github/workflows/validate-workflow.yml',
+  '.github/workflows/validate-astro-scaffold.yml',
+  '.github/workflows/release-toolkit.yml',
+  '.github/workflows/design-workflow-command.yml',
+  'implementation-adapters/astro/scaffold/repository/validate-ui.yml.template',
+]) {
+  const content = readFileSync(join(root, relativePath), 'utf8');
+  assert.match(content, /node-version:\s*24\b/, `${relativePath} must use Node.js 24.`);
+  assert(!content.includes('matrix.node-version'), `${relativePath} must not use a multi-version Node.js matrix.`);
+  assert.doesNotMatch(content, /node-version:\s*22\b/, `${relativePath} must not use Node.js 22.`);
+}
 
 const triggerBlock = workflow.slice(workflow.indexOf('on:'), workflow.indexOf('\nconcurrency:'));
 assert.match(triggerBlock, /workflow_dispatch:/, 'Stable releases must be explicitly dispatched.');
@@ -27,7 +49,7 @@ assert.match(triggerBlock, /version:[\s\S]*?required:\s*true/, 'Release dispatch
 
 assert.match(workflow, /\$GITHUB_REF" != "refs\/heads\/main"/, 'Release workflow must fail closed outside main.');
 assert.match(workflow, /scripts\/check-toolkit-release\.mjs/, 'Release workflow must run release-metadata preflight.');
-assert.match(workflow, /node-version:\s*\n\s*- 22\s*\n\s*- 24/, 'Release validation must cover Node.js 22 and 24.');
+assert.match(workflow, /node-version:\s*24\b/, 'Release validation must use Node.js 24.');
 assert.match(workflow, /npm run validate/, 'Release workflow must run the full repository validation contract.');
 assert.match(workflow, /npm pack --dry-run/, 'Release workflow must verify package generation.');
 assert.match(workflow, /git diff --exit-code/, 'Release workflow must reject packaging drift.');
