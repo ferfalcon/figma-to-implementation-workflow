@@ -44,7 +44,7 @@ After packaging or installation:
 npx @ferfalcon/design-workflow help
 ```
 
-Node.js 22 or newer is required.
+Node.js 24 is required.
 
 ## Executable control and manual scaffolding
 

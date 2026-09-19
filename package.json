@@ -84,6 +84,6 @@
     "test:astro-fixture": "node scripts/test-astro-fixture.mjs"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=24 <25"
   }
 }

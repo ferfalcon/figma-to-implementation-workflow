@@ -22,8 +22,8 @@ A stable toolkit release is valid only when all of the following are true:
 3. The version is a stable `MAJOR.MINOR.PATCH` version, not a prerelease.
 4. `CHANGELOG.md` contains a dated heading for that version.
 5. The `## [Unreleased]` section is empty, so no merged work is silently omitted from the released version.
-6. The full repository validation contract passes on Node.js 22 and 24.
-7. `npm pack --dry-run` succeeds on Node.js 22 and 24 and packaging leaves no repository drift.
+6. The full repository validation contract passes on Node.js 24.
+7. `npm pack --dry-run` succeeds on Node.js 24 and packaging leaves no repository drift.
 8. Neither the version tag nor a GitHub Release with that tag already exists.
 9. The release is created against the exact validated `GITHUB_SHA` and the resulting tag resolves back to that commit.
 

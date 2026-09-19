@@ -118,7 +118,7 @@ function buildRecord(profile, stage, {
         expected: 'The matrix fixture passes',
         actual: 'The matrix fixture passed',
         command: 'node scripts/test-stage-gates.mjs',
-        environment: 'Node.js 22+',
+        environment: 'Node.js 24',
         executedAt: timestamp,
         evidence: ['Synthetic gate matrix'],
         references: ['PLAN-001'],

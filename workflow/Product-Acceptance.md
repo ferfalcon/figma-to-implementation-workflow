@@ -6,7 +6,7 @@ Product acceptance is maintainer QA. It is not a starter-publication gate, a pac
 
 ## Candidate preparation
 
-Run the full toolkit validator on Node 22 and 24. Generate the maintained Astro implementation fixture from an exact toolkit commit and run locked installation, Astro/TypeScript checks, production build, and desktop/mobile Playwright through the Validate Astro starter workflow.
+Run the full toolkit validator on Node 24. Generate the maintained Astro implementation fixture from an exact toolkit commit and run locked installation, Astro/TypeScript checks, production build, and desktop/mobile Playwright through the Validate Astro starter workflow.
 
 Prepare two maintainer-controlled implementation repositories from the same fixture behavior:
 
